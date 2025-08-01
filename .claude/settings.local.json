@@ -13,7 +13,9 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
