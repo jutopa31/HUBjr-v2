@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escala NIHSS - Evaluación de Ictus</title>
+    <style>
+        :root {
+            --primary-color: #4a6da7;
+            --primary-hover: #3a5d97;
+            --secondary-color: #f0f4f8;
+            --text-color: #333;
+            --border-color: #ddd;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            font-size: 18px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            border-radius: 6px;
+        }
+        
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .item-title .item-number {
+            background-color: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: flex-start;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .option input[type="radio"] {
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+        
+        .option label {
+            flex: 1;
+            cursor: pointer;
+        }
+        
+        .option-score {
+            font-weight: bold;
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .btn-secondary {
+            background-color: #f1f3f5;
+            color: var(--text-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--secondary-color);
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .result-container h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        .result-score {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: var(--primary-color);
+        }
+        
+        .result-interpretation {
+            margin-bottom: 15px;
+        }
+        
+        .severity-indicator {
+            display: flex;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .severity-indicator div {
+            height: 100%;
+        }
+        
+        .severity-indicator .none {
+            background-color: #4caf50;
+        }
+        
+        .severity-indicator .minor {
+            background-color: #8bc34a;
+        }
+        
+        .severity-indicator .moderate {
+            background-color: #ffc107;
+        }
+        
+        .severity-indicator .moderate-severe {
+            background-color: #ff9800;
+        }
+        
+        .severity-indicator .severe {
+            background-color: #f44336;
+        }
+        
+        .severity-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+        }
+        
+        .info-box strong {
+            color: #0d47a1;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Escala NIHSS (National Institutes of Health Stroke Scale)</h1>
+        
+        <div class="info-box">
+            <p><strong>Instrucciones:</strong> Complete todos los ítems de la escala. Al finalizar, haga clic en "Calcular Puntuación" para obtener el resultado.</p>
+            <p>La escala NIHSS evalúa la gravedad del ictus con puntuaciones que van desde 0 (sin síntomas) hasta 42 (ictus muy grave).</p>
+        </div>
+        
+        <form id="nihss-form">
+            <!-- 1. Nivel de consciencia -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">1</span> Nivel de consciencia</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="loc-0" name="loc" value="0" required>
+                        <label for="loc-0"><span class="option-score">0:</span> Alerta, respuestas normales</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-1" name="loc" value="1">
+                        <label for="loc-1"><span class="option-score">1:</span> No alerta, pero responde a mínimos estímulos verbales</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-2" name="loc" value="2">
+                        <label for="loc-2"><span class="option-score">2:</span> No alerta, requiere estímulos repetidos o dolorosos para responder</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-3" name="loc" value="3">
+                        <label for="loc-3"><span class="option-score">3:</span> Responde solo con reflejo motor o respuestas autonómicas, o totalmente irresponsivo</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2. Preguntas LOC -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">2</span> Preguntas del nivel de consciencia</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="loc-questions-0" name="loc-questions" value="0" required>
+                        <label for="loc-questions-0"><span class="option-score">0:</span> Responde ambas preguntas correctamente (mes y edad)</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-questions-1" name="loc-questions" value="1">
+                        <label for="loc-questions-1"><span class="option-score">1:</span> Responde una pregunta correctamente</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-questions-2" name="loc-questions" value="2">
+                        <label for="loc-questions-2"><span class="option-score">2:</span> No responde ninguna pregunta correctamente</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3. Órdenes LOC -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">3</span> Órdenes del nivel de consciencia</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="loc-commands-0" name="loc-commands" value="0" required>
+                        <label for="loc-commands-0"><span class="option-score">0:</span> Realiza ambas tareas correctamente (abrir/cerrar ojos, apretar/soltar mano)</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-commands-1" name="loc-commands" value="1">
+                        <label for="loc-commands-1"><span class="option-score">1:</span> Realiza una tarea correctamente</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="loc-commands-2" name="loc-commands" value="2">
+                        <label for="loc-commands-2"><span class="option-score">2:</span> No realiza ninguna tarea correctamente</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4. Mejor mirada -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">4</span> Mejor mirada</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="gaze-0" name="gaze" value="0" required>
+                        <label for="gaze-0"><span class="option-score">0:</span> Normal</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="gaze-1" name="gaze" value="1">
+                        <label for="gaze-1"><span class="option-score">1:</span> Parálisis parcial de la mirada</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="gaze-2" name="gaze" value="2">
+                        <label for="gaze-2"><span class="option-score">2:</span> Desviación forzada o parálisis total de la mirada</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 5. Campos visuales -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">5</span> Campos visuales</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="visual-0" name="visual" value="0" required>
+                        <label for="visual-0"><span class="option-score">0:</span> Sin déficits campimétricos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="visual-1" name="visual" value="1">
+                        <label for="visual-1"><span class="option-score">1:</span> Hemianopsia parcial</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="visual-2" name="visual" value="2">
+                        <label for="visual-2"><span class="option-score">2:</span> Hemianopsia completa</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="visual-3" name="visual" value="3">
+                        <label for="visual-3"><span class="option-score">3:</span> Hemianopsia bilateral (ceguera cortical)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 6. Parálisis facial -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">6</span> Parálisis facial</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="facial-0" name="facial" value="0" required>
+                        <label for="facial-0"><span class="option-score">0:</span> Movimientos normales simétricos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="facial-1" name="facial" value="1">
+                        <label for="facial-1"><span class="option-score">1:</span> Paresia leve (asimetría al sonreír)</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="facial-2" name="facial" value="2">
+                        <label for="facial-2"><span class="option-score">2:</span> Parálisis parcial (parálisis total de la parte inferior de la cara)</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="facial-3" name="facial" value="3">
+                        <label for="facial-3"><span class="option-score">3:</span> Parálisis completa (ausencia de movimientos faciales en la parte superior e inferior)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 7a. Motor - Brazo izquierdo -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">7a</span> Motor - Brazo izquierdo</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="motor-left-arm-0" name="motor-left-arm" value="0" required>
+                        <label for="motor-left-arm-0"><span class="option-score">0:</span> No hay caída, mantiene la posición 10 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-arm-1" name="motor-left-arm" value="1">
+                        <label for="motor-left-arm-1"><span class="option-score">1:</span> Caída parcial antes de 10 segundos, no llega a tocar la cama</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-arm-2" name="motor-left-arm" value="2">
+                        <label for="motor-left-arm-2"><span class="option-score">2:</span> Esfuerzo contra gravedad, no puede alcanzar o mantener 10 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-arm-3" name="motor-left-arm" value="3">
+                        <label for="motor-left-arm-3"><span class="option-score">3:</span> No esfuerzo contra gravedad, el miembro cae</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-arm-4" name="motor-left-arm" value="4">
+                        <label for="motor-left-arm-4"><span class="option-score">4:</span> No movimiento</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-arm-un" name="motor-left-arm" value="UN">
+                        <label for="motor-left-arm-un"><span class="option-score">UN:</span> Amputación o fusión articular (explicar)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 7b. Motor - Brazo derecho -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">7b</span> Motor - Brazo derecho</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="motor-right-arm-0" name="motor-right-arm" value="0" required>
+                        <label for="motor-right-arm-0"><span class="option-score">0:</span> No hay caída, mantiene la posición 10 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-arm-1" name="motor-right-arm" value="1">
+                        <label for="motor-right-arm-1"><span class="option-score">1:</span> Caída parcial antes de 10 segundos, no llega a tocar la cama</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-arm-2" name="motor-right-arm" value="2">
+                        <label for="motor-right-arm-2"><span class="option-score">2:</span> Esfuerzo contra gravedad, no puede alcanzar o mantener 10 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-arm-3" name="motor-right-arm" value="3">
+                        <label for="motor-right-arm-3"><span class="option-score">3:</span> No esfuerzo contra gravedad, el miembro cae</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-arm-4" name="motor-right-arm" value="4">
+                        <label for="motor-right-arm-4"><span class="option-score">4:</span> No movimiento</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-arm-un" name="motor-right-arm" value="UN">
+                        <label for="motor-right-arm-un"><span class="option-score">UN:</span> Amputación o fusión articular (explicar)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 8a. Motor - Pierna izquierda -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">8a</span> Motor - Pierna izquierda</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="motor-left-leg-0" name="motor-left-leg" value="0" required>
+                        <label for="motor-left-leg-0"><span class="option-score">0:</span> No hay caída, mantiene la posición 5 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-leg-1" name="motor-left-leg" value="1">
+                        <label for="motor-left-leg-1"><span class="option-score">1:</span> Caída parcial antes de 5 segundos, no llega a tocar la cama</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-leg-2" name="motor-left-leg" value="2">
+                        <label for="motor-left-leg-2"><span class="option-score">2:</span> Esfuerzo contra gravedad, cae a la cama en menos de 5 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-leg-3" name="motor-left-leg" value="3">
+                        <label for="motor-left-leg-3"><span class="option-score">3:</span> No esfuerzo contra gravedad, el miembro cae inmediatamente</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-leg-4" name="motor-left-leg" value="4">
+                        <label for="motor-left-leg-4"><span class="option-score">4:</span> No movimiento</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-left-leg-un" name="motor-left-leg" value="UN">
+                        <label for="motor-left-leg-un"><span class="option-score">UN:</span> Amputación o fusión articular (explicar)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 8b. Motor - Pierna derecha -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">8b</span> Motor - Pierna derecha</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="motor-right-leg-0" name="motor-right-leg" value="0" required>
+                        <label for="motor-right-leg-0"><span class="option-score">0:</span> No hay caída, mantiene la posición 5 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-leg-1" name="motor-right-leg" value="1">
+                        <label for="motor-right-leg-1"><span class="option-score">1:</span> Caída parcial antes de 5 segundos, no llega a tocar la cama</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-leg-2" name="motor-right-leg" value="2">
+                        <label for="motor-right-leg-2"><span class="option-score">2:</span> Esfuerzo contra gravedad, cae a la cama en menos de 5 segundos</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-leg-3" name="motor-right-leg" value="3">
+                        <label for="motor-right-leg-3"><span class="option-score">3:</span> No esfuerzo contra gravedad, el miembro cae inmediatamente</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-leg-4" name="motor-right-leg" value="4">
+                        <label for="motor-right-leg-4"><span class="option-score">4:</span> No movimiento</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="motor-right-leg-un" name="motor-right-leg" value="UN">
+                        <label for="motor-right-leg-un"><span class="option-score">UN:</span> Amputación o fusión articular (explicar)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 9. Ataxia de miembros -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">9</span> Ataxia de miembros</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="ataxia-0" name="ataxia" value="0" required>
+                        <label for="ataxia-0"><span class="option-score">0:</span> Ausente</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="ataxia-1" name="ataxia" value="1">
+                        <label for="ataxia-1"><span class="option-score">1:</span> Presente en un miembro</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="ataxia-2" name="ataxia" value="2">
+                        <label for="ataxia-2"><span class="option-score">2:</span> Presente en dos miembros</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="ataxia-un" name="ataxia" value="UN">
+                        <label for="ataxia-un"><span class="option-score">UN:</span> Amputación o fusión articular (explicar)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 10. Sensibilidad -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">10</span> Sensibilidad</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="sensory-0" name="sensory" value="0" required>
+                        <label for="sensory-0"><span class="option-score">0:</span> Normal, sin pérdida sensorial</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="sensory-1" name="sensory" value="1">
+                        <label for="sensory-1"><span class="option-score">1:</span> Pérdida sensorial leve a moderada</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="sensory-2" name="sensory" value="2">
+                        <label for="sensory-2"><span class="option-score">2:</span> Pérdida sensorial severa o total</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 11. Mejor lenguaje -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">11</span> Mejor lenguaje</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="language-0" name="language" value="0" required>
+                        <label for="language-0"><span class="option-score">0:</span> Sin afasia, normal</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="language-1" name="language" value="1">
+                        <label for="language-1"><span class="option-score">1:</span> Afasia leve a moderada</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="language-2" name="language" value="2">
+                        <label for="language-2"><span class="option-score">2:</span> Afasia severa</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="language-3" name="language" value="3">
+                        <label for="language-3"><span class="option-score">3:</span> Mudo, afasia global</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 12. Disartria -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">12</span> Disartria</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="dysarthria-0" name="dysarthria" value="0" required>
+                        <label for="dysarthria-0"><span class="option-score">0:</span> Normal</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="dysarthria-1" name="dysarthria" value="1">
+                        <label for="dysarthria-1"><span class="option-score">1:</span> Disartria leve a moderada</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="dysarthria-2" name="dysarthria" value="2">
+                        <label for="dysarthria-2"><span class="option-score">2:</span> Disartria severa, habla ininteligible</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="dysarthria-un" name="dysarthria" value="UN">
+                        <label for="dysarthria-un"><span class="option-score">UN:</span> Intubado u otra barrera física (explicar)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 13. Extinción e inatención -->
+            <div class="item">
+                <div class="item-title">
+                    <span><span class="item-number">13</span> Extinción e inatención (negligencia)</span>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="neglect-0" name="neglect" value="0" required>
+                        <label for="neglect-0"><span class="option-score">0:</span> Sin anormalidad</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="neglect-1" name="neglect" value="1">
+                        <label for="neglect-1"><span class="option-score">1:</span> Inatención o extinción visual, táctil, auditiva, espacial o personal a la estimulación bilateral simultánea en una de las modalidades sensoriales</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="neglect-2" name="neglect" value="2">
+                        <label for="neglect-2"><span class="option-score">2:</span> Hemi-inatención severa o extinción en más de una modalidad</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button type="button" id="cancel-btn" class="btn-secondary">Cancelar</button>
+                <button type="button" id="calculate-btn" class="btn-primary">Calcular Puntuación</button>
+            </div>
+        </form>
+        
+        <div id="result-container" class="result-container">
+            <h3>Resultado de la Escala NIHSS</h3>
+            <div class="result-score">Puntuación total: <span id="total-score">0</span></div>
+            <div class="result-interpretation">
+                <strong>Interpretación:</strong> <span id="interpretation-text"></span>
+            </div>
+            
+            <div class="severity-indicator">
+                <div class="none" style="width: 20%"></div>
+                <div class="minor" style="width: 20%"></div>
+                <div class="moderate" style="width: 20%"></div>
+                <div class="moderate-severe" style="width: 20%"></div>
+                <div class="severe" style="width: 20%"></div>
+            </div>
+            <div class="severity-labels">
+                <span>Sin síntomas (0)</span>
+                <span>Leve (1-4)</span>
+                <span>Moderado (5-15)</span>
+                <span>Mod-Grave (16-20)</span>
+                <span>Grave (21-42)</span>
+            </div>
+            
+            <div class="buttons">
+                <button type="button" id="reset-btn" class="btn-secondary">Nueva Evaluación</button>
+                <button type="button" id="insert-btn" class="btn-primary">Insertar en Examen Físico</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="nihss.js"></script>
+</body>
+</html>

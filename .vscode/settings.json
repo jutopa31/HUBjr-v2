@@ -1,0 +1,15 @@
+{
+  "debug.javascript.usePreview": true,
+  "debug.node.autoAttach": "on",
+  "typescript.preferences.noSemicolons": "off",
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "typescript": "typescriptreact"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": true,
+  "debug.javascript.codelens.npmScripts": "top"
+}
