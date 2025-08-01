@@ -36,3 +36,4 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+# Environment variables - NEVER COMMIT\n.env\n.env.local\n.env.production
