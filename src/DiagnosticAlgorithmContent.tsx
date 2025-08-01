@@ -8,7 +8,6 @@ interface DiagnosticAlgorithmContentProps {
   notes: string;
   setNotes: (v: string) => void;
   copyNotes: () => void;
-  openNihssModal: () => void;
   openScaleModal: (scaleId: string) => void;
   medicalScales: Scale[];
 }
@@ -17,7 +16,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   notes,
   setNotes,
   copyNotes,
-  openNihssModal,
   openScaleModal,
   medicalScales,
 }) => {
@@ -235,7 +233,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
 
 `;
-                  setNotes(prev => prev + normalExamText);
+                  setNotes(notes + normalExamText);
                 }}
                 className="flex items-center space-x-2 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
               >

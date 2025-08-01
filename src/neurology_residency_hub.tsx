@@ -32,8 +32,8 @@ Motivo de consulta:
   
   // Estados para gestión de eventos mejorada
   const [showNewEventForm, setShowNewEventForm] = useState(false);
-  const [eventFilter, setEventFilter] = useState('all');
-  const [eventSearch, setEventSearch] = useState('');
+  // const [eventFilter] = useState('all'); // setEventFilter unused
+  // const [eventSearch] = useState(''); // setEventSearch unused
   
   // Estados para la biblioteca de recursos
   const [resourcesSearch, setResourcesSearch] = useState('');
@@ -2580,14 +2580,14 @@ Motivo de consulta:
 
 
   // Filtros y búsqueda
-  const filteredEvents = classboardEvents.filter(event => {
-    const matchesFilter = eventFilter === 'all' || event.type === eventFilter;
-    const matchesSearch = eventSearch === '' || 
-      event.title.toLowerCase().includes(eventSearch.toLowerCase()) ||
-      event.presenter.toLowerCase().includes(eventSearch.toLowerCase()) ||
-      event.description.toLowerCase().includes(eventSearch.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  // const filteredEvents = classboardEvents.filter(event => { // unused variable
+  //   const matchesFilter = eventFilter === 'all' || event.type === eventFilter;
+  //   const matchesSearch = eventSearch === '' || 
+  //     event.title.toLowerCase().includes(eventSearch.toLowerCase()) ||
+  //     event.presenter.toLowerCase().includes(eventSearch.toLowerCase()) ||
+  //     event.description.toLowerCase().includes(eventSearch.toLowerCase());
+  //   return matchesFilter && matchesSearch;
+  // });
 
   // Filtros y búsqueda para recursos
   const filteredResources = neurologyResources.filter(resource => {
@@ -2653,9 +2653,9 @@ Motivo de consulta:
     if (scale) setSelectedScale(scale);
   }, [medicalScales]);
 
-  const openNihssModal = useCallback(() => {
-    openScaleModal('nihss');
-  }, [openScaleModal]);
+  // const openNihssModal = useCallback(() => {
+  //   openScaleModal('nihss');
+  // }, [openScaleModal]); // unused function
 
   const handleModalClose = useCallback(() => {
     setSelectedScale(null);
@@ -2675,7 +2675,6 @@ Motivo de consulta:
             notes={notes}
             setNotes={setNotes}
             copyNotes={copyNotes}
-            openNihssModal={openNihssModal}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
           />
@@ -3962,7 +3961,6 @@ Motivo de consulta:
             notes={notes}
             setNotes={setNotes}
             copyNotes={copyNotes}
-            openNihssModal={openNihssModal}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
           />

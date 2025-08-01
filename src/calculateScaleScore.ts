@@ -203,31 +203,31 @@ export default function calculateScaleScore(scale: Scale, scores: { [key: string
     
     // Aplicar algoritmo diagnóstico McDonald 2024
     let mcdonaldResult = '';
-    let canDiagnose = false;
+    // let canDiagnose = false;
     
     if (!alternativeDxRuledOut) {
       mcdonaldResult = 'CRITERIOS NO CUMPLIDOS - Debe descartarse diagnóstico alternativo';
     } else if (attacks >= 2 && lesions >= 2) {
       mcdonaldResult = 'ESCLEROSIS MÚLTIPLE - ≥2 ataques con ≥2 lesiones objetivas';
-      canDiagnose = true;
+      // canDiagnose = true;
     } else if (attacks >= 2 && lesions === 1) {
       if (disPresent) {
         mcdonaldResult = 'ESCLEROSIS MÚLTIPLE - ≥2 ataques con 1 lesión + DIS demostrada';
-        canDiagnose = true;
+        // canDiagnose = true;
       } else {
         mcdonaldResult = 'CRITERIOS INSUFICIENTES - Requiere DIS o esperar nuevo ataque';
       }
     } else if (attacks === 1 && lesions >= 2) {
       if (ditPresent) {
         mcdonaldResult = 'ESCLEROSIS MÚLTIPLE - 1 ataque con ≥2 lesiones + DIT demostrada';
-        canDiagnose = true;
+        // canDiagnose = true;
       } else {
         mcdonaldResult = 'CRITERIOS INSUFICIENTES - Requiere DIT o esperar nuevo ataque';
       }
     } else if (attacks === 1 && lesions === 1) {
       if (disPresent && ditPresent) {
         mcdonaldResult = 'ESCLEROSIS MÚLTIPLE - 1 ataque con 1 lesión + DIS + DIT demostradas';
-        canDiagnose = true;
+        // canDiagnose = true;
       } else {
         const missing = [];
         if (!disPresent) missing.push('DIS');
