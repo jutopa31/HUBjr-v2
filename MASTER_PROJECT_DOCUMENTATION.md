@@ -21,12 +21,14 @@ HUBJR (Neurology Residency Hub) is a comprehensive digital platform designed to 
 
 ### Key Project Information
 - **Project Name**: hubjr-neurology
-- **Version**: 0.1.0
-- **Type**: React TypeScript Web Application
-- **Development Status**: Active Development
+- **Version**: 2.2.0 (Stable)
+- **Type**: React TypeScript Web Application with Next.js Backend
+- **Development Status**: Stable Working Version ✅
 - **Target Users**: Neurology residents, medical staff, hospital administrators
 - **Institution**: Hospital Nacional Posadas - Neurology Service
 - **Chief Resident**: Dr. Julián Alonso
+- **Current Repository**: https://github.com/jutopa31/HUBjr-v2
+- **Deployment**: Vercel (configured for automatic deployment)
 
 ---
 
@@ -247,7 +249,19 @@ HUBJR/
 - ❌ File attachments
 - ❌ Message history
 
-#### 3. Evaluation System
+#### 3. Event Management System
+**Status**: 🟢 Complete and Functional
+**Current**: Full Supabase-powered event management
+**Implemented**:
+- ✅ EventManagerSupabase component with CRUD operations
+- ✅ Real-time event synchronization with Supabase database
+- ✅ Medical event types (clinical, academic, administrative, social, emergency)
+- ✅ Inline editing capabilities with professional UI
+- ✅ DateTime handling and validation
+- ✅ Integration with main neurology hub interface
+- ✅ Persistent storage replacing static calendar
+
+#### 4. Evaluation System
 **Status**: 🟡 Assessment Tools Only
 **Current**: Medical scales and scoring
 **Missing**:

@@ -185,4 +185,28 @@ npm run db:reset
 
 ---
 
+---
+
+## Current Project Status (Updated: August 31, 2025)
+
+### ✅ STABLE WORKING VERSION
+- **Repository**: https://github.com/jutopa31/HUBjr-v2 (Main working repository)
+- **Status**: Fully functional neurology residency hub with Supabase integration
+- **Key Achievement**: Replaced static Google Calendar with dynamic Supabase-powered event management
+
+### Major Components Implemented:
+- **Main Hub**: Complete neurology residency interface (`src/neurology_residency_hub.tsx`)
+- **Event Management**: Real-time Supabase integration (`src/EventManagerSupabase.tsx`)  
+- **Medical Scales**: 15+ neurological assessment tools with proper calculations
+- **Diagnostic Algorithms**: Evidence-based clinical decision support
+- **Professional UI**: Tailwind CSS with Lucide React icons
+
+### Deployment Architecture:
+- **Frontend**: React 18 + TypeScript + Next.js 14
+- **Database**: Supabase with `medical_events` table
+- **Hosting**: Vercel with automatic deployment
+- **API**: Next.js serverless functions (`pages/api/events.js`)
+
+---
+
 **Note**: This file is automatically loaded into Claude's context for each development session, ensuring consistent guidance and adherence to project principles throughout the HUBJR development lifecycle. All team members should familiarize themselves with these standards and refer to this document when making development decisions.
