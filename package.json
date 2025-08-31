@@ -15,6 +15,7 @@
     "preview:vite": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.56.1",
     "cors": "^2.8.5",
     "gapi-script": "^1.2.0",
     "googleapis": "^154.0.0",

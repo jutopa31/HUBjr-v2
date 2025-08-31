@@ -1,24 +1,9 @@
 // API endpoint for medical events management
-// Handles creating and retrieving medical events with basic validation
+// Handles creating and retrieving medical events with Supabase integration
 
-let events = [
-  {
-    id: 'evt_sample_1',
-    title: 'Morning Rounds - Neurology Ward',
-    link: 'https://hospital.gov.ar/neurology/rounds',
-    category: 'Clinical',
-    createdAt: '2025-08-01T08:00:00.000Z'
-  },
-  {
-    id: 'evt_sample_2', 
-    title: 'NIHSS Training Session',
-    link: 'https://training.hospital.gov.ar/nihss',
-    category: 'Education',
-    createdAt: '2025-08-01T10:00:00.000Z'
-  }
-]; // In-memory storage (replace with database in production)
+import { supabase } from '../../src/utils/supabase.js';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -51,20 +36,34 @@ export default function handler(req, res) {
         });
       }
 
-      // Create new event
-      const event = {
-        id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // Create new event in Supabase
+      const eventData = {
         title: title.trim(),
-        link: link.trim(),
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 3600000).toISOString(), // +1 hour
+        type: 'clinical',
         category: category?.trim() || 'General',
-        createdAt: new Date().toISOString()
+        location: link.trim(),
+        description: `Event: ${title.trim()}`,
+        created_by: 'res_chief_julian'
       };
 
-      events.push(event);
-      
+      const { data, error } = await supabase
+        .from('medical_events')
+        .insert([eventData])
+        .select();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ 
+          error: 'Database Error',
+          message: 'Failed to create event in database'
+        });
+      }
+
       return res.status(201).json({ 
         success: true, 
-        event,
+        event: data[0],
         message: 'Event created successfully'
       });
     }
@@ -73,31 +72,44 @@ export default function handler(req, res) {
       // Get query parameters for filtering
       const { category, limit } = req.query;
       
-      let filteredEvents = events;
+      let query = supabase
+        .from('medical_events')
+        .select('*')
+        .order('created_at', { ascending: false });
       
       // Filter by category if specified
       if (category && category !== 'all') {
-        filteredEvents = events.filter(e => 
-          e.category.toLowerCase() === category.toLowerCase()
-        );
+        query = query.eq('category', category);
       }
       
       // Limit results if specified
       if (limit) {
         const limitNum = parseInt(limit);
         if (!isNaN(limitNum) && limitNum > 0) {
-          filteredEvents = filteredEvents.slice(0, limitNum);
+          query = query.limit(limitNum);
         }
       }
       
-      // Sort by creation date (newest first)
-      filteredEvents.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const { data: events, error } = await query;
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ 
+          error: 'Database Error',
+          message: 'Failed to retrieve events from database'
+        });
+      }
+
+      // Get total count
+      const { count } = await supabase
+        .from('medical_events')
+        .select('*', { count: 'exact', head: true });
       
       return res.status(200).json({ 
-        events: filteredEvents,
-        total: events.length,
-        filtered: filteredEvents.length,
-        categories: [...new Set(events.map(e => e.category))]
+        events: events || [],
+        total: count || 0,
+        filtered: events?.length || 0,
+        categories: [...new Set((events || []).map(e => e.category))]
       });
     }
 

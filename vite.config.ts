@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
       'process.env': {
         REACT_APP_GOOGLE_CLIENT_ID: JSON.stringify(env.REACT_APP_GOOGLE_CLIENT_ID),
         REACT_APP_GOOGLE_API_KEY: JSON.stringify(env.REACT_APP_GOOGLE_API_KEY),
+        SUPABASE_URL: JSON.stringify(env.SUPABASE_URL),
+        SUPABASE_ANON_KEY: JSON.stringify(env.SUPABASE_ANON_KEY),
       }
     },
     server: {
