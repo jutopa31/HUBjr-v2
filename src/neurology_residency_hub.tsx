@@ -14,6 +14,7 @@ const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
+  const [clickedScale, setClickedScale] = useState<string | null>(null);
   const [notes, setNotes] = useState(`Datos paciente:
 
 Antecedentes:
@@ -4536,8 +4537,23 @@ Motivo de consulta:
   }, [notes]);
 
   const openScaleModal = useCallback((scaleId: string) => {
+    console.log('🔍 Opening scale modal for scaleId:', scaleId);
+    console.log('🔍 Available medicalScales:', medicalScales.length, 'scales');
+    console.log('🔍 Scale IDs available:', medicalScales.map(s => s.id));
+    
+    // Visual feedback for click
+    setClickedScale(scaleId);
+    setTimeout(() => setClickedScale(null), 2000);
+    
     const scale = medicalScales.find(scale => scale.id === scaleId);
-    if (scale) setSelectedScale(scale);
+    console.log('🔍 Found scale:', scale ? scale.name : 'NOT FOUND');
+    
+    if (scale) {
+      console.log('🔍 Setting selectedScale:', scale.name);
+      setSelectedScale(scale);
+    } else {
+      console.error('❌ Scale not found with ID:', scaleId);
+    }
   }, [medicalScales]);
 
   // const openNihssModal = useCallback(() => {
@@ -4881,16 +4897,34 @@ Motivo de consulta:
 
   // Renderizar el modal en un portal fuera del flujo principal
   const modalRoot = typeof window !== 'undefined' ? document.getElementById('modal-root') : null;
-  const modalPortal = (selectedScale && modalRoot)
-    ? ReactDOM.createPortal(
-        <ScaleModal
-          scale={selectedScale}
-          onClose={handleModalClose}
-          onSubmit={handleModalSubmit}
-        />,
-        modalRoot
+  
+  // Debug modal rendering conditions
+  console.log('🔍 Modal rendering check:');
+  console.log('  - selectedScale:', selectedScale ? selectedScale.name : 'null');
+  console.log('  - modalRoot exists:', !!modalRoot);
+  console.log('  - window defined:', typeof window !== 'undefined');
+  
+  // Create modal content
+  const modalContent = selectedScale ? (
+    <ScaleModal
+      scale={selectedScale}
+      onClose={handleModalClose}
+      onSubmit={handleModalSubmit}
+    />
+  ) : null;
+  
+  // Try portal first, fallback to regular rendering
+  const modalPortal = selectedScale
+    ? (modalRoot 
+        ? ReactDOM.createPortal(modalContent!, modalRoot)
+        : modalContent // Fallback: render directly in component tree
       )
     : null;
+    
+  // Debug modal portal creation
+  console.log('🔍 Modal portal created:', !!modalPortal);
+  console.log('🔍 Using portal:', !!modalRoot);
+  console.log('🔍 Using fallback rendering:', selectedScale && !modalRoot);
 
   return (
     <div className="min-h-screen bg-gray-100 flex">

@@ -10,6 +10,7 @@ interface DiagnosticAlgorithmContentProps {
   copyNotes: () => void;
   openScaleModal: (scaleId: string) => void;
   medicalScales: Scale[];
+  clickedScale?: string | null;
 }
 
 const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
@@ -18,6 +19,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   copyNotes,
   openScaleModal,
   medicalScales,
+  clickedScale,
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
@@ -31,6 +33,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Debug: log del análisis
   console.log('🔍 DiagnosticAlgorithm - Current notes:', notes);
   console.log('🤖 DiagnosticAlgorithm - AI Analysis:', aiAnalysis);
+  console.log('🔍 DiagnosticAlgorithm - medicalScales received:', medicalScales?.length || 0);
+  console.log('🔍 DiagnosticAlgorithm - medicalScales data:', medicalScales?.map(s => ({ id: s.id, name: s.name, hasItems: !!s.items?.length })));
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -175,8 +179,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                   {scales.map((scale) => (
                     <div key={scale.id} className="relative">
                       <button
-                        onClick={() => openScaleModal(scale.id)}
-                        className="w-full p-3 text-left hover:bg-blue-50 transition-colors"
+                        onClick={() => {
+                          console.log('🔍 Scale button clicked:', scale.id, scale.name);
+                          openScaleModal(scale.id);
+                        }}
+                        className={`w-full p-3 text-left transition-colors ${
+                          clickedScale === scale.id 
+                            ? 'bg-green-100 border-l-4 border-green-500' 
+                            : 'hover:bg-blue-50'
+                        }`}
                       >
                         <div className="flex items-start space-x-3">
                           <div className="flex-1">

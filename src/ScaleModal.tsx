@@ -5,6 +5,10 @@ import { ScaleModalProps, ScaleItem } from './types';
 
 const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => {
   const [scores, setScores] = useState<{ [key: string]: number | string }>({});
+  
+  // Debug modal rendering
+  console.log('🔍 ScaleModal rendering for scale:', scale?.name || 'undefined');
+  console.log('🔍 ScaleModal scale data:', scale ? { id: scale.id, itemsCount: scale.items?.length || 0 } : 'null');
 
   const handleScoreChange = useCallback((itemId: string, score: string) => {
     if (score === 'UN') {
@@ -36,8 +40,40 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
     }, 0);
   }, [scale.items, scores, scale.id]);
 
-  if (!scale || !scale.items) {
-    return <div>Error: Scale data is missing</div>;
+  if (!scale) {
+    console.error('❌ ScaleModal: No scale provided');
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <h3 className="text-lg font-semibold text-red-600">Error</h3>
+          <p className="text-gray-600 mt-2">No se pudo cargar la escala seleccionada.</p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!scale.items || scale.items.length === 0) {
+    console.error('❌ ScaleModal: Scale has no items:', scale.name);
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+          <h3 className="text-lg font-semibold text-yellow-600">Advertencia</h3>
+          <p className="text-gray-600 mt-2">La escala "{scale.name}" no tiene elementos configurados.</p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
