@@ -14,7 +14,6 @@ const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
-  const [clickedScale, setClickedScale] = useState<string | null>(null);
   const [notes, setNotes] = useState(`Datos paciente:
 
 Antecedentes:
@@ -4541,9 +4540,6 @@ Motivo de consulta:
     console.log('🔍 Available medicalScales:', medicalScales.length, 'scales');
     console.log('🔍 Scale IDs available:', medicalScales.map(s => s.id));
     
-    // Visual feedback for click
-    setClickedScale(scaleId);
-    setTimeout(() => setClickedScale(null), 2000);
     
     const scale = medicalScales.find(scale => scale.id === scaleId);
     console.log('🔍 Found scale:', scale ? scale.name : 'NOT FOUND');
