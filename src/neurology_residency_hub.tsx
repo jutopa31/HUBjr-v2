@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
+import PendientesManager from './PendientesManager';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -60,6 +61,7 @@ Motivo de consulta:
   const menuItems = [
     { id: 'inicio', icon: Home, label: 'Inicio' },
     { id: 'diagnostic', icon: Calculator, label: 'Algoritmos Diagnósticos' },
+    { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
     // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
     // { id: 'academics', icon: BookOpen, label: 'Actividades Académicas' },
     // { id: 'clinical', icon: Activity, label: 'Registro Asistencial' },
@@ -4806,6 +4808,8 @@ Motivo de consulta:
         ); */
       case 'schedule':
         return <EventManagerSupabase />;
+      case 'pendientes':
+        return <PendientesManager />;
       /* case 'clinical':
         return (
           <div className="space-y-6">
