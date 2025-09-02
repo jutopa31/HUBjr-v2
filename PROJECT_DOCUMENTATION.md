@@ -9,9 +9,10 @@
 
 ### Key Information
 - **Project Name**: hubjr-neurology
-- **Version**: 0.1.0
-- **Type**: React TypeScript Web Application
-- **Development Status**: Active Development
+- **Version**: 2.3.0
+- **Type**: React TypeScript Web Application with Next.js Backend
+- **Development Status**: Production Deployment Active ✅
+- **Live URL**: https://hubjr-v2.vercel.app/
 - **Target Users**: Neurology residents, medical staff, hospital administrators
 
 ---
@@ -20,11 +21,15 @@
 
 ### Technology Stack
 - **Frontend Framework**: React 18.2.0 with TypeScript
-- **Build Tool**: Vite 5.2.0
+- **Meta Framework**: Next.js 14.2.31
+- **Database**: Supabase (PostgreSQL)
+- **Build Tools**: Vite 5.2.0 + Next.js
 - **Styling**: Tailwind CSS 3.4.4
 - **Icons Library**: Lucide React 0.400.0
 - **Code Quality**: ESLint with TypeScript rules
+- **Deployment**: Vercel
 - **Additional Dependencies**:
+  - Supabase client for real-time database operations
   - Google APIs integration (gapi-script, googleapis)
   - React DOM for rendering
 

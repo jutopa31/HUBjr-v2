@@ -20,10 +20,11 @@
 
 ## 🚀 Current Status: STABLE ✅
 
-- **Version**: 2.2.0 (Working Deployment)
+- **Version**: 2.3.0 (Production Deployment)
 - **Repository**: https://github.com/jutopa31/HUBjr-v2
+- **Live URL**: https://hubjr-v2.vercel.app/
 - **Technology Stack**: React + TypeScript + Next.js + Supabase
-- **Deployment**: Ready for Vercel production deployment
+- **Deployment**: Active production deployment on Vercel
 
 ## 🛠️ Technical Architecture
 
@@ -69,7 +70,7 @@ cp .env.example .env.local
 
 **Development:**
 ```bash
-npm run dev          # Next.js development server (http://localhost:3000)
+npm run dev          # Next.js development server (auto-detects port, usually 3001)
 npm run dev:vite     # Vite development server (http://localhost:5173)
 ```
 
@@ -179,4 +180,4 @@ This software is designed for educational and clinical support purposes. Always 
 
 **Developed by**: Dr. Julián Alonso, Chief Neurology Resident  
 **Institution**: Hospital Nacional Posadas - Servicio de Neurología  
-**Last Updated**: August 31, 2025
+**Last Updated**: September 2, 2025
