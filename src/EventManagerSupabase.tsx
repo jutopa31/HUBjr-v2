@@ -20,6 +20,8 @@ const EventManagerSupabase: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [newEvent, setNewEvent] = useState<MedicalEvent>({
     title: '',
     start_date: '',
@@ -178,6 +180,58 @@ const EventManagerSupabase: React.FC = () => {
     fetchEvents();
   }, []);
 
+  // Helper functions for calendar views
+  const getWeekDays = (date: Date) => {
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay());
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  const getMonthDays = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    // Add all days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const getEventsForDate = (date: Date) => {
+    if (!date) return [];
+    const dateStr = date.toDateString();
+    return events.filter(event => {
+      const eventDate = new Date(event.start_date);
+      return eventDate.toDateString() === dateStr;
+    });
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    if (viewMode === 'week') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    } else {
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    }
+    setCurrentDate(newDate);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -186,17 +240,75 @@ const EventManagerSupabase: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Calendar className="h-8 w-8" />
             <div>
-              <h1 className="text-3xl font-bold">Gestor de Eventos</h1>
-              <p className="text-green-100 text-lg">Calendario médico con Supabase</p>
+              <h1 className="text-3xl font-bold">Cronograma Neurología</h1>
+              <p className="text-green-100 text-lg">Calendario de residentes - Hospital Posadas</p>
             </div>
           </div>
+          <div className="flex items-center space-x-3">
+            {/* View Toggle */}
+            <div className="bg-white bg-opacity-20 rounded-lg p-1 flex">
+              <button
+                onClick={() => setViewMode('week')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                  viewMode === 'week' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-white hover:bg-white hover:bg-opacity-10'
+                }`}
+              >
+                7 Días
+              </button>
+              <button
+                onClick={() => setViewMode('month')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-all ${
+                  viewMode === 'month' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-white hover:bg-white hover:bg-opacity-10'
+                }`}
+              >
+                Mes
+              </button>
+            </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
+              disabled={loading}
+            >
+              <Plus className="h-5 w-5" />
+              <span>Nuevo Evento</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Navigation */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex items-center justify-between">
           <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
-            disabled={loading}
+            onClick={() => navigateDate('prev')}
+            className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <Plus className="h-5 w-5" />
-            <span>Nuevo Evento</span>
+            <span>←</span>
+            <span>{viewMode === 'week' ? 'Semana Anterior' : 'Mes Anterior'}</span>
+          </button>
+          
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {viewMode === 'week' 
+                ? `Semana del ${currentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`
+                : currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+              }
+            </h2>
+            <p className="text-sm text-gray-500">
+              {viewMode === 'week' ? 'Vista semanal' : 'Vista mensual'}
+            </p>
+          </div>
+          
+          <button
+            onClick={() => navigateDate('next')}
+            className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <span>{viewMode === 'week' ? 'Semana Siguiente' : 'Mes Siguiente'}</span>
+            <span>→</span>
           </button>
         </div>
       </div>
@@ -313,12 +425,144 @@ const EventManagerSupabase: React.FC = () => {
         </div>
       )}
 
+      {/* Calendar View */}
+      <div className="bg-white rounded-lg shadow p-6">
+        {viewMode === 'week' ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Vista Semanal</h3>
+            <div className="grid grid-cols-7 gap-4">
+              {getWeekDays(currentDate).map((day, index) => {
+                const dayEvents = getEventsForDate(day);
+                const isToday = day.toDateString() === new Date().toDateString();
+                const dayName = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][index];
+                
+                return (
+                  <div key={index} className="min-h-[200px]">
+                    <div className={`p-3 rounded-lg border-2 h-full ${
+                      isToday 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 bg-gray-50'
+                    }`}>
+                      <div className="text-center mb-3">
+                        <div className={`text-xs font-medium ${isToday ? 'text-blue-600' : 'text-gray-500'}`}>
+                          {dayName}
+                        </div>
+                        <div className={`text-lg font-bold ${isToday ? 'text-blue-700' : 'text-gray-700'}`}>
+                          {day.getDate()}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {dayEvents.map((event) => {
+                          const Icon = getEventTypeIcon(event.type || 'clinical');
+                          const startTime = new Date(event.start_date).toLocaleTimeString('es-ES', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          });
+                          
+                          return (
+                            <div 
+                              key={event.id}
+                              className="bg-white p-2 rounded border border-gray-200 hover:shadow-sm transition-shadow cursor-pointer"
+                              onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id!)}
+                            >
+                              <div className="flex items-center space-x-2 mb-1">
+                                <Icon className="h-3 w-3 text-gray-500" />
+                                <span className="text-xs font-medium text-gray-600">{startTime}</span>
+                              </div>
+                              <div className="text-xs text-gray-800 line-clamp-2">
+                                {event.title}
+                              </div>
+                              {event.location && (
+                                <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                  <MapPin className="h-2 w-2 mr-1" />
+                                  {event.location}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {dayEvents.length === 0 && (
+                          <div className="text-xs text-gray-400 text-center py-4">
+                            Sin eventos
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Vista Mensual</h3>
+            <div className="grid grid-cols-7 gap-1">
+              {/* Week headers */}
+              {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
+                <div key={day} className="p-2 text-center text-xs font-medium text-gray-500 bg-gray-100">
+                  {day}
+                </div>
+              ))}
+              
+              {/* Month days */}
+              {getMonthDays(currentDate).map((day, index) => {
+                if (!day) {
+                  return <div key={index} className="aspect-square bg-gray-50"></div>;
+                }
+                
+                const dayEvents = getEventsForDate(day);
+                const isToday = day.toDateString() === new Date().toDateString();
+                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                
+                return (
+                  <div 
+                    key={index} 
+                    className={`aspect-square border border-gray-200 p-1 relative ${
+                      isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                    } ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
+                  >
+                    <div className={`text-xs font-medium ${
+                      isToday 
+                        ? 'text-blue-600' 
+                        : isCurrentMonth 
+                          ? 'text-gray-700' 
+                          : 'text-gray-400'
+                    }`}>
+                      {day.getDate()}
+                    </div>
+                    
+                    {dayEvents.length > 0 && (
+                      <div className="mt-1 space-y-0.5">
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <div 
+                            key={event.id}
+                            className="text-xs bg-blue-100 text-blue-800 px-1 rounded truncate"
+                            title={event.title}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <div className="text-xs text-gray-500">
+                            +{dayEvents.length - 2} más
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Events List */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold flex items-center">
             <CalendarDays className="h-6 w-6 mr-2 text-blue-600" />
-            Eventos Médicos ({events.length})
+            Lista de Eventos ({events.length})
           </h2>
           <div className="text-sm text-gray-500">
             {loading ? 'Sincronizando...' : 'Conectado a Supabase'}
