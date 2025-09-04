@@ -6,7 +6,7 @@ import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
 import PendientesManager from './PendientesManager';
-import WardRounds from './WardRoundsComplete';
+import WardRounds from './WardRounds';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -4568,18 +4568,6 @@ Motivo de consulta:
     }
   }, []);
 
-  const restoreBackup = useCallback(() => {
-    const backupNotes = localStorage.getItem('hubjr-patient-notes-backup');
-    if (backupNotes) {
-      const confirmRestore = window.confirm(
-        '💾 Se encontró una copia de seguridad de tus notas.\n\n¿Quieres restaurarla?'
-      );
-      if (confirmRestore) {
-        setNotes(backupNotes);
-        localStorage.removeItem('hubjr-patient-notes-backup');
-      }
-    }
-  }, []);
 
   const openScaleModal = useCallback((scaleId: string) => {
     console.log('🔍 Opening scale modal for scaleId:', scaleId);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, X, Save } from 'lucide-react';
+import { Plus, Download, X } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 interface Patient {
@@ -21,7 +21,6 @@ interface Patient {
 const WardRoundsComplete: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -120,26 +119,6 @@ const WardRoundsComplete: React.FC = () => {
     }
   };
 
-  // Actualizar paciente existente
-  const updatePatient = async (id: string, updatedPatient: Patient) => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('ward_round_patients')
-        .update(updatedPatient)
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setEditingId(null);
-      loadPatients();
-    } catch (error) {
-      console.error('Error updating patient:', error);
-      alert('Error al actualizar paciente');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // Eliminar paciente
   const deletePatient = async (id: string, patientName: string) => {
@@ -471,13 +450,6 @@ const WardRoundsComplete: React.FC = () => {
                   <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.plan}>{patient.plan}</td>
                   <td className="px-3 py-4 text-sm text-gray-500">
                     <div className="flex space-x-2">
-                      <button
-                        onClick={() => setEditingId(patient.id || null)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Editar paciente"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
                       <button
                         onClick={() => deletePatient(patient.id || '', patient.nombre)}
                         className="text-red-600 hover:text-red-900"

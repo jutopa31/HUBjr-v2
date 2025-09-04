@@ -18,7 +18,7 @@ interface Patient {
 }
 
 const WardRoundsWorking: React.FC = () => {
-  const [patients, setPatients] = useState<Patient[]>([
+  const [patients] = useState<Patient[]>([
     {
       id: '1',
       cama: 'UTI 1',

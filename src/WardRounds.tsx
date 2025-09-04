@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, X } from 'lucide-react';
+import { Plus, Download, Edit, Save, X } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 interface Patient {
@@ -19,10 +19,6 @@ interface Patient {
 }
 
 const WardRounds: React.FC = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  
   const emptyPatient: Patient = {
     cama: '',
     dni: '',
@@ -38,7 +34,12 @@ const WardRounds: React.FC = () => {
     fecha: new Date().toISOString().split('T')[0]
   };
 
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
+  const [loading, setLoading] = useState(true);
 
   // Cargar pacientes desde Supabase
   useEffect(() => {
@@ -80,6 +81,23 @@ const WardRounds: React.FC = () => {
     }
   };
 
+  // Actualizar paciente existente
+  const updatePatient = async (id: string, updatedPatient: Patient) => {
+    try {
+      const { error } = await supabase
+        .from('ward_round_patients')
+        .update(updatedPatient)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setEditingId(null);
+      loadPatients();
+    } catch (error) {
+      console.error('Error updating patient:', error);
+      alert('Error al actualizar paciente');
+    }
+  };
 
   // Exportar a PDF (simple)
   const exportToPDF = () => {
@@ -385,7 +403,10 @@ const WardRounds: React.FC = () => {
                   <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.plan}>{patient.plan}</td>
                   <td className="px-3 py-4 text-sm text-gray-500">
                     <button
-                      onClick={() => setEditingId(patient.id || null)}
+                      onClick={() => {
+                        setEditingId(patient.id || null);
+                        setEditingPatient(patient);
+                      }}
                       className="text-blue-600 hover:text-blue-900"
                       title="Editar paciente"
                     >
@@ -397,6 +418,175 @@ const WardRounds: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Formulario de Edición */}
+        {editingId && (
+          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Editar Paciente</h3>
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setEditingPatient(emptyPatient);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
+                <input
+                  type="text"
+                  value={editingPatient.cama}
+                  onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+                <input
+                  type="text"
+                  value={editingPatient.dni}
+                  onChange={(e) => setEditingPatient({...editingPatient, dni: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={editingPatient.nombre}
+                  onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
+                <input
+                  type="text"
+                  value={editingPatient.edad}
+                  onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
+                <select
+                  value={editingPatient.severidad}
+                  onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="">Seleccionar severidad</option>
+                  <option value="1">I - Sin requerimiento seguimiento</option>
+                  <option value="2">II - Seguimiento mínimo</option>
+                  <option value="3">III - Seguimiento periódico</option>
+                  <option value="4">IV - Activos</option>
+                  <option value="5">V - Críticos</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                <input
+                  type="date"
+                  value={editingPatient.fecha}
+                  onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Antecedentes</label>
+                <textarea
+                  value={editingPatient.antecedentes}
+                  onChange={(e) => setEditingPatient({...editingPatient, antecedentes: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Consulta</label>
+                <textarea
+                  value={editingPatient.motivo_consulta}
+                  onChange={(e) => setEditingPatient({...editingPatient, motivo_consulta: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Examen Físico</label>
+                <textarea
+                  value={editingPatient.examen_fisico}
+                  onChange={(e) => setEditingPatient({...editingPatient, examen_fisico: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estudios</label>
+                <textarea
+                  value={editingPatient.estudios}
+                  onChange={(e) => setEditingPatient({...editingPatient, estudios: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Diagnóstico</label>
+                <textarea
+                  value={editingPatient.diagnostico}
+                  onChange={(e) => setEditingPatient({...editingPatient, diagnostico: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  rows={2}
+                />
+              </div>
+              
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <textarea
+                  value={editingPatient.plan}
+                  onChange={(e) => setEditingPatient({...editingPatient, plan: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  rows={2}
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  if (editingId) {
+                    updatePatient(editingId, editingPatient);
+                  }
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Guardar Cambios
+              </button>
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setEditingPatient(emptyPatient);
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
         
         {patients.length === 0 && (
           <div className="text-center py-12">
