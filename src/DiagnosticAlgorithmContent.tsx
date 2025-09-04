@@ -8,6 +8,7 @@ interface DiagnosticAlgorithmContentProps {
   notes: string;
   setNotes: (v: string) => void;
   copyNotes: () => void;
+  clearNotes?: () => void;
   openScaleModal: (scaleId: string) => void;
   medicalScales: Scale[];
   clickedScale?: string | null;
@@ -17,6 +18,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   notes,
   setNotes,
   copyNotes,
+  clearNotes,
   openScaleModal,
   medicalScales,
   clickedScale,
@@ -238,6 +240,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
               </button>
+              {clearNotes && (
+                <button
+                  onClick={clearNotes}
+                  className="flex items-center space-x-2 px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                >
+                  <span>🗑️</span>
+                  <span>Limpiar</span>
+                </button>
+              )}
               <button
                 onClick={() => {
                   const normalExamText = `Examen neurológico:
@@ -254,7 +265,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               <button
                 onClick={() => {
                   const testText = `Paciente con temblor en reposo y rigidez muscular. Presenta hemiparesia derecha y disartria severa.`;
-                  setNotes(testText);
+                  setNotes(notes + (notes ? '\n\n' : '') + testText);
                 }}
                 className="flex items-center space-x-2 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >

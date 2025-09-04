@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
 import PendientesManager from './PendientesManager';
+import WardRounds from './WardRoundsComplete';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -14,12 +15,26 @@ const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
-  const [notes, setNotes] = useState(`Datos paciente:
+  
+  // Initialize notes with localStorage persistence
+  const [notes, setNotes] = useState(() => {
+    const savedNotes = localStorage.getItem('hubjr-patient-notes');
+    if (savedNotes) {
+      console.log('💾 Restored notes from localStorage');
+      return savedNotes;
+    }
+    return `Datos paciente:
 
 Antecedentes:
 
 Motivo de consulta:
-`);
+`;
+  });
+
+  // Auto-save notes to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('hubjr-patient-notes', notes);
+  }, [notes]);
 
   // Estados para el sistema de administración
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -61,6 +76,7 @@ Motivo de consulta:
   const menuItems = [
     { id: 'inicio', icon: Home, label: 'Inicio' },
     { id: 'diagnostic', icon: Calculator, label: 'Algoritmos Diagnósticos' },
+    { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
     // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
     // { id: 'academics', icon: BookOpen, label: 'Actividades Académicas' },
@@ -4535,6 +4551,36 @@ Motivo de consulta:
     }
   }, [notes]);
 
+  const clearNotes = useCallback(() => {
+    const confirmClear = window.confirm(
+      '⚠️ ¿Estás seguro de que quieres limpiar todas las notas?\n\nEsta acción no se puede deshacer. Se eliminará toda la información del paciente.'
+    );
+    
+    if (confirmClear) {
+      const templateNotes = `Datos paciente:
+
+Antecedentes:
+
+Motivo de consulta:
+`;
+      setNotes(templateNotes);
+      localStorage.setItem('hubjr-patient-notes', templateNotes);
+    }
+  }, []);
+
+  const restoreBackup = useCallback(() => {
+    const backupNotes = localStorage.getItem('hubjr-patient-notes-backup');
+    if (backupNotes) {
+      const confirmRestore = window.confirm(
+        '💾 Se encontró una copia de seguridad de tus notas.\n\n¿Quieres restaurarla?'
+      );
+      if (confirmRestore) {
+        setNotes(backupNotes);
+        localStorage.removeItem('hubjr-patient-notes-backup');
+      }
+    }
+  }, []);
+
   const openScaleModal = useCallback((scaleId: string) => {
     console.log('🔍 Opening scale modal for scaleId:', scaleId);
     console.log('🔍 Available medicalScales:', medicalScales.length, 'scales');
@@ -4574,6 +4620,7 @@ Motivo de consulta:
             notes={notes}
             setNotes={setNotes}
             copyNotes={copyNotes}
+            clearNotes={clearNotes}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
           />
@@ -4820,6 +4867,8 @@ Motivo de consulta:
         ); */
       case 'schedule':
         return <EventManagerSupabase />;
+      case 'ward-rounds':
+        return <WardRounds />;
       case 'pendientes':
         return <PendientesManager />;
       /* case 'clinical':

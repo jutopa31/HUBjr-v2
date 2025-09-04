@@ -1,0 +1,4 @@
+cama,dni,nombre,edad,antecedentes,motivo_consulta,examen_fisico,estudios,severidad,diagnostico,plan,fecha
+UTI 1,12345678,TREJO LUDMILA ANTONELLA,22,PUERPERA,Crisis TCG en Neo,paciente vigil afasia de broca,RMN hipoINT GRE región parietal posterior izquierda,III,crisis sintomaticas,LEVETIRACETAM 1G C/12,2025-09-04
+UTI 15,13922874,CANTERO JUAN BERNARDINO,65,Epilepsia estructural Cirrosis OH,10 crisis en dom + 3 crisis en EMA,IOT/ARM RASS -4 Crisis focales,PL ET 12 L2 H10 TC lesion csc frontoparietal izq,IV,SESR,LVT 3 gr TOP 400 DFH 300,2025-09-04
+3C7,92788399,ADELIO GIMENEZ ALONSO,58,DBT TIPO II NR HTA,DESORIENTACION Y AFASIA DE EXPRESION,afasia motora de expresion ROT disminuidos,RNN hiperintensidad occipital izquierda T2 FLAIR,II,ACV ISQUEMICO,Atorvastatina 80 mg/día + AAS,2025-09-04
