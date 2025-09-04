@@ -8,6 +8,7 @@ import EventManagerSupabase from './EventManagerSupabase';
 import PendientesManager from './PendientesManager';
 import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
+import DashboardInicio from './DashboardInicio';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -4616,7 +4617,7 @@ Motivo de consulta:
           />
         );
       case 'inicio':
-        return <div></div>;
+        return <DashboardInicio setActiveTab={setActiveTab} openScaleModal={openScaleModal} />;
       /* case 'dashboard':
         return (
           <div className="space-y-6">
@@ -4624,8 +4625,8 @@ Motivo de consulta:
               <div className="flex items-center space-x-3">
                 <Brain className="h-8 w-8" />
                 <div>
-                  <h1 className="text-2xl font-bold">Bienvenido, Dr. Julián Alonso</h1>
-                  <p className="text-blue-100">Residencia de Neurología - R2 | Hospital Nacional Posadas</p>
+                  <h1 className="text-2xl font-bold">¡Bienvenidos!</h1>
+                  <p className="text-blue-100">Residencia de Neurología | Hospital Nacional Posadas</p>
                 </div>
               </div>
             </div>
@@ -4804,7 +4805,7 @@ Motivo de consulta:
                     <span className="text-sm text-gray-500">Miércoles 15:00</span>
                   </div>
                   <h3 className="font-medium mb-2">Caso: Encefalopatía Metabólica</h3>
-                  <p className="text-sm text-gray-600 mb-3">Residente R2 - Todos los años</p>
+                  <p className="text-sm text-gray-600 mb-3">Residente - Todos los años</p>
                   <div className="flex space-x-2">
                     <button className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded">
                       Historia
@@ -4823,7 +4824,7 @@ Motivo de consulta:
                     <span className="text-sm text-gray-500">Viernes 16:00</span>
                   </div>
                   <h3 className="font-medium mb-2">Evaluación Cognitiva - MMSE</h3>
-                  <p className="text-sm text-gray-600 mb-3">Dra. López - R1 y R2</p>
+                  <p className="text-sm text-gray-600 mb-3">Dra. López - Residentes</p>
                   <div className="flex space-x-2">
                     <button className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded">
                       Protocolo
