@@ -21,7 +21,6 @@ interface Patient {
 const WardRounds: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   const emptyPatient: Patient = {
