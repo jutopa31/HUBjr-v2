@@ -36,4 +36,18 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
-# Environment variables - NEVER COMMIT\n.env\n.env.local\n.env.production
+
+# Credentials and Keys - NEVER COMMIT
+.git-credentials
+*.pem
+*.key
+*.pub
+key
+key.pub
+prpr
+prpr.pub
+
+# Environment variables - NEVER COMMIT
+.env
+.env.local
+.env.production
