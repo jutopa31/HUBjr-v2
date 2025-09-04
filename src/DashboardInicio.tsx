@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   Home, 
   Calendar, 
-  Clock, 
   Users, 
   Brain, 
   Activity, 
-  ArrowRight,
   FileText,
   Stethoscope,
   TrendingUp,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react';
 import { getDashboardMetrics, getTodayEvents, getScaleUsageStats, getWeeklyActivitySummary } from './utils/dashboardQueries';
 
