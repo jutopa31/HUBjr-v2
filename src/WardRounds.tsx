@@ -80,23 +80,6 @@ const WardRounds: React.FC = () => {
     }
   };
 
-  // Actualizar paciente existente
-  const updatePatient = async (id: string, updatedPatient: Patient) => {
-    try {
-      const { error } = await supabase
-        .from('ward_round_patients')
-        .update(updatedPatient)
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setEditingId(null);
-      loadPatients();
-    } catch (error) {
-      console.error('Error updating patient:', error);
-      alert('Error al actualizar paciente');
-    }
-  };
 
   // Exportar a PDF (simple)
   const exportToPDF = () => {
