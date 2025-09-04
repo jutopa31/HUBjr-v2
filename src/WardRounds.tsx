@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X } from 'lucide-react';
+import { Plus, Download, Edit, X } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 interface Patient {
