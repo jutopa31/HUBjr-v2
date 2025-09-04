@@ -38,4 +38,32 @@ export interface AISuggestion {
 export interface AIAnalysisResult {
   suggestions: AISuggestion[];
   timestamp: number;
-} 
+}
+
+// Tipos para evaluaciones diagnósticas de pacientes
+export interface PatientAssessment {
+  id?: string;
+  patient_name: string;
+  patient_age: string;
+  patient_dni: string;
+  clinical_notes: string;
+  scale_results: SavedScaleResult[];
+  created_at?: string;
+  created_by?: string;
+  status?: string;
+}
+
+export interface SavedScaleResult {
+  scale_name: string;
+  score: string;
+  details: string;
+  completed_at: string;
+}
+
+export interface SavePatientData {
+  patient_name: string;
+  patient_age: string;
+  patient_dni: string;
+  clinical_notes: string;
+  scale_results: SavedScaleResult[];
+}

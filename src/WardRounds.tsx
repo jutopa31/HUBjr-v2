@@ -167,7 +167,7 @@ const WardRounds: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="h-full flex flex-col p-6 overflow-hidden">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -201,8 +201,8 @@ const WardRounds: React.FC = () => {
 
       {/* Formulario para agregar paciente */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="modal-overlay">
+          <div className="modal-content max-w-4xl w-full medical-form">
             <div className="p-6 border-b flex items-center justify-between">
               <h2 className="text-xl font-semibold">Agregar Nuevo Paciente</h2>
               <button
@@ -215,46 +215,48 @@ const WardRounds: React.FC = () => {
                 <X className="h-6 w-6" />
               </button>
             </div>
-            <div className="p-6 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
-                <input
-                  type="text"
-                  value={newPatient.cama}
-                  onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
-                />
+            <div className="p-6">
+              <div className="form-row">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
+                  <input
+                    type="text"
+                    value={newPatient.cama}
+                    onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+                  <input
+                    type="text"
+                    value={newPatient.dni}
+                    onChange={(e) => setNewPatient({...newPatient, dni: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    value={newPatient.nombre}
+                    onChange={(e) => setNewPatient({...newPatient, nombre: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
+                  <input
+                    type="text"
+                    value={newPatient.edad}
+                    onChange={(e) => setNewPatient({...newPatient, edad: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="22, 52 AÑOS..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
-                <input
-                  type="text"
-                  value={newPatient.dni}
-                  onChange={(e) => setNewPatient({...newPatient, dni: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={newPatient.nombre}
-                  onChange={(e) => setNewPatient({...newPatient, nombre: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
-                <input
-                  type="text"
-                  value={newPatient.edad}
-                  onChange={(e) => setNewPatient({...newPatient, edad: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder="22, 52 AÑOS..."
-                />
-              </div>
-              <div className="col-span-2">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Antecedentes</label>
                 <textarea
                   value={newPatient.antecedentes}
@@ -263,7 +265,7 @@ const WardRounds: React.FC = () => {
                   rows={2}
                 />
               </div>
-              <div className="col-span-2">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Consulta</label>
                 <textarea
                   value={newPatient.motivo_consulta}
@@ -272,7 +274,7 @@ const WardRounds: React.FC = () => {
                   rows={2}
                 />
               </div>
-              <div className="col-span-2">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</label>
                 <textarea
                   value={newPatient.examen_fisico}
@@ -281,7 +283,7 @@ const WardRounds: React.FC = () => {
                   rows={2}
                 />
               </div>
-              <div className="col-span-2">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estudios Complementarios</label>
                 <textarea
                   value={newPatient.estudios}
@@ -290,30 +292,32 @@ const WardRounds: React.FC = () => {
                   rows={3}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
-                <select
-                  value={newPatient.severidad}
-                  onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="I">I</option>
-                  <option value="II">II</option>
-                  <option value="III">III</option>
-                  <option value="IV">IV</option>
-                </select>
+              <div className="form-row">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
+                  <select
+                    value={newPatient.severidad}
+                    onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Seleccionar...</option>
+                    <option value="I">I</option>
+                    <option value="II">II</option>
+                    <option value="III">III</option>
+                    <option value="IV">IV</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                  <input
+                    type="date"
+                    value={newPatient.fecha}
+                    onChange={(e) => setNewPatient({...newPatient, fecha: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                <input
-                  type="date"
-                  value={newPatient.fecha}
-                  onChange={(e) => setNewPatient({...newPatient, fecha: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                />
-              </div>
-              <div className="col-span-2">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Diagnóstico</label>
                 <textarea
                   value={newPatient.diagnostico}
@@ -322,7 +326,7 @@ const WardRounds: React.FC = () => {
                   rows={2}
                 />
               </div>
-              <div className="col-span-2">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
                 <textarea
                   value={newPatient.plan}
@@ -354,23 +358,23 @@ const WardRounds: React.FC = () => {
       )}
 
       {/* Tabla de pacientes */}
-      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div id="ward-round-table">
+      <div className="flex-1 bg-white shadow-lg rounded-lg overflow-hidden flex flex-col">
+        <div id="ward-round-table" className="ward-rounds-table flex-1 overflow-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cama</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DNI</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Edad</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ant</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MC</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EF/NIHSS</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EC</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SEV</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DX</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">Cama</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">DNI</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Nombre</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[60px]">Edad</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">Ant</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">MC</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">EF/NIHSS</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">EC</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[60px] text-center">SEV</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">DX</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">Plan</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px] text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -381,14 +385,14 @@ const WardRounds: React.FC = () => {
                   patient.severidad === 'III' ? 'bg-orange-50' :
                   patient.severidad === 'IV' ? 'bg-red-50' : ''
                 }`}>
-                  <td className="px-3 py-4 text-sm text-gray-900">{patient.cama}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900">{patient.dni}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 font-medium">{patient.nombre}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900">{patient.edad}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.antecedentes}>{patient.antecedentes}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.motivo_consulta}>{patient.motivo_consulta}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.examen_fisico}>{patient.examen_fisico}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.estudios}>{patient.estudios}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 min-w-[80px]">{patient.cama}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 min-w-[100px]">{patient.dni}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 font-medium min-w-[150px]">{patient.nombre}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 min-w-[60px]">{patient.edad}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.antecedentes}>{patient.antecedentes}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.motivo_consulta}>{patient.motivo_consulta}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.examen_fisico}>{patient.examen_fisico}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.estudios}>{patient.estudios}</td>
                   <td className="px-3 py-4 text-sm text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
@@ -399,9 +403,9 @@ const WardRounds: React.FC = () => {
                       {patient.severidad}
                     </span>
                   </td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.diagnostico}>{patient.diagnostico}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.plan}>{patient.plan}</td>
-                  <td className="px-3 py-4 text-sm text-gray-500">
+                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.diagnostico}>{patient.diagnostico}</td>
+                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.plan}>{patient.plan}</td>
+                  <td className="px-3 py-4 text-sm text-gray-500 text-center min-w-[80px]">
                     <button
                       onClick={() => {
                         setEditingId(patient.id || null);

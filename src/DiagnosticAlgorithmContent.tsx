@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
-import { Scale } from './types';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
+import SavePatientModal from './SavePatientModal';
+import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
+import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
 
 interface DiagnosticAlgorithmContentProps {
   notes: string;
@@ -29,6 +32,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     '🤖 Sugerencias IA': true // Siempre expandido
   });
 
+  // Estado para el modal de guardar paciente
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ success: boolean; message: string } | null>(null);
+
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
   
@@ -43,6 +50,48 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       ...prev,
       [category]: !prev[category]
     }));
+  };
+
+  // Función para manejar el guardado de paciente
+  const handleSavePatient = () => {
+    const extractedData = extractPatientData(notes);
+    
+    if (!validatePatientData(extractedData) && notes.trim().length === 0) {
+      setSaveStatus({
+        success: false,
+        message: 'No hay datos suficientes para guardar. Agregue información del paciente o complete alguna escala.'
+      });
+      return;
+    }
+    
+    setShowSaveModal(true);
+    setSaveStatus(null);
+  };
+
+  // Función para confirmar el guardado
+  const handleConfirmSave = async (patientData: SavePatientData) => {
+    try {
+      const result = await savePatientAssessment(patientData);
+      
+      if (result.success) {
+        setSaveStatus({
+          success: true,
+          message: 'Paciente guardado exitosamente en la base de datos.'
+        });
+        setShowSaveModal(false);
+        
+        // Limpiar mensaje después de 5 segundos
+        setTimeout(() => setSaveStatus(null), 5000);
+      } else {
+        throw new Error(result.error || 'Error desconocido');
+      }
+    } catch (error) {
+      setSaveStatus({
+        success: false,
+        message: `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      });
+      // No cerrar el modal para que el usuario pueda intentar de nuevo
+    }
   };
 
   // Función para obtener escalas sugeridas por IA
@@ -234,6 +283,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             </div>
             <div className="flex space-x-2">
               <button
+                onClick={handleSavePatient}
+                className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                title="Guardar paciente en base de datos"
+              >
+                <Database className="h-4 w-4" />
+                <span>Guardar Paciente</span>
+              </button>
+              <button
                 onClick={copyNotes}
                 className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
@@ -276,6 +333,20 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </div>
         </div>
         <div className="p-4 h-full">
+          {/* Mensaje de estado del guardado */}
+          {saveStatus && (
+            <div className={`mb-4 p-3 rounded-lg border flex items-center space-x-2 ${
+              saveStatus.success 
+                ? 'bg-green-50 text-green-800 border-green-200'
+                : 'bg-red-50 text-red-800 border-red-200'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                saveStatus.success ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
+              <span className="text-sm">{saveStatus.message}</span>
+            </div>
+          )}
+
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -285,6 +356,17 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
         </div>
       </div>
     </div>
+
+    {/* Modal de guardar paciente */}
+    {showSaveModal && (
+      <SavePatientModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleConfirmSave}
+        extractedData={extractPatientData(notes)}
+        fullNotes={notes}
+      />
+    )}
   </div>
   );
 };

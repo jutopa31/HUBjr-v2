@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
 import PendientesManager from './PendientesManager';
 import WardRounds from './WardRounds';
+import SavedPatients from './SavedPatients';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -77,6 +78,7 @@ Motivo de consulta:
     { id: 'inicio', icon: Home, label: 'Inicio' },
     { id: 'diagnostic', icon: Calculator, label: 'Algoritmos Diagnósticos' },
     { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
+    { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
     // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
     // { id: 'academics', icon: BookOpen, label: 'Actividades Académicas' },
@@ -4857,6 +4859,8 @@ Motivo de consulta:
         return <EventManagerSupabase />;
       case 'ward-rounds':
         return <WardRounds />;
+      case 'saved-patients':
+        return <SavedPatients />;
       case 'pendientes':
         return <PendientesManager />;
       /* case 'clinical':
@@ -4960,8 +4964,8 @@ Motivo de consulta:
   console.log('🔍 Using fallback rendering:', selectedScale && !modalRoot);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <div className="w-64 bg-white shadow-lg">
+    <div className="h-screen bg-gray-100 flex overflow-hidden">
+      <div className="w-64 bg-white shadow-lg flex flex-col">
         <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
             <Brain className="h-8 w-8 text-blue-600" />
@@ -4972,7 +4976,7 @@ Motivo de consulta:
           </div>
         </div>
         
-        <nav className="p-4">
+        <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -5030,8 +5034,10 @@ Motivo de consulta:
         </nav>
       </div>
 
-      <div className={`flex-1 ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-6'}`}>
-        {renderContent()}
+      <div className={`flex-1 flex flex-col overflow-hidden ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-6'}`}>
+        <div className="flex-1 overflow-y-auto">
+          {renderContent()}
+        </div>
         {modalPortal}
         
         {/* Modal de autenticación administrativa */}
