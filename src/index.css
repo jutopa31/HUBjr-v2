@@ -47,6 +47,79 @@ html, body, #root {
   white-space: normal;
 }
 
+/* Enhanced expandable rows animations */
+.expandable-row {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expandable-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.expandable-content {
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease-in-out,
+              padding 0.3s ease;
+  overflow: hidden;
+}
+
+.expand-icon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+/* Improved severity indicators */
+.severity-indicator {
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.severity-indicator:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced medical cards */
+.medical-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.medical-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Smooth scrolling for expanded content */
+.medical-details {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.medical-details::-webkit-scrollbar {
+  width: 6px;
+}
+
+.medical-details::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.medical-details::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.medical-details::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Improve modal positioning for medical forms */
 .modal-overlay {
   position: fixed;

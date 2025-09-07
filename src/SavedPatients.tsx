@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw } from 'lucide-react';
+import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight } from 'lucide-react';
 import { PatientAssessment } from './types';
 import { getPatientAssessments, deletePatientAssessment } from './utils/diagnosticAssessmentDB';
 import PatientDetailsModal from './PatientDetailsModal';
@@ -12,6 +12,9 @@ const SavedPatients: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientAssessment | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estado para el control de expansión de filas
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   // Cargar pacientes al montar el componente
   useEffect(() => {
@@ -76,6 +79,17 @@ const SavedPatients: React.FC = () => {
   const handleViewPatient = (patient: PatientAssessment) => {
     setSelectedPatient(patient);
     setShowDetailsModal(true);
+  };
+
+  // Función para alternar la expansión de una fila
+  const toggleRowExpansion = (patientId: string) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(patientId)) {
+      newExpandedRows.delete(patientId);
+    } else {
+      newExpandedRows.add(patientId);
+    }
+    setExpandedRows(newExpandedRows);
   };
 
   const formatDate = (dateString: string) => {
@@ -189,7 +203,7 @@ const SavedPatients: React.FC = () => {
         </div>
       </div>
 
-      {/* Patient List */}
+      {/* Lista de pacientes compacta y expandible */}
       <div className="flex-1 bg-white shadow-lg rounded-lg overflow-hidden">
         {filteredPatients.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center p-8">
@@ -214,85 +228,180 @@ const SavedPatients: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-auto h-full">
-            <table className="w-full">
-              <thead className="bg-gray-50 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Paciente
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Edad/DNI
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Escalas
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPatients.map((patient) => (
-                  <tr key={patient.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
+            <div className="divide-y divide-gray-200">
+              {/* Header */}
+              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 sticky top-0 z-10">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pacientes guardados desde Algoritmos Diagnósticos
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Haz clic en las filas para expandir los detalles
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de pacientes */}
+              {filteredPatients.map((patient) => {
+                const isExpanded = expandedRows.has(patient.id || '');
+                return (
+                  <div key={patient.id} className={`expandable-row bg-white hover:bg-gray-50 ${
+                    isExpanded ? 'shadow-md border-l-4 border-l-blue-400' : 'border-l-4 border-l-transparent'
+                  }`}>
+                    
+                    {/* Fila principal compacta */}
+                    <div 
+                      className="px-6 py-4 cursor-pointer flex items-center justify-between"
+                      onClick={() => toggleRowExpansion(patient.id || '')}
+                    >
+                      <div className="flex items-center space-x-4 flex-1">
+                        {/* Icono de expansión */}
+                        <div className="flex-shrink-0">
+                          <ChevronRight 
+                            className={`expand-icon h-4 w-4 text-gray-400 ${
+                              isExpanded ? 'expanded' : ''
+                            }`}
+                          />
+                        </div>
+                        
+                        {/* Avatar del usuario */}
                         <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                           <User className="h-5 w-5 text-blue-600" />
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {patient.patient_name}
+                        
+                        {/* Información principal */}
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          <div className="md:col-span-2">
+                            <div className="text-sm font-medium text-gray-900">{patient.patient_name}</div>
+                            <div className="text-xs text-gray-500">
+                              {patient.clinical_notes.length > 60 
+                                ? `${patient.clinical_notes.slice(0, 60)}...` 
+                                : patient.clinical_notes
+                              }
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {patient.clinical_notes.slice(0, 60)}...
+                          
+                          <div className="hidden lg:block">
+                            <div className="text-sm text-gray-700">
+                              {patient.patient_age && `${patient.patient_age} años`}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              DNI: {patient.patient_dni || 'Sin especificar'}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                              <span className="severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                {getScaleSummary(patient)}
+                              </span>
+                              <div className="text-xs text-gray-500 flex items-center">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {formatDate(patient.created_at || '')}
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2 ml-4">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewPatient(patient);
+                                }}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Ver detalles completos"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  patient.id && handleDeletePatient(patient.id);
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                                title="Eliminar paciente"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {patient.patient_age && `${patient.patient_age} años`}
+                    </div>
+
+                    {/* Contenido expandible */}
+                    <div className={`expandable-content ${
+                      isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      <div className="px-6 pb-4 border-t border-gray-200 bg-gray-50 medical-details">
+                        <div className="pt-4 space-y-4">
+                          
+                          {/* Información del paciente */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <h4 className="font-medium text-gray-700 mb-1">Información Personal</h4>
+                              <div className="text-gray-600 medical-card p-2 rounded space-y-1">
+                                <div><strong>Nombre:</strong> {patient.patient_name}</div>
+                                <div><strong>Edad:</strong> {patient.patient_age ? `${patient.patient_age} años` : 'No especificada'}</div>
+                                <div><strong>DNI:</strong> {patient.patient_dni || 'No especificado'}</div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-medium text-gray-700 mb-1">Fecha de Evaluación</h4>
+                              <div className="text-gray-600 medical-card p-2 rounded">
+                                <div className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  {formatDate(patient.created_at || '')}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-medium text-gray-700 mb-1">Escalas Aplicadas</h4>
+                              <div className="text-gray-600 medical-card p-2 rounded">
+                                <div className="flex items-center">
+                                  <Brain className="h-4 w-4 mr-2 text-purple-600" />
+                                  <span className="font-medium text-purple-800">
+                                    {getScaleSummary(patient)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Notas clínicas */}
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Notas Clínicas</h4>
+                            <div className="text-gray-600 medical-card p-3 rounded max-h-24 overflow-y-auto">
+                              {patient.clinical_notes}
+                            </div>
+                          </div>
+                          
+                          {/* Resultados de escalas */}
+                          {patient.scale_results && patient.scale_results.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-gray-700 mb-1">Resultados de Escalas</h4>
+                              <div className="medical-card p-3 rounded max-h-32 overflow-y-auto">
+                                <div className="space-y-2">
+                                  {patient.scale_results.map((result, index) => (
+                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                                      <span className="font-medium">{result.scale_name}</span>
+                                      <span className="text-blue-600 font-semibold">
+                                        Puntuación: {result.score}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {patient.patient_dni || 'Sin DNI'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {getScaleSummary(patient)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {formatDate(patient.created_at || '')}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleViewPatient(patient)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Ver detalles"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => patient.id && handleDeletePatient(patient.id)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 interface Patient {
@@ -40,6 +40,13 @@ const WardRounds: React.FC = () => {
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
   const [loading, setLoading] = useState(true);
+  
+  // Estados para el sorting
+  const [sortField, setSortField] = useState<keyof Patient | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Estado para el control de expansión de filas
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   // Cargar pacientes desde Supabase
   useEffect(() => {
@@ -62,6 +69,44 @@ const WardRounds: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Función para ordenar pacientes
+  const handleSort = (field: keyof Patient) => {
+    const newDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortDirection(newDirection);
+  };
+
+  // Función para alternar la expansión de una fila
+  const toggleRowExpansion = (patientId: string) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(patientId)) {
+      newExpandedRows.delete(patientId);
+    } else {
+      newExpandedRows.add(patientId);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
+  // Ordenar pacientes basado en el estado actual
+  const sortedPatients = React.useMemo(() => {
+    if (!sortField) return patients;
+
+    return [...patients].sort((a, b) => {
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
+      
+      // Convertir a string para comparación
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      
+      if (sortDirection === 'asc') {
+        return aStr.localeCompare(bStr, 'es');
+      } else {
+        return bStr.localeCompare(aStr, 'es');
+      }
+    });
+  }, [patients, sortField, sortDirection]);
 
   // Agregar nuevo paciente
   const addPatient = async () => {
@@ -357,70 +402,179 @@ const WardRounds: React.FC = () => {
         </div>
       )}
 
-      {/* Tabla de pacientes */}
+      {/* Lista de pacientes compacta y expandible */}
       <div className="flex-1 bg-white shadow-lg rounded-lg overflow-hidden flex flex-col">
-        <div id="ward-round-table" className="ward-rounds-table flex-1 overflow-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 sticky top-0 z-10">
-              <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">Cama</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">DNI</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Nombre</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[60px]">Edad</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">Ant</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">MC</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">EF/NIHSS</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">EC</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[60px] text-center">SEV</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">DX</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px] max-w-[200px]">Plan</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px] text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {patients.map((patient) => (
-                <tr key={patient.id} className={`hover:bg-gray-50 ${
-                  patient.severidad === 'I' ? 'bg-green-50' :
-                  patient.severidad === 'II' ? 'bg-yellow-50' :
-                  patient.severidad === 'III' ? 'bg-orange-50' :
-                  patient.severidad === 'IV' ? 'bg-red-50' : ''
-                }`}>
-                  <td className="px-3 py-4 text-sm text-gray-900 min-w-[80px]">{patient.cama}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 min-w-[100px]">{patient.dni}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 font-medium min-w-[150px]">{patient.nombre}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 min-w-[60px]">{patient.edad}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.antecedentes}>{patient.antecedentes}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.motivo_consulta}>{patient.motivo_consulta}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.examen_fisico}>{patient.examen_fisico}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.estudios}>{patient.estudios}</td>
-                  <td className="px-3 py-4 text-sm text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
-                      patient.severidad === 'II' ? 'bg-yellow-100 text-yellow-800' :
-                      patient.severidad === 'III' ? 'bg-orange-100 text-orange-800' :
-                      patient.severidad === 'IV' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {patient.severidad}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.diagnostico}>{patient.diagnostico}</td>
-                  <td className="px-3 py-4 text-sm text-gray-900 max-w-[200px] truncate" title={patient.plan}>{patient.plan}</td>
-                  <td className="px-3 py-4 text-sm text-gray-500 text-center min-w-[80px]">
-                    <button
-                      onClick={() => {
-                        setEditingId(patient.id || null);
-                        setEditingPatient(patient);
-                      }}
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Editar paciente"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div id="ward-round-table" className="flex-1 overflow-auto">
+          <div className="divide-y divide-gray-200">
+            {/* Header para ordenamiento */}
+            <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 sticky top-0 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-4">
+                  <button 
+                    onClick={() => handleSort('nombre')}
+                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                  >
+                    <span>Pacientes</span>
+                    {sortField === 'nombre' && (
+                      sortDirection === 'asc' ? 
+                        <ChevronUp className="h-3 w-3" /> : 
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => handleSort('severidad')}
+                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                  >
+                    <span>Severidad</span>
+                    {sortField === 'severidad' && (
+                      sortDirection === 'asc' ? 
+                        <ChevronUp className="h-3 w-3" /> : 
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => handleSort('cama')}
+                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                  >
+                    <span>Ubicación</span>
+                    {sortField === 'cama' && (
+                      sortDirection === 'asc' ? 
+                        <ChevronUp className="h-3 w-3" /> : 
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Haz clic en las filas para expandir los detalles
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de pacientes */}
+            {sortedPatients.map((patient) => {
+              const isExpanded = expandedRows.has(patient.id || '');
+              return (
+                <div key={patient.id} className={`expandable-row ${
+                  patient.severidad === 'I' ? 'bg-green-50 border-l-4 border-l-green-400' :
+                  patient.severidad === 'II' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' :
+                  patient.severidad === 'III' ? 'bg-orange-50 border-l-4 border-l-orange-400' :
+                  patient.severidad === 'IV' ? 'bg-red-50 border-l-4 border-l-red-400' : 'bg-white border-l-4 border-l-gray-300'
+                } ${isExpanded ? 'shadow-md' : 'hover:bg-gray-50'}`}>
+                  
+                  {/* Fila principal compacta */}
+                  <div 
+                    className="px-6 py-4 cursor-pointer flex items-center justify-between"
+                    onClick={() => toggleRowExpansion(patient.id || '')}
+                  >
+                    <div className="flex items-center space-x-4 flex-1">
+                      {/* Icono de expansión */}
+                      <div className="flex-shrink-0">
+                        <ChevronRight 
+                          className={`expand-icon h-4 w-4 text-gray-400 ${
+                            isExpanded ? 'expanded' : ''
+                          }`}
+                        />
+                      </div>
+                      
+                      {/* Información principal */}
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{patient.nombre}</div>
+                          <div className="text-xs text-gray-500">DNI: {patient.dni}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-700">{patient.cama}</div>
+                          <div className="text-xs text-gray-500">{patient.edad} años</div>
+                        </div>
+                        <div className="hidden md:block">
+                          <div className="text-xs text-gray-600 truncate">
+                            {patient.diagnostico ? patient.diagnostico.slice(0, 40) + '...' : 'Sin diagnóstico'}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
+                            patient.severidad === 'II' ? 'bg-yellow-100 text-yellow-800' :
+                            patient.severidad === 'III' ? 'bg-orange-100 text-orange-800' :
+                            patient.severidad === 'IV' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {patient.severidad}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingId(patient.id || null);
+                              setEditingPatient(patient);
+                            }}
+                            className="text-blue-600 hover:text-blue-900 ml-2"
+                            title="Editar paciente"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contenido expandible */}
+                  <div className={`expandable-content ${
+                    isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="px-6 pb-4 border-t border-gray-200 bg-gray-50 medical-details">
+                      <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Antecedentes</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.antecedentes || 'No especificado'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Motivo de Consulta</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.motivo_consulta || 'No especificado'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.examen_fisico || 'No especificado'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Estudios Complementarios</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.estudios || 'No especificado'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Diagnóstico</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.diagnostico || 'No especificado'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Plan</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.plan || 'No especificado'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Formulario de Edición */}
