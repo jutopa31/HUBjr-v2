@@ -29,23 +29,6 @@ html, body, #root {
   height: 100%;
 }
 
-/* Improve table responsiveness */
-.ward-rounds-table {
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.ward-rounds-table table {
-  min-width: 1200px; /* Ensure minimum width for readability */
-}
-
-.ward-rounds-table th,
-.ward-rounds-table td {
-  min-width: 80px; /* Minimum column width */
-  max-width: 200px; /* Maximum column width */
-  word-wrap: break-word;
-  white-space: normal;
-}
 
 /* Enhanced expandable rows animations */
 .expandable-row {
@@ -162,18 +145,12 @@ html, body, #root {
 
 /* Responsive utilities for medical data */
 @media (max-width: 768px) {
-  .ward-rounds-table {
-    font-size: 0.8rem;
-  }
-  
-  .ward-rounds-table th,
-  .ward-rounds-table td {
-    padding: 0.5rem 0.25rem;
-    min-width: 60px;
-  }
-  
   .modal-content {
     max-width: 95vw;
     margin: 0.5rem;
+  }
+  
+  .expandable-row {
+    font-size: 0.9rem;
   }
 }

@@ -185,10 +185,9 @@ const WardRounds: React.FC = () => {
               background-color: #f3f4f6; 
               font-weight: bold;
             }
-            .severity-I { background-color: #dcfce7; }
-            .severity-II { background-color: #fef3c7; }
-            .severity-III { background-color: #fed7aa; }
-            .severity-IV { background-color: #fecaca; }
+            .expandable-row { background-color: #ffffff; }
+            .medical-card { background-color: #f9fafb; }
+            .severity-indicator { font-weight: 600; }
           </style>
         </head>
         <body>
@@ -642,11 +641,10 @@ const WardRounds: React.FC = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                 >
                   <option value="">Seleccionar severidad</option>
-                  <option value="1">I - Sin requerimiento seguimiento</option>
-                  <option value="2">II - Seguimiento mínimo</option>
-                  <option value="3">III - Seguimiento periódico</option>
-                  <option value="4">IV - Activos</option>
-                  <option value="5">V - Críticos</option>
+                  <option value="I">I</option>
+                  <option value="II">II</option>
+                  <option value="III">III</option>
+                  <option value="IV">IV</option>
                 </select>
               </div>
               
