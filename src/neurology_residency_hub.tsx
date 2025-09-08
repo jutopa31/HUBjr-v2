@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -17,6 +17,13 @@ const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Function to handle tab changes and close sidebar on mobile
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false); // Close sidebar on mobile after navigation
+  };
   
   // Initialize notes with localStorage persistence
   const [notes, setNotes] = useState(() => {
@@ -4617,7 +4624,7 @@ Motivo de consulta:
           />
         );
       case 'inicio':
-        return <DashboardInicio setActiveTab={setActiveTab} openScaleModal={openScaleModal} />;
+        return <DashboardInicio setActiveTab={handleTabChange} openScaleModal={openScaleModal} />;
       /* case 'dashboard':
         return (
           <div className="space-y-6">
@@ -4966,7 +4973,34 @@ Motivo de consulta:
 
   return (
     <div className="h-screen bg-gray-100 flex overflow-hidden">
-      <div className="w-64 bg-white shadow-lg flex flex-col">
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg border"
+      >
+        <Menu className="h-6 w-6 text-gray-600" />
+      </button>
+
+      {/* Sidebar overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg flex flex-col transition-transform duration-300 ease-in-out lg:transition-none`}>
+        {/* Mobile close button */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
         <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
             <Brain className="h-8 w-8 text-blue-600" />
@@ -4984,7 +5018,7 @@ Motivo de consulta:
               return (
                 <li key={item.id}>
                   <button
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => handleTabChange(item.id)}
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       activeTab === item.id
                         ? 'bg-blue-100 text-blue-700'
@@ -5035,7 +5069,8 @@ Motivo de consulta:
         </nav>
       </div>
 
-      <div className={`flex-1 flex flex-col overflow-hidden ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-6'}`}>
+      {/* Main content */}
+      <div className={`flex-1 flex flex-col overflow-hidden lg:ml-0 ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-6'} ${activeTab !== 'diagnostic' && activeTab !== 'inicio' ? 'pt-20 lg:pt-6' : 'pt-16 lg:pt-0'}`}>
         <div className="flex-1 overflow-y-auto">
           {renderContent()}
         </div>
