@@ -135,11 +135,6 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
     });
   };
 
-  const assignments = {
-    morning: 'Consultorio Neurología General',
-    afternoon: 'Interconsultas Piso 4-5',
-    supervisor: 'Dr. García (R4)'
-  };
 
   return (
     <div className="h-full overflow-y-auto bg-gray-50">
@@ -241,15 +236,6 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
               </button>
             </div>
 
-            {/* Asignaciones del día */}
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Asignaciones del Día</h4>
-              <div className="space-y-1 text-sm">
-                <div><span className="font-medium">Mañana:</span> {assignments.morning}</div>
-                <div><span className="font-medium">Tarde:</span> {assignments.afternoon}</div>
-                <div><span className="font-medium">Supervisor:</span> {assignments.supervisor}</div>
-              </div>
-            </div>
 
             {/* Lista de actividades */}
             <div className="space-y-3">

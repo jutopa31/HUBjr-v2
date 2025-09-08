@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 interface Patient {
@@ -15,6 +15,7 @@ interface Patient {
   severidad: string;
   diagnostico: string;
   plan: string;
+  pendientes: string;
   fecha: string;
 }
 
@@ -31,6 +32,7 @@ const WardRounds: React.FC = () => {
     severidad: '',
     diagnostico: '',
     plan: '',
+    pendientes: '',
     fecha: new Date().toISOString().split('T')[0]
   };
 
@@ -47,6 +49,10 @@ const WardRounds: React.FC = () => {
   
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  
+  // Estados para edición inline de pendientes
+  const [editingPendientesId, setEditingPendientesId] = useState<string | null>(null);
+  const [tempPendientes, setTempPendientes] = useState<string>('');
 
   // Cargar pacientes desde Supabase
   useEffect(() => {
@@ -142,6 +148,35 @@ const WardRounds: React.FC = () => {
       console.error('Error updating patient:', error);
       alert('Error al actualizar paciente');
     }
+  };
+
+  // Funciones para edición inline de pendientes
+  const startEditingPendientes = (patientId: string, currentPendientes: string) => {
+    setEditingPendientesId(patientId);
+    setTempPendientes(currentPendientes || '');
+  };
+
+  const saveInlinePendientes = async (patientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('ward_round_patients')
+        .update({ pendientes: tempPendientes })
+        .eq('id', patientId);
+
+      if (error) throw error;
+      
+      setEditingPendientesId(null);
+      setTempPendientes('');
+      loadPatients();
+    } catch (error) {
+      console.error('Error updating pendientes:', error);
+      alert('Error al actualizar pendientes');
+    }
+  };
+
+  const cancelEditingPendientes = () => {
+    setEditingPendientesId(null);
+    setTempPendientes('');
   };
 
   // Exportar a PDF (simple)
@@ -379,6 +414,16 @@ const WardRounds: React.FC = () => {
                   rows={3}
                 />
               </div>
+              <div className="form-row full-width">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pendientes</label>
+                <textarea
+                  value={newPatient.pendientes}
+                  onChange={(e) => setNewPatient({...newPatient, pendientes: e.target.value})}
+                  className="w-full border rounded-lg px-3 py-2"
+                  rows={2}
+                  placeholder="Estudios pendientes, interconsultas, seguimientos..."
+                />
+              </div>
             </div>
             <div className="p-6 border-t flex justify-end space-x-3">
               <button
@@ -406,44 +451,64 @@ const WardRounds: React.FC = () => {
         <div id="ward-round-table" className="flex-1 overflow-auto">
           <div className="divide-y divide-gray-200">
             {/* Header para ordenamiento */}
-            <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 sticky top-0 z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex space-x-4">
-                  <button 
-                    onClick={() => handleSort('nombre')}
-                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                  >
-                    <span>Pacientes</span>
-                    {sortField === 'nombre' && (
-                      sortDirection === 'asc' ? 
-                        <ChevronUp className="h-3 w-3" /> : 
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                  <button 
-                    onClick={() => handleSort('severidad')}
-                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                  >
-                    <span>Severidad</span>
-                    {sortField === 'severidad' && (
-                      sortDirection === 'asc' ? 
-                        <ChevronUp className="h-3 w-3" /> : 
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                  <button 
-                    onClick={() => handleSort('cama')}
-                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700"
-                  >
-                    <span>Ubicación</span>
-                    {sortField === 'cama' && (
-                      sortDirection === 'asc' ? 
-                        <ChevronUp className="h-3 w-3" /> : 
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <div className="text-xs text-gray-500">
+            <div className="bg-gray-50 px-6 py-1.5 border-b border-gray-200 sticky top-0 z-10">
+              <div className="ward-header-grid">
+                <button 
+                  onClick={() => handleSort('nombre')}
+                  className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                >
+                  <span>Pacientes</span>
+                  {sortField === 'nombre' && (
+                    sortDirection === 'asc' ? 
+                      <ChevronUp className="h-3 w-3" /> : 
+                      <ChevronDown className="h-3 w-3" />
+                  )}
+                </button>
+                <button 
+                  onClick={() => handleSort('cama')}
+                  className="hidden sm:flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                >
+                  <span>Ubicación</span>
+                  {sortField === 'cama' && (
+                    sortDirection === 'asc' ? 
+                      <ChevronUp className="h-3 w-3" /> : 
+                      <ChevronDown className="h-3 w-3" />
+                  )}
+                </button>
+                <button 
+                  onClick={() => handleSort('diagnostico')}
+                  className="hidden md:flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 justify-start"
+                >
+                  <span>Diagnóstico</span>
+                  {sortField === 'diagnostico' && (
+                    sortDirection === 'asc' ? 
+                      <ChevronUp className="h-3 w-3" /> : 
+                      <ChevronDown className="h-3 w-3" />
+                  )}
+                </button>
+                <button 
+                  onClick={() => handleSort('severidad')}
+                  className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-center py-1"
+                >
+                  <span>Severidad</span>
+                  {sortField === 'severidad' && (
+                    sortDirection === 'asc' ? 
+                      <ChevronUp className="h-3 w-3" /> : 
+                      <ChevronDown className="h-3 w-3" />
+                  )}
+                </button>
+                <button 
+                  onClick={() => handleSort('pendientes')}
+                  className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                >
+                  <span>Pendientes</span>
+                  {sortField === 'pendientes' && (
+                    sortDirection === 'asc' ? 
+                      <ChevronUp className="h-3 w-3" /> : 
+                      <ChevronDown className="h-3 w-3" />
+                  )}
+                </button>
+                <div className="hidden lg:block text-xs text-gray-500 justify-self-end self-center">
                   Haz clic en las filas para expandir los detalles
                 </div>
               </div>
@@ -476,21 +541,24 @@ const WardRounds: React.FC = () => {
                       </div>
                       
                       {/* Información principal */}
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
+                      <div className="flex-1 ward-content-grid">
+                        <div className="ward-col-pacientes">
                           <div className="text-sm font-medium text-gray-900">{patient.nombre}</div>
-                          <div className="text-xs text-gray-500">DNI: {patient.dni}</div>
+                          <div className="text-xs text-gray-500">
+                            <span>DNI: {patient.dni}</span>
+                            <span className="sm:hidden"> • {patient.cama} • {patient.edad} años</span>
+                          </div>
                         </div>
-                        <div>
+                        <div className="ward-col-ubicacion hidden sm:block">
                           <div className="text-sm text-gray-700">{patient.cama}</div>
                           <div className="text-xs text-gray-500">{patient.edad} años</div>
                         </div>
-                        <div className="hidden md:block">
+                        <div className="ward-col-diagnostico hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
-                            {patient.diagnostico ? patient.diagnostico.slice(0, 40) + '...' : 'Sin diagnóstico'}
+                            {patient.diagnostico ? patient.diagnostico.slice(0, 45) + '...' : 'Sin diagnóstico'}
                           </div>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="ward-col-severidad">
                           <span className={`severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
                             patient.severidad === 'II' ? 'bg-yellow-100 text-yellow-800' :
@@ -499,17 +567,68 @@ const WardRounds: React.FC = () => {
                           }`}>
                             {patient.severidad}
                           </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingId(patient.id || null);
-                              setEditingPatient(patient);
-                            }}
-                            className="text-blue-600 hover:text-blue-900 ml-2"
-                            title="Editar paciente"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
+                        </div>
+                        <div className="ward-col-pendientes">
+                          {editingPendientesId === patient.id ? (
+                            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+                              <textarea
+                                value={tempPendientes}
+                                onChange={(e) => setTempPendientes(e.target.value)}
+                                className="flex-1 text-xs border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none min-w-0 sm:h-auto h-8"
+                                rows={2}
+                                placeholder="Escribir pendientes..."
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && e.ctrlKey) {
+                                    saveInlinePendientes(patient.id || '');
+                                  }
+                                  if (e.key === 'Escape') {
+                                    cancelEditingPendientes();
+                                  }
+                                }}
+                              />
+                              <div className="flex sm:flex-col flex-row space-y-0 sm:space-y-1 space-x-1 sm:space-x-0">
+                                <button
+                                  onClick={() => saveInlinePendientes(patient.id || '')}
+                                  className="text-green-600 hover:text-green-800 p-1"
+                                  title="Guardar (Ctrl+Enter)"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </button>
+                                <button
+                                  onClick={cancelEditingPendientes}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                  title="Cancelar (Esc)"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <div 
+                                className="text-xs text-gray-600 truncate flex-1 cursor-text hover:bg-blue-50 p-1 rounded"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditingPendientes(patient.id || '', patient.pendientes || '');
+                                }}
+                                title="Clic para editar pendientes"
+                              >
+                                {patient.pendientes ? patient.pendientes.slice(0, 35) + (patient.pendientes.length > 35 ? '...' : '') : 'Sin pendientes'}
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingId(patient.id || null);
+                                  setEditingPatient(patient);
+                                }}
+                                className="text-blue-600 hover:text-blue-900 ml-2"
+                                title="Editar paciente completo"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -566,6 +685,13 @@ const WardRounds: React.FC = () => {
                               {patient.plan || 'No especificado'}
                             </p>
                           </div>
+                          
+                          <div>
+                            <h4 className="font-medium text-gray-700 mb-1">Pendientes</h4>
+                            <p className="text-gray-600 medical-card p-2 rounded">
+                              {patient.pendientes || 'Sin pendientes'}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -576,11 +702,12 @@ const WardRounds: React.FC = () => {
           </div>
         </div>
 
-        {/* Formulario de Edición */}
-        {editingId && (
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Editar Paciente</h3>
+      {/* Formulario de Edición Modal */}
+      {editingId && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-4xl w-full medical-form">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Editar Paciente</h2>
               <button
                 onClick={() => {
                   setEditingId(null);
@@ -588,161 +715,165 @@ const WardRounds: React.FC = () => {
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
-                <input
-                  type="text"
-                  value={editingPatient.cama}
-                  onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
+            <div className="p-6">
+              <div className="form-row">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
+                  <input
+                    type="text"
+                    value={editingPatient.cama}
+                    onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+                  <input
+                    type="text"
+                    value={editingPatient.dni}
+                    onChange={(e) => setEditingPatient({...editingPatient, dni: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    value={editingPatient.nombre}
+                    onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
+                  <input
+                    type="text"
+                    value={editingPatient.edad}
+                    onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="22, 52 AÑOS..."
+                  />
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
-                <input
-                  type="text"
-                  value={editingPatient.dni}
-                  onChange={(e) => setEditingPatient({...editingPatient, dni: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={editingPatient.nombre}
-                  onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
-                <input
-                  type="text"
-                  value={editingPatient.edad}
-                  onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
-                <select
-                  value={editingPatient.severidad}
-                  onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                >
-                  <option value="">Seleccionar severidad</option>
-                  <option value="I">I</option>
-                  <option value="II">II</option>
-                  <option value="III">III</option>
-                  <option value="IV">IV</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                <input
-                  type="date"
-                  value={editingPatient.fecha}
-                  onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Antecedentes</label>
                 <textarea
                   value={editingPatient.antecedentes}
                   onChange={(e) => setEditingPatient({...editingPatient, antecedentes: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border rounded-lg px-3 py-2"
                   rows={2}
                 />
               </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Consulta</label>
                 <textarea
                   value={editingPatient.motivo_consulta}
                   onChange={(e) => setEditingPatient({...editingPatient, motivo_consulta: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border rounded-lg px-3 py-2"
                   rows={2}
                 />
               </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Examen Físico</label>
+              <div className="form-row full-width">
+                <label className="block text-sm font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</label>
                 <textarea
                   value={editingPatient.examen_fisico}
                   onChange={(e) => setEditingPatient({...editingPatient, examen_fisico: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border rounded-lg px-3 py-2"
                   rows={2}
                 />
               </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estudios</label>
+              <div className="form-row full-width">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estudios Complementarios</label>
                 <textarea
                   value={editingPatient.estudios}
                   onChange={(e) => setEditingPatient({...editingPatient, estudios: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                  rows={2}
+                  className="w-full border rounded-lg px-3 py-2"
+                  rows={3}
                 />
               </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
+              <div className="form-row">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
+                  <select
+                    value={editingPatient.severidad}
+                    onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Seleccionar...</option>
+                    <option value="I">I</option>
+                    <option value="II">II</option>
+                    <option value="III">III</option>
+                    <option value="IV">IV</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                  <input
+                    type="date"
+                    value={editingPatient.fecha}
+                    onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+              </div>
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Diagnóstico</label>
                 <textarea
                   value={editingPatient.diagnostico}
                   onChange={(e) => setEditingPatient({...editingPatient, diagnostico: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border rounded-lg px-3 py-2"
                   rows={2}
                 />
               </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
+              <div className="form-row full-width">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
                 <textarea
                   value={editingPatient.plan}
                   onChange={(e) => setEditingPatient({...editingPatient, plan: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border rounded-lg px-3 py-2"
+                  rows={3}
+                />
+              </div>
+              <div className="form-row full-width">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pendientes</label>
+                <textarea
+                  value={editingPatient.pendientes}
+                  onChange={(e) => setEditingPatient({...editingPatient, pendientes: e.target.value})}
+                  className="w-full border rounded-lg px-3 py-2"
                   rows={2}
+                  placeholder="Estudios pendientes, interconsultas, seguimientos..."
                 />
               </div>
             </div>
-            
-            <div className="flex gap-2 mt-6">
+            <div className="p-6 border-t flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setEditingPatient(emptyPatient);
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
               <button
                 onClick={() => {
                   if (editingId) {
                     updatePatient(editingId, editingPatient);
                   }
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                Guardar Cambios
-              </button>
-              <button
-                onClick={() => {
-                  setEditingId(null);
-                  setEditingPatient(emptyPatient);
-                }}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-              >
-                Cancelar
+                <span>Guardar Cambios</span>
               </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
         
         {patients.length === 0 && (
           <div className="text-center py-12">
