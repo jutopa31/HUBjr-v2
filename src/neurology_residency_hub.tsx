@@ -2331,6 +2331,61 @@ Motivo de consulta:
           score: 0
         }
       ]
+    },
+    {
+      id: 'abcd2_score',
+      name: 'ABCD2 Score (AIT - Ataque Isquémico Transitorio)',
+      category: 'Stroke & Cerebrovascular',
+      description: 'Escala de riesgo de ACV después de un AIT en las próximas 48 horas',
+      items: [
+        {
+          id: 'age',
+          label: 'A - Edad (Age)',
+          options: [
+            '0 - < 60 años',
+            '1 - ≥ 60 años'
+          ],
+          score: 0
+        },
+        {
+          id: 'blood_pressure',
+          label: 'B - Presión Arterial (Blood Pressure)',
+          options: [
+            '0 - < 140/90 mmHg',
+            '1 - ≥ 140/90 mmHg'
+          ],
+          score: 0
+        },
+        {
+          id: 'clinical_features',
+          label: 'C - Características Clínicas (Clinical Features)',
+          options: [
+            '0 - Otros síntomas',
+            '1 - Alteración del habla sin debilidad',
+            '2 - Debilidad unilateral'
+          ],
+          score: 0
+        },
+        {
+          id: 'duration',
+          label: 'D - Duración de síntomas (Duration)',
+          options: [
+            '0 - < 10 minutos',
+            '1 - 10-59 minutos',
+            '2 - ≥ 60 minutos'
+          ],
+          score: 0
+        },
+        {
+          id: 'diabetes',
+          label: 'D - Diabetes',
+          options: [
+            '0 - No',
+            '1 - Sí'
+          ],
+          score: 0
+        }
+      ]
     }
   ];
 

@@ -19,6 +19,7 @@ This document tracks neurological algorithms and scales planned for future imple
 ✅ **CASE** (Comprehensive Aphasia Test - Screening) - *Implementado 9 Sep 2025*  
 ✅ **NEOS Score** (NEurological Outcome Scale) - *Implementado 9 Sep 2025*  
 ✅ **RASS** (Richmond Agitation-Sedation Scale) - *Implementado 9 Sep 2025*  
+✅ **ABCD2 Score** (AIT Risk Assessment) - *Implementado 9 Sep 2025*  
 
 ---
 
@@ -31,6 +32,7 @@ This document tracks neurological algorithms and scales planned for future imple
 - [x] HAS-BLED Score ✅ **Implementado - 31 Jul 2025**
 - [x] ICH Score ✅ **Implementado - 31 Jul 2025**
 - [x] Hunt and Hess Scale ✅ **Implementado - 31 Jul 2025**
+- [x] ABCD2 Score (AIT Risk Assessment) ✅ **Implementado - 9 Sep 2025**
 - [ ] Fisher Grade Scale
 - [ ] WFNS Scale (World Federation of Neurosurgical Societies)
 
@@ -156,7 +158,7 @@ interface FutureScale {
 ## Update Log
 - **Created**: July 31, 2025
 - **Last Modified**: September 9, 2025
-- **Latest Update**: Added CASE, NEOS Score, and RASS scales
+- **Latest Update**: Added CASE, NEOS Score, RASS, and ABCD2 scales
 - **Next Review**: To be scheduled by Chief Resident
 
 ---
