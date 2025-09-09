@@ -20,6 +20,7 @@ This document tracks neurological algorithms and scales planned for future imple
 ✅ **NEOS Score** (NEurological Outcome Scale) - *Implementado 9 Sep 2025*  
 ✅ **RASS** (Richmond Agitation-Sedation Scale) - *Implementado 9 Sep 2025*  
 ✅ **ABCD2 Score** (AIT Risk Assessment) - *Implementado 9 Sep 2025*  
+✅ **Escala de Fazekas** (Neuroimaging White Matter Lesions) - *Implementado 9 Sep 2025*  
 
 ---
 
@@ -104,6 +105,9 @@ This document tracks neurological algorithms and scales planned for future imple
 ### Lenguaje y Afasia / Language & Aphasia
 - [x] CASE (Comprehensive Aphasia Test - Screening) ✅ **Implementado - 9 Sep 2025**
 
+### Neuroimagen / Neuroimaging
+- [x] Escala de Fazekas (White Matter Lesion Assessment) ✅ **Implementado - 9 Sep 2025**
+
 ### General Neurology
 - [ ] Barthel Index
 - [ ] Functional Independence Measure (FIM)
@@ -158,7 +162,7 @@ interface FutureScale {
 ## Update Log
 - **Created**: July 31, 2025
 - **Last Modified**: September 9, 2025
-- **Latest Update**: Added CASE, NEOS Score, RASS, and ABCD2 scales
+- **Latest Update**: Added CASE, NEOS Score, RASS, ABCD2, and Fazekas scales
 - **Next Review**: To be scheduled by Chief Resident
 
 ---

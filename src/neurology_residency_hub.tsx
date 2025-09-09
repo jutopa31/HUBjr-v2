@@ -2386,6 +2386,36 @@ Motivo de consulta:
           score: 0
         }
       ]
+    },
+    {
+      id: 'fazekas_scale',
+      name: 'Escala de Fazekas',
+      category: 'Neuroimagen',
+      description: 'Evaluación de lesiones de sustancia blanca periventricular y profunda en RM',
+      items: [
+        {
+          id: 'periventricular_hyperintensities',
+          label: 'Hiperintensidades Periventriculares',
+          options: [
+            '0 - Ausentes',
+            '1 - Caps o líneas pencil-thin',
+            '2 - Halos lisos',
+            '3 - Hiperintensidades periventriculares irregulares que se extienden a la sustancia blanca profunda'
+          ],
+          score: 0
+        },
+        {
+          id: 'deep_white_matter_hyperintensities',
+          label: 'Hiperintensidades de Sustancia Blanca Profunda',
+          options: [
+            '0 - Ausentes',
+            '1 - Focos puntiformes',
+            '2 - Focos múltiples en "comienzo de confluencia"',
+            '3 - Focos grandes confluentes'
+          ],
+          score: 0
+        }
+      ]
     }
   ];
 
