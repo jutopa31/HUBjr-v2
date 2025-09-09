@@ -758,8 +758,8 @@ const WardRounds: React.FC = () => {
                       <ChevronDown className="h-3 w-3" />
                   )}
                 </button>
-                <div className="hidden lg:block text-xs text-gray-500 justify-self-end self-center">
-                  Haz clic en las filas para expandir los detalles
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                  <span>Acciones</span>
                 </div>
               </div>
             </div>
@@ -855,30 +855,30 @@ const WardRounds: React.FC = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="flex items-center justify-between">
-                              <div 
-                                className="text-xs text-gray-600 truncate flex-1 cursor-text hover:bg-blue-50 p-1 rounded"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  startEditingPendientes(patient.id || '', patient.pendientes || '');
-                                }}
-                                title="Clic para editar pendientes"
-                              >
-                                {patient.pendientes ? patient.pendientes.slice(0, 35) + (patient.pendientes.length > 35 ? '...' : '') : 'Sin pendientes'}
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingId(patient.id || null);
-                                  setEditingPatient(patient);
-                                }}
-                                className="text-blue-600 hover:text-blue-900 ml-2"
-                                title="Editar paciente completo"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
+                            <div 
+                              className="text-xs text-gray-600 truncate cursor-text hover:bg-blue-50 p-1 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingPendientes(patient.id || '', patient.pendientes || '');
+                              }}
+                              title="Clic para editar pendientes"
+                            >
+                              {patient.pendientes ? patient.pendientes.slice(0, 40) + (patient.pendientes.length > 40 ? '...' : '') : 'Sin pendientes'}
                             </div>
                           )}
+                        </div>
+                        <div className="ward-col-actions">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingId(patient.id || null);
+                              setEditingPatient(patient);
+                            }}
+                            className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar paciente completo"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     </div>

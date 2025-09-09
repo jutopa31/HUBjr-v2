@@ -82,7 +82,7 @@ html, body, #root {
 /* Ward Rounds Table Grid Layout */
 .ward-header-grid {
   display: grid;
-  grid-template-columns: 22% 18% 30% 15% 15% 1fr;
+  grid-template-columns: 22% 18% 28% 12% 15% 5%;
   gap: 0.75rem;
   align-items: center;
   min-height: 2rem;
@@ -90,7 +90,7 @@ html, body, #root {
 
 .ward-content-grid {
   display: grid;
-  grid-template-columns: 22% 18% 30% 15% 15%;
+  grid-template-columns: 22% 18% 28% 12% 15% 5%;
   gap: 1rem;
   align-items: center;
 }
@@ -121,26 +121,35 @@ html, body, #root {
   border-left: 1px solid #f1f5f9;
 }
 
+.ward-col-actions {
+  padding-left: 0.5rem;
+  border-left: 1px solid #f1f5f9;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Responsive adjustments */
 /* Large tablets and small desktops */
 @media (max-width: 1024px) {
   .ward-header-grid {
-    grid-template-columns: 25% 20% 25% 15% 15% 1fr;
+    grid-template-columns: 25% 20% 23% 12% 15% 5%;
   }
   
   .ward-content-grid {
-    grid-template-columns: 25% 20% 25% 15% 15%;
+    grid-template-columns: 25% 20% 23% 12% 15% 5%;
   }
 }
 
 /* Tablets */
 @media (max-width: 768px) {
   .ward-header-grid {
-    grid-template-columns: 40% 30% 15% 15%;
+    grid-template-columns: 35% 25% 15% 20% 5%;
   }
   
   .ward-content-grid {
-    grid-template-columns: 40% 30% 15% 15%;
+    grid-template-columns: 35% 25% 15% 20% 5%;
   }
   
   .ward-col-diagnostico {
@@ -155,12 +164,12 @@ html, body, #root {
 /* Mobile devices */
 @media (max-width: 640px) {
   .ward-header-grid {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
     gap: 0.5rem;
   }
   
   .ward-content-grid {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
     gap: 0.5rem;
   }
   
@@ -181,6 +190,12 @@ html, body, #root {
   .ward-col-pendientes {
     border-left: none;
     padding-left: 0.25rem;
+  }
+  
+  .ward-col-actions {
+    border-left: none;
+    padding-left: 0.25rem;
+    min-width: 40px;
   }
   
   /* Make patient info more compact on mobile */
@@ -214,12 +229,12 @@ html, body, #root {
 /* Very small devices */
 @media (max-width: 480px) {
   .ward-header-grid {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
     gap: 0.25rem;
   }
   
   .ward-content-grid {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
     gap: 0.25rem;
   }
   
@@ -228,7 +243,11 @@ html, body, #root {
   }
   
   .ward-col-pendientes {
-    min-width: 120px;
+    min-width: 100px;
+  }
+  
+  .ward-col-actions {
+    min-width: 40px;
   }
   
   /* Stack buttons vertically on very small screens */
