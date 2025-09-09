@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -35,6 +35,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Estado para el modal de guardar paciente
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Estado para el buscador de escalas
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -94,17 +98,32 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }
   };
 
+  // Función para filtrar escalas por búsqueda
+  const filterScalesBySearch = (scales: Scale[]) => {
+    if (!searchQuery.trim()) return scales;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return scales.filter(scale => 
+      scale.name.toLowerCase().includes(query) ||
+      scale.description.toLowerCase().includes(query) ||
+      scale.category.toLowerCase().includes(query)
+    );
+  };
+
   // Función para obtener escalas sugeridas por IA
   const getSuggestedScales = () => {
-    return aiAnalysis.suggestions.map(suggestion => 
+    const suggested = aiAnalysis.suggestions.map(suggestion => 
       medicalScales.find(scale => scale.id === suggestion.scaleId)
     ).filter(scale => scale !== undefined) as Scale[];
+    
+    return filterScalesBySearch(suggested);
   };
 
   // Función para obtener escalas no sugeridas
   const getNonSuggestedScales = () => {
     const suggestedIds = aiAnalysis.suggestions.map(s => s.scaleId);
-    return medicalScales.filter(scale => !suggestedIds.includes(scale.id));
+    const nonSuggested = medicalScales.filter(scale => !suggestedIds.includes(scale.id));
+    return filterScalesBySearch(nonSuggested);
   };
 
   // Crear agrupación dinámica: primero sugerencias, luego por categoría
@@ -113,6 +132,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     const nonSuggestedScales = getNonSuggestedScales();
     
     const groups: { [key: string]: Scale[] } = {};
+    
+    // Si estamos en modo de búsqueda, crear un grupo especial con todos los resultados
+    if (searchQuery.trim()) {
+      const allFilteredScales = [...suggestedScales, ...nonSuggestedScales];
+      if (allFilteredScales.length > 0) {
+        groups['🔍 Resultados de Búsqueda'] = allFilteredScales;
+      }
+      return groups;
+    }
     
     // Si hay sugerencias, crear grupo especial
     if (suggestedScales.length > 0) {
@@ -142,7 +170,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
           <Calculator className="h-5 w-5 mr-2" />
           Escalas y Algoritmos
         </h2>
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-1 mb-3">
           <p className="text-blue-100 text-sm">Herramientas de evaluación neurológica</p>
           {/* Indicador de IA */}
           <div className="flex items-center space-x-2">
@@ -157,11 +185,45 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             </div>
           </div>
         </div>
+        
+        {/* Buscador de escalas */}
+        <div className="relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-200" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsSearching(e.target.value.trim().length > 0);
+              }}
+              placeholder="Buscar escalas..."
+              className="w-full pl-10 pr-10 py-2 text-sm rounded-lg bg-white bg-opacity-20 text-white placeholder-blue-200 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setIsSearching(false);
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-200 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-xs text-blue-200">
+              Buscando: "{searchQuery}"
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-4">
         <div className="space-y-4">
           {Object.entries(groupedScales).map(([category, scales]) => {
             const isAISuggestions = category === '🤖 Sugerencias IA';
+            const isSearchResults = category === '🔍 Resultados de Búsqueda';
             const isParkinson = category === 'Parkinson';
             
             return (
@@ -170,43 +232,53 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 className={`border rounded-lg overflow-hidden ${
                   isAISuggestions 
                     ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 shadow-lg' 
-                    : 'border-gray-200'
+                    : isSearchResults
+                      ? 'border-green-300 bg-gradient-to-r from-green-50 to-teal-50 shadow-lg'
+                      : 'border-gray-200'
                 }`}
               >
                 {/* Category Header */}
                 <button
-                  onClick={() => !isAISuggestions && toggleCategory(category)}
+                  onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
                   className={`w-full p-3 flex items-center justify-between transition-colors ${
                     isAISuggestions 
                       ? 'bg-gradient-to-r from-purple-100 to-blue-100 cursor-default' 
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      : isSearchResults
+                        ? 'bg-gradient-to-r from-green-100 to-teal-100 cursor-default'
+                        : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
                     <div className={`p-1.5 rounded ${
                       isAISuggestions 
                         ? 'bg-purple-200' 
-                        : isParkinson 
-                          ? 'bg-orange-100' 
-                          : 'bg-blue-100'
+                        : isSearchResults
+                          ? 'bg-green-200'
+                          : isParkinson 
+                            ? 'bg-orange-100' 
+                            : 'bg-blue-100'
                     }`}>
                       <Stethoscope className={`h-4 w-4 ${
                         isAISuggestions 
                           ? 'text-purple-700' 
-                          : isParkinson 
-                            ? 'text-orange-600' 
-                            : 'text-blue-600'
+                          : isSearchResults
+                            ? 'text-green-700'
+                            : isParkinson 
+                              ? 'text-orange-600' 
+                              : 'text-blue-600'
                       }`} />
                     </div>
                     <span className={`font-medium ${
-                      isAISuggestions ? 'text-purple-900' : 'text-gray-900'
+                      isAISuggestions || isSearchResults ? 'text-purple-900' : 'text-gray-900'
                     }`}>
                       {category}
                     </span>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       isAISuggestions 
                         ? 'text-purple-700 bg-purple-200' 
-                        : 'text-gray-500 bg-gray-200'
+                        : isSearchResults
+                          ? 'text-green-700 bg-green-200'
+                          : 'text-gray-500 bg-gray-200'
                     }`}>
                       {scales.length}
                     </span>
@@ -216,8 +288,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                         <span className="text-xs text-purple-700 font-medium">Activo</span>
                       </div>
                     )}
+                    {isSearchResults && (
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-xs text-green-700 font-medium">Búsqueda</span>
+                      </div>
+                    )}
                   </div>
-                  {!isAISuggestions && (
+                  {!isAISuggestions && !isSearchResults && (
                     expandedCategories[category] ? 
                       <ChevronUp className="h-5 w-5 text-gray-400" /> : 
                       <ChevronDown className="h-5 w-5 text-gray-400" />
@@ -225,7 +303,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 </button>
               
               {/* Category Content */}
-              {expandedCategories[category] && (
+              {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
                 <div className="divide-y divide-gray-100">
                   {scales.map((scale) => (
                     <div key={scale.id} className="relative">
