@@ -16,6 +16,9 @@ This document tracks neurological algorithms and scales planned for future imple
 ✅ **HAS-BLED Score** - *Implementado 31 Jul 2025*  
 ✅ **ICH Score** - *Implementado 31 Jul 2025*  
 ✅ **Hunt and Hess Scale** - *Implementado 31 Jul 2025*  
+✅ **CASE** (Comprehensive Aphasia Test - Screening) - *Implementado 9 Sep 2025*  
+✅ **NEOS Score** (NEurological Outcome Scale) - *Implementado 9 Sep 2025*  
+✅ **RASS** (Richmond Agitation-Sedation Scale) - *Implementado 9 Sep 2025*  
 
 ---
 
@@ -92,6 +95,13 @@ This document tracks neurological algorithms and scales planned for future imple
 - [ ] Denver Developmental Screening Test
 - [ ] Childhood Autism Rating Scale (CARS)
 
+### Neurocríticos / Critical Care
+- [x] NEOS Score (NEurological Outcome Scale) ✅ **Implementado - 9 Sep 2025**
+- [x] RASS (Richmond Agitation-Sedation Scale) ✅ **Implementado - 9 Sep 2025**
+
+### Lenguaje y Afasia / Language & Aphasia
+- [x] CASE (Comprehensive Aphasia Test - Screening) ✅ **Implementado - 9 Sep 2025**
+
 ### General Neurology
 - [ ] Barthel Index
 - [ ] Functional Independence Measure (FIM)
@@ -145,7 +155,8 @@ interface FutureScale {
 
 ## Update Log
 - **Created**: July 31, 2025
-- **Last Modified**: July 31, 2025
+- **Last Modified**: September 9, 2025
+- **Latest Update**: Added CASE, NEOS Score, and RASS scales
 - **Next Review**: To be scheduled by Chief Resident
 
 ---

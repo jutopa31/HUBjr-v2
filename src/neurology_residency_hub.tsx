@@ -2155,6 +2155,182 @@ Motivo de consulta:
           score: 0
         }
       ]
+    },
+    {
+      id: 'case_scale',
+      name: 'CASE (Comprehensive Aphasia Test - Screening)',
+      category: 'Evaluación Neurológica',
+      description: 'Test de screening para evaluación comprensiva de afasia',
+      items: [
+        {
+          id: 'auditory_comprehension',
+          label: 'Comprensión auditiva de palabras',
+          options: [
+            '4 - 4/4 correctas',
+            '3 - 3/4 correctas',
+            '2 - 2/4 correctas',
+            '1 - 1/4 correcta',
+            '0 - 0/4 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'auditory_sentence_comprehension',
+          label: 'Comprensión auditiva de oraciones',
+          options: [
+            '4 - 4/4 correctas',
+            '3 - 3/4 correctas',
+            '2 - 2/4 correctas',
+            '1 - 1/4 correcta',
+            '0 - 0/4 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'repetition_words',
+          label: 'Repetición de palabras',
+          options: [
+            '4 - 4/4 correctas',
+            '3 - 3/4 correctas',
+            '2 - 2/4 correctas',
+            '1 - 1/4 correcta',
+            '0 - 0/4 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'repetition_complex_words',
+          label: 'Repetición de palabras complejas',
+          options: [
+            '2 - 2/2 correctas',
+            '1 - 1/2 correcta',
+            '0 - 0/2 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'repetition_nonwords',
+          label: 'Repetición de no-palabras',
+          options: [
+            '2 - 2/2 correctas',
+            '1 - 1/2 correcta',
+            '0 - 0/2 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'object_naming',
+          label: 'Denominación de objetos',
+          options: [
+            '4 - 4/4 correctas',
+            '3 - 3/4 correctas',
+            '2 - 2/4 correctas',
+            '1 - 1/4 correcta',
+            '0 - 0/4 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'reading_words',
+          label: 'Lectura de palabras',
+          options: [
+            '4 - 4/4 correctas',
+            '3 - 3/4 correctas',
+            '2 - 2/4 correctas',
+            '1 - 1/4 correcta',
+            '0 - 0/4 correctas'
+          ],
+          score: 0
+        },
+        {
+          id: 'writing_words',
+          label: 'Escritura de palabras',
+          options: [
+            '4 - 4/4 correctas',
+            '3 - 3/4 correctas',
+            '2 - 2/4 correctas',
+            '1 - 1/4 correcta',
+            '0 - 0/4 correctas'
+          ],
+          score: 0
+        }
+      ]
+    },
+    {
+      id: 'neos_score',
+      name: 'NEOS Score (NEurological Outcome Scale)',
+      category: 'Neurocríticos',
+      description: 'Escala de pronóstico neurológico para pacientes críticos',
+      items: [
+        {
+          id: 'consciousness_level',
+          label: 'Nivel de conciencia',
+          options: [
+            '0 - Alerta',
+            '1 - Somnoliento pero despierta con estímulos verbales',
+            '2 - Despierta solo con estímulos físicos',
+            '3 - No responde a estímulos verbales ni físicos'
+          ],
+          score: 0
+        },
+        {
+          id: 'brainstem_reflexes',
+          label: 'Reflejos de tronco cerebral',
+          options: [
+            '0 - Presentes bilateralmente',
+            '1 - Ausentes unilateralmente',
+            '2 - Ausentes bilateralmente'
+          ],
+          score: 0
+        },
+        {
+          id: 'motor_response',
+          label: 'Respuesta motora',
+          options: [
+            '0 - Obedece órdenes',
+            '1 - Localiza el dolor',
+            '2 - Flexión al dolor',
+            '3 - Extensión al dolor',
+            '4 - No respuesta motora'
+          ],
+          score: 0
+        },
+        {
+          id: 'respiratory_pattern',
+          label: 'Patrón respiratorio',
+          options: [
+            '0 - Normal o respiración espontánea',
+            '1 - Respiración irregular',
+            '2 - Apnea o ventilación mecánica obligatoria'
+          ],
+          score: 0
+        }
+      ]
+    },
+    {
+      id: 'rass_scale',
+      name: 'RASS (Richmond Agitation-Sedation Scale)',
+      category: 'Neurocríticos',
+      description: 'Escala de agitación y sedación de Richmond para pacientes críticos',
+      items: [
+        {
+          id: 'sedation_agitation_level',
+          label: 'Nivel de sedación/agitación',
+          options: [
+            '+4 - Combativo: Violento, peligro inmediato para el personal',
+            '+3 - Muy agitado: Agresivo, se quita tubos o catéteres',
+            '+2 - Agitado: Movimientos frecuentes sin propósito, lucha con el ventilador',
+            '+1 - Inquieto: Ansioso, aprehensivo, movimientos no agresivos',
+            '0 - Alerta y tranquilo: Espontáneamente alerta y obedece órdenes',
+            '-1 - Somnoliento: No completamente alerta, pero mantiene los ojos abiertos al llamado verbal (>10 seg)',
+            '-2 - Sedación ligera: Se despierta brevemente al llamado verbal (<10 seg)',
+            '-3 - Sedación moderada: Movimiento o apertura ocular al llamado verbal (sin contacto visual)',
+            '-4 - Sedación profunda: Sin respuesta al llamado verbal, pero movimiento o apertura ocular al estímulo físico',
+            '-5 - Sin respuesta: Sin respuesta al llamado verbal o estímulo físico'
+          ],
+          score: 0
+        }
+      ]
     }
   ];
 
