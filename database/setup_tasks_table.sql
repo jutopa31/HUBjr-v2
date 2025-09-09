@@ -1,5 +1,5 @@
 -- Create tasks table for the pendientes management system
-CREATE TABLE IF NOT EXISTS tasks (
+CREATE TABLE tasks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT,
@@ -14,17 +14,27 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
-CREATE INDEX IF NOT EXISTS idx_tasks_patient_id ON tasks(patient_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_source ON tasks(source);
-CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+DROP INDEX IF EXISTS idx_tasks_status;
+CREATE INDEX idx_tasks_status ON tasks(status);
 
--- Add RLS (Row Level Security) policies if needed
+DROP INDEX IF EXISTS idx_tasks_priority;
+CREATE INDEX idx_tasks_priority ON tasks(priority);
+
+DROP INDEX IF EXISTS idx_tasks_patient_id;
+CREATE INDEX idx_tasks_patient_id ON tasks(patient_id);
+
+DROP INDEX IF EXISTS idx_tasks_source;
+CREATE INDEX idx_tasks_source ON tasks(source);
+
+DROP INDEX IF EXISTS idx_tasks_due_date;
+CREATE INDEX idx_tasks_due_date ON tasks(due_date);
+
+-- Add RLS (Row Level Security) policies
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for now (you can restrict this based on your auth requirements)
-CREATE POLICY IF NOT EXISTS "Enable all operations for tasks" ON tasks
+-- Drop policy if exists and create new one
+DROP POLICY IF EXISTS "Enable all operations for tasks" ON tasks;
+CREATE POLICY "Enable all operations for tasks" ON tasks
   FOR ALL USING (true);
 
 -- Create updated_at trigger
@@ -36,7 +46,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER IF NOT EXISTS update_tasks_updated_at 
+-- Drop trigger if exists and create new one
+DROP TRIGGER IF EXISTS update_tasks_updated_at ON tasks;
+CREATE TRIGGER update_tasks_updated_at 
   BEFORE UPDATE ON tasks 
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
