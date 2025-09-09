@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { supabase } from './utils/supabase';
+import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 
 interface Patient {
   id?: string;
@@ -142,6 +143,13 @@ const WardRounds: React.FC = () => {
 
       if (error) throw error;
       
+      // Sincronizar con el sistema de tareas
+      const patientWithId = { ...updatedPatient, id };
+      const syncSuccess = await createOrUpdateTaskFromPatient(patientWithId);
+      if (!syncSuccess) {
+        console.warn('No se pudo sincronizar con el sistema de tareas');
+      }
+      
       setEditingId(null);
       loadPatients();
     } catch (error) {
@@ -158,12 +166,28 @@ const WardRounds: React.FC = () => {
 
   const saveInlinePendientes = async (patientId: string) => {
     try {
+      // Actualizar pendientes en la base de datos del pase de sala
       const { error } = await supabase
         .from('ward_round_patients')
         .update({ pendientes: tempPendientes })
         .eq('id', patientId);
 
       if (error) throw error;
+      
+      // Obtener información completa del paciente para sincronizar con tareas
+      const { data: patientData, error: fetchError } = await supabase
+        .from('ward_round_patients')
+        .select('id, nombre, dni, cama, severidad, pendientes')
+        .eq('id', patientId)
+        .single();
+
+      if (!fetchError && patientData) {
+        // Sincronizar con el sistema de tareas
+        const syncSuccess = await createOrUpdateTaskFromPatient(patientData);
+        if (!syncSuccess) {
+          console.warn('No se pudo sincronizar con el sistema de tareas');
+        }
+      }
       
       setEditingPendientesId(null);
       setTempPendientes('');
@@ -179,62 +203,288 @@ const WardRounds: React.FC = () => {
     setTempPendientes('');
   };
 
-  // Exportar a PDF (simple)
+  // Exportar a PDF estilo tabla Excel compacta
   const exportToPDF = () => {
-    const printContent = document.getElementById('ward-round-table');
-    if (!printContent) return;
-
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const today = new Date().toLocaleDateString('es-AR');
+    const today = new Date().toLocaleDateString('es-AR', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
     
-    printWindow.document.write(`
+    // Función para truncar texto largo
+    const truncateText = (text: string, maxLength: number) => {
+      if (!text) return '';
+      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+
+    // Generar filas de la tabla
+    const generateTableRows = () => {
+      return sortedPatients.map((patient, index) => {
+        const severityColor = 
+          patient.severidad === 'I' ? '#10b981' :
+          patient.severidad === 'II' ? '#f59e0b' :
+          patient.severidad === 'III' ? '#f97316' :
+          patient.severidad === 'IV' ? '#ef4444' : '#6b7280';
+
+        return `
+          <tr>
+            <td class="number-cell">${index + 1}</td>
+            <td class="text-cell bold">${patient.nombre || '-'}</td>
+            <td class="text-cell">${patient.dni || '-'}</td>
+            <td class="text-cell">${patient.edad || '-'}</td>
+            <td class="text-cell">${patient.cama || '-'}</td>
+            <td class="severity-cell" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
+              <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
+            </td>
+            <td class="text-cell small">${truncateText(patient.antecedentes, 80)}</td>
+            <td class="text-cell small">${truncateText(patient.motivo_consulta, 80)}</td>
+            <td class="text-cell small">${truncateText(patient.examen_fisico, 60)}</td>
+            <td class="text-cell small">${truncateText(patient.estudios, 80)}</td>
+            <td class="text-cell small">${truncateText(patient.diagnostico, 80)}</td>
+            <td class="text-cell small">${truncateText(patient.plan, 80)}</td>
+            <td class="text-cell small pending-cell">${truncateText(patient.pendientes, 60)}</td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    const htmlContent = `
+      <!DOCTYPE html>
       <html>
         <head>
           <title>Pase de Sala Neurología - ${today}</title>
+          <meta charset="UTF-8">
           <style>
+            @media print {
+              body { -webkit-print-color-adjust: exact; }
+              @page { 
+                margin: 0.5cm; 
+                size: A4 landscape;
+              }
+            }
+            
             body { 
-              font-family: Arial, sans-serif; 
-              margin: 20px; 
-              font-size: 12px;
+              font-family: 'Arial', sans-serif; 
+              margin: 0;
+              padding: 8px;
+              font-size: 8px;
+              line-height: 1.2;
+              color: #333;
             }
-            h1 { 
-              text-align: center; 
+            
+            .header {
+              text-align: center;
+              margin-bottom: 10px;
+              padding-bottom: 8px;
+              border-bottom: 2px solid #2563eb;
+            }
+            
+            .header h1 { 
               color: #2563eb;
-              margin-bottom: 20px;
-            }
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin-top: 10px;
-            }
-            th, td { 
-              border: 1px solid #ccc; 
-              padding: 8px; 
-              text-align: left;
-              vertical-align: top;
-              word-wrap: break-word;
-            }
-            th { 
-              background-color: #f3f4f6; 
+              font-size: 16px;
+              margin: 0 0 3px 0;
               font-weight: bold;
             }
-            .expandable-row { background-color: #ffffff; }
-            .medical-card { background-color: #f9fafb; }
-            .severity-indicator { font-weight: 600; }
+            
+            .header .info {
+              color: #666;
+              font-size: 9px;
+            }
+            
+            .summary-bar {
+              background: #f8f9fa;
+              padding: 6px 12px;
+              border-radius: 4px;
+              margin-bottom: 8px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 8px;
+              border-left: 3px solid #2563eb;
+            }
+            
+            .summary-stats {
+              display: flex;
+              gap: 15px;
+            }
+            
+            .stat {
+              display: flex;
+              align-items: center;
+              gap: 3px;
+            }
+            
+            .stat-number {
+              font-weight: bold;
+              color: #2563eb;
+            }
+            
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              border: 1px solid #d1d5db;
+              font-size: 7px;
+            }
+            
+            th {
+              background: #f9fafb;
+              font-weight: bold;
+              padding: 4px 2px;
+              text-align: center;
+              border: 1px solid #d1d5db;
+              font-size: 7px;
+              color: #374151;
+              white-space: nowrap;
+            }
+            
+            td {
+              padding: 3px 2px;
+              border: 1px solid #e5e7eb;
+              vertical-align: top;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+            }
+            
+            .number-cell {
+              width: 25px;
+              text-align: center;
+              font-weight: bold;
+              background: #f9fafb;
+            }
+            
+            .text-cell {
+              max-width: 80px;
+              word-break: break-word;
+            }
+            
+            .text-cell.bold {
+              font-weight: bold;
+              color: #1f2937;
+            }
+            
+            .text-cell.small {
+              font-size: 6px;
+              line-height: 1.3;
+            }
+            
+            .severity-cell {
+              width: 35px;
+              text-align: center;
+              font-weight: bold;
+            }
+            
+            .pending-cell {
+              background: #fefce8;
+              border-left: 2px solid #f59e0b;
+            }
+            
+            tr:nth-child(even) {
+              background-color: #f9fafb;
+            }
+            
+            tr:hover {
+              background-color: #f3f4f6;
+            }
+            
+            /* Optimización de columnas */
+            .col-name { width: 10%; }
+            .col-dni { width: 7%; }
+            .col-age { width: 5%; }
+            .col-bed { width: 8%; }
+            .col-severity { width: 5%; }
+            .col-history { width: 12%; }
+            .col-reason { width: 12%; }
+            .col-exam { width: 10%; }
+            .col-studies { width: 12%; }
+            .col-diagnosis { width: 12%; }
+            .col-plan { width: 12%; }
+            .col-pending { width: 10%; }
+            
+            .footer {
+              margin-top: 8px;
+              text-align: center;
+              color: #6b7280;
+              font-size: 7px;
+              border-top: 1px solid #e5e7eb;
+              padding-top: 4px;
+            }
           </style>
         </head>
         <body>
-          <h1>PASE DE SALA NEUROLOGÍA - ${today}</h1>
-          ${printContent.outerHTML}
+          <div class="header">
+            <h1>PASE DE SALA NEUROLOGÍA</h1>
+            <div class="info">${today} - Hospital Nacional Posadas</div>
+          </div>
+          
+          <div class="summary-bar">
+            <div class="summary-stats">
+              <div class="stat">
+                <span class="stat-number">${patients.length}</span>
+                <span>Total</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number">${patients.filter(p => p.severidad === 'IV').length}</span>
+                <span>Críticos</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number">${patients.filter(p => p.severidad === 'III').length}</span>
+                <span>Severos</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number">${patients.filter(p => p.pendientes && p.pendientes.trim()).length}</span>
+                <span>Con Pendientes</span>
+              </div>
+            </div>
+            <div>Generado: ${new Date().toLocaleString('es-AR', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-name">Nombre</th>
+                <th class="col-dni">DNI</th>
+                <th class="col-age">Edad</th>
+                <th class="col-bed">Cama</th>
+                <th class="col-severity">Sev</th>
+                <th class="col-history">Antecedentes</th>
+                <th class="col-reason">Motivo Consulta</th>
+                <th class="col-exam">EF/NIHSS/ABCD2</th>
+                <th class="col-studies">Estudios</th>
+                <th class="col-diagnosis">Diagnóstico</th>
+                <th class="col-plan">Plan</th>
+                <th class="col-pending">Pendientes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${generateTableRows()}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            Pase de Sala Neurología - Hospital Nacional Posadas - Servicio de Neurología
+          </div>
         </body>
       </html>
-    `);
+    `;
     
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
+    
+    // Esperar un momento para que se cargue el contenido antes de imprimir
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   if (loading) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle, Trash2, Edit3, Save, X, Filter, Calendar } from 'lucide-react';
+import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle, Trash2, Edit3, Save, X, Filter, Calendar, Users } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
+import { syncAllPendientes, completeTaskAndClearPatientPendientes } from './utils/pendientesSync';
 
 interface Task {
   id?: string;
@@ -9,6 +10,8 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'completed';
   due_date?: string;
+  patient_id?: string;
+  source?: string;
   created_by?: string;
   created_at?: string;
   updated_at?: string;
@@ -21,6 +24,8 @@ const PendientesManager: React.FC = () => {
   const [_editingTask, setEditingTask] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterSource, setFilterSource] = useState<string>('all');
+  const [syncing, setSyncing] = useState(false);
   const [newTask, setNewTask] = useState<Task>({
     title: '',
     description: '',
@@ -73,6 +78,24 @@ const PendientesManager: React.FC = () => {
     setLoading(false);
   };
 
+  // Sync with ward rounds
+  const handleSyncWithWardRounds = async () => {
+    setSyncing(true);
+    try {
+      const success = await syncAllPendientes();
+      if (success) {
+        await fetchTasks(); // Refresh the task list
+        alert('Sincronización completada exitosamente');
+      } else {
+        alert('Error durante la sincronización');
+      }
+    } catch (error) {
+      console.error('Error syncing:', error);
+      alert('Error durante la sincronización');
+    }
+    setSyncing(false);
+  };
+
   // Add new task
   const addTask = async () => {
     if (!newTask.title.trim()) return;
@@ -119,6 +142,24 @@ const PendientesManager: React.FC = () => {
   // Update task status
   const updateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
     try {
+      // Si la tarea se está marcando como completada y es del pase de sala, usar la función especializada
+      const task = tasks.find(t => t.id === taskId);
+      if (newStatus === 'completed' && task?.source === 'ward_rounds') {
+        const success = await completeTaskAndClearPatientPendientes(taskId, true);
+        if (success) {
+          // Update local state
+          setTasks(tasks.map(t => 
+            t.id === taskId 
+              ? { ...t, status: newStatus, updated_at: new Date().toISOString() }
+              : t
+          ));
+        } else {
+          alert('Error al completar la tarea del pase de sala');
+        }
+        return;
+      }
+
+      // Para tareas normales, actualización estándar
       const { error } = await supabase
         .from('tasks')
         .update({ 
@@ -137,7 +178,7 @@ const PendientesManager: React.FC = () => {
           : task
       ));
     } catch (err) {
-      console.error('Error updating task:', err);
+      console.error('Error updating task status:', err);
     }
   };
 
@@ -166,7 +207,10 @@ const PendientesManager: React.FC = () => {
   const filteredTasks = tasks.filter(task => {
     const statusMatch = filterStatus === 'all' || task.status === filterStatus;
     const priorityMatch = filterPriority === 'all' || task.priority === filterPriority;
-    return statusMatch && priorityMatch;
+    const sourceMatch = filterSource === 'all' || 
+      (filterSource === 'ward_rounds' && task.source === 'ward_rounds') ||
+      (filterSource === 'manual' && task.source !== 'ward_rounds');
+    return statusMatch && priorityMatch && sourceMatch;
   });
 
   // Get priority icon and color
@@ -213,14 +257,24 @@ const PendientesManager: React.FC = () => {
               <p className="text-purple-100 text-lg">Lista de tareas y recordatorios</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
-            disabled={loading}
-          >
-            <Plus className="h-5 w-5" />
-            <span>Nueva Tarea</span>
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
+              disabled={loading}
+            >
+              <Plus className="h-5 w-5" />
+              <span>Nueva Tarea</span>
+            </button>
+            <button
+              onClick={handleSyncWithWardRounds}
+              className="flex items-center space-x-2 bg-blue-600 bg-opacity-80 hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all text-white"
+              disabled={syncing || loading}
+            >
+              <Users className="h-5 w-5" />
+              <span>{syncing ? 'Sincronizando...' : 'Sincronizar Pase'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -252,6 +306,18 @@ const PendientesManager: React.FC = () => {
               <option value="high">Alta</option>
               <option value="medium">Media</option>
               <option value="low">Baja</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Origen:</label>
+            <select 
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-1 text-sm"
+            >
+              <option value="all">Todas</option>
+              <option value="ward_rounds">Pase de Sala</option>
+              <option value="manual">Manuales</option>
             </select>
           </div>
           <div className="text-sm text-gray-500">
@@ -409,6 +475,13 @@ const PendientesManager: React.FC = () => {
                         }`}>
                           {task.title}
                         </h3>
+                        
+                        {task.source === 'ward_rounds' && (
+                          <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                            <Users className="h-3 w-3" />
+                            <span>Pase de Sala</span>
+                          </span>
+                        )}
                         
                         <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${priorityDisplay.color}`}>
                           <PriorityIcon className="h-3 w-3" />
