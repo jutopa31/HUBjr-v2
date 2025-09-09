@@ -805,7 +805,7 @@ const WardRounds: React.FC = () => {
                         </div>
                         <div className="ward-col-diagnostico hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
-                            {patient.diagnostico ? patient.diagnostico.slice(0, 35) + '...' : 'Sin diagnóstico'}
+                            {patient.diagnostico ? patient.diagnostico.slice(0, 25) + '...' : 'Sin diagnóstico'}
                           </div>
                         </div>
                         <div className="ward-col-severidad">
@@ -863,7 +863,7 @@ const WardRounds: React.FC = () => {
                               }}
                               title="Clic para editar pendientes"
                             >
-                              {patient.pendientes ? patient.pendientes.slice(0, 40) + (patient.pendientes.length > 40 ? '...' : '') : 'Sin pendientes'}
+                              {patient.pendientes ? patient.pendientes.slice(0, 30) + (patient.pendientes.length > 30 ? '...' : '') : 'Sin pendientes'}
                             </div>
                           )}
                         </div>

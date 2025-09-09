@@ -82,16 +82,16 @@ html, body, #root {
 /* Ward Rounds Table Grid Layout */
 .ward-header-grid {
   display: grid;
-  grid-template-columns: 24% 16% 22% 14% 16% 8%;
-  gap: 0.75rem;
+  grid-template-columns: 22% 14% 18% 12% 16% 10%;
+  gap: 0.5rem;
   align-items: center;
   min-height: 2rem;
 }
 
 .ward-content-grid {
   display: grid;
-  grid-template-columns: 24% 16% 22% 14% 16% 8%;
-  gap: 1rem;
+  grid-template-columns: 22% 14% 18% 12% 16% 10%;
+  gap: 0.5rem;
   align-items: center;
 }
 
@@ -134,22 +134,22 @@ html, body, #root {
 /* Large tablets and small desktops */
 @media (max-width: 1024px) {
   .ward-header-grid {
-    grid-template-columns: 26% 18% 20% 14% 16% 6%;
+    grid-template-columns: 24% 16% 18% 12% 18% 8%;
   }
   
   .ward-content-grid {
-    grid-template-columns: 26% 18% 20% 14% 16% 6%;
+    grid-template-columns: 24% 16% 18% 12% 18% 8%;
   }
 }
 
 /* Tablets */
 @media (max-width: 768px) {
   .ward-header-grid {
-    grid-template-columns: 32% 22% 18% 22% 6%;
+    grid-template-columns: 30% 20% 16% 24% 8%;
   }
   
   .ward-content-grid {
-    grid-template-columns: 32% 22% 18% 22% 6%;
+    grid-template-columns: 30% 20% 16% 24% 8%;
   }
   
   .ward-col-diagnostico {
