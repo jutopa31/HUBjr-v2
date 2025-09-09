@@ -805,7 +805,7 @@ const WardRounds: React.FC = () => {
                         </div>
                         <div className="ward-col-diagnostico hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
-                            {patient.diagnostico ? patient.diagnostico.slice(0, 45) + '...' : 'Sin diagnóstico'}
+                            {patient.diagnostico ? patient.diagnostico.slice(0, 35) + '...' : 'Sin diagnóstico'}
                           </div>
                         </div>
                         <div className="ward-col-severidad">
