@@ -38,7 +38,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   // Estado para el buscador de escalas
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isSearching, setIsSearching] = useState<boolean>(false);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -195,7 +194,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setIsSearching(e.target.value.trim().length > 0);
               }}
               placeholder="Buscar escalas..."
               className="w-full pl-10 pr-10 py-2 text-sm rounded-lg bg-white bg-opacity-20 text-white placeholder-blue-200 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent"
@@ -204,7 +202,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               <button
                 onClick={() => {
                   setSearchQuery('');
-                  setIsSearching(false);
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-200 hover:text-white transition-colors"
               >
