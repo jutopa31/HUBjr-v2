@@ -5135,7 +5135,11 @@ Motivo de consulta:
           </ProtectedRoute>
         );
       case 'saved-patients':
-        return <SavedPatients />;
+        return (
+          <ProtectedRoute>
+            <SavedPatients />
+          </ProtectedRoute>
+        );
       case 'pendientes':
         return <PendientesManager />;
       /* case 'clinical':
