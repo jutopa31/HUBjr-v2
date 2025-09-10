@@ -9,7 +9,7 @@ import PendientesManager from './PendientesManager';
 import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
-import { UserMenu, ProtectedRoute } from './components/auth';
+import { ProtectedRoute } from './components/auth';
 import SimpleUserMenu from './components/auth/SimpleUserMenu';
 
 // Import types from separate file
