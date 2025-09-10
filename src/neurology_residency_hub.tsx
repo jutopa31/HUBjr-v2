@@ -9,6 +9,8 @@ import PendientesManager from './PendientesManager';
 import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
+import { UserMenu, ProtectedRoute } from './components/auth';
+import SimpleUserMenu from './components/auth/SimpleUserMenu';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -5127,7 +5129,11 @@ Motivo de consulta:
       case 'schedule':
         return <EventManagerSupabase />;
       case 'ward-rounds':
-        return <WardRounds />;
+        return (
+          <ProtectedRoute>
+            <WardRounds />
+          </ProtectedRoute>
+        );
       case 'saved-patients':
         return <SavedPatients />;
       case 'pendientes':
@@ -5204,11 +5210,6 @@ Motivo de consulta:
   // Renderizar el modal en un portal fuera del flujo principal
   const modalRoot = typeof window !== 'undefined' ? document.getElementById('modal-root') : null;
   
-  // Debug modal rendering conditions
-  console.log('🔍 Modal rendering check:');
-  console.log('  - selectedScale:', selectedScale ? selectedScale.name : 'null');
-  console.log('  - modalRoot exists:', !!modalRoot);
-  console.log('  - window defined:', typeof window !== 'undefined');
   
   // Create modal content
   const modalContent = selectedScale ? (
@@ -5227,10 +5228,6 @@ Motivo de consulta:
       )
     : null;
     
-  // Debug modal portal creation
-  console.log('🔍 Modal portal created:', !!modalPortal);
-  console.log('🔍 Using portal:', !!modalRoot);
-  console.log('🔍 Using fallback rendering:', selectedScale && !modalRoot);
 
   return (
     <div className="h-screen bg-gray-100 flex overflow-hidden">
@@ -5263,13 +5260,16 @@ Motivo de consulta:
         </button>
 
         <div className="p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <Brain className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="font-bold text-lg">Neurología</h1>
-              <p className="text-sm text-gray-600">Hospital Posadas</p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Brain className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="font-bold text-lg">Neurología</h1>
+                <p className="text-sm text-gray-600">Hospital Posadas</p>
+              </div>
             </div>
           </div>
+          <SimpleUserMenu />
         </div>
         
         <nav className="flex-1 p-4 overflow-y-auto">

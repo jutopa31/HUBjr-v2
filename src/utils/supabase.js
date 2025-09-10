@@ -30,7 +30,17 @@ if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
 }
 
 // Initialize Supabase client
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    // Clear invalid sessions automatically
+    onAuthTokenRefresh: (event, session) => {
+      if (!session) {
+        console.log('Session refresh failed, clearing auth state');
+        supabase.auth.signOut();
+      }
+    }
+  }
+});
 
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
@@ -38,4 +48,23 @@ export const isSupabaseConfigured = () => {
          supabaseUrl !== 'your-supabase-url-here' && 
          supabaseKey !== 'your-supabase-anon-key-here' &&
          supabaseUrl.startsWith('https://');
+};
+
+// Helper function to clear corrupted auth state
+export const clearAuthState = async () => {
+  console.log('Clearing corrupted auth state...');
+  
+  // Clear localStorage tokens
+  if (typeof window !== 'undefined') {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('supabase.')) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+  
+  // Sign out from Supabase
+  await supabase.auth.signOut();
+  
+  console.log('Auth state cleared');
 };
