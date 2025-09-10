@@ -224,6 +224,39 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
             </div>
           )}
 
+          {scale.id === 'mich' && (
+            <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="text-sm text-red-800">
+                <p className="font-medium mb-2">Interpretación de la Escala mICH:</p>
+                <div className="bg-white rounded-lg p-3 mb-3">
+                  <div className="text-xs text-gray-700 mb-2">
+                    <strong>Mortalidad estimada a 30 días:</strong>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <ul className="space-y-1 text-gray-600">
+                        <li>• <strong>0 puntos:</strong> 2% mortalidad</li>
+                        <li>• <strong>1 punto:</strong> 6% mortalidad</li>
+                        <li>• <strong>2 puntos:</strong> 13% mortalidad</li>
+                        <li>• <strong>3 puntos:</strong> 26% mortalidad</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <ul className="space-y-1 text-gray-600">
+                        <li>• <strong>4 puntos:</strong> 50% mortalidad</li>
+                        <li>• <strong>5 puntos:</strong> 75% mortalidad</li>
+                        <li>• <strong>6 puntos:</strong> 90% mortalidad</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-yellow-100 p-2 rounded text-xs text-yellow-800">
+                  <strong>Advertencia:</strong> La escala mICH estima mortalidad a 30 días. No debe usarse como único criterio para retirar soporte vital. Validar con guías locales.
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 flex space-x-3">
             <button
               onClick={handleSubmit}

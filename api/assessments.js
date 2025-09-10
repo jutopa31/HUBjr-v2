@@ -109,7 +109,7 @@ export default async function handler(req, res) {
           'NIHSS', 'Glasgow', 'UPDRS-I', 'UPDRS-II', 'UPDRS-III', 'UPDRS-IV',
           'MDS-Parkinson-2015', 'Ashworth', 'mRS', 'ASPECTS', 'CHA2DS2-VASc',
           'HAS-BLED', 'ICH', 'Hunt-Hess', 'McDonald-2024', 'MMSE', 'MoCA',
-          'MIDAS', 'HIT-6', 'Hoehn-Yahr', 'EDSS', 'Engel'
+          'MIDAS', 'HIT-6', 'Hoehn-Yahr', 'EDSS', 'Engel', 'mICH'
         ];
 
         if (!validScales.includes(newAssessment.scaleType)) {

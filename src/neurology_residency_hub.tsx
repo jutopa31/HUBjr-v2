@@ -2418,6 +2418,60 @@ Motivo de consulta:
           score: 0
         }
       ]
+    },
+    {
+      id: 'mich',
+      name: 'Escala mICH (Modified Intracerebral Hemorrhage Score)',
+      category: 'Evaluación Neurológica',
+      description: 'Escala de pronóstico para mortalidad a 30 días en hemorragia intracerebral',
+      items: [
+        {
+          id: 'age',
+          label: 'Edad del paciente',
+          options: [
+            '0 - ≤79 años',
+            '1 - ≥80 años'
+          ],
+          score: 0
+        },
+        {
+          id: 'gcs',
+          label: 'Glasgow Coma Scale en el ingreso',
+          options: [
+            '0 - 13-15 puntos',
+            '1 - 5-12 puntos', 
+            '2 - 3-4 puntos'
+          ],
+          score: 0
+        },
+        {
+          id: 'ich_volume_ml',
+          label: 'Volumen de hematoma intracerebral en mL',
+          options: [
+            '0 - <30 mL',
+            '1 - ≥30 mL'
+          ],
+          score: 0
+        },
+        {
+          id: 'intraventricular_extension',
+          label: 'Extensión intraventricular',
+          options: [
+            '0 - No',
+            '1 - Sí'
+          ],
+          score: 0
+        },
+        {
+          id: 'infratentorial',
+          label: 'Localización infratentorial',
+          options: [
+            '0 - No',
+            '1 - Sí'
+          ],
+          score: 0
+        }
+      ]
     }
   ];
 
