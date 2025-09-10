@@ -216,7 +216,7 @@ export function useAuth() {
   }, [loadMFAFactors]);
 
   // Verify MFA challenge (for login) - simplified
-  const verifyMFA = useCallback(async (factorId: string, code: string, challengeId?: string) => {
+  const verifyMFA = useCallback(async (factorId: string, code: string) => {
     try {
       // Always use enrollment verification for now to avoid challenge ID issues
       return await verifyMFAEnrollment(factorId, code);
