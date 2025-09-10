@@ -8,11 +8,6 @@ function SimpleUserMenu() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalView, setAuthModalView] = useState<'login' | 'mfa'>('login');
 
-  const openMFASetup = () => {
-    setAuthModalView('mfa');
-    setShowAuthModal(true);
-  };
-
   const openLogin = () => {
     setAuthModalView('login');
     setShowAuthModal(true);
