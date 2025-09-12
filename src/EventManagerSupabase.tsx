@@ -118,11 +118,10 @@ const EventManagerSupabase: React.FC = () => {
           alert(`${recurringEvents.length} eventos creados exitosamente`);
         }
       } else {
-        // Single event (remove recurrence fields for DB)
-        const { is_recurring, recurrence_pattern, recurrence_end, ...eventForDB } = baseEventData;
+        // Single event
         const { error } = await supabase
           .from('medical_events')
-          .insert([eventForDB]);
+          .insert([baseEventData]);
 
         if (error) {
           console.error('Supabase error:', error);
