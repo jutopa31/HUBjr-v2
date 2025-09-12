@@ -25,7 +25,6 @@ const EventManagerSupabase: React.FC = () => {
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [showClases, setShowClases] = useState(true);
   const [showTareas, setShowTareas] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<MedicalEvent | null>(null);
@@ -296,7 +295,6 @@ const EventManagerSupabase: React.FC = () => {
     const endTime = new Date(startTime);
     endTime.setMinutes(startTime.getMinutes() + 5); // Add 5 minutes
     
-    setSelectedDay(day);
     setNewEvent({
       title: '',
       start_date: startTime.toISOString().slice(0, 16), // Format for datetime-local input
