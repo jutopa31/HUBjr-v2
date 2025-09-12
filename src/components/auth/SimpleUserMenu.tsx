@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { User, Shield } from 'lucide-react';
 import { useAuthContext } from './AuthProvider';
 import AuthModal from './AuthModal';
@@ -32,11 +33,14 @@ function SimpleUserMenu() {
           Iniciar Sesión
         </button>
         
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          initialView={authModalView}
-        />
+        {showAuthModal && ReactDOM.createPortal(
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            initialView={authModalView}
+          />,
+          document.body
+        )}
       </>
     );
   }
@@ -78,11 +82,14 @@ function SimpleUserMenu() {
         </button>
       </div>
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialView={authModalView}
-      />
+      {showAuthModal && ReactDOM.createPortal(
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          initialView={authModalView}
+        />,
+        document.body
+      )}
     </>
   );
 }

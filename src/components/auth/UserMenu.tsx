@@ -78,7 +78,13 @@ function UserMenu() {
             />
             
             {/* Menu */}
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-screen overflow-y-auto" 
+                 style={{
+                   maxHeight: 'calc(100vh - 100px)',
+                   right: '0',
+                   transform: 'translateX(0)',
+                   minWidth: '280px'
+                 }}>
               <div className="py-2">
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-gray-100">

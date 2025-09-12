@@ -351,12 +351,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     <div className="flex-1 p-6">
       <div className="h-full bg-white rounded-lg shadow">
         <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Notas del Paciente</h2>
-              <p className="text-sm text-gray-600 mt-1">Registre la información del paciente y resultados de escalas</p>
-            </div>
-            <div className="flex space-x-2">
+          <div className="text-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Notas del Paciente</h2>
+          </div>
+          <div className="flex justify-center space-x-2">
               <button
                 onClick={handleSavePatient}
                 className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -404,7 +402,6 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                 <Plus className="h-4 w-4" />
                 <span>Test IA</span>
               </button>
-            </div>
           </div>
         </div>
         <div className="p-4 h-full">

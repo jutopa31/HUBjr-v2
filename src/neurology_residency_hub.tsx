@@ -86,7 +86,7 @@ Motivo de consulta:
 
   const menuItems = [
     { id: 'inicio', icon: Home, label: 'Inicio' },
-    { id: 'diagnostic', icon: Calculator, label: 'Algoritmos Diagnósticos' },
+    { id: 'diagnostic', icon: Calculator, label: 'Evolucionador' },
     { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
     { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },

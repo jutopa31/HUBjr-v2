@@ -158,7 +158,7 @@ function MFASetup({ onClose }: MFASetupProps) {
 
   if (step === 'setup' && enrollmentData) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mb-4">
             <QrCode className="h-6 w-6 text-blue-600" />
@@ -245,7 +245,7 @@ function MFASetup({ onClose }: MFASetupProps) {
 
   if (step === 'verify' && enrollmentData) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mb-4">
             <Key className="h-6 w-6 text-green-600" />
