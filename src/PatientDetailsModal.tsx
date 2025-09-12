@@ -69,11 +69,11 @@ Hospital Nacional Posadas - Servicio de Neurología`;
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div className="bg-white w-full h-full overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center justify-between">
+        <div className="p-8 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 sticky top-0 z-10">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-blue-100 rounded-full">
                 <User className="h-6 w-6 text-blue-600" />
@@ -120,37 +120,37 @@ Hospital Nacional Posadas - Servicio de Neurología`;
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-          <div className="p-6">
+        <div className="overflow-y-auto h-full">
+          <div className="p-8 pb-24 max-w-7xl mx-auto">
             {/* Applied Scales */}
             {patient.scale_results && patient.scale_results.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Brain className="h-5 w-5 mr-2 text-purple-600" />
+              <div className="mb-10">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                  <Brain className="h-6 w-6 mr-3 text-purple-600" />
                   Escalas Aplicadas ({patient.scale_results.length})
                 </h3>
-                <div className="grid gap-4">
+                <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
                   {patient.scale_results.map((scale, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{scale.scale_name}</h4>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                    <div key={index} className="bg-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">{scale.scale_name}</h4>
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span className="flex items-center">
-                              <Calendar className="h-3 w-3 mr-1" />
+                              <Calendar className="h-4 w-4 mr-2" />
                               {formatDate(scale.completed_at)}
                             </span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-purple-600">{scale.score}</div>
-                          <div className="text-xs text-gray-500">puntos</div>
+                        <div className="text-right ml-4">
+                          <div className="text-3xl font-bold text-purple-600">{scale.score}</div>
+                          <div className="text-sm text-gray-500 font-medium">puntos</div>
                         </div>
                       </div>
                       {scale.details && (
-                        <div className="text-sm text-gray-700 bg-white rounded p-3 border">
-                          <div className="font-medium text-gray-900 mb-1">Detalles:</div>
-                          <div className="whitespace-pre-wrap">{scale.details}</div>
+                        <div className="text-sm text-gray-700 bg-white rounded-lg p-4 border">
+                          <div className="font-semibold text-gray-900 mb-2">Detalles:</div>
+                          <div className="whitespace-pre-wrap leading-relaxed">{scale.details}</div>
                         </div>
                       )}
                     </div>
@@ -161,21 +161,21 @@ Hospital Nacional Posadas - Servicio de Neurología`;
 
             {/* Clinical Notes */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <FileText className="h-6 w-6 mr-3 text-blue-600" />
                 Notas Clínicas
               </h3>
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">
+              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <div className="text-base text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {patient.clinical_notes}
                 </div>
               </div>
             </div>
 
             {/* Metadata */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">Información del Registro</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="mt-10 pt-8 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-500 mb-4">Información del Registro</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                 <div>
                   <span className="text-gray-500">Creado por:</span>
                   <div className="font-medium">{patient.created_by || 'Neurología'}</div>
@@ -200,13 +200,15 @@ Hospital Nacional Posadas - Servicio de Neurología`;
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white focus:ring-2 focus:ring-blue-500"
-          >
-            Cerrar
-          </button>
+        <div className="fixed bottom-0 left-0 right-0 p-8 border-t border-gray-200 bg-white bg-opacity-95 backdrop-blur-sm flex justify-end space-x-4">
+          <div className="max-w-7xl mx-auto w-full flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-white focus:ring-2 focus:ring-blue-500 font-medium shadow-lg"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
