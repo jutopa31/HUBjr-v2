@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays } from 'lucide-react';
+import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, BookOpen, Users, FileText, Heart, AlertTriangle } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
 
 interface MedicalEvent {
@@ -113,9 +113,9 @@ const EventManagerSupabase: React.FC = () => {
 
         if (error) {
           console.error('Supabase error:', error);
-          alert('Error al crear eventos recurrentes: ' + error.message);
+          alert('❌ Error al crear eventos recurrentes: ' + error.message + '\n\nVerifica que tu conexión a Supabase esté funcionando.');
         } else {
-          alert(`${recurringEvents.length} eventos creados exitosamente`);
+          alert(`✅ ${recurringEvents.length} eventos creados exitosamente`);
         }
       } else {
         // Single event
@@ -125,7 +125,9 @@ const EventManagerSupabase: React.FC = () => {
 
         if (error) {
           console.error('Supabase error:', error);
-          alert('Error al crear evento: ' + error.message);
+          alert('❌ Error al crear evento: ' + error.message + '\n\nVerifica que tu conexión a Supabase esté funcionando.');
+        } else {
+          alert(`✅ Evento "${newEvent.title}" creado exitosamente`);
         }
       }
 
@@ -201,13 +203,16 @@ const EventManagerSupabase: React.FC = () => {
   // Get event type color
   const getEventTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
-      // Clases (Academic) - Verde
-      academic: 'bg-green-100 text-green-800 border-green-300',
-      // Tareas - Azul
+      // Clases (Academic) - Verde brillante distintivo
+      academic: 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 border-emerald-400 shadow-md',
+      // Tareas Clínicas - Azul
       clinical: 'bg-blue-100 text-blue-800 border-blue-300',
-      administrative: 'bg-blue-100 text-blue-800 border-blue-300',
+      // Administrativo - Púrpura
+      administrative: 'bg-purple-100 text-purple-800 border-purple-300',
+      // Emergencia - Rojo
       emergency: 'bg-red-100 text-red-800 border-red-300',
-      social: 'bg-blue-100 text-blue-800 border-blue-300',
+      // Social - Naranja
+      social: 'bg-orange-100 text-orange-800 border-orange-300',
     };
     return colors[type] || colors.clinical;
   };
@@ -215,13 +220,13 @@ const EventManagerSupabase: React.FC = () => {
   // Get event type icon
   const getEventTypeIcon = (type: string) => {
     const icons: { [key: string]: React.FC<any> } = {
-      clinical: User,
-      academic: Calendar,
-      administrative: CalendarDays,
-      social: MapPin,
-      emergency: Clock,
+      clinical: Users, // Tareas clínicas
+      academic: BookOpen, // Clases académicas - icono de libro
+      administrative: FileText, // Administrativo
+      social: Heart, // Social
+      emergency: AlertTriangle, // Emergencia
     };
-    return icons[type] || User;
+    return icons[type] || Users;
   };
 
   // Load events on component mount
@@ -506,14 +511,33 @@ const EventManagerSupabase: React.FC = () => {
               </button>
             </div>
 
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
-              disabled={loading}
-            >
-              <Plus className="h-5 w-5" />
-              <span>Nuevo Evento</span>
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
+                disabled={loading}
+              >
+                <Plus className="h-5 w-5" />
+                <span>Nuevo Evento</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setNewEvent({
+                    ...newEvent,
+                    type: 'academic',
+                    title: ''
+                  });
+                  setShowForm(true);
+                }}
+                className="flex items-center space-x-2 bg-green-500 bg-opacity-80 hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all"
+                disabled={loading}
+                title="Crear una clase académica"
+              >
+                <span>📚</span>
+                <span>Nueva Clase</span>
+              </button>
+            </div>
             
             <button
               onClick={() => {
@@ -568,10 +592,21 @@ const EventManagerSupabase: React.FC = () => {
       {/* Quick Event Form */}
       {showForm && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <h3 className="text-lg font-semibold mb-2 flex items-center">
             <Plus className="h-5 w-5 mr-2 text-blue-600" />
             Crear Nuevo Evento Médico
+            {newEvent.type === 'academic' && (
+              <span className="ml-2 text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                📚 Modo Clase
+              </span>
+            )}
           </h3>
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              <strong>💡 Tip:</strong> Los eventos de tipo "Académico" aparecerán en el filtro "Clases".
+              Los demás tipos aparecerán en "Tareas".
+            </p>
+          </div>
           <form onSubmit={createEvent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -596,12 +631,15 @@ const EventManagerSupabase: React.FC = () => {
                   onChange={(e) => setNewEvent({...newEvent, type: e.target.value})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="clinical">Clínico</option>
-                  <option value="academic">Académico</option>
-                  <option value="administrative">Administrativo</option>
-                  <option value="social">Social</option>
-                  <option value="emergency">Emergencia</option>
+                  <option value="clinical">Clínico (Tareas)</option>
+                  <option value="academic">📚 Académico (Clases)</option>
+                  <option value="administrative">Administrativo (Tareas)</option>
+                  <option value="social">Social (Tareas)</option>
+                  <option value="emergency">Emergencia (Tareas)</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Selecciona "Académico" para crear clases que aparecerán en el filtro "Clases"
+                </p>
               </div>
 
               <div>
@@ -771,20 +809,21 @@ const EventManagerSupabase: React.FC = () => {
                           });
                           
                           return (
-                            <div 
+                            <div
                               key={event.id}
-                              className="bg-white p-2 rounded border border-gray-200 hover:shadow-md transition-all cursor-pointer hover:scale-105"
+                              className={`p-2 rounded border hover:shadow-md transition-all cursor-pointer hover:scale-105 ${getEventTypeColor(event.type || 'clinical')}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openEventDetails(event);
                               }}
                             >
                               <div className="flex items-center space-x-2 mb-1">
-                                <Icon className="h-3 w-3 text-gray-500" />
-                                <span className="text-xs font-medium text-gray-600">{startTime}</span>
+                                <Icon className={`h-3 w-3 ${event.type === 'academic' ? 'text-emerald-600' : 'text-gray-500'}`} />
+                                <span className="text-xs font-medium opacity-75">{startTime}</span>
                               </div>
-                              <div className="text-xs text-gray-800 line-clamp-2">
-                                {event.title}
+                              <div className="text-xs font-medium line-clamp-2 flex items-center space-x-1">
+                                {event.type === 'academic' && <span className="text-[10px]">📚</span>}
+                                <span>{event.title}</span>
                               </div>
                               {event.location && (
                                 <div className="text-xs text-gray-500 mt-1 flex items-center">
@@ -848,12 +887,13 @@ const EventManagerSupabase: React.FC = () => {
                     {dayEvents.length > 0 && (
                       <div className="mt-1 space-y-0.5">
                         {dayEvents.slice(0, 2).map((event) => (
-                          <div 
+                          <div
                             key={event.id}
-                            className="text-xs bg-blue-100 text-blue-800 px-1 rounded truncate"
-                            title={event.title}
+                            className={`text-xs px-2 py-1 rounded truncate font-medium flex items-center space-x-1 ${getEventTypeColor(event.type || 'clinical')}`}
+                            title={`${event.title} - ${event.type === 'academic' ? '📚 Clase' : 'Tarea'}`}
                           >
-                            {event.title}
+                            {React.createElement(getEventTypeIcon(event.type || 'clinical'), { className: "w-2 h-2 flex-shrink-0" })}
+                            <span className="truncate">{event.title}</span>
                           </div>
                         ))}
                         {dayEvents.length > 2 && (
@@ -926,11 +966,14 @@ const EventManagerSupabase: React.FC = () => {
                           ) : (
                             <h4 className="font-semibold text-lg text-gray-800">{event.title}</h4>
                           )}
-                          <span className={`px-2 py-1 text-xs rounded-full border ${getEventTypeColor(event.type || 'clinical')}`}>
-                            {event.type === 'clinical' ? 'Clínico' :
-                             event.type === 'academic' ? 'Académico' :
-                             event.type === 'administrative' ? 'Admin' :
-                             event.type === 'social' ? 'Social' : 'Emergencia'}
+                          <span className={`px-3 py-1 text-xs rounded-full border flex items-center space-x-1 ${getEventTypeColor(event.type || 'clinical')}`}>
+                            {React.createElement(getEventTypeIcon(event.type || 'clinical'), { className: "w-3 h-3" })}
+                            <span className="font-medium">
+                              {event.type === 'clinical' ? 'Clínico' :
+                               event.type === 'academic' ? '📚 Clase' :
+                               event.type === 'administrative' ? 'Admin' :
+                               event.type === 'social' ? 'Social' : 'Emergencia'}
+                            </span>
                           </span>
                         </div>
                         
@@ -1105,11 +1148,14 @@ const EventManagerSupabase: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className={`px-2 py-1 text-xs rounded-full border ${getEventTypeColor(selectedEvent.type || 'clinical')}`}>
-                    {selectedEvent.type === 'clinical' ? 'Clínico' :
-                     selectedEvent.type === 'academic' ? 'Académico' :
-                     selectedEvent.type === 'administrative' ? 'Admin' :
-                     selectedEvent.type === 'social' ? 'Social' : 'Emergencia'}
+                  <span className={`px-3 py-1 text-sm rounded-full border flex items-center space-x-2 ${getEventTypeColor(selectedEvent.type || 'clinical')}`}>
+                    {React.createElement(getEventTypeIcon(selectedEvent.type || 'clinical'), { className: "w-4 h-4" })}
+                    <span className="font-medium">
+                      {selectedEvent.type === 'clinical' ? 'Clínico' :
+                       selectedEvent.type === 'academic' ? '📚 Clase Académica' :
+                       selectedEvent.type === 'administrative' ? 'Administrativo' :
+                       selectedEvent.type === 'social' ? 'Social' : 'Emergencia'}
+                    </span>
                   </span>
                 </div>
               </div>

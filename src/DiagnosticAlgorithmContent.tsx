@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X } from 'lucide-react';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
 import SavePatientModal from './SavePatientModal';
+import NeurologicalExamModal from './components/NeurologicalExamModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
 
@@ -38,6 +39,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   // Estado para el buscador de escalas
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Estado para el modal de examen físico neurológico
+  const [showNeurologicalExam, setShowNeurologicalExam] = useState(false);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -216,7 +220,28 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
           )}
         </div>
       </div>
+
+      {/* Sección de Examen Físico Neurológico */}
+      <div className="border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-cyan-50 p-4">
+        <button
+          onClick={() => setShowNeurologicalExam(true)}
+          className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
+        >
+          <Brain className="h-5 w-5" />
+          <span>Examen Físico Neurológico</span>
+          <Stethoscope className="h-4 w-4" />
+        </button>
+        <p className="text-emerald-700 text-xs text-center mt-2">Evaluación sistemática por esferas neurológicas</p>
+      </div>
+
       <div className="p-4">
+        <div className="mb-4 border-b border-gray-200 pb-4">
+          <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+            <Calculator className="h-4 w-4 mr-2" />
+            Escalas Diagnósticas
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">Herramientas de puntuación y evaluación clínica</p>
+        </div>
         <div className="space-y-4">
           {Object.entries(groupedScales).map(([category, scales]) => {
             const isAISuggestions = category === '🤖 Sugerencias IA';
@@ -439,6 +464,19 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
         fullNotes={notes}
       />
     )}
+
+    {/* Modal de Examen Físico Neurológico */}
+    <NeurologicalExamModal
+      isOpen={showNeurologicalExam}
+      onClose={() => setShowNeurologicalExam(false)}
+      onExamCompleted={(examData) => {
+        // Agregar resultados del examen a las notas
+        const examSummary = `\n\n=== EXAMEN FÍSICO NEUROLÓGICO ===\nFecha: ${new Date().toLocaleDateString()}\nExaminador: ${examData.examiner || 'Dr. Usuario'}\n\nHallazgos principales:\n- Estado mental: ${examData.mental_state?.consciousness?.level || 'No evaluado'}\n- Consciencia: ${examData.mental_state?.consciousness?.orientation ? 'Orientado' : 'Desorientado'}\n- Examen realizado completo\n\n`;
+        setNotes(notes + examSummary);
+        setShowNeurologicalExam(false);
+      }}
+      examiner="Dr. Usuario"
+    />
   </div>
   );
 };
