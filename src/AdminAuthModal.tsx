@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Lock, Eye, EyeOff, X, Brain, Settings } from 'lucide-react';
+import { Lock, Eye, EyeOff, X, Brain, Settings, Stethoscope } from 'lucide-react';
 import AIConfigPanel from './AIConfigPanel';
+import NeurologicalExamModal from './components/NeurologicalExamModal';
 
 interface AdminAuthModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAIConfig, setShowAIConfig] = useState(false);
+  const [showNeurologicalExam, setShowNeurologicalExam] = useState(false);
 
   // Contraseña simple para demo - en producción debería ser más segura
   const ADMIN_PASSWORD = 'admin2025';
@@ -46,6 +48,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     setError('');
     setIsAuthenticated(false);
     setShowAIConfig(false);
+    setShowNeurologicalExam(false);
     onClose();
   };
 
@@ -96,11 +99,31 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 </div>
               </button>
 
+              {/* Procesador OCR */}
+
+              {/* Examen Neurológico Interactivo */}
+              <button
+                onClick={() => setShowNeurologicalExam(true)}
+                className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
+              >
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Stethoscope className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-medium text-gray-900">Examen Neurológico</h3>
+                  <p className="text-sm text-gray-600">
+                    Sistema interactivo paso a paso para evaluación completa
+                  </p>
+                </div>
+              </button>
+
               {/* Otras configuraciones futuras */}
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2">Funciones Disponibles</h3>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Configuración de IA y API Keys</li>
+                  <li>• Configuración de IA y API Keys ✅</li>
+                  <li>• Procesador OCR para documentos médicos ✅</li>
+                  <li>• Examen Neurológico Interactivo 🚧 (Nuevo)</li>
                   <li>• Gestión de usuarios (próximamente)</li>
                   <li>• Configuración de calendario (próximamente)</li>
                   <li>• Configuración de escalas (próximamente)</li>
@@ -123,6 +146,18 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
         <AIConfigPanel
           isOpen={showAIConfig}
           onClose={() => setShowAIConfig(false)}
+        />
+
+
+        {/* Examen Neurológico */}
+        <NeurologicalExamModal
+          isOpen={showNeurologicalExam}
+          onClose={() => setShowNeurologicalExam(false)}
+          examiner="Dr. Administrador"
+          onExamCompleted={(examData) => {
+            console.log('✅ Examen neurológico completado:', examData);
+            // Aquí se podría integrar con el sistema de pacientes
+          }}
         />
       </>
     );

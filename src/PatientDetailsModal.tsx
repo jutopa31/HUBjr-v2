@@ -1,17 +1,19 @@
 import React from 'react';
-import { X, User, Calendar, FileText, Brain, Copy, Download } from 'lucide-react';
+import { X, User, Calendar, FileText, Brain, Copy, Download, Edit } from 'lucide-react';
 import { PatientAssessment } from './types';
 
 interface PatientDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   patient: PatientAssessment | null;
+  onEdit?: (patient: PatientAssessment) => void;
 }
 
 const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   isOpen,
   onClose,
-  patient
+  patient,
+  onEdit
 }) => {
   if (!isOpen || !patient) return null;
 
@@ -95,6 +97,15 @@ Hospital Nacional Posadas - Servicio de Neurología`;
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(patient)}
+                  className="p-2 text-blue-500 hover:text-blue-700 rounded-lg hover:bg-white"
+                  title="Editar paciente"
+                >
+                  <Edit className="h-5 w-5" />
+                </button>
+              )}
               <button
                 onClick={() => copyToClipboard(patient.clinical_notes)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white"

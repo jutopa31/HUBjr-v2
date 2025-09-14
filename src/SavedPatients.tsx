@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight } from 'lucide-react';
 import { PatientAssessment } from './types';
-import { getPatientAssessments, deletePatientAssessment } from './utils/diagnosticAssessmentDB';
+import { getPatientAssessments, deletePatientAssessment, updatePatientAssessment } from './utils/diagnosticAssessmentDB';
 import PatientDetailsModal from './PatientDetailsModal';
+import EditPatientNotesModal from './EditPatientNotesModal';
 
 const SavedPatients: React.FC = () => {
   const [patients, setPatients] = useState<PatientAssessment[]>([]);
@@ -11,6 +12,7 @@ const SavedPatients: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<PatientAssessment | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Estado para el control de expansión de filas
@@ -79,6 +81,30 @@ const SavedPatients: React.FC = () => {
   const handleViewPatient = (patient: PatientAssessment) => {
     setSelectedPatient(patient);
     setShowDetailsModal(true);
+  };
+
+  const handleEditPatient = (patient: PatientAssessment) => {
+    setSelectedPatient(patient);
+    setShowEditModal(true);
+  };
+
+  const handleSavePatientEdit = async (patientId: string, updates: { clinical_notes: string; patient_name?: string; patient_age?: string; patient_dni?: string }): Promise<boolean> => {
+    try {
+      const result = await updatePatientAssessment(patientId, updates);
+      
+      if (result.success) {
+        // Actualizar la lista de pacientes
+        await loadPatients();
+        return true;
+      } else {
+        setError(result.error || 'Error al actualizar paciente');
+        return false;
+      }
+    } catch (error) {
+      setError('Error inesperado al actualizar paciente');
+      console.error('Error updating patient:', error);
+      return false;
+    }
   };
 
   // Función para alternar la expansión de una fila
@@ -411,6 +437,15 @@ const SavedPatients: React.FC = () => {
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
         patient={selectedPatient}
+        onEdit={handleEditPatient}
+      />
+
+      {/* Edit Patient Notes Modal */}
+      <EditPatientNotesModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        patient={selectedPatient}
+        onSave={handleSavePatientEdit}
       />
     </div>
   );

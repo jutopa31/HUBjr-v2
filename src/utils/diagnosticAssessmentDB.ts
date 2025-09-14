@@ -175,6 +175,56 @@ export async function deletePatientAssessment(assessmentId: string): Promise<{ s
 }
 
 /**
+ * Actualiza una evaluación diagnóstica existente
+ * @param assessmentId - ID de la evaluación a actualizar
+ * @param updates - Datos a actualizar
+ * @returns Promise con el resultado de la operación
+ */
+export async function updatePatientAssessment(
+  assessmentId: string, 
+  updates: Partial<SavePatientData>
+): Promise<{ success: boolean; data?: PatientAssessment; error?: string }> {
+  try {
+    console.log('🔄 Actualizando evaluación diagnóstica:', assessmentId, updates);
+
+    const { data, error } = await supabase
+      .from('diagnostic_assessments')
+      .update({
+        ...(updates.patient_name && { patient_name: updates.patient_name }),
+        ...(updates.patient_age && { patient_age: updates.patient_age }),
+        ...(updates.patient_dni && { patient_dni: updates.patient_dni }),
+        ...(updates.clinical_notes && { clinical_notes: updates.clinical_notes }),
+        ...(updates.scale_results && { scale_results: updates.scale_results }),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', assessmentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Error actualizando evaluación:', error);
+      return { 
+        success: false, 
+        error: `Error al actualizar: ${error.message}` 
+      };
+    }
+
+    console.log('✅ Evaluación actualizada exitosamente:', data);
+    return { 
+      success: true, 
+      data: data as PatientAssessment 
+    };
+
+  } catch (error) {
+    console.error('❌ Error inesperado actualizando:', error);
+    return { 
+      success: false, 
+      error: 'Error inesperado al actualizar la evaluación' 
+    };
+  }
+}
+
+/**
  * Valida la conexión con Supabase
  * @returns Promise indicando si la conexión es exitosa
  */

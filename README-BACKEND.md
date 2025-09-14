@@ -186,13 +186,25 @@ Este backend convive con tu aplicación Vite existente:
 - **Desarrollo Vite original**: `npm run dev:vite` → localhost:5173
 - **APIs disponibles** en ambos entornos via proxy/CORS
 
-## 🚀 Próximos Pasos
+## 🚀 Próximas Implementaciones Prioritarias
 
-1. **Base de datos**: Integrar PostgreSQL/MongoDB
+### 🧠 Sistema de Análisis IA Avanzado (Implementación Inmediata)
+1. **APIs de IA reales**: Integración con OpenAI, Claude, Gemini
+2. **Análisis de texto largo**: Procesamiento de documentos médicos extensos
+3. **Resúmenes estructurados**: Generación automática de reportes médicos
+4. **Modo administrativo**: Funciones avanzadas restringidas
+
+### 📄 Sistema OCR Completo (Implementación Inmediata)  
+1. **Extracción PDF**: Texto directo y OCR para documentos escaneados
+2. **Procesamiento imágenes**: OCR para JPG, PNG, TIFF médicas
+3. **Pipeline integrado**: OCR → IA → Resultados estructurados
+4. **Validación segura**: Control estricto de archivos médicos
+
+### 🔧 Implementaciones Backend Tradicionales
+1. **Base de datos**: PostgreSQL/MongoDB completa
 2. **Autenticación**: JWT + middleware de seguridad
-3. **Conectar frontend**: Usar API desde React components
-4. **Más endpoints**: Pacientes, evaluaciones, calendario
-5. **Testing**: Unit tests para las APIs
+3. **Más endpoints**: Expansión API médica
+4. **Testing**: Unit tests para las APIs
 
 ## 🏥 Específico para Neurología
 

@@ -17,15 +17,20 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.56.1",
     "cors": "^2.8.5",
+    "file-type": "^21.0.0",
     "gapi-script": "^1.2.0",
     "googleapis": "^154.0.0",
     "lucide-react": "^0.400.0",
     "next": "^14.2.32",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^5.4.149",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
