@@ -4938,6 +4938,8 @@ Motivo de consulta:
             clearNotes={clearNotes}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
+            isAdminMode={isAdminMode}
+            currentHospitalContext={'Posadas'}
           />
         );
       case 'inicio':
@@ -5191,7 +5193,7 @@ Motivo de consulta:
       case 'saved-patients':
         return (
           <ProtectedRoute>
-            <SavedPatients />
+            <SavedPatients isAdminMode={isAdminMode} />
           </ProtectedRoute>
         );
       case 'pendientes':
@@ -5260,6 +5262,8 @@ Motivo de consulta:
             copyNotes={copyNotes}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
+            isAdminMode={isAdminMode}
+            currentHospitalContext={'Posadas'}
           />
         );
     }

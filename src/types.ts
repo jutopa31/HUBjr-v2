@@ -48,6 +48,7 @@ export interface PatientAssessment {
   patient_dni: string;
   clinical_notes: string;
   scale_results: SavedScaleResult[];
+  hospital_context?: 'Posadas' | 'Julian';
   created_at?: string;
   created_by?: string;
   status?: string;
@@ -66,4 +67,8 @@ export interface SavePatientData {
   patient_dni: string;
   clinical_notes: string;
   scale_results: SavedScaleResult[];
+  hospital_context?: 'Posadas' | 'Julian';
 }
+
+// Tipos para contexto de hospital
+export type HospitalContext = 'Posadas' | 'Julian';

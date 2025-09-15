@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar } from 'lucide-react';
+import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2 } from 'lucide-react';
 import { ExtractedPatientData, cleanPatientName } from './utils/patientDataExtractor';
-import { SavePatientData } from './types';
+import { SavePatientData, HospitalContext } from './types';
 
 interface SavePatientModalProps {
   isOpen: boolean;
@@ -9,6 +9,8 @@ interface SavePatientModalProps {
   onSave: (patientData: SavePatientData) => Promise<void>;
   extractedData: ExtractedPatientData;
   fullNotes: string;
+  isAdminMode?: boolean;
+  currentHospitalContext?: HospitalContext;
 }
 
 const SavePatientModal: React.FC<SavePatientModalProps> = ({
@@ -16,11 +18,14 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   onClose,
   onSave,
   extractedData,
-  fullNotes
+  fullNotes,
+  isAdminMode = false,
+  currentHospitalContext = 'Posadas'
 }) => {
   const [patientName, setPatientName] = useState(extractedData.name || '');
   const [patientAge, setPatientAge] = useState(extractedData.age || '');
   const [patientDni, setPatientDni] = useState(extractedData.dni || '');
+  const [hospitalContext, setHospitalContext] = useState<HospitalContext>(currentHospitalContext);
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -41,6 +46,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
         patient_age: patientAge,
         patient_dni: patientDni,
         clinical_notes: fullNotes,
+        hospital_context: hospitalContext,
         scale_results: extractedData.extractedScales.map(scale => ({
           scale_name: scale.name,
           score: scale.score,
@@ -175,6 +181,28 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
                 />
               </div>
             </div>
+
+            {/* Selector de Hospital (solo admin) */}
+            {isAdminMode && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Building2 className="h-4 w-4 inline mr-1" />
+                  Hospital/Contexto
+                </label>
+                <select
+                  value={hospitalContext}
+                  onChange={(e) => setHospitalContext(e.target.value as HospitalContext)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isSaving}
+                >
+                  <option value="Posadas">Hospital Posadas</option>
+                  <option value="Julian">Consultorios Julian</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Este selector solo está disponible en modo administrador
+                </p>
+              </div>
+            )}
 
             {/* Vista previa de las notas */}
             <div>

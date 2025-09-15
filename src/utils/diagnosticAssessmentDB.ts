@@ -20,6 +20,7 @@ export async function savePatientAssessment(patientData: SavePatientData): Promi
         patient_dni: patientData.patient_dni,
         clinical_notes: patientData.clinical_notes,
         scale_results: patientData.scale_results,
+        hospital_context: patientData.hospital_context || 'Posadas',
         created_by: 'neurologist',
         status: 'active'
       }])
@@ -56,8 +57,9 @@ export async function savePatientAssessment(patientData: SavePatientData): Promi
  * @returns Datos formateados para guardar
  */
 export function convertExtractedDataToSaveFormat(
-  extractedData: ExtractedPatientData, 
-  fullNotes: string
+  extractedData: ExtractedPatientData,
+  fullNotes: string,
+  hospitalContext: 'Posadas' | 'Julian' = 'Posadas'
 ): SavePatientData {
   const scaleResults: SavedScaleResult[] = extractedData.extractedScales.map((scale: ExtractedScale) => ({
     scale_name: scale.name,
@@ -71,20 +73,31 @@ export function convertExtractedDataToSaveFormat(
     patient_age: extractedData.age || '',
     patient_dni: extractedData.dni || '',
     clinical_notes: fullNotes,
-    scale_results: scaleResults
+    scale_results: scaleResults,
+    hospital_context: hospitalContext
   };
 }
 
 /**
  * Obtiene todas las evaluaciones diagnósticas guardadas
+ * @param hospitalContext - Contexto del hospital para filtrar (opcional)
  * @returns Promise con las evaluaciones
  */
-export async function getPatientAssessments(): Promise<{ success: boolean; data?: PatientAssessment[]; error?: string }> {
+export async function getPatientAssessments(hospitalContext?: 'Posadas' | 'Julian'): Promise<{ success: boolean; data?: PatientAssessment[]; error?: string }> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('diagnostic_assessments')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+
+    // Filtrar por contexto de hospital si se especifica
+    if (hospitalContext) {
+      query = query.eq('hospital_context', hospitalContext);
+    } else {
+      // Por defecto, solo mostrar Posadas
+      query = query.eq('hospital_context', 'Posadas');
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('❌ Error obteniendo evaluaciones:', error);

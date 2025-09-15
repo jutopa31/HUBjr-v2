@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight } from 'lucide-react';
-import { PatientAssessment } from './types';
+import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight, Building2 } from 'lucide-react';
+import { PatientAssessment, HospitalContext } from './types';
 import { getPatientAssessments, deletePatientAssessment, updatePatientAssessment } from './utils/diagnosticAssessmentDB';
 import PatientDetailsModal from './PatientDetailsModal';
 import EditPatientNotesModal from './EditPatientNotesModal';
+import HospitalContextSelector from './HospitalContextSelector';
 
-const SavedPatients: React.FC = () => {
+interface SavedPatientsProps {
+  isAdminMode?: boolean;
+}
+
+const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) => {
   const [patients, setPatients] = useState<PatientAssessment[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientAssessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,14 +19,15 @@ const SavedPatients: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [hospitalContext, setHospitalContext] = useState<HospitalContext>('Posadas');
+
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  // Cargar pacientes al montar el componente
+  // Cargar pacientes al montar el componente y cuando cambie el contexto
   useEffect(() => {
     loadPatients();
-  }, []);
+  }, [hospitalContext]);
 
   // Filtrar pacientes cuando cambie el término de búsqueda
   useEffect(() => {
@@ -41,9 +47,11 @@ const SavedPatients: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const result = await getPatientAssessments();
-      
+
+      // Solo pasar el contexto si está en modo admin, sino usar por defecto Posadas
+      const contextToUse = isAdminMode ? hospitalContext : 'Posadas';
+      const result = await getPatientAssessments(contextToUse);
+
       if (result.success && result.data) {
         setPatients(result.data);
         setFilteredPatients(result.data);
@@ -135,6 +143,22 @@ const SavedPatients: React.FC = () => {
     return `${scaleCount} escalas`;
   };
 
+  const getHospitalBadge = (context: HospitalContext | undefined) => {
+    if (!context) context = 'Posadas'; // fallback por defecto
+
+    const badgeStyles = {
+      'Posadas': 'bg-blue-100 text-blue-800 border-blue-200',
+      'Julian': 'bg-green-100 text-green-800 border-green-200'
+    };
+
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${badgeStyles[context]}`}>
+        <Building2 className="h-3 w-3 mr-1" />
+        {context}
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6">
@@ -167,6 +191,13 @@ const SavedPatients: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Hospital Context Selector (Admin Only) */}
+      <HospitalContextSelector
+        currentContext={hospitalContext}
+        onContextChange={setHospitalContext}
+        isAdminMode={isAdminMode}
+      />
 
       {/* Search Bar */}
       <div className="mb-6">
@@ -318,9 +349,12 @@ const SavedPatients: React.FC = () => {
                           
                           <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                              <span className="severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                {getScaleSummary(patient)}
-                              </span>
+                              <div className="flex items-center space-x-2">
+                                <span className="severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                  {getScaleSummary(patient)}
+                                </span>
+                                {isAdminMode && getHospitalBadge(patient.hospital_context)}
+                              </div>
                               <div className="text-xs text-gray-500 flex items-center">
                                 <Calendar className="h-3 w-3 mr-1" />
                                 {formatDate(patient.created_at || '')}

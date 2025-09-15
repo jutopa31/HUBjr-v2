@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 
@@ -531,163 +531,226 @@ const WardRounds: React.FC = () => {
       {/* Formulario para agregar paciente */}
       {showAddForm && (
         <div className="modal-overlay">
-          <div className="modal-content max-w-4xl w-full medical-form">
-            <div className="p-6 border-b flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Agregar Nuevo Paciente</h2>
+          <div className="modal-content max-w-2xl w-full h-[85vh] flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
+              <h2 className="text-lg font-semibold text-gray-900">Agregar Nuevo Paciente</h2>
               <button
                 onClick={() => {
                   setShowAddForm(false);
                   setNewPatient(emptyPatient);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6">
-              <div className="form-row">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+
+              {/* Sección 1: Datos Básicos */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <User className="h-5 w-5 text-blue-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Datos del Paciente</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Cama</label>
+                    <input
+                      type="text"
+                      value={newPatient.cama}
+                      onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">DNI</label>
+                    <input
+                      type="text"
+                      value={newPatient.dni}
+                      onChange={(e) => setNewPatient({...newPatient, dni: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="12345678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <input
+                      type="text"
+                      value={newPatient.nombre}
+                      onChange={(e) => setNewPatient({...newPatient, nombre: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Apellido, Nombre"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Edad</label>
+                    <input
+                      type="text"
+                      value={newPatient.edad}
+                      onChange={(e) => setNewPatient({...newPatient, edad: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="52 años"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Sección 2: Historia Clínica */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Clipboard className="h-5 w-5 text-green-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Antecedentes</label>
+                    <textarea
+                      value={newPatient.antecedentes}
+                      onChange={(e) => setNewPatient({...newPatient, antecedentes: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="HTA, DBT, dislipidemia..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de Consulta</label>
+                    <textarea
+                      value={newPatient.motivo_consulta}
+                      onChange={(e) => setNewPatient({...newPatient, motivo_consulta: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="Cuadro de inicio súbito caracterizado por..."
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Sección 3: Examen Físico */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Stethoscope className="h-5 w-5 text-purple-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
-                  <input
-                    type="text"
-                    value={newPatient.cama}
-                    onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                    placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
+                  <label className="block text-sm font-medium text-gray-700 mb-2">EF/NIHSS/ABCD2</label>
+                  <textarea
+                    value={newPatient.examen_fisico}
+                    onChange={(e) => setNewPatient({...newPatient, examen_fisico: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    placeholder="Paciente consciente, orientado. NIHSS: 0..."
                   />
                 </div>
+              </section>
+
+              {/* Sección 4: Estudios */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <FlaskConical className="h-5 w-5 text-orange-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
-                  <input
-                    type="text"
-                    value={newPatient.dni}
-                    onChange={(e) => setNewPatient({...newPatient, dni: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Laboratorio e Imágenes</label>
+                  <textarea
+                    value={newPatient.estudios}
+                    onChange={(e) => setNewPatient({...newPatient, estudios: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    placeholder="TC sin contraste, laboratorio, ECG..."
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <input
-                    type="text"
-                    value={newPatient.nombre}
-                    onChange={(e) => setNewPatient({...newPatient, nombre: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
+              </section>
+
+              {/* Sección 5: Diagnóstico y Plan */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Target className="h-5 w-5 text-red-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
-                  <input
-                    type="text"
-                    value={newPatient.edad}
-                    onChange={(e) => setNewPatient({...newPatient, edad: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                    placeholder="22, 52 AÑOS..."
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
+                    <textarea
+                      value={newPatient.diagnostico}
+                      onChange={(e) => setNewPatient({...newPatient, diagnostico: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="ACV isquémico en territorio de ACM derecha..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Plan de Tratamiento</label>
+                    <textarea
+                      value={newPatient.plan}
+                      onChange={(e) => setNewPatient({...newPatient, plan: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={3}
+                      placeholder="Antiagregación, control de factores de riesgo..."
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Antecedentes</label>
-                <textarea
-                  value={newPatient.antecedentes}
-                  onChange={(e) => setNewPatient({...newPatient, antecedentes: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Consulta</label>
-                <textarea
-                  value={newPatient.motivo_consulta}
-                  onChange={(e) => setNewPatient({...newPatient, motivo_consulta: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</label>
-                <textarea
-                  value={newPatient.examen_fisico}
-                  onChange={(e) => setNewPatient({...newPatient, examen_fisico: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estudios Complementarios</label>
-                <textarea
-                  value={newPatient.estudios}
-                  onChange={(e) => setNewPatient({...newPatient, estudios: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={3}
-                />
-              </div>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
-                  <select
-                    value={newPatient.severidad}
-                    onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                  >
-                    <option value="">Seleccionar...</option>
-                    <option value="I">I</option>
-                    <option value="II">II</option>
-                    <option value="III">III</option>
-                    <option value="IV">IV</option>
-                  </select>
+              </section>
+
+              {/* Sección 6: Seguimiento */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <CheckCircle className="h-5 w-5 text-teal-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    value={newPatient.fecha}
-                    onChange={(e) => setNewPatient({...newPatient, fecha: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
+                      <select
+                        value={newPatient.severidad}
+                        onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="I">I - Estable</option>
+                        <option value="II">II - Moderado</option>
+                        <option value="III">III - Severo</option>
+                        <option value="IV">IV - Crítico</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                      <input
+                        type="date"
+                        value={newPatient.fecha}
+                        onChange={(e) => setNewPatient({...newPatient, fecha: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Pendientes</label>
+                    <textarea
+                      value={newPatient.pendientes}
+                      onChange={(e) => setNewPatient({...newPatient, pendientes: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="Interconsulta neuropsicología, control en 48hs..."
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Diagnóstico</label>
-                <textarea
-                  value={newPatient.diagnostico}
-                  onChange={(e) => setNewPatient({...newPatient, diagnostico: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
-                <textarea
-                  value={newPatient.plan}
-                  onChange={(e) => setNewPatient({...newPatient, plan: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={3}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pendientes</label>
-                <textarea
-                  value={newPatient.pendientes}
-                  onChange={(e) => setNewPatient({...newPatient, pendientes: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                  placeholder="Estudios pendientes, interconsultas, seguimientos..."
-                />
-              </div>
+              </section>
+
             </div>
-            <div className="p-6 border-t flex justify-end space-x-3">
+            <div className="p-4 border-t bg-white flex justify-end space-x-3 sticky bottom-0">
               <button
                 onClick={() => {
                   setShowAddForm(false);
                   setNewPatient(emptyPatient);
                 }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
               >
                 Cancelar
               </button>
               <button
                 onClick={addPatient}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
               >
                 Guardar Paciente
               </button>
@@ -955,157 +1018,220 @@ const WardRounds: React.FC = () => {
       {/* Formulario de Edición Modal */}
       {editingId && (
         <div className="modal-overlay">
-          <div className="modal-content max-w-4xl w-full medical-form">
-            <div className="p-6 border-b flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Editar Paciente</h2>
+          <div className="modal-content max-w-2xl w-full h-[85vh] flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
+              <h2 className="text-lg font-semibold text-gray-900">Editar Paciente</h2>
               <button
                 onClick={() => {
                   setEditingId(null);
                   setEditingPatient(emptyPatient);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6">
-              <div className="form-row">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+
+              {/* Sección 1: Datos Básicos */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <User className="h-5 w-5 text-blue-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Datos del Paciente</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Cama</label>
+                    <input
+                      type="text"
+                      value={editingPatient.cama}
+                      onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">DNI</label>
+                    <input
+                      type="text"
+                      value={editingPatient.dni}
+                      onChange={(e) => setEditingPatient({...editingPatient, dni: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="12345678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <input
+                      type="text"
+                      value={editingPatient.nombre}
+                      onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Apellido, Nombre"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Edad</label>
+                    <input
+                      type="text"
+                      value={editingPatient.edad}
+                      onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="52 años"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Sección 2: Historia Clínica */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Clipboard className="h-5 w-5 text-green-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Antecedentes</label>
+                    <textarea
+                      value={editingPatient.antecedentes}
+                      onChange={(e) => setEditingPatient({...editingPatient, antecedentes: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="HTA, DBT, dislipidemia..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de Consulta</label>
+                    <textarea
+                      value={editingPatient.motivo_consulta}
+                      onChange={(e) => setEditingPatient({...editingPatient, motivo_consulta: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="Cuadro de inicio súbito caracterizado por..."
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Sección 3: Examen Físico */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Stethoscope className="h-5 w-5 text-purple-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cama</label>
-                  <input
-                    type="text"
-                    value={editingPatient.cama}
-                    onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                    placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
+                  <label className="block text-sm font-medium text-gray-700 mb-2">EF/NIHSS/ABCD2</label>
+                  <textarea
+                    value={editingPatient.examen_fisico}
+                    onChange={(e) => setEditingPatient({...editingPatient, examen_fisico: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    placeholder="Paciente consciente, orientado. NIHSS: 0..."
                   />
                 </div>
+              </section>
+
+              {/* Sección 4: Estudios */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <FlaskConical className="h-5 w-5 text-orange-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
-                  <input
-                    type="text"
-                    value={editingPatient.dni}
-                    onChange={(e) => setEditingPatient({...editingPatient, dni: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Laboratorio e Imágenes</label>
+                  <textarea
+                    value={editingPatient.estudios}
+                    onChange={(e) => setEditingPatient({...editingPatient, estudios: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    placeholder="TC sin contraste, laboratorio, ECG..."
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <input
-                    type="text"
-                    value={editingPatient.nombre}
-                    onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
+              </section>
+
+              {/* Sección 5: Diagnóstico y Plan */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <Target className="h-5 w-5 text-red-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
-                  <input
-                    type="text"
-                    value={editingPatient.edad}
-                    onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                    placeholder="22, 52 AÑOS..."
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
+                    <textarea
+                      value={editingPatient.diagnostico}
+                      onChange={(e) => setEditingPatient({...editingPatient, diagnostico: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="ACV isquémico en territorio de ACM derecha..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Plan de Tratamiento</label>
+                    <textarea
+                      value={editingPatient.plan}
+                      onChange={(e) => setEditingPatient({...editingPatient, plan: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={3}
+                      placeholder="Antiagregación, control de factores de riesgo..."
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Antecedentes</label>
-                <textarea
-                  value={editingPatient.antecedentes}
-                  onChange={(e) => setEditingPatient({...editingPatient, antecedentes: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Consulta</label>
-                <textarea
-                  value={editingPatient.motivo_consulta}
-                  onChange={(e) => setEditingPatient({...editingPatient, motivo_consulta: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</label>
-                <textarea
-                  value={editingPatient.examen_fisico}
-                  onChange={(e) => setEditingPatient({...editingPatient, examen_fisico: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estudios Complementarios</label>
-                <textarea
-                  value={editingPatient.estudios}
-                  onChange={(e) => setEditingPatient({...editingPatient, estudios: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={3}
-                />
-              </div>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Severidad</label>
-                  <select
-                    value={editingPatient.severidad}
-                    onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                  >
-                    <option value="">Seleccionar...</option>
-                    <option value="I">I</option>
-                    <option value="II">II</option>
-                    <option value="III">III</option>
-                    <option value="IV">IV</option>
-                  </select>
+              </section>
+
+              {/* Sección 6: Seguimiento */}
+              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <CheckCircle className="h-5 w-5 text-teal-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    value={editingPatient.fecha}
-                    onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
+                      <select
+                        value={editingPatient.severidad}
+                        onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="I">I - Estable</option>
+                        <option value="II">II - Moderado</option>
+                        <option value="III">III - Severo</option>
+                        <option value="IV">IV - Crítico</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                      <input
+                        type="date"
+                        value={editingPatient.fecha}
+                        onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Pendientes</label>
+                    <textarea
+                      value={editingPatient.pendientes}
+                      onChange={(e) => setEditingPatient({...editingPatient, pendientes: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      placeholder="Interconsulta neuropsicología, control en 48hs..."
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Diagnóstico</label>
-                <textarea
-                  value={editingPatient.diagnostico}
-                  onChange={(e) => setEditingPatient({...editingPatient, diagnostico: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
-                <textarea
-                  value={editingPatient.plan}
-                  onChange={(e) => setEditingPatient({...editingPatient, plan: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={3}
-                />
-              </div>
-              <div className="form-row full-width">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pendientes</label>
-                <textarea
-                  value={editingPatient.pendientes}
-                  onChange={(e) => setEditingPatient({...editingPatient, pendientes: e.target.value})}
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={2}
-                  placeholder="Estudios pendientes, interconsultas, seguimientos..."
-                />
-              </div>
+              </section>
+
             </div>
-            <div className="p-6 border-t flex justify-end space-x-3">
+            <div className="p-4 border-t bg-white flex justify-end space-x-3 sticky bottom-0">
               <button
                 onClick={() => {
                   setEditingId(null);
                   setEditingPatient(emptyPatient);
                 }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
               >
                 Cancelar
               </button>
@@ -1115,7 +1241,7 @@ const WardRounds: React.FC = () => {
                     updatePatient(editingId, editingPatient);
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 text-sm"
               >
                 <Save className="h-4 w-4" />
                 <span>Guardar Cambios</span>

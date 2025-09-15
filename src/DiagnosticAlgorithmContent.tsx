@@ -16,6 +16,8 @@ interface DiagnosticAlgorithmContentProps {
   openScaleModal: (scaleId: string) => void;
   medicalScales: Scale[];
   clickedScale?: string | null;
+  isAdminMode?: boolean;
+  currentHospitalContext?: 'Posadas' | 'Julian';
 }
 
 const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
@@ -26,6 +28,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   openScaleModal,
   medicalScales,
   clickedScale,
+  isAdminMode = false,
+  currentHospitalContext = 'Posadas'
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
@@ -462,6 +466,8 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
         onSave={handleConfirmSave}
         extractedData={extractPatientData(notes)}
         fullNotes={notes}
+        isAdminMode={isAdminMode}
+        currentHospitalContext={currentHospitalContext}
       />
     )}
 
