@@ -28,8 +28,6 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<string | null>(null);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['magistral', 'ateneo', 'seminario', 'examen', 'taller', 'rotacion']);
 
   const [newClass, setNewClass] = useState<AcademicClass>({
