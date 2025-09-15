@@ -14,7 +14,7 @@ function ProtectedRoute({
   requireMFA = false, 
   fallback 
 }: ProtectedRouteProps) {
-  const { user, loading, hasMFA } = useAuthContext();
+  const { user, loading } = useAuthContext();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   if (loading) {
@@ -63,37 +63,6 @@ function ProtectedRoute({
     );
   }
 
-  if (requireMFA && !hasMFA) {
-    return (
-      <>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <div className="text-center max-w-md mx-auto p-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-6">
-              <Shield className="h-8 w-8 text-orange-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              MFA Requerido
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Esta sección requiere autenticación de dos factores para mayor seguridad.
-            </p>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700"
-            >
-              Configurar MFA
-            </button>
-          </div>
-        </div>
-        
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          initialView="mfa"
-        />
-      </>
-    );
-  }
 
   return <>{children}</>;
 }

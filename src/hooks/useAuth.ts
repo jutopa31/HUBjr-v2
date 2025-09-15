@@ -9,12 +9,6 @@ export interface AuthState {
   error: string | null;
 }
 
-export interface MFAFactors {
-  id: string;
-  friendly_name?: string;
-  factor_type: 'totp';
-  status: 'verified' | 'unverified';
-}
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
@@ -24,7 +18,6 @@ export function useAuth() {
     error: null,
   });
 
-  const [mfaFactors, setMfaFactors] = useState<MFAFactors[]>([]);
 
   useEffect(() => {
     // Get initial session
@@ -48,10 +41,6 @@ export function useAuth() {
           loading: false,
         }));
         
-        // Load MFA factors if user is logged in
-        if (session?.user) {
-          loadMFAFactors();
-        }
       }
     });
 
@@ -66,11 +55,6 @@ export function useAuth() {
         loading: false,
       }));
 
-      if (session?.user) {
-        loadMFAFactors();
-      } else {
-        setMfaFactors([]);
-      }
     });
 
     return () => subscription.unsubscribe();
@@ -169,122 +153,13 @@ export function useAuth() {
     }
   }, []);
 
-  const enrollMFA = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.auth.mfa.enroll({
-        factorType: 'totp',
-        friendlyName: 'HubJR Authenticator',
-      });
 
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      const authError = error as AuthError;
-      return { data: null, error: authError };
-    }
-  }, []);
-
-  // Verify MFA enrollment (no challenge needed)
-  const verifyMFAEnrollment = useCallback(async (factorId: string, code: string) => {
-    try {
-      console.log('Verifying MFA enrollment with:', { factorId, code: code.substring(0, 3) + '***' });
-      
-      // For enrollment verification, we need to use a different approach
-      // Create a minimal verification object without challengeId
-      const verificationData = {
-        factorId: factorId,
-        code: code
-      };
-      
-      console.log('Sending verification data (enrollment):', verificationData);
-      
-      const { data, error } = await supabase.auth.mfa.verify(verificationData as any);
-
-      if (error) {
-        console.error('Supabase MFA verify error:', error);
-        throw error;
-      }
-      
-      console.log('MFA enrollment verification successful:', data);
-      await loadMFAFactors(); // Reload factors after verification
-      return { data, error: null };
-    } catch (error) {
-      console.error('MFA enrollment verification error:', error);
-      const authError = error as AuthError;
-      return { data: null, error: authError };
-    }
-  }, [loadMFAFactors]);
-
-  // Verify MFA challenge (for login) - simplified
-  const verifyMFA = useCallback(async (factorId: string, code: string) => {
-    try {
-      // Always use enrollment verification for now to avoid challenge ID issues
-      return await verifyMFAEnrollment(factorId, code);
-    } catch (error) {
-      const authError = error as AuthError;
-      return { data: null, error: authError };
-    }
-  }, [verifyMFAEnrollment]);
-
-  const unenrollMFA = useCallback(async (factorId: string) => {
-    try {
-      const { data, error } = await supabase.auth.mfa.unenroll({
-        factorId,
-      });
-
-      if (error) throw error;
-      await loadMFAFactors(); // Reload factors after unenrollment
-      return { data, error: null };
-    } catch (error) {
-      const authError = error as AuthError;
-      return { data: null, error: authError };
-    }
-  }, [loadMFAFactors]);
-
-  const challengeMFA = useCallback(async (factorId: string) => {
-    try {
-      const { data, error } = await supabase.auth.mfa.challenge({
-        factorId,
-      });
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      const authError = error as AuthError;
-      return { data: null, error: authError };
-    }
-  }, []);
-
-  const verifyMFAChallenge = useCallback(async (factorId: string, challengeId: string, code: string) => {
-    try {
-      const { data, error } = await supabase.auth.mfa.verify({
-        factorId,
-        challengeId,
-        code,
-      });
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      const authError = error as AuthError;
-      return { data: null, error: authError };
-    }
-  }, []);
 
   return {
     ...state,
-    mfaFactors,
-    hasMFA: mfaFactors.some(factor => factor.status === 'verified'),
     signUp,
     signIn,
     signOut,
     resetPassword,
-    enrollMFA,
-    verifyMFA,
-    verifyMFAEnrollment,
-    unenrollMFA,
-    challengeMFA,
-    verifyMFAChallenge,
-    refreshMFAFactors: loadMFAFactors,
   };
 }

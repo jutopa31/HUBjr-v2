@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { User, Settings, Shield, LogOut, ChevronDown } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
 import { useAuthContext } from './AuthProvider';
 import AuthModal from './AuthModal';
 
 function UserMenu() {
-  const { user, signOut, hasMFA, loading } = useAuthContext();
+  const { user, signOut, loading } = useAuthContext();
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalView, setAuthModalView] = useState<'login' | 'mfa'>('login');
@@ -14,11 +14,6 @@ function UserMenu() {
     setIsOpen(false);
   };
 
-  const openMFASetup = () => {
-    setAuthModalView('mfa');
-    setShowAuthModal(true);
-    setIsOpen(false);
-  };
 
   const openLogin = () => {
     setAuthModalView('login');
@@ -96,13 +91,7 @@ function UserMenu() {
                       <p className="text-sm font-medium text-gray-900">{userDisplayName}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                       <div className="flex items-center mt-1">
-                        <span className="text-xs text-gray-500 capitalize mr-2">{userRole}</span>
-                        {hasMFA && (
-                          <div className="flex items-center text-xs text-green-600">
-                            <Shield className="h-3 w-3 mr-1" />
-                            MFA Activo
-                          </div>
-                        )}
+                        <span className="text-xs text-gray-500 capitalize">{userRole}</span>
                       </div>
                     </div>
                   </div>
@@ -110,22 +99,6 @@ function UserMenu() {
 
                 {/* Menu Items */}
                 <div className="py-1">
-                  <button
-                    onClick={openMFASetup}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <Shield className="h-4 w-4 mr-3" />
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center justify-between">
-                        <span>Autenticación 2FA</span>
-                        {!hasMFA && (
-                          <span className="text-xs text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                            Configurar
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
 
                   <button
                     onClick={() => {

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { User, Shield } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useAuthContext } from './AuthProvider';
 import AuthModal from './AuthModal';
 
 function SimpleUserMenu() {
-  const { user, signOut, hasMFA, loading } = useAuthContext();
+  const { user, signOut, loading } = useAuthContext();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalView, setAuthModalView] = useState<'login' | 'mfa'>('login');
 
@@ -45,32 +45,18 @@ function SimpleUserMenu() {
     );
   }
 
-  // User is logged in - show user info and MFA option
+  // User is logged in - show user info
   return (
     <>
       <div className="w-full space-y-3">
         {/* User Info */}
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center mb-2">
+          <div className="flex items-center">
             <User className="h-4 w-4 text-blue-600 mr-2" />
             <span className="text-sm font-medium text-blue-900">
               {user.email}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-blue-700">
-              MFA: {hasMFA ? 'Activo' : 'Inactivo'}
-            </span>
-            {hasMFA && (
-              <Shield className="h-4 w-4 text-green-600" />
-            )}
-          </div>
-        </div>
-
-        {/* MFA Setup Button - Temporarily disabled */}
-        <div className="w-full flex items-center justify-center px-4 py-3 text-sm font-medium rounded-lg text-gray-500 bg-gray-100 border border-gray-300">
-          <Shield className="h-4 w-4 mr-2" />
-          MFA (En desarrollo)
         </div>
 
         {/* Sign Out Button */}

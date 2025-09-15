@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { X, Shield } from 'lucide-react';
+import { X } from 'lucide-react';
 import LoginForm from './LoginForm';
-import MFASetup from './MFASetup';
 import { useAuthContext } from './AuthProvider';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialView?: 'login' | 'mfa';
+  initialView?: 'login';
 }
 
 function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalProps) {
   const { user } = useAuthContext();
-  const [view, setView] = useState<'login' | 'signup' | 'mfa'>(initialView);
+  const [view, setView] = useState<'login' | 'signup'>(initialView);
   const [showSignUp, setShowSignUp] = useState(false);
 
   // Update view when initialView changes (for switching between login and MFA)
@@ -44,28 +43,11 @@ function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalProps) {
         </button>
 
         {/* Content */}
-        {view === 'mfa' || (user && initialView === 'mfa') ? (
-          <MFASetup onClose={onClose} />
-        ) : (
-          <LoginForm
-            onSuccess={handleSuccess}
-            onToggleMode={handleToggleMode}
-            showSignUp={showSignUp}
-          />
-        )}
-
-        {/* Switch to MFA setup if logged in and not already in MFA view */}
-        {user && view !== 'mfa' && initialView !== 'mfa' && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setView('mfa')}
-              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-            >
-              <Shield className="h-4 w-4 mr-1" />
-              Configurar MFA
-            </button>
-          </div>
-        )}
+        <LoginForm
+          onSuccess={handleSuccess}
+          onToggleMode={handleToggleMode}
+          showSignUp={showSignUp}
+        />
       </div>
     </div>
   );
