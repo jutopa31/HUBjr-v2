@@ -182,12 +182,6 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
     });
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   const filteredClasses = classes.filter(classItem =>
     selectedTypes.includes(classItem.type)

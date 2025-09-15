@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Filter, Plus, Eye, Heart, Download, Edit3, Trash2, X, Save, ExternalLink, Tag, Clock, User, Star } from 'lucide-react';
+import { BookOpen, Search, Filter, Plus, Eye, Heart, Edit3, Trash2, X, Save, ExternalLink, Clock, User, Star } from 'lucide-react';
 import { supabase } from './utils/supabase';
 
 interface AcademicResource {
@@ -21,12 +21,6 @@ interface AcademicResource {
   created_at?: string;
 }
 
-interface UserResourceFavorite {
-  id?: string;
-  user_id: string;
-  resource_id: string;
-  created_at?: string;
-}
 
 interface RecursosManagerProps {
   isAdminMode?: boolean;
