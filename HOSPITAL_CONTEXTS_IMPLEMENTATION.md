@@ -193,7 +193,29 @@ CHECK (hospital_context IN ('Posadas', 'Julian'));
 
 ---
 
+---
+
+## 🎓 Próxima Implementación: Sección "Academia"
+
+### **Nueva Funcionalidad Planificada:**
+- 📅 **Cronograma de Clases**: Sistema de calendario académico con tipos de actividades (magistrales, ateneos, seminarios, exámenes)
+- 📚 **Sistema de Recursos**: Gestión de materiales educativos con enlaces a Google Drive organizados por categorías
+- 🔍 **Búsqueda y Filtros**: Sistema avanzado de búsqueda por categorías, tags y tipos de contenido
+- 👨‍🏫 **Tracking de Clases**: Recordatorios, asistencia y materiales por clase
+- ⭐ **Recursos Favoritos**: Sistema de marcadores y recursos frecuentes
+
+### **Arquitectura Técnica:**
+- `AcademiaManager.tsx` - Componente principal con tabs
+- `ClasesScheduler.tsx` - Calendario académico basado en EventManager
+- `RecursosManager.tsx` - Gestión de recursos con Google Drive
+- Nuevas tablas DB: `academic_classes`, `academic_resources`
+- Integración con navegación existente usando ícono `BookOpen`
+
+### **Estado**: 📋 **EN PLANIFICACIÓN**
+
+---
+
 **Desarrollado por**: Dr. Julián Alonso
 **Fecha**: 15 de Septiembre, 2025
 **Estado**: ✅ **FUNCIONANDO EN PRODUCCIÓN**
-**Resultado**: Sistema de múltiples contextos hospitalarios operativo
+**Resultado**: Sistema de múltiples contextos hospitalarios operativo + UI optimizada
