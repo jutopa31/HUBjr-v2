@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -9,6 +9,7 @@ import PendientesManager from './PendientesManager';
 import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
+import AcademiaManager from './AcademiaManager';
 import { ProtectedRoute } from './components/auth';
 import SimpleUserMenu from './components/auth/SimpleUserMenu';
 
@@ -90,13 +91,13 @@ Motivo de consulta:
     { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
     { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
+    { id: 'academia', icon: BookOpen, label: 'Academia' },
+    { id: 'schedule', icon: Calendar, label: 'Cronograma' },
     // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
-    // { id: 'academics', icon: BookOpen, label: 'Actividades Académicas' },
     // { id: 'clinical', icon: Activity, label: 'Registro Asistencial' },
     // { id: 'evaluations', icon: Award, label: 'Evaluaciones' },
     // { id: 'resources', icon: FileText, label: 'Recursos' },
     // { id: 'communication', icon: MessageSquare, label: 'Comunicación' },
-    { id: 'schedule', icon: Calendar, label: 'Cronograma' },
     // { id: 'profile', icon: User, label: 'Mi Perfil' }
   ];
 
@@ -4944,6 +4945,8 @@ Motivo de consulta:
         );
       case 'inicio':
         return <DashboardInicio setActiveTab={handleTabChange} openScaleModal={openScaleModal} />;
+      case 'academia':
+        return <AcademiaManager isAdminMode={isAdminMode} />;
       /* case 'dashboard':
         return (
           <div className="space-y-6">
