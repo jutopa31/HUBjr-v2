@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Calendar, FolderOpen, GraduationCap, FileText } from 'lucide-react';
+import { Calendar, FolderOpen, GraduationCap, FileText } from 'lucide-react';
 import ClasesScheduler from './ClasesScheduler';
 import RecursosManager from './RecursosManager';
 
