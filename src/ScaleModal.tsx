@@ -227,7 +227,27 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
           {scale.id === 'mich' && (
             <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
               <div className="text-sm text-red-800">
-                <p className="font-medium mb-2">Interpretación de la Escala mICH:</p>
+                <p className="font-medium mb-3">Interpretación de la Escala MICH:</p>
+
+                {/* Leyenda de características de alto riesgo */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                  <div className="text-xs text-blue-800">
+                    <p className="font-medium mb-2">📋 Características de Alto Riesgo en TCSC:</p>
+                    <p className="mb-1">
+                      <strong>"El estudio de TCSC muestra (1) vasos ingurgitados o calcificaciones
+                      en los márgenes del hematoma intraparenquimal o (2)
+                      hiperdensidad dentro de un seno venoso dural o vena cortical en el
+                      contexto de drenaje venoso del sitio del hematoma o (3) ambos"</strong>
+                    </p>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-blue-700">
+                      <li>Vasos ingurgitados en márgenes del hematoma</li>
+                      <li>Calcificaciones en márgenes del hematoma</li>
+                      <li>Hiperdensidad en seno venoso dural</li>
+                      <li>Hiperdensidad en vena cortical relacionada al drenaje</li>
+                    </ul>
+                  </div>
+                </div>
+
                 <div className="bg-white rounded-lg p-3 mb-3">
                   <div className="text-xs text-gray-700 mb-2">
                     <strong>Mortalidad estimada a 30 días:</strong>
@@ -251,7 +271,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                   </div>
                 </div>
                 <div className="bg-yellow-100 p-2 rounded text-xs text-yellow-800">
-                  <strong>Advertencia:</strong> La escala mICH estima mortalidad a 30 días. No debe usarse como único criterio para retirar soporte vital. Validar con guías locales.
+                  <strong>Advertencia:</strong> La escala MICH estima mortalidad a 30 días. No debe usarse como único criterio para retirar soporte vital. Validar con guías locales.
                 </div>
               </div>
             </div>
