@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 
@@ -155,6 +155,42 @@ const WardRounds: React.FC = () => {
     } catch (error) {
       console.error('Error updating patient:', error);
       alert('Error al actualizar paciente');
+    }
+  };
+
+  // Eliminar paciente del pase de sala
+  const deletePatient = async (id: string, patientName: string) => {
+    const confirmDelete = window.confirm(
+      `¿Está seguro que desea eliminar al paciente "${patientName}" del pase de sala?\n\nEsta acción también eliminará todas las tareas pendientes asociadas a este paciente.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      // Primero eliminar las tareas relacionadas
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('patient_id', id)
+        .eq('source', 'ward_rounds');
+
+      if (tasksError) {
+        console.warn('Error al eliminar tareas relacionadas:', tasksError);
+      }
+
+      // Luego eliminar el paciente del pase de sala
+      const { error } = await supabase
+        .from('ward_round_patients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      loadPatients();
+      alert(`Paciente "${patientName}" eliminado del pase de sala exitosamente.`);
+    } catch (error) {
+      console.error('Error deleting patient:', error);
+      alert('Error al eliminar paciente del pase de sala');
     }
   };
 
@@ -931,17 +967,29 @@ const WardRounds: React.FC = () => {
                           )}
                         </div>
                         <div className="ward-col-actions">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingId(patient.id || null);
-                              setEditingPatient(patient);
-                            }}
-                            className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar paciente completo"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingId(patient.id || null);
+                                setEditingPatient(patient);
+                              }}
+                              className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar paciente completo"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deletePatient(patient.id || '', patient.nombre);
+                              }}
+                              className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar paciente del pase de sala"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
