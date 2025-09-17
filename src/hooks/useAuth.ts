@@ -60,23 +60,6 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadMFAFactors = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.auth.mfa.listFactors();
-      if (error) {
-        // Don't log MFA errors if user doesn't have MFA set up
-        if (!error.message.includes('422')) {
-          console.error('Error loading MFA factors:', error);
-        }
-        setMfaFactors([]);
-        return;
-      }
-      setMfaFactors((data.totp || []) as MFAFactors[]);
-    } catch (error) {
-      console.error('Error loading MFA factors:', error);
-      setMfaFactors([]);
-    }
-  }, []);
 
   const signUp = useCallback(async (email: string, password: string, metadata?: Record<string, any>) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -123,7 +106,6 @@ export function useAuth() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setMfaFactors([]);
       return { error: null };
     } catch (error) {
       const authError = error as AuthError;

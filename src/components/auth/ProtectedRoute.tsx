@@ -5,14 +5,12 @@ import AuthModal from './AuthModal';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requireMFA?: boolean;
   fallback?: React.ReactNode;
 }
 
-function ProtectedRoute({ 
-  children, 
-  requireMFA = false, 
-  fallback 
+function ProtectedRoute({
+  children,
+  fallback
 }: ProtectedRouteProps) {
   const { user, loading } = useAuthContext();
   const [showAuthModal, setShowAuthModal] = useState(false);

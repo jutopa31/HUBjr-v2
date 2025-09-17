@@ -1,25 +1,14 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import LoginForm from './LoginForm';
-import { useAuthContext } from './AuthProvider';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialView?: 'login';
 }
 
-function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalProps) {
-  const { user } = useAuthContext();
-  const [view, setView] = useState<'login' | 'signup'>(initialView);
+function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [showSignUp, setShowSignUp] = useState(false);
-
-  // Update view when initialView changes (for switching between login and MFA)
-  React.useEffect(() => {
-    if (isOpen) {
-      setView(initialView);
-    }
-  }, [initialView, isOpen]);
 
   if (!isOpen) return null;
 

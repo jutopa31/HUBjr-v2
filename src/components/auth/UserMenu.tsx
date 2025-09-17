@@ -7,7 +7,6 @@ function UserMenu() {
   const { user, signOut, loading } = useAuthContext();
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalView, setAuthModalView] = useState<'login' | 'mfa'>('login');
 
   const handleSignOut = async () => {
     await signOut();
@@ -16,7 +15,6 @@ function UserMenu() {
 
 
   const openLogin = () => {
-    setAuthModalView('login');
     setShowAuthModal(true);
     setIsOpen(false);
   };
@@ -36,7 +34,6 @@ function UserMenu() {
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          initialView={authModalView}
         />
       </>
     );
@@ -132,7 +129,6 @@ function UserMenu() {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        initialView={authModalView}
       />
     </>
   );

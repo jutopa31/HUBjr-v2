@@ -7,10 +7,8 @@ import AuthModal from './AuthModal';
 function SimpleUserMenu() {
   const { user, signOut, loading } = useAuthContext();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalView, setAuthModalView] = useState<'login' | 'mfa'>('login');
 
   const openLogin = () => {
-    setAuthModalView('login');
     setShowAuthModal(true);
   };
 
@@ -37,7 +35,6 @@ function SimpleUserMenu() {
           <AuthModal
             isOpen={showAuthModal}
             onClose={() => setShowAuthModal(false)}
-            initialView={authModalView}
           />,
           document.body
         )}
@@ -72,7 +69,6 @@ function SimpleUserMenu() {
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          initialView={authModalView}
         />,
         document.body
       )}

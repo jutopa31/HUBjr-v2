@@ -22,7 +22,6 @@ function LoginForm({ onSuccess, onToggleMode, showSignUp = false }: LoginFormPro
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [needsMFA, setNeedsMFA] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +55,6 @@ function LoginForm({ onSuccess, onToggleMode, showSignUp = false }: LoginFormPro
         const { error } = await signIn(formData.email, formData.password);
 
         if (error) {
-          // Temporarily disable MFA handling to fix basic login
           setFormError(error.message);
         } else {
           onSuccess?.();
@@ -75,25 +73,6 @@ function LoginForm({ onSuccess, onToggleMode, showSignUp = false }: LoginFormPro
     if (formError) setFormError('');
   };
 
-  if (needsMFA) {
-    return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-        <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">
-          Autenticación de Dos Factores Requerida
-        </h3>
-        <p className="text-blue-700 mb-4">
-          Su cuenta requiere verificación adicional. Complete el proceso de MFA para continuar.
-        </p>
-        <button
-          onClick={() => setNeedsMFA(false)}
-          className="text-blue-600 hover:text-blue-800 font-medium"
-        >
-          Volver a intentar
-        </button>
-      </div>
-    );
-  }
 
   const displayError = formError || authError;
 
