@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, Archive, AlertTriangle, FileText } from 'lucide-react';
+import { X, Trash2, Archive } from 'lucide-react';
 
 interface DeletePatientModalProps {
   isOpen: boolean;
