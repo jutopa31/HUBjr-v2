@@ -3,6 +3,24 @@ import { supabase } from './supabase';
 import { PatientAssessment, SavePatientData, SavedScaleResult } from '../types';
 import { ExtractedPatientData, ExtractedScale } from './patientDataExtractor';
 
+// Interface para pacientes del pase de sala
+interface WardRoundPatient {
+  id?: string;
+  cama: string;
+  dni: string;
+  nombre: string;
+  edad: string;
+  antecedentes: string;
+  motivo_consulta: string;
+  examen_fisico: string;
+  estudios: string;
+  severidad: string;
+  diagnostico: string;
+  plan: string;
+  pendientes: string;
+  fecha: string;
+}
+
 /**
  * Guarda una nueva evaluación diagnóstica en Supabase
  * @param patientData - Datos del paciente a guardar
@@ -256,5 +274,156 @@ export async function validateSupabaseConnection(): Promise<boolean> {
   } catch (error) {
     console.error('❌ Error validando conexión:', error);
     return false;
+  }
+}
+
+/**
+ * Convierte un paciente del pase de sala al formato de evaluación diagnóstica
+ * @param wardPatient - Paciente del pase de sala
+ * @param hospitalContext - Contexto hospitalario
+ * @returns Datos formateados para guardar en diagnostic_assessments
+ */
+export function convertWardPatientToAssessment(
+  wardPatient: WardRoundPatient,
+  hospitalContext: 'Posadas' | 'Julian' = 'Posadas'
+): SavePatientData {
+  // Concatenar toda la información clínica en un texto estructurado
+  const clinicalNotes = `INFORMACIÓN DEL PASE DE SALA - ${wardPatient.fecha}
+
+DATOS BÁSICOS:
+- Cama: ${wardPatient.cama}
+- Edad: ${wardPatient.edad} años
+- Severidad: ${wardPatient.severidad}
+
+ANTECEDENTES:
+${wardPatient.antecedentes}
+
+MOTIVO DE CONSULTA:
+${wardPatient.motivo_consulta}
+
+EXAMEN FÍSICO:
+${wardPatient.examen_fisico}
+
+ESTUDIOS:
+${wardPatient.estudios}
+
+DIAGNÓSTICO:
+${wardPatient.diagnostico}
+
+PLAN DE TRATAMIENTO:
+${wardPatient.plan}
+
+PENDIENTES:
+${wardPatient.pendientes}
+
+---
+Paciente archivado desde Pase de Sala el ${new Date().toLocaleString('es-AR')}`;
+
+  return {
+    patient_name: wardPatient.nombre,
+    patient_age: wardPatient.edad,
+    patient_dni: wardPatient.dni,
+    clinical_notes: clinicalNotes,
+    scale_results: [], // No hay escalas en el pase de sala
+    hospital_context: hospitalContext
+  };
+}
+
+/**
+ * Verifica si ya existe un paciente con el mismo DNI en diagnostic_assessments
+ * @param dni - DNI del paciente a verificar
+ * @returns Promise con el resultado de la verificación
+ */
+export async function checkForDuplicatePatient(dni: string): Promise<{ exists: boolean; patient?: PatientAssessment; error?: string }> {
+  try {
+    if (!dni || dni.trim() === '') {
+      return { exists: false };
+    }
+
+    const { data, error } = await supabase
+      .from('diagnostic_assessments')
+      .select('*')
+      .eq('patient_dni', dni.trim())
+      .limit(1);
+
+    if (error) {
+      console.error('❌ Error verificando duplicado:', error);
+      return {
+        exists: false,
+        error: `Error al verificar duplicado: ${error.message}`
+      };
+    }
+
+    if (data && data.length > 0) {
+      return {
+        exists: true,
+        patient: data[0] as PatientAssessment
+      };
+    }
+
+    return { exists: false };
+
+  } catch (error) {
+    console.error('❌ Error inesperado verificando duplicado:', error);
+    return {
+      exists: false,
+      error: 'Error inesperado al verificar duplicado'
+    };
+  }
+}
+
+/**
+ * Archiva un paciente del pase de sala en diagnostic_assessments
+ * @param wardPatient - Paciente del pase de sala
+ * @param hospitalContext - Contexto hospitalario
+ * @returns Promise con el resultado de la operación
+ */
+export async function archiveWardPatient(
+  wardPatient: WardRoundPatient,
+  hospitalContext: 'Posadas' | 'Julian' = 'Posadas'
+): Promise<{ success: boolean; data?: PatientAssessment; error?: string; duplicate?: boolean }> {
+  try {
+    console.log('📦 Archivando paciente del pase de sala:', wardPatient.nombre);
+
+    // Verificar si ya existe un paciente con el mismo DNI
+    const duplicateCheck = await checkForDuplicatePatient(wardPatient.dni);
+
+    if (duplicateCheck.error) {
+      return { success: false, error: duplicateCheck.error };
+    }
+
+    if (duplicateCheck.exists) {
+      return {
+        success: false,
+        duplicate: true,
+        error: `Ya existe un paciente archivado con DNI ${wardPatient.dni}. Nombre: ${duplicateCheck.patient?.patient_name}`
+      };
+    }
+
+    // Convertir al formato de diagnostic_assessment
+    const assessmentData = convertWardPatientToAssessment(wardPatient, hospitalContext);
+
+    // Guardar en diagnostic_assessments
+    const result = await savePatientAssessment(assessmentData);
+
+    if (result.success) {
+      console.log('✅ Paciente archivado exitosamente');
+      return {
+        success: true,
+        data: result.data
+      };
+    } else {
+      return {
+        success: false,
+        error: result.error
+      };
+    }
+
+  } catch (error) {
+    console.error('❌ Error inesperado archivando paciente:', error);
+    return {
+      success: false,
+      error: 'Error inesperado al archivar paciente'
+    };
   }
 }

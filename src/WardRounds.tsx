@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
+import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
+import DeletePatientModal from './components/DeletePatientModal';
 
 interface Patient {
   id?: string;
@@ -58,6 +60,11 @@ const WardRounds: React.FC = () => {
   // Estados para validación de DNI duplicado
   const [dniError, setDniError] = useState<string>('');
   const [isDniChecking, setIsDniChecking] = useState(false);
+
+  // Estados para el modal de eliminar/archivar paciente
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<{ id: string; nombre: string; dni: string } | null>(null);
+  const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
 
   // Cargar pacientes desde Supabase
   useEffect(() => {
@@ -217,16 +224,57 @@ const WardRounds: React.FC = () => {
     }
   };
 
-  // Eliminar paciente del pase de sala
-  const deletePatient = async (id: string, patientName: string) => {
-    const confirmDelete = window.confirm(
-      `¿Está seguro que desea eliminar al paciente "${patientName}" del pase de sala?\n\nEsta acción también eliminará todas las tareas pendientes asociadas a este paciente.`
-    );
+  // Abrir modal para eliminar/archivar paciente
+  const openDeleteModal = (id: string, patientName: string, dni: string) => {
+    setSelectedPatientForDeletion({ id, nombre: patientName, dni });
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmDelete) return;
+  // Cerrar modal de eliminación
+  const closeDeleteModal = () => {
+    if (isProcessingDeletion) return; // No permitir cerrar si está procesando
+    setShowDeleteModal(false);
+    setSelectedPatientForDeletion(null);
+  };
+
+  // Ejecutar acción de eliminación o archivo
+  const handleDeleteAction = async (action: 'delete' | 'archive') => {
+    if (!selectedPatientForDeletion) return;
+
+    setIsProcessingDeletion(true);
 
     try {
-      // Primero eliminar las tareas relacionadas
+      const { id, nombre: patientName } = selectedPatientForDeletion;
+
+      if (action === 'archive') {
+        // Primero obtener toda la información del paciente
+        const { data: fullPatientData, error: fetchError } = await supabase
+          .from('ward_round_patients')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (fetchError) {
+          throw new Error(`Error al obtener datos del paciente: ${fetchError.message}`);
+        }
+
+        // Intentar archivar el paciente
+        const archiveResult = await archiveWardPatient(fullPatientData, 'Posadas');
+
+        if (!archiveResult.success) {
+          if (archiveResult.duplicate) {
+            alert(`No se puede archivar: ${archiveResult.error}\n\n¿Desea continuar con la eliminación completa?`);
+            return; // No continuar con la eliminación
+          } else {
+            throw new Error(archiveResult.error || 'Error al archivar paciente');
+          }
+        }
+
+        // Si el archivo fue exitoso, proceder con la eliminación del pase
+        console.log('✅ Paciente archivado exitosamente, procediendo con eliminación del pase...');
+      }
+
+      // Eliminar tareas relacionadas
       const { error: tasksError } = await supabase
         .from('tasks')
         .delete()
@@ -237,7 +285,7 @@ const WardRounds: React.FC = () => {
         console.warn('Error al eliminar tareas relacionadas:', tasksError);
       }
 
-      // Luego eliminar el paciente del pase de sala
+      // Eliminar el paciente del pase de sala
       const { error } = await supabase
         .from('ward_round_patients')
         .delete()
@@ -245,11 +293,21 @@ const WardRounds: React.FC = () => {
 
       if (error) throw error;
 
+      // Éxito
       loadPatients();
-      alert(`Paciente "${patientName}" eliminado del pase de sala exitosamente.`);
+      closeDeleteModal();
+
+      if (action === 'archive') {
+        alert(`Paciente "${patientName}" archivado exitosamente en "Pacientes Guardados" y eliminado del pase de sala.\n\nPuede acceder a la información archivada desde el menú principal > Pacientes Guardados.`);
+      } else {
+        alert(`Paciente "${patientName}" eliminado completamente del pase de sala.`);
+      }
+
     } catch (error) {
-      console.error('Error deleting patient:', error);
-      alert('Error al eliminar paciente del pase de sala');
+      console.error('Error processing deletion:', error);
+      alert(`Error al ${action === 'archive' ? 'archivar' : 'eliminar'} paciente: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsProcessingDeletion(false);
     }
   };
 
@@ -1070,10 +1128,10 @@ const WardRounds: React.FC = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deletePatient(patient.id || '', patient.nombre);
+                                openDeleteModal(patient.id || '', patient.nombre, patient.dni);
                               }}
                               className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Eliminar paciente del pase de sala"
+                              title="Eliminar o archivar paciente"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -1428,6 +1486,15 @@ const WardRounds: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal para eliminar/archivar paciente */}
+      <DeletePatientModal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        patient={selectedPatientForDeletion}
+        onConfirmDelete={handleDeleteAction}
+        isProcessing={isProcessingDeletion}
+      />
     </div>
   );
 };
