@@ -2422,53 +2422,54 @@ Motivo de consulta:
     },
     {
       id: 'mich',
-      name: 'Escala mICH (Modified Intracerebral Hemorrhage Score)',
+      name: 'Escala MICH (Modified ICH Score)',
       category: 'Evaluación Neurológica',
-      description: 'Escala de pronóstico para mortalidad a 30 días en hemorragia intracerebral',
+      description: 'Escala de pronóstico modificada para hemorragia intracerebral',
       items: [
         {
-          id: 'age',
-          label: 'Edad del paciente',
+          id: 'ct_characteristics',
+          label: 'Características de la TCSC',
           options: [
-            '0 - ≤79 años',
-            '1 - ≥80 años'
+            '2 - Características de alto riesgo',
+            '1 - ≤ 3 mm de las cisternas',
+            '0 - Ninguna'
           ],
           score: 0
         },
         {
-          id: 'gcs',
-          label: 'Glasgow Coma Scale en el ingreso',
+          id: 'age_group',
+          label: 'Grupo etario',
           options: [
-            '0 - 13-15 puntos',
-            '1 - 5-12 puntos', 
-            '2 - 3-4 puntos'
+            '2 - 18-45 años',
+            '1 - 46-70 años',
+            '0 - ≥ 71 años'
           ],
           score: 0
         },
         {
-          id: 'ich_volume_ml',
-          label: 'Volumen de hematoma intracerebral en mL',
+          id: 'sex',
+          label: 'Sexo',
           options: [
-            '0 - <30 mL',
-            '1 - ≥30 mL'
+            '1 - Femenino',
+            '0 - Masculino'
           ],
           score: 0
         },
         {
-          id: 'intraventricular_extension',
-          label: 'Extensión intraventricular',
+          id: 'systolic_pressure',
+          label: 'Presión sistólica < 160 mmHg',
           options: [
-            '0 - No',
-            '1 - Sí'
+            '1 - Sí',
+            '0 - No'
           ],
           score: 0
         },
         {
-          id: 'infratentorial',
-          label: 'Localización infratentorial',
+          id: 'low_risk_location',
+          label: 'Localización de bajo riesgo',
           options: [
-            '0 - No',
-            '1 - Sí'
+            '0 - Sí',
+            '1 - No'
           ],
           score: 0
         }
