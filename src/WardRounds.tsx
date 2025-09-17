@@ -263,7 +263,7 @@ const WardRounds: React.FC = () => {
 
         if (!archiveResult.success) {
           if (archiveResult.duplicate) {
-            alert(`No se puede archivar: ${archiveResult.error}\n\n¿Desea continuar con la eliminación completa?`);
+            alert(`Paciente ya existe en archivo. ${archiveResult.error}`);
             return; // No continuar con la eliminación
           } else {
             throw new Error(archiveResult.error || 'Error al archivar paciente');
@@ -298,9 +298,9 @@ const WardRounds: React.FC = () => {
       closeDeleteModal();
 
       if (action === 'archive') {
-        alert(`Paciente "${patientName}" archivado exitosamente en "Pacientes Guardados" y eliminado del pase de sala.\n\nPuede acceder a la información archivada desde el menú principal > Pacientes Guardados.`);
+        alert(`Paciente "${patientName}" guardado y eliminado del pase de sala.`);
       } else {
-        alert(`Paciente "${patientName}" eliminado completamente del pase de sala.`);
+        alert(`Paciente "${patientName}" eliminado completamente.`);
       }
 
     } catch (error) {
