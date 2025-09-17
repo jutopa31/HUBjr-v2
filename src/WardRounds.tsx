@@ -55,6 +55,10 @@ const WardRounds: React.FC = () => {
   const [editingPendientesId, setEditingPendientesId] = useState<string | null>(null);
   const [tempPendientes, setTempPendientes] = useState<string>('');
 
+  // Estados para validación de DNI duplicado
+  const [dniError, setDniError] = useState<string>('');
+  const [isDniChecking, setIsDniChecking] = useState(false);
+
   // Cargar pacientes desde Supabase
   useEffect(() => {
     loadPatients();
@@ -74,6 +78,47 @@ const WardRounds: React.FC = () => {
       alert('Error al cargar pacientes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para validar DNI duplicado
+  const validateDNI = async (dni: string, excludeId?: string) => {
+    if (!dni.trim()) {
+      setDniError('');
+      return true;
+    }
+
+    setIsDniChecking(true);
+    setDniError('');
+
+    try {
+      let query = supabase
+        .from('ward_round_patients')
+        .select('id, nombre, dni')
+        .eq('dni', dni.trim());
+
+      // Si estamos editando, excluir el paciente actual
+      if (excludeId) {
+        query = query.neq('id', excludeId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const existingPatient = data[0];
+        setDniError(`⚠️ DNI ya existe: ${existingPatient.nombre} (${existingPatient.dni})`);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating DNI:', error);
+      setDniError('Error al validar DNI');
+      return false;
+    } finally {
+      setIsDniChecking(false);
     }
   };
 
@@ -117,15 +162,22 @@ const WardRounds: React.FC = () => {
 
   // Agregar nuevo paciente
   const addPatient = async () => {
+    // Validar DNI antes de agregar
+    const isValidDNI = await validateDNI(newPatient.dni);
+    if (!isValidDNI) {
+      return; // No agregar si hay duplicado
+    }
+
     try {
       const { error } = await supabase
         .from('ward_round_patients')
         .insert([newPatient]);
 
       if (error) throw error;
-      
+
       setNewPatient(emptyPatient);
       setShowAddForm(false);
+      setDniError(''); // Limpiar error al cerrar
       loadPatients();
     } catch (error) {
       console.error('Error adding patient:', error);
@@ -135,6 +187,12 @@ const WardRounds: React.FC = () => {
 
   // Actualizar paciente existente
   const updatePatient = async (id: string, updatedPatient: Patient) => {
+    // Validar DNI antes de actualizar (excluyendo el paciente actual)
+    const isValidDNI = await validateDNI(updatedPatient.dni, id);
+    if (!isValidDNI) {
+      return; // No actualizar si hay duplicado
+    }
+
     try {
       const { error } = await supabase
         .from('ward_round_patients')
@@ -142,15 +200,16 @@ const WardRounds: React.FC = () => {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       // Sincronizar con el sistema de tareas
       const patientWithId = { ...updatedPatient, id };
       const syncSuccess = await createOrUpdateTaskFromPatient(patientWithId);
       if (!syncSuccess) {
         console.warn('No se pudo sincronizar con el sistema de tareas');
       }
-      
+
       setEditingId(null);
+      setDniError(''); // Limpiar error al cerrar
       loadPatients();
     } catch (error) {
       console.error('Error updating patient:', error);
@@ -574,6 +633,7 @@ const WardRounds: React.FC = () => {
                 onClick={() => {
                   setShowAddForm(false);
                   setNewPatient(emptyPatient);
+                  setDniError(''); // Clear DNI error when closing
                 }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
               >
@@ -601,13 +661,34 @@ const WardRounds: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">DNI</label>
-                    <input
-                      type="text"
-                      value={newPatient.dni}
-                      onChange={(e) => setNewPatient({...newPatient, dni: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="12345678"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={newPatient.dni}
+                        onChange={(e) => {
+                          const dni = e.target.value;
+                          setNewPatient({...newPatient, dni});
+                          // Validar DNI después de un breve delay
+                          if (dni.trim()) {
+                            setTimeout(() => validateDNI(dni), 500);
+                          } else {
+                            setDniError('');
+                          }
+                        }}
+                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          dniError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        }`}
+                        placeholder="12345678"
+                      />
+                      {isDniChecking && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                        </div>
+                      )}
+                    </div>
+                    {dniError && (
+                      <p className="mt-1 text-sm text-red-600 font-medium">{dniError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
@@ -779,6 +860,7 @@ const WardRounds: React.FC = () => {
                 onClick={() => {
                   setShowAddForm(false);
                   setNewPatient(emptyPatient);
+                  setDniError(''); // Clear DNI error when closing
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
               >
@@ -786,9 +868,15 @@ const WardRounds: React.FC = () => {
               </button>
               <button
                 onClick={addPatient}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                disabled={!!dniError || isDniChecking}
+                className={`px-4 py-2 rounded-lg text-sm ${
+                  dniError || isDniChecking
+                    ? 'bg-gray-400 cursor-not-allowed text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                title={dniError ? 'Resuelva el error de DNI para continuar' : ''}
               >
-                Guardar Paciente
+                {isDniChecking ? 'Verificando DNI...' : 'Guardar Paciente'}
               </button>
             </div>
           </div>
@@ -1073,6 +1161,7 @@ const WardRounds: React.FC = () => {
                 onClick={() => {
                   setEditingId(null);
                   setEditingPatient(emptyPatient);
+                  setDniError(''); // Clear DNI error when closing
                 }}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
               >
@@ -1100,13 +1189,34 @@ const WardRounds: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">DNI</label>
-                    <input
-                      type="text"
-                      value={editingPatient.dni}
-                      onChange={(e) => setEditingPatient({...editingPatient, dni: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="12345678"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={editingPatient.dni}
+                        onChange={(e) => {
+                          const dni = e.target.value;
+                          setEditingPatient({...editingPatient, dni});
+                          // Validar DNI después de un breve delay, excluyendo el paciente actual
+                          if (dni.trim()) {
+                            setTimeout(() => validateDNI(dni, editingId || undefined), 500);
+                          } else {
+                            setDniError('');
+                          }
+                        }}
+                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          dniError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        }`}
+                        placeholder="12345678"
+                      />
+                      {isDniChecking && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                        </div>
+                      )}
+                    </div>
+                    {dniError && (
+                      <p className="mt-1 text-sm text-red-600 font-medium">{dniError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
@@ -1278,6 +1388,7 @@ const WardRounds: React.FC = () => {
                 onClick={() => {
                   setEditingId(null);
                   setEditingPatient(emptyPatient);
+                  setDniError(''); // Clear DNI error when closing
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
               >
@@ -1289,10 +1400,16 @@ const WardRounds: React.FC = () => {
                     updatePatient(editingId, editingPatient);
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 text-sm"
+                disabled={!!dniError || isDniChecking}
+                className={`px-4 py-2 rounded-lg flex items-center space-x-2 text-sm ${
+                  dniError || isDniChecking
+                    ? 'bg-gray-400 cursor-not-allowed text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                title={dniError ? 'Resuelva el error de DNI para continuar' : ''}
               >
                 <Save className="h-4 w-4" />
-                <span>Guardar Cambios</span>
+                <span>{isDniChecking ? 'Verificando DNI...' : 'Guardar Cambios'}</span>
               </button>
             </div>
           </div>
