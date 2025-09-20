@@ -69,6 +69,9 @@ The platform includes standardized neurological evaluation scales:
 - **NIHSS (National Institutes of Health Stroke Scale)**: 15-item stroke assessment
 - **Glasgow Coma Scale**: 3-component consciousness evaluation
 - **UPDRS I-IV (Unified Parkinson's Disease Rating Scale)**: Complete 4-section assessment
+- **Escala de Fisher (Hemorragia Subaracnoidea)**: Grado tomografico HSA
+- **WFNS Scale**: Gradacion clinica de HSA basada en GCS
+- **Epworth Sleepiness Scale**: Somnolencia diurna en actividades cotidianas
 - **MDS 2015 Parkinson's Diagnostic Criteria**: Comprehensive diagnostic framework
 
 #### Features
@@ -110,6 +113,12 @@ Key metrics tracking for resident progress:
 
 ### 4. Resource Library
 Digital resource management system:
+
+### 5. OCR y Captura de Documentos (Admin)
+- Modal exclusivo de administradores para subir PDF o imagenes clínicamente relevantes
+- Extracción automática de texto con análisis de PDF y OCR en espanol/inglés
+- Inserción directa del resultado en las notas del paciente para acelerar la documentación
+
 
 #### Categories
 - Stroke/Cerebrovascular

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useEscapeKey from './hooks/useEscapeKey';
 import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2 } from 'lucide-react';
 import { ExtractedPatientData, cleanPatientName } from './utils/patientDataExtractor';
 import { SavePatientData, HospitalContext } from './types';
@@ -28,6 +29,8 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   const [hospitalContext, setHospitalContext] = useState<HospitalContext>(currentHospitalContext);
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 

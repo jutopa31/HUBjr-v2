@@ -1,10 +1,13 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import useEscapeKey from './hooks/useEscapeKey';
 import { X, Copy } from 'lucide-react';
 import calculateScaleScore from './calculateScaleScore';
 import { ScaleModalProps, ScaleItem } from './types';
 
 const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => {
   const [scores, setScores] = useState<{ [key: string]: number | string }>({});
+
+  useEscapeKey(onClose, Boolean(scale));
   
   // Debug modal rendering
   console.log('🔍 ScaleModal rendering for scale:', scale?.name || 'undefined');

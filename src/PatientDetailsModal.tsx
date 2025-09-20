@@ -1,4 +1,5 @@
 import React from 'react';
+import useEscapeKey from './hooks/useEscapeKey';
 import { X, User, Calendar, FileText, Brain, Copy, Download, Edit } from 'lucide-react';
 import { PatientAssessment } from './types';
 
@@ -15,6 +16,8 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   patient,
   onEdit
 }) => {
+  useEscapeKey(onClose, isOpen);
+
   if (!isOpen || !patient) return null;
 
   const formatDate = (dateString: string) => {

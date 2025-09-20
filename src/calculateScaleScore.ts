@@ -998,8 +998,40 @@ export default function calculateScaleScore(scale: Scale, scores: { [key: string
       details += `• Evaluación en centro especializado\n`;
       details += `• Considerar tratamientos de segunda línea\n`;
     }
+  } else if (scale.id === 'fisher_grade') {
+    const grade = Math.max(1, Math.min(4, totalScore || 0));
+    const fisherInterpretation: Record<number, string> = {
+      1: 'Sin sangre subaracnoidea visible en la tomografia',
+      2: 'Capa fina difusa de sangre subaracnoidea (<1 mm)',
+      3: 'Coagulo localizado o capa gruesa (>=1 mm)',
+      4: 'Hemorragia intraventricular o parenquimatosa con sangre difusa'
+    };
+    interpretation = fisherInterpretation[grade] || 'Gradacion tomografica no especificada';
+    details = `Escala de Fisher:\n\nGrado: ${grade}\nInterpretacion: ${interpretation}\n\nConsideraciones:\n- Grados 3-4 implican mayor riesgo de vasoespasmo\n`;
+  } else if (scale.id === 'wfns') {
+    const grade = Math.max(1, Math.min(5, totalScore || 0));
+    const wfnsInterpretation: Record<number, string> = {
+      1: 'GCS 15 sin deficit motor - pronostico favorable',
+      2: 'GCS 13-14 sin deficit motor - riesgo intermedio',
+      3: 'GCS 13-14 con deficit motor - riesgo aumentado',
+      4: 'GCS 7-12 con o sin deficit motor - hemorragia grave',
+      5: 'GCS 3-6 - estado critico con alto riesgo vital'
+    };
+    interpretation = wfnsInterpretation[grade] || 'Gradacion WFNS no especificada';
+    details = `WFNS (World Federation of Neurosurgical Societies):\n\nGrado: ${grade}\nInterpretacion: ${interpretation}\n\nConsideraciones:\n- Grados 4-5 requieren manejo neurocritico intensivo\n`;
+  } else if (scale.id === 'epworth') {
+    const epworthScore = totalScore;
+    if (epworthScore <= 10) {
+      interpretation = 'Somnolencia normal';
+    } else if (epworthScore <= 12) {
+      interpretation = 'Somnolencia leve';
+    } else if (epworthScore <= 15) {
+      interpretation = 'Somnolencia moderada';
+    } else {
+      interpretation = 'Somnolencia severa';
+    }
+    details = `Epworth Sleepiness Scale:\n\nPuntaje total: ${epworthScore}/24\nInterpretacion: ${interpretation}\n\nRangos:\n- 0-10: Somnolencia normal\n- 11-12: Somnolencia leve\n- 13-15: Somnolencia moderada\n- 16-24: Somnolencia severa\n`;
   }
-
   return {
     scaleName: scale.name,
     totalScore,

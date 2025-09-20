@@ -105,7 +105,31 @@ const MEDICAL_PATTERNS: MedicalPattern[] = [
     scaleId: 'edss',
     reason: 'Evaluación de discapacidad en esclerosis múltiple',
     baseConfidence: 0.8
-  }
+  },
+  
+  // Fisher Grade - Hemorragia Subaracnoidea
+  {
+    keywords: ['fisher', 'subaracnoidea', 'sangrado cisternal', 'coagulo intraventricular', 'hemorragia subaracnoidea', 'sah', 'fisher iv'],
+    scaleId: 'fisher_grade',
+    reason: 'Clasificacion tomografica para hemorragia subaracnoidea',
+    baseConfidence: 0.8
+  },
+  
+  // WFNS - Hemorragia Subaracnoidea
+  {
+    keywords: ['wfns', 'world federation', 'gcs 13', 'deficit motor', 'hemorragia subaracnoidea', 'wfns v', 'wfns iii'],
+    scaleId: 'wfns',
+    reason: 'Gradar severidad clinica en hemorragia subaracnoidea',
+    baseConfidence: 0.78
+  },
+  
+  // Epworth Sleepiness Scale
+  {
+    keywords: ['epworth', 'somnolencia diurna', 'hipersomnia', 'quedarse dormido', 'suenio', 'sueno excesivo', 'somnolencia'],
+    scaleId: 'epworth',
+    reason: 'Evaluar somnolencia diurna excesiva',
+    baseConfidence: 0.75
+  },
 ];
 
 // Función para normalizar texto (eliminar acentos, minúsculas)
@@ -119,62 +143,78 @@ const normalizeText = (text: string): string => {
     .trim();
 };
 
+const tokenize = (normalizedText: string): string[] =>
+  normalizedText.split(' ').filter(Boolean);
+
+const getMatchedKeywords = (
+  normalizedText: string,
+  pattern: MedicalPattern,
+  tokens: string[]
+): string[] => {
+  if (!normalizedText) return [];
+
+  const tokenSet = new Set(tokens);
+
+  return pattern.keywords.filter(keyword => {
+    const normalizedKeyword = normalizeText(keyword);
+    if (!normalizedKeyword) return false;
+
+    if (normalizedKeyword.includes(' ')) {
+      return normalizedText.includes(normalizedKeyword);
+    }
+
+    if (tokenSet.has(normalizedKeyword)) {
+      return true;
+    }
+
+    if (normalizedKeyword.length <= 3) {
+      return false;
+    }
+
+    if (normalizedText.includes(normalizedKeyword)) {
+      return true;
+    }
+
+    for (const token of tokenSet) {
+      if (token.length >= 4 && normalizedKeyword.startsWith(token)) return true;
+      if (normalizedKeyword.length >= 4 && token.startsWith(normalizedKeyword)) return true;
+    }
+
+    return false;
+  });
+};
+
 // Función para calcular la confianza basada en coincidencias
 const calculateConfidence = (
-  normalizedText: string, 
-  pattern: MedicalPattern
+  matchedKeywords: string[],
+  pattern: MedicalPattern,
+  tokenCount: number
 ): number => {
-  const words = normalizedText.split(' ');
-  const matchedKeywords: string[] = [];
-  
-  console.log(`🔍 Testing pattern ${pattern.scaleId} against text:`, normalizedText.substring(0, 100));
-  
-  pattern.keywords.forEach(keyword => {
-    const normalizedKeyword = normalizeText(keyword);
-    console.log(`  🔸 Testing keyword "${keyword}" -> "${normalizedKeyword}"`);
-    
-    // Buscar keyword completa o como parte de palabra
-    if (normalizedText.includes(normalizedKeyword)) {
-      matchedKeywords.push(keyword);
-      console.log(`    ✅ MATCH found for "${keyword}"`);
-    } else {
-      console.log(`    ❌ No match for "${keyword}"`);
-    }
-  });
-  
-  console.log(`  📊 Pattern ${pattern.scaleId}: ${matchedKeywords.length} matches`);
-  
   if (matchedKeywords.length === 0) return 0;
-  
-  // Calcular confianza basada en:
-  // - Número de keywords coincidentes
-  // - Longitud del texto (más texto = más contexto)
-  // - Confianza base del patrón
-  const keywordRatio = matchedKeywords.length / pattern.keywords.length;
-  const textLengthFactor = Math.min(words.length / 50, 1); // Normalizar longitud
+
   const baseConfidence = pattern.baseConfidence;
-  
-  // Combinar factores - AJUSTADO para ser más sensible
-  let confidence = baseConfidence * keywordRatio * (0.5 + 0.5 * textLengthFactor);
-  
-  // Boost si hay múltiples keywords del mismo patrón
-  if (matchedKeywords.length >= 2) {
-    confidence *= 1.3;
+  const matchScore = Math.min(matchedKeywords.length / 3, 1);
+  const coverageWeight = 0.35 + 0.65 * matchScore;
+  const lengthWeight =
+  tokenCount < 12
+    ? 0.85
+    : Math.min(1, 0.85 + (tokenCount - 12) / 120);
+
+  let confidence = baseConfidence * coverageWeight * lengthWeight;
+
+  if (matchedKeywords.length >= 3) {
+    confidence += 0.1;
   }
-  
-  // Para keywords médicas importantes, dar boost extra
-  const importantKeywords = ['temblor', 'hemiparesia', 'disartria', 'glasgow', 'ictus', 'debilidad'];
-  const hasImportantKeyword = matchedKeywords.some(kw => 
+
+  const importantKeywords = ['temblor', 'hemiparesia', 'disartria', 'glasgow', 'ictus', 'debilidad', 'somnolencia'];
+  const hasImportantKeyword = matchedKeywords.some(kw =>
     importantKeywords.some(imp => normalizeText(kw).includes(imp))
   );
-  
+
   if (hasImportantKeyword) {
-    confidence *= 1.5; // Boost significativo para keywords médicas importantes
+    confidence += 0.15;
   }
-  
-  console.log(`  📈 Final confidence for ${pattern.scaleId}: ${confidence.toFixed(3)} (matches: ${matchedKeywords.length}, important: ${hasImportantKeyword})`);
-  
-  // Limitar entre 0 y 1
+
   return Math.min(confidence, 1);
 };
 
@@ -182,8 +222,8 @@ const calculateConfidence = (
 export const analyzeText = (text: string): AIAnalysisResult => {
   console.log('🔍 AI Analyzer - Analyzing text:', text.substring(0, 100) + '...');
   
-  if (!text || text.trim().length < 10) {
-    console.log('❌ AI Analyzer - Text too short, skipping analysis');
+  if (!text || text.trim().length < 6) {
+    console.log('⚠️ AI Analyzer - Text too short, skipping analysis');
     return {
       suggestions: [],
       timestamp: Date.now()
@@ -193,14 +233,13 @@ export const analyzeText = (text: string): AIAnalysisResult => {
   const normalizedText = normalizeText(text);
   const suggestions: AISuggestion[] = [];
   
+  const tokens = tokenize(normalizedText);
+
   MEDICAL_PATTERNS.forEach(pattern => {
-    const confidence = calculateConfidence(normalizedText, pattern);
-    
-    if (confidence >= 0.1) { // Umbral ultra bajo para detectar patrones médicos
-      const matchedKeywords = pattern.keywords.filter(keyword => 
-        normalizedText.includes(normalizeText(keyword))
-      );
-      
+    const matchedKeywords = getMatchedKeywords(normalizedText, pattern, tokens);
+    const confidence = calculateConfidence(matchedKeywords, pattern, tokens.length);
+
+    if (confidence >= 0.1) {
       suggestions.push({
         scaleId: pattern.scaleId,
         confidence,

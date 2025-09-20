@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useEscapeKey from './hooks/useEscapeKey';
 import { Lock, Eye, EyeOff, X, Brain, Settings, Stethoscope } from 'lucide-react';
 import AIConfigPanel from './AIConfigPanel';
 import NeurologicalExamModal from './components/NeurologicalExamModal';
@@ -51,6 +52,8 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     setShowNeurologicalExam(false);
     onClose();
   };
+
+  useEscapeKey(handleClose, isOpen);
 
   if (!isOpen) return null;
 

@@ -1619,6 +1619,45 @@ Motivo de consulta:
       ]
     },
     {
+      id: 'fisher_grade',
+      name: 'Escala de Fisher (Hemorragia Subaracnoidea)',
+      category: 'Stroke & Cerebrovascular',
+      description: 'Clasificacion tomografica de hemorragia subaracnoidea',
+      items: [
+        {
+          id: 'fisher_grade_ct',
+          label: 'Grado tomografico',
+          options: [
+            '1 - Sin sangre subaracnoidea visible o traza minima',
+            '2 - Capa fina de sangre difusa <1 mm',
+            '3 - Coagulo localizado o capa gruesa >=1 mm',
+            '4 - Hemorragia intracerebral o intraventricular con sangre difusa'
+          ],
+          score: 1
+        }
+      ]
+    },
+    {
+      id: 'wfns',
+      name: 'WFNS (World Federation of Neurosurgical Societies)',
+      category: 'Stroke & Cerebrovascular',
+      description: 'Grado clinico de hemorragia subaracnoidea basado en GCS',
+      items: [
+        {
+          id: 'wfns_grade',
+          label: 'Grado WFNS',
+          options: [
+            '1 - GCS 15 y sin deficit motor',
+            '2 - GCS 13-14 y sin deficit motor',
+            '3 - GCS 13-14 con deficit motor',
+            '4 - GCS 7-12 con o sin deficit motor',
+            '5 - GCS 3-6'
+          ],
+          score: 1
+        }
+      ]
+    },
+    {
       id: 'hunt_hess',
       name: 'Escala de Hunt y Hess',
       category: 'Stroke & Cerebrovascular',
@@ -2577,6 +2616,102 @@ Motivo de consulta:
           options: [
             '1 - Continúa el episodio a pesar de estímulos',
             '0 - Se detiene con estímulos externos'
+          ],
+          score: 0
+        }
+      ]
+    },
+    {
+      id: 'epworth',
+      name: 'Escala de Somnolencia de Epworth',
+      category: 'Trastornos del Sueno',
+      description: 'Cuantifica somnolencia diurna en actividades cotidianas',
+      items: [
+        {
+          id: 'sitting_reading',
+          label: '1. Sentado leyendo',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'watching_tv',
+          label: '2. Mirando television',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'sitting_public',
+          label: '3. Sentado inactivo en un lugar publico (cine, reunion)',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'passenger_car',
+          label: '4. Como pasajero en un auto durante una hora sin pausa',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'lying_rest',
+          label: '5. Descansando acostado por la tarde cuando las circunstancias lo permiten',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'talking_to_someone',
+          label: '6. Sentado conversando con alguien',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'after_lunch',
+          label: '7. Sentado calmado despues de almorzar (sin alcohol)',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
+          ],
+          score: 0
+        },
+        {
+          id: 'driving_traffic',
+          label: '8. En un auto detenido en el trafico por unos minutos',
+          options: [
+            '0 - Nunca me dormiria',
+            '1 - Baja probabilidad',
+            '2 - Moderada probabilidad',
+            '3 - Alta probabilidad'
           ],
           score: 0
         }
@@ -4300,6 +4435,45 @@ Motivo de consulta:
             '1 - ≥80 años'
           ],
           score: 0
+        }
+      ]
+    },
+    {
+      id: 'fisher_grade',
+      name: 'Escala de Fisher (Hemorragia Subaracnoidea)',
+      category: 'Stroke & Cerebrovascular',
+      description: 'Clasificacion tomografica de hemorragia subaracnoidea',
+      items: [
+        {
+          id: 'fisher_grade_ct',
+          label: 'Grado tomografico',
+          options: [
+            '1 - Sin sangre subaracnoidea visible o traza minima',
+            '2 - Capa fina de sangre difusa <1 mm',
+            '3 - Coagulo localizado o capa gruesa >=1 mm',
+            '4 - Hemorragia intracerebral o intraventricular con sangre difusa'
+          ],
+          score: 1
+        }
+      ]
+    },
+    {
+      id: 'wfns',
+      name: 'WFNS (World Federation of Neurosurgical Societies)',
+      category: 'Stroke & Cerebrovascular',
+      description: 'Grado clinico de hemorragia subaracnoidea basado en GCS',
+      items: [
+        {
+          id: 'wfns_grade',
+          label: 'Grado WFNS',
+          options: [
+            '1 - GCS 15 y sin deficit motor',
+            '2 - GCS 13-14 y sin deficit motor',
+            '3 - GCS 13-14 con deficit motor',
+            '4 - GCS 7-12 con o sin deficit motor',
+            '5 - GCS 3-6'
+          ],
+          score: 1
         }
       ]
     },

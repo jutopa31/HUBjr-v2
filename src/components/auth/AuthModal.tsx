@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useEscapeKey from '../../hooks/useEscapeKey';
 import { X } from 'lucide-react';
 import LoginForm from './LoginForm';
 
@@ -9,6 +10,8 @@ interface AuthModalProps {
 
 function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [showSignUp, setShowSignUp] = useState(false);
+
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 

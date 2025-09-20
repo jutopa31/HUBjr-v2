@@ -34,8 +34,8 @@ This document tracks neurological algorithms and scales planned for future imple
 - [x] ICH Score ✅ **Implementado - 31 Jul 2025**
 - [x] Hunt and Hess Scale ✅ **Implementado - 31 Jul 2025**
 - [x] ABCD2 Score (AIT Risk Assessment) ✅ **Implementado - 9 Sep 2025**
-- [ ] Fisher Grade Scale
-- [ ] WFNS Scale (World Federation of Neurosurgical Societies)
+- [x] Fisher Grade Scale ✅ **Implementado - 20 Sep 2025**
+- [x] WFNS Scale (World Federation of Neurosurgical Societies) ✅ **Implementado - 20 Sep 2025**
 
 ### Cognitive & Dementia
 - [ ] MMSE (Mini-Mental State Examination)
@@ -85,7 +85,7 @@ This document tracks neurological algorithms and scales planned for future imple
 - [ ] MS Quality of Life-54 (MSQoL-54)
 
 ### Sleep Disorders
-- [ ] Epworth Sleepiness Scale
+- [x] Epworth Sleepiness Scale ✅ **Implementado - 20 Sep 2025**
 - [ ] Pittsburgh Sleep Quality Index
 - [ ] REM Sleep Behavior Disorder Screening Questionnaire
 - [ ] Berlin Questionnaire for Sleep Apnea

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
 import SavePatientModal from './SavePatientModal';
 import NeurologicalExamModal from './components/NeurologicalExamModal';
+import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
 
@@ -46,6 +47,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   // Estado para el modal de examen físico neurológico
   const [showNeurologicalExam, setShowNeurologicalExam] = useState(false);
+  const [showOcrModal, setShowOcrModal] = useState(false);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -55,6 +57,22 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   console.log('🤖 DiagnosticAlgorithm - AI Analysis:', aiAnalysis);
   console.log('🔍 DiagnosticAlgorithm - medicalScales received:', medicalScales?.length || 0);
   console.log('🔍 DiagnosticAlgorithm - medicalScales data:', medicalScales?.map(s => ({ id: s.id, name: s.name, hasItems: !!s.items?.length })));
+
+  const handleInsertOcrText = useCallback((extractedText: string) => {
+    const cleanedText = extractedText.trim();
+    if (!cleanedText) {
+      setShowOcrModal(false);
+      return;
+    }
+
+    const trimmedCurrentNotes = notes.trim().length === 0 ? '' : notes.trimEnd();
+    const mergedNotes = trimmedCurrentNotes.length > 0
+      ? `${trimmedCurrentNotes}\n\n${cleanedText}`
+      : cleanedText;
+
+    setNotes(mergedNotes);
+    setShowOcrModal(false);
+  }, [notes, setNotes]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -399,6 +417,16 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
               </button>
+              {isAdminMode && (
+                <button
+                  onClick={() => setShowOcrModal(true)}
+                  className="flex items-center space-x-2 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  title="Procesar PDF/Imagen con OCR"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>OCR notas</span>
+                </button>
+              )}
               {clearNotes && (
                 <button
                   onClick={clearNotes}
@@ -459,6 +487,14 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
     </div>
 
     {/* Modal de guardar paciente */}
+    {showOcrModal && (
+      <OCRProcessorModal
+        isOpen={showOcrModal}
+        onClose={() => setShowOcrModal(false)}
+        onInsert={handleInsertOcrText}
+      />
+    )}
+
     {showSaveModal && (
       <SavePatientModal
         isOpen={showSaveModal}

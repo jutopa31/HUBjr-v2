@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useEscapeKey from './hooks/useEscapeKey';
 import { X, Save, FileText, AlertCircle, CheckCircle, User, Calendar } from 'lucide-react';
 import { PatientAssessment } from './types';
 
@@ -21,6 +22,8 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
   const [patientDni, setPatientDni] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  useEscapeKey(onClose, isOpen);
 
   // Cargar datos del paciente cuando se abre el modal
   useEffect(() => {

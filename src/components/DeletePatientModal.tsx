@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useEscapeKey from '../hooks/useEscapeKey';
 import { X, Trash2, Archive } from 'lucide-react';
 
 interface DeletePatientModalProps {
@@ -21,6 +22,8 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
   isProcessing
 }) => {
   const [selectedAction, setSelectedAction] = useState<'delete' | 'archive'>('archive');
+
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen || !patient) return null;
 

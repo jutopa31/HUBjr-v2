@@ -118,11 +118,14 @@ HUBJR/
 - ✅ **HAS-BLED Score** - Bleeding risk assessment
 - ✅ **ICH Score** - Intracerebral hemorrhage prognosis
 - ✅ **Hunt and Hess Scale** - Subarachnoid hemorrhage grading
+- ✅ **Fisher Grade Scale** - Tomografia de hemorragia subaracnoidea
+- ✅ **WFNS Scale** - Clasificacion clinica HSA basada en GCS
 - ✅ **McDonald 2024 Criteria** - Multiple sclerosis diagnosis
 - ✅ **MMSE** (Mini-Mental State Examination) - Cognitive assessment
 - ✅ **MoCA** (Montreal Cognitive Assessment) - Cognitive screening
 - ✅ **MIDAS** (Migraine Disability Assessment) - Migraine impact
 - ✅ **HIT-6** (Headache Impact Test) - Headache impact assessment
+- ✅ **Epworth Sleepiness Scale** - Evaluacion de somnolencia diurna
 - ✅ **Hoehn and Yahr Scale** - Parkinson's disease staging
 - ✅ **EDSS** (Expanded Disability Status Scale) - Multiple sclerosis disability
 - ✅ **Engel Scale** - Epilepsy surgery outcomes
@@ -146,6 +149,7 @@ HUBJR/
 - ✅ **Usage Tracking**: Cost and request monitoring
 - ✅ **Real-time Analysis**: Dynamic text analysis with debouncing
 - ✅ **AI Badge System**: Visual indicators for AI suggestions
+- ✅ **Procesador OCR (admin)**: Extraccion de PDF/imagenes a notas clínicas
 
 #### 4. User Interface Framework
 **Status**: 🟢 Complete and Functional
@@ -442,7 +446,7 @@ HUBJR/
 - [ ] DaTscan SPECT Interpretation Guidelines
 
 **Sleep Disorders**:
-- [ ] Epworth Sleepiness Scale
+- [x] Epworth Sleepiness Scale
 - [ ] Pittsburgh Sleep Quality Index
 - [ ] REM Sleep Behavior Disorder Screening Questionnaire
 - [ ] Berlin Questionnaire for Sleep Apnea
@@ -470,8 +474,8 @@ HUBJR/
 - [ ] Adverse Events Profile (AEP)
 
 **Additional Stroke Scales**:
-- [ ] Fisher Grade Scale
-- [ ] WFNS Scale (World Federation of Neurosurgical Societies)
+- [x] Fisher Grade Scale
+- [x] WFNS Scale (World Federation of Neurosurgical Societies)
 
 **General Neurology**:
 - [ ] Barthel Index

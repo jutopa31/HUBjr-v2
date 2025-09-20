@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useEscapeKey from './hooks/useEscapeKey';
 import { 
   Brain, 
   Key, 
@@ -33,6 +34,8 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEscapeKey(onClose, isOpen);
 
   useEffect(() => {
     if (isOpen) {

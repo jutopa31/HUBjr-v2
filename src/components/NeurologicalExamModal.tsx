@@ -2,6 +2,7 @@
 // Interfaz unificada con navegación entre secciones y seguimiento de progreso
 
 import React, { useState, useEffect } from 'react';
+import useEscapeKey from '../hooks/useEscapeKey';
 import { X, Brain, CheckCircle, Clock, FileText, Save, RotateCw, AlertTriangle } from 'lucide-react';
 import { NeurologicalExamService } from '../services/neurologicalExamService';
 import { 
@@ -37,6 +38,8 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+
+  useEscapeKey(onClose, isOpen);
 
   // ==================== EFECTOS ====================
   useEffect(() => {
