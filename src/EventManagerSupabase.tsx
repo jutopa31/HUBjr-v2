@@ -708,7 +708,7 @@ const EventManagerSupabase: React.FC = () => {
                 </div>
 
                 {newEvent.is_recurring && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Frecuencia
@@ -740,7 +740,7 @@ const EventManagerSupabase: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row">
               <button
                 type="submit"
                 disabled={loading}
@@ -767,7 +767,7 @@ const EventManagerSupabase: React.FC = () => {
         {viewMode === 'week' ? (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Vista Semanal</h3>
-            <div className="grid grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
               {getWeekDays(currentDate).map((day, index) => {
                 const dayEvents = getEventsForDate(day);
                 const isToday = day.toDateString() === new Date().toDateString();
@@ -849,7 +849,8 @@ const EventManagerSupabase: React.FC = () => {
         ) : (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Vista Mensual</h3>
-            <div className="grid grid-cols-5 gap-1">
+            <div className="overflow-x-auto">
+              <div className="grid min-w-[520px] grid-cols-5 gap-1 sm:min-w-0 sm:gap-2 md:gap-3">
               {/* Week headers */}
               {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day) => (
                 <div key={day} className="p-2 text-center text-xs font-medium text-gray-500 bg-gray-100">
@@ -906,6 +907,7 @@ const EventManagerSupabase: React.FC = () => {
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         )}
@@ -1161,7 +1163,7 @@ const EventManagerSupabase: React.FC = () => {
               </div>
 
               {/* Date and Time */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Inicio</label>
                   <div className="p-3 bg-gray-50 rounded-lg text-sm">
