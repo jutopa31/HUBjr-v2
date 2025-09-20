@@ -169,7 +169,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
   }
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
+    <div className="min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
