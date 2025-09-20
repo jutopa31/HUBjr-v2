@@ -2474,6 +2474,113 @@ Motivo de consulta:
           score: 0
         }
       ]
+    },
+    {
+      id: 'flep',
+      name: 'Escala FLEP (Frontal Lobe Epilepsy and Parasomnias)',
+      category: 'Epilepsia',
+      description: 'Diferenciación entre epilepsia del lóbulo frontal nocturna y parasomnias',
+      items: [
+        {
+          id: 'age_onset',
+          label: '1. Edad de inicio de los episodios',
+          options: [
+            '1 - Infancia/adolescencia (<20 años)',
+            '0 - Adultez (≥20 años)'
+          ],
+          score: 0
+        },
+        {
+          id: 'episode_duration',
+          label: '2. Duración del episodio',
+          options: [
+            '1 - Breve (<1 minuto)',
+            '0 - Prolongado (≥1 minuto)'
+          ],
+          score: 0
+        },
+        {
+          id: 'episode_frequency',
+          label: '3. Frecuencia de episodios',
+          options: [
+            '1 - Múltiples por noche',
+            '0 - Uno por noche o menos'
+          ],
+          score: 0
+        },
+        {
+          id: 'timing_within_sleep',
+          label: '4. Momento del episodio durante el sueño',
+          options: [
+            '1 - Cualquier momento (N1, N2, REM)',
+            '0 - Principalmente sueño profundo (N3)'
+          ],
+          score: 0
+        },
+        {
+          id: 'stereotypy',
+          label: '5. Estereotipia de movimientos',
+          options: [
+            '1 - Movimientos estereotipados, repetitivos',
+            '0 - Movimientos variables, complejos'
+          ],
+          score: 0
+        },
+        {
+          id: 'dystonic_posturing',
+          label: '6. Posturas distónicas',
+          options: [
+            '1 - Presentes',
+            '0 - Ausentes'
+          ],
+          score: 0
+        },
+        {
+          id: 'vocalization',
+          label: '7. Vocalización',
+          options: [
+            '1 - Gritos, gemidos',
+            '0 - Murmullo o sin vocalización'
+          ],
+          score: 0
+        },
+        {
+          id: 'recall_episode',
+          label: '8. Recuerdo del episodio',
+          options: [
+            '1 - Recuerda parcial o totalmente',
+            '0 - No recuerda'
+          ],
+          score: 0
+        },
+        {
+          id: 'awakening_pattern',
+          label: '9. Patrón de despertar',
+          options: [
+            '1 - Despierta completamente, alerta',
+            '0 - Confusión post-episodio'
+          ],
+          score: 0
+        },
+        {
+          id: 'clustering',
+          label: '10. Agrupación de episodios',
+          options: [
+            '1 - Episodios agrupados en la misma noche',
+            '0 - Episodio único por noche'
+          ],
+          score: 0
+        },
+        {
+          id: 'response_to_intervention',
+          label: '11. Respuesta a intervención externa',
+          options: [
+            '1 - Continúa el episodio a pesar de estímulos',
+            '0 - Se detiene con estímulos externos'
+          ],
+          score: 0
+        }
+      ]
     }
   ];
 

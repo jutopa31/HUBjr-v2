@@ -386,10 +386,10 @@ const WardRounds: React.FC = () => {
         return `
           <tr>
             <td class="number-cell">${index + 1}</td>
+            <td class="text-cell bold">${patient.cama || '-'}</td>
             <td class="text-cell bold">${patient.nombre || '-'}</td>
             <td class="text-cell">${patient.dni || '-'}</td>
             <td class="text-cell">${patient.edad || '-'}</td>
-            <td class="text-cell">${patient.cama || '-'}</td>
             <td class="severity-cell" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
               <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
             </td>
@@ -604,10 +604,10 @@ const WardRounds: React.FC = () => {
             <thead>
               <tr>
                 <th class="col-num">#</th>
+                <th class="col-bed">Ubicación</th>
                 <th class="col-name">Nombre</th>
                 <th class="col-dni">DNI</th>
                 <th class="col-age">Edad</th>
-                <th class="col-bed">Cama</th>
                 <th class="col-severity">Sev</th>
                 <th class="col-history">Antecedentes</th>
                 <th class="col-reason">Motivo Consulta</th>
@@ -947,64 +947,76 @@ const WardRounds: React.FC = () => {
           <div className="divide-y divide-gray-200">
             {/* Header para ordenamiento */}
             <div className="bg-gray-50 px-6 py-1.5 border-b border-gray-200 sticky top-0 z-10">
-              <div className="ward-header-grid">
-                <button 
-                  onClick={() => handleSort('nombre')}
-                  className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
-                >
-                  <span>Pacientes</span>
-                  {sortField === 'nombre' && (
-                    sortDirection === 'asc' ? 
-                      <ChevronUp className="h-3 w-3" /> : 
-                      <ChevronDown className="h-3 w-3" />
-                  )}
-                </button>
-                <button 
-                  onClick={() => handleSort('cama')}
-                  className="hidden sm:flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
-                >
-                  <span>Ubicación</span>
-                  {sortField === 'cama' && (
-                    sortDirection === 'asc' ? 
-                      <ChevronUp className="h-3 w-3" /> : 
-                      <ChevronDown className="h-3 w-3" />
-                  )}
-                </button>
-                <button 
-                  onClick={() => handleSort('diagnostico')}
-                  className="hidden md:flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 justify-start"
-                >
-                  <span>Diagnóstico</span>
-                  {sortField === 'diagnostico' && (
-                    sortDirection === 'asc' ? 
-                      <ChevronUp className="h-3 w-3" /> : 
-                      <ChevronDown className="h-3 w-3" />
-                  )}
-                </button>
-                <button 
-                  onClick={() => handleSort('severidad')}
-                  className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-center py-1"
-                >
-                  <span>Severidad</span>
-                  {sortField === 'severidad' && (
-                    sortDirection === 'asc' ? 
-                      <ChevronUp className="h-3 w-3" /> : 
-                      <ChevronDown className="h-3 w-3" />
-                  )}
-                </button>
-                <button 
-                  onClick={() => handleSort('pendientes')}
-                  className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
-                >
-                  <span>Pendientes</span>
-                  {sortField === 'pendientes' && (
-                    sortDirection === 'asc' ? 
-                      <ChevronUp className="h-3 w-3" /> : 
-                      <ChevronDown className="h-3 w-3" />
-                  )}
-                </button>
-                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                  <span>Acciones</span>
+              <div className="grid grid-cols-12 gap-2 items-center px-6">
+                <div className="col-span-2">
+                  <button
+                    onClick={() => handleSort('cama')}
+                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                  >
+                    <span>Ubicación</span>
+                    {sortField === 'cama' && (
+                      sortDirection === 'asc' ?
+                        <ChevronUp className="h-3 w-3" /> :
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="col-span-3">
+                  <button
+                    onClick={() => handleSort('nombre')}
+                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                  >
+                    <span>Pacientes</span>
+                    {sortField === 'nombre' && (
+                      sortDirection === 'asc' ?
+                        <ChevronUp className="h-3 w-3" /> :
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="col-span-3 hidden md:block">
+                  <button
+                    onClick={() => handleSort('diagnostico')}
+                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 justify-start py-1"
+                  >
+                    <span>Diagnóstico</span>
+                    {sortField === 'diagnostico' && (
+                      sortDirection === 'asc' ?
+                        <ChevronUp className="h-3 w-3" /> :
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="col-span-1">
+                  <button
+                    onClick={() => handleSort('severidad')}
+                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-center py-1"
+                  >
+                    <span>Sev</span>
+                    {sortField === 'severidad' && (
+                      sortDirection === 'asc' ?
+                        <ChevronUp className="h-3 w-3" /> :
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="col-span-2">
+                  <button
+                    onClick={() => handleSort('pendientes')}
+                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                  >
+                    <span>Pendientes</span>
+                    {sortField === 'pendientes' && (
+                      sortDirection === 'asc' ?
+                        <ChevronUp className="h-3 w-3" /> :
+                        <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="col-span-1">
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                    <span>Acciones</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1013,12 +1025,12 @@ const WardRounds: React.FC = () => {
             {sortedPatients.map((patient) => {
               const isExpanded = expandedRows.has(patient.id || '');
               return (
-                <div key={patient.id} className={`expandable-row ${
+                <div key={patient.id} className={`expandable-row mb-2 ${
                   patient.severidad === 'I' ? 'bg-green-50 border-l-4 border-l-green-400' :
                   patient.severidad === 'II' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' :
                   patient.severidad === 'III' ? 'bg-orange-50 border-l-4 border-l-orange-400' :
                   patient.severidad === 'IV' ? 'bg-red-50 border-l-4 border-l-red-400' : 'bg-white border-l-4 border-l-gray-300'
-                } ${isExpanded ? 'shadow-md' : 'hover:bg-gray-50'}`}>
+                } ${isExpanded ? 'shadow-md mb-6' : 'hover:bg-gray-50'}`}>
                   
                   {/* Fila principal compacta */}
                   <div 
@@ -1036,24 +1048,24 @@ const WardRounds: React.FC = () => {
                       </div>
                       
                       {/* Información principal */}
-                      <div className="flex-1 ward-content-grid">
-                        <div className="ward-col-pacientes">
+                      <div className="flex-1 grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-2">
+                          <div className="text-sm font-medium text-gray-900">{patient.cama}</div>
+                          <div className="text-xs text-gray-500">{patient.edad} años</div>
+                        </div>
+                        <div className="col-span-3">
                           <div className="text-sm font-medium text-gray-900">{patient.nombre}</div>
                           <div className="text-xs text-gray-500">
                             <span>DNI: {patient.dni}</span>
-                            <span className="sm:hidden"> • {patient.cama} • {patient.edad} años</span>
+                            <span className="sm:hidden"> • {patient.edad} años</span>
                           </div>
                         </div>
-                        <div className="ward-col-ubicacion hidden sm:block">
-                          <div className="text-sm text-gray-700">{patient.cama}</div>
-                          <div className="text-xs text-gray-500">{patient.edad} años</div>
-                        </div>
-                        <div className="ward-col-diagnostico hidden md:block">
+                        <div className="col-span-3 hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
-                            {patient.diagnostico ? patient.diagnostico.slice(0, 25) + '...' : 'Sin diagnóstico'}
+                            {patient.diagnostico ? patient.diagnostico.slice(0, 30) + '...' : 'Sin diagnóstico'}
                           </div>
                         </div>
-                        <div className="ward-col-severidad">
+                        <div className="col-span-1">
                           <span className={`severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
                             patient.severidad === 'II' ? 'bg-yellow-100 text-yellow-800' :
@@ -1063,7 +1075,7 @@ const WardRounds: React.FC = () => {
                             {patient.severidad}
                           </span>
                         </div>
-                        <div className="ward-col-pendientes">
+                        <div className="col-span-2">
                           {editingPendientesId === patient.id ? (
                             <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
                               <textarea
@@ -1112,8 +1124,8 @@ const WardRounds: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <div className="ward-col-actions">
-                          <div className="flex items-center space-x-1">
+                        <div className="col-span-1">
+                          <div className="flex items-center space-x-1 justify-center">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1142,30 +1154,30 @@ const WardRounds: React.FC = () => {
                   </div>
 
                   {/* Contenido expandible */}
-                  <div className={`expandable-content ${
-                    isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    isExpanded ? 'max-h-screen opacity-100 mb-4' : 'max-h-0 opacity-0'
                   }`}>
-                    <div className="px-6 pb-4 border-t border-gray-200 bg-gray-50 medical-details">
+                    <div className="px-6 pb-6 pt-4 border-t border-gray-200 bg-gray-50 medical-details">
                       <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         
                         <div className="space-y-3">
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Antecedentes</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.antecedentes || 'No especificado'}
                             </p>
                           </div>
                           
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Motivo de Consulta</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.motivo_consulta || 'No especificado'}
                             </p>
                           </div>
                           
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.examen_fisico || 'No especificado'}
                             </p>
                           </div>
@@ -1174,28 +1186,28 @@ const WardRounds: React.FC = () => {
                         <div className="space-y-3">
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Estudios Complementarios</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.estudios || 'No especificado'}
                             </p>
                           </div>
                           
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Diagnóstico</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.diagnostico || 'No especificado'}
                             </p>
                           </div>
                           
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Plan</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.plan || 'No especificado'}
                             </p>
                           </div>
                           
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Pendientes</h4>
-                            <p className="text-gray-600 medical-card p-2 rounded">
+                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.pendientes || 'Sin pendientes'}
                             </p>
                           </div>

@@ -34,7 +34,10 @@
       "Bash(node:*)",
       "Bash(npx next lint:*)",
       "Bash(git fetch:*)",
-      "WebFetch(domain:hubjr-v2.vercel.app)"
+      "WebFetch(domain:hubjr-v2.vercel.app)",
+      "WebSearch",
+      "WebFetch(domain:link.springer.com)",
+      "WebFetch(domain:www.researchgate.net)"
     ],
     "deny": []
   }

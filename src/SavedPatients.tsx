@@ -287,7 +287,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
           <div className="overflow-auto h-full">
             <div className="divide-y divide-gray-200">
               {/* Header */}
-              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 sticky top-0 z-10">
+              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 md:sticky md:top-0 z-10">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Pacientes guardados desde Algoritmos Diagnósticos
