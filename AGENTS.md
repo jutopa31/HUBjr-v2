@@ -1,29 +1,21 @@
 # Repository Guidelines
 
-## Project Structure & Modules
-Core UI and feature logic live under src/ (notably components/, services/, utils/, and large feature files such as 
-eurology_residency_hub.tsx). Next.js routing is handled in pages/, with API routes in pages/api/. Standalone Node handlers are kept in pi/, while database DDL scripts sit in database/. Shared assets reside in public/, and static exports build to dist/ or .next/ depending on the toolchain.
+## Project Structure & Module Organization
+Core UI, hooks, and services live in `src/`, with React components under `src/components/`, business logic in `src/services/` and `src/utils/`, and feature hubs like `src/eurology_residency_hub.tsx`. Next.js routes sit in `pages/`, API handlers land in `pages/api/`, and standalone Node jobs belong to `api/`. Database DDL is kept in `database/`, while shared assets ship from `public/`. Build artifacts land in `.next/` or `dist/`; keep them out of version control. Co-locate new tests beside their sources or in `__tests__/` directories.
 
-## Build, Test, and Development
-Use 
-pm run dev for the Next.js dev server (default port 3000+) and 
-pm run dev:vite when you need the lighter Vite preview. Production bundles are created with 
-pm run build; pair with 
-pm run start to smoke-test the compiled app. Run 
-pm run build:vite for the alternative Vite pipeline and 
-pm run preview:vite to inspect that bundle. Linting (
-pm run lint) and TypeScript checks (
-pm run typecheck) must pass before opening a PR.
+## Build, Test, and Development Commands
+Use `pm run dev` for the primary Next.js dev server, and `pm run dev:vite` for a lightweight Vite preview. Ship production bundles with `pm run build`, then validate via `pm run start`. The alternative Vite pipeline pairs `pm run build:vite` with `pm run preview:vite`. Always lint before pushing using `pm run lint`, and back it up with strict type checks via `pm run typecheck`.
 
-## Coding Style & Naming
-Write TypeScript-first components with strict mode expectations (	sconfig.json enables strict, 
-oUnused*). Prefer functional React components, hooks under src/hooks, and PascalCase filenames for exported components. Keep tailwind utility classes grouped by layout ? color ? typography. ESLint is the source of truth; run it when touching JSX/TSX. Follow existing patterns for Supabase helpers in src/services/ and keep shared types in src/types/.
+## Coding Style & Naming Conventions
+Write strict TypeScript and functional React components. Follow PascalCase for exported components, camelCase for helpers, and UPPER_SNAKE_CASE for constants. Align Tailwind classes as layout > color > typography. ESLint and Prettier enforce formatting; fix issues via `pm run lint -- --fix` when permissible rather than hand-editing. Keep Supabase helpers in `src/services/` and share types from `src/types/`.
 
-## Testing Expectations
-There is currently no automated test suite; add Vitest or Playwright coverage alongside new features. Place unit tests next to the source (Component.test.tsx) or under a __tests__/ folder, and name test cases after the user scenario being validated. At minimum, cover critical flows (patient CRUD, event scheduling) and include regression tests when fixing defects.
+## Testing Guidelines
+Adopt Vitest or Playwright when touching critical flows such as patient CRUD or scheduling. Name specs `Component.test.tsx` or place them under `__tests__/` with scenario-focused test titles. Aim to cover user paths you change or introduce, and run the suite with the appropriate `pm run test:*` script once added. Include regression tests when fixing bugs.
 
-## Commit & PR Workflow
-Adopt the conventional commit style found in history (eat:, ix:, efactor:). Commits should stay scoped to a single feature or bug. Pull requests need a concise summary, linked GitHub issue (if applicable), verification steps, and screenshots or screen recordings for UI changes. Flag environment variable updates in the PR body and update .env.example when you add new config.
+## Commit & Pull Request Guidelines
+Commits follow conventional prefixes like `feat:`, `fix:`, or `refactor:` and stay narrowly scoped. Pull requests need a concise summary, linked issue when available, verification steps (commands run, screenshots or recordings for UI work), and any environment variable changes documented alongside updates to `.env.example`. If production data or Supabase roles are involved, note approvals and sanitise all identifiers.
 
-## Environment & Data Handling
-Copy .env.example to .env.local for local runs and avoid checking secrets into version control. Supabase credentials grant production data access—use service roles only in secure server contexts. Obfuscate patient identifiers in sample data and scrub exports before sharing outside the hospital network.
+## Security & Configuration Tips
+Copy `.env.example` to `.env.local` for local runs and never commit secrets. Supabase service keys must remain on the server side only. When sharing logs or exports, scrub patient identifiers and audit trails. Treat production backups carefully and confirm with the product owner before using real data in demos.
+
+
