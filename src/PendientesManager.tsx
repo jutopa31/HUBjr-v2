@@ -25,6 +25,7 @@ const PendientesManager: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [newTask, setNewTask] = useState<Task>({
     title: '',
@@ -249,7 +250,7 @@ const PendientesManager: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center space-x-3">
             <CheckSquare className="h-8 w-8" />
             <div>
@@ -257,18 +258,18 @@ const PendientesManager: React.FC = () => {
               <p className="text-purple-100 text-lg">Lista de tareas y recordatorios</p>
             </div>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
+              className="flex w-full items-center justify-center space-x-2 rounded-lg bg-white bg-opacity-20 px-4 py-2 transition-all hover:bg-opacity-30 sm:w-auto"
               disabled={loading}
             >
               <Plus className="h-5 w-5" />
-              <span>Nueva Tarea</span>
+              <span>{showForm ? 'Cerrar formulario' : 'Nueva Tarea'}</span>
             </button>
             <button
               onClick={handleSyncWithWardRounds}
-              className="flex items-center space-x-2 bg-blue-600 bg-opacity-80 hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all text-white"
+              className="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 bg-opacity-80 px-4 py-2 text-white transition-all hover:bg-opacity-100 sm:w-auto"
               disabled={syncing || loading}
             >
               <Users className="h-5 w-5" />
@@ -279,49 +280,66 @@ const PendientesManager: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex items-center space-x-4">
-          <Filter className="h-5 w-5 text-gray-500" />
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Estado:</label>
-            <select 
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm"
-            >
-              <option value="all">Todos</option>
-              <option value="pending">Pendientes</option>
-              <option value="in_progress">En Progreso</option>
-              <option value="completed">Completadas</option>
-            </select>
+      <div className="bg-white rounded-lg shadow">
+        <div className="flex items-center justify-between px-4 py-3 md:hidden">
+          <div className="flex items-center gap-2 text-gray-700">
+            <Filter className="h-5 w-5 text-gray-500" />
+            <span className="text-sm font-medium">Filtros</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Prioridad:</label>
-            <select 
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm"
-            >
-              <option value="all">Todas</option>
-              <option value="high">Alta</option>
-              <option value="medium">Media</option>
-              <option value="low">Baja</option>
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Origen:</label>
-            <select 
-              value={filterSource}
-              onChange={(e) => setFilterSource(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm"
-            >
-              <option value="all">Todas</option>
-              <option value="ward_rounds">Pase de Sala</option>
-              <option value="manual">Manuales</option>
-            </select>
-          </div>
-          <div className="text-sm text-gray-500">
-            {filteredTasks.length} de {tasks.length} tareas
+          <button
+            onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+            className="text-sm font-medium text-purple-600"
+          >
+            {isFilterPanelOpen ? 'Ocultar' : 'Mostrar'}
+          </button>
+        </div>
+        <div className={`${isFilterPanelOpen ? 'block' : 'hidden'} px-4 pb-4 md:block md:px-6 md:pb-6`}>
+          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
+            <div className="flex items-center gap-2 text-gray-700">
+              <Filter className="hidden h-5 w-5 text-gray-500 md:block" />
+              <span className="hidden text-sm font-medium md:inline">Filtros:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Estado:</label>
+              <select 
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded border border-gray-300 px-3 py-1 text-sm"
+              >
+                <option value="all">Todos</option>
+                <option value="pending">Pendientes</option>
+                <option value="in_progress">En Progreso</option>
+                <option value="completed">Completadas</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Prioridad:</label>
+              <select 
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value)}
+                className="rounded border border-gray-300 px-3 py-1 text-sm"
+              >
+                <option value="all">Todas</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Origen:</label>
+              <select 
+                value={filterSource}
+                onChange={(e) => setFilterSource(e.target.value)}
+                className="rounded border border-gray-300 px-3 py-1 text-sm"
+              >
+                <option value="all">Todas</option>
+                <option value="ward_rounds">Pase de Sala</option>
+                <option value="manual">Manuales</option>
+              </select>
+            </div>
+            <div className="text-sm text-gray-500">
+              {filteredTasks.length} de {tasks.length} tareas
+            </div>
           </div>
         </div>
       </div>
@@ -418,13 +436,9 @@ const PendientesManager: React.FC = () => {
 
       {/* Tasks List */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">
-            Lista de Tareas ({filteredTasks.length})
-          </h2>
-          <div className="text-sm text-gray-500">
-            {loading ? 'Sincronizando...' : 'Conectado a Supabase'}
-          </div>
+        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-xl font-semibold">Lista de Tareas ({filteredTasks.length})</h2>
+          <div className="text-sm text-gray-500">{loading ? 'Sincronizando...' : 'Conectado a Supabase'}</div>
         </div>
 
         {filteredTasks.length === 0 ? (
@@ -453,15 +467,15 @@ const PendientesManager: React.FC = () => {
                     task.status === 'completed' ? 'bg-gray-50 opacity-75' : 'bg-white'
                   } ${isOverdue ? 'border-red-300 bg-red-50' : ''}`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => {
                             const newStatus = task.status === 'completed' ? 'pending' : 'completed';
                             updateTaskStatus(task.id!, newStatus);
                           }}
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                          className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-colors ${
                             task.status === 'completed' 
                               ? 'bg-green-500 border-green-500 text-white' 
                               : 'border-gray-300 hover:border-green-500'
@@ -477,13 +491,13 @@ const PendientesManager: React.FC = () => {
                         </h3>
                         
                         {task.source === 'ward_rounds' && (
-                          <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs bg-blue-100 text-blue-800">
                             <Users className="h-3 w-3" />
                             <span>Pase de Sala</span>
                           </span>
                         )}
                         
-                        <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${priorityDisplay.color}`}>
+                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${priorityDisplay.color}`}>
                           <PriorityIcon className="h-3 w-3" />
                           <span>{priorityDisplay.label}</span>
                         </div>
@@ -507,9 +521,9 @@ const PendientesManager: React.FC = () => {
                         </p>
                       )}
                       
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                         {task.due_date && (
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>
                               Vence: {new Date(task.due_date).toLocaleDateString('es-ES')}
@@ -517,7 +531,7 @@ const PendientesManager: React.FC = () => {
                           </div>
                         )}
                         {task.created_at && (
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             <span>
                               Creada: {new Date(task.created_at).toLocaleDateString('es-ES')}
@@ -527,7 +541,7 @@ const PendientesManager: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2 ml-4">
+                    <div className="ml-0 flex flex-wrap items-center gap-2 md:ml-4 md:flex-nowrap">
                       <select
                         value={task.status}
                         onChange={(e) => updateTaskStatus(task.id!, e.target.value as Task['status'])}

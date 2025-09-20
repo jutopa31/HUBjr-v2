@@ -255,45 +255,61 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
     ];
 
     return (
-      <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex-shrink-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Progreso del Examen</h3>
           <div className="text-sm text-gray-600">
             {examProgress.completion_percentage}% completado
           </div>
         </div>
-        
+
         {/* Barra de progreso */}
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            className="h-full rounded-full bg-blue-600 transition-all duration-300"
             style={{ width: `${examProgress.completion_percentage}%` }}
           />
         </div>
 
         {/* Navegación de secciones */}
-        <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+        <div className="mt-4 -mx-1 flex gap-2 overflow-x-auto pb-2 px-1">
           {sections.map((section) => {
             const isCompleted = examProgress.sections_completed.includes(section.id);
             const isCurrent = currentSection === section.id;
-            
+            const statusText = isCurrent ? 'En progreso' : isCompleted ? 'Completo' : 'Pendiente';
+            const statusColor = isCurrent
+              ? 'text-blue-100'
+              : isCompleted
+              ? 'text-green-600'
+              : 'text-gray-500';
+
+            const buttonClasses = [
+              'flex-shrink-0 min-w-[180px] rounded-xl border p-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-50',
+              isCurrent
+                ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                : isCompleted
+                ? 'bg-green-50 text-green-900 border-green-200 hover:border-green-300'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300'
+            ].join(' ');
+
             return (
               <button
                 key={section.id}
                 onClick={() => navigateToSection(section.id)}
-                className={`p-2 rounded-lg text-xs text-center transition-all ${
-                  isCurrent
-                    ? 'bg-blue-600 text-white'
-                    : isCompleted
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
+                className={buttonClasses}
               >
-                <div className="text-lg mb-1">{section.icon}</div>
-                <div className="font-medium">{section.name}</div>
-                {isCompleted && (
-                  <CheckCircle className="h-3 w-3 mx-auto mt-1" />
-                )}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl" aria-hidden="true">{section.icon}</span>
+                    <div>
+                      <div className="font-semibold text-sm">{section.name}</div>
+                      <div className={`mt-1 text-xs ${statusColor}`}>{statusText}</div>
+                    </div>
+                  </div>
+                  {isCompleted && (
+                    <CheckCircle className={`h-4 w-4 ${isCurrent ? 'text-white' : 'text-green-600'}`} />
+                  )}
+                </div>
               </button>
             );
           })}
@@ -918,8 +934,8 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black bg-opacity-50 py-8 px-4 sm:px-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -968,3 +984,4 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
 };
 
 export default NeurologicalExamModal;
+

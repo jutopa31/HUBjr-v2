@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Next.js development server (auto-detects port, usually 3001)
 npm run build        # Production build with Next.js
 npm run start        # Start production server
-npm run lint         # ESLint checking
+npm run lint         # ESLint checking and error detection
 ```
 
 ### Alternative Build System
@@ -19,10 +19,15 @@ npm run build:vite        # TypeScript compilation + Vite build
 npm run preview:vite      # Preview Vite production build
 ```
 
-### Specialized Scripts
+### Quality Assurance
 ```bash
+npm run lint              # ESLint checking
 npm run audit:responsive  # Run responsive design audit script
+tsc --noEmit             # TypeScript type checking without compilation
 ```
+
+### Testing
+**Note**: No test framework is currently configured. Manual testing is performed using development servers.
 
 ## Architecture Overview
 
@@ -90,8 +95,9 @@ npm run audit:responsive  # Run responsive design audit script
 - Vite for fast development (alternative)
 
 **Environment Setup**:
-- Copy `.env.example` to `.env` and configure Supabase credentials
-- Google API keys required for calendar integration
+- Copy `.env.example` to `.env` and configure required API keys
+- Supabase credentials required: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Optional: Google Calendar API keys, AI service API keys (OpenAI, Anthropic, Google AI)
 - Medical data encryption keys for HIPAA compliance
 
 ### Code Conventions
@@ -129,3 +135,18 @@ npm run audit:responsive  # Run responsive design audit script
 **Production**: Vercel deployment with environment variables configured in dashboard
 **Development**: Both Next.js and Vite development servers available
 **Environment Variables**: Copy `.env.example` to `.env` and configure all required API keys
+
+### Development Workflow
+
+**Before making changes**:
+1. Run `npm run lint` to check for code quality issues
+2. Run `tsc --noEmit` for TypeScript type checking
+3. Test locally with `npm run dev` (Next.js) or `npm run dev:vite` (Vite)
+
+**File Structure Conventions**:
+- Main application components in `src/` root
+- Reusable UI components in `src/components/`
+- Authentication system in `src/components/auth/`
+- Utility functions in `src/utils/`
+- TypeScript type definitions in `src/types/` or co-located with components
+- API routes in `pages/api/` (Next.js) or `api/` (legacy)

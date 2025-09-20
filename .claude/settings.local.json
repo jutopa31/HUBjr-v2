@@ -26,7 +26,6 @@
       "Bash(git merge:*)",
       "Bash(gh repo create:*)",
       "Bash(git remote add:*)",
-      "Bash(git commit:*)",
       "Bash(npx eslint:*)",
       "Bash(git config:*)",
       "Bash(git remote set-url:*)",
