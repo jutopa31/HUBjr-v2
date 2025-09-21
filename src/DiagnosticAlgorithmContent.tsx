@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload, LayoutList, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -48,6 +48,38 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Estado para el modal de examen físico neurológico
   const [showNeurologicalExam, setShowNeurologicalExam] = useState(false);
   const [showOcrModal, setShowOcrModal] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 1024;
+  });
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 1024;
+  });
+  const [showScaleList, setShowScaleList] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 1024;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024;
+      setIsMobileView(isMobile);
+      setIsSidebarOpen(isMobile ? false : true);
+      setShowScaleList(isMobile ? false : true);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -187,224 +219,302 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const groupedScales = createDynamicGroups();
 
   return (
-  <div className="flex h-full">
-    {/* Left Sidebar */}
-    <div className="w-80 bg-white shadow-lg border-r">
-      <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <h2 className="text-lg font-semibold flex items-center">
-          <Calculator className="h-5 w-5 mr-2" />
-          Escalas y Algoritmos
-        </h2>
-        <div className="flex items-center justify-between mt-1 mb-3">
-          <p className="text-blue-100 text-sm">Herramientas de evaluación neurológica</p>
-          {/* Indicador de IA */}
-          <div className="flex items-center space-x-2">
-            {aiAnalysis.suggestions.length > 0 && (
-              <div className="flex items-center space-x-1 bg-white bg-opacity-20 px-2 py-1 rounded-full">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-blue-100">IA: {aiAnalysis.suggestions.length}</span>
-              </div>
-            )}
-            <div className="text-xs text-blue-200">
-              {notes.length > 0 ? `${notes.length} chars` : 'Sin texto'}
-            </div>
+    <div className="flex h-full flex-col lg:flex-row">
+      {/* Mobile Controls */}
+      <div className="border-b bg-white px-4 py-3 shadow-sm lg:hidden">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Evolucionador</p>
+            <h2 className="text-base font-semibold text-gray-900">Notas y escalas neurológicas</h2>
           </div>
-        </div>
-        
-        {/* Buscador de escalas */}
-        <div className="relative">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-200" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-              }}
-              placeholder="Buscar escalas..."
-              className="w-full pl-10 pr-10 py-2 text-sm rounded-lg bg-white bg-opacity-20 text-white placeholder-blue-200 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-200 hover:text-white transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowScaleList((prev) => !prev)}
+              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm"
+            >
+              <LayoutList className="mr-1 h-3.5 w-3.5" />
+              {showScaleList ? 'Ocultar escala' : 'Mostrar escala'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              className="inline-flex items-center rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
+            >
+              {isSidebarOpen ? (
+                <>
+                  <PanelLeftClose className="mr-1.5 h-3.5 w-3.5" />
+                  Ocultar
+                </>
+              ) : (
+                <>
+                  <PanelLeftOpen className="mr-1.5 h-3.5 w-3.5" />
+                  Escalas
+                </>
+              )}
+            </button>
           </div>
-          {searchQuery && (
-            <div className="mt-2 text-xs text-blue-200">
-              Buscando: "{searchQuery}"
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Sección de Examen Físico Neurológico */}
-      <div className="border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-cyan-50 p-4">
+      {isMobileView && isSidebarOpen && (
         <button
-          onClick={() => setShowNeurologicalExam(true)}
-          className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
-        >
-          <Brain className="h-5 w-5" />
-          <span>Examen Físico Neurológico</span>
-          <Stethoscope className="h-4 w-4" />
-        </button>
-        <p className="text-emerald-700 text-xs text-center mt-2">Evaluación sistemática por esferas neurológicas</p>
-      </div>
+          type="button"
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 transition-opacity lg:hidden"
+          aria-label="Cerrar panel de escalas"
+        />
+      )}
 
-      <div className="p-4">
-        <div className="mb-4 border-b border-gray-200 pb-4">
-          <h3 className="text-sm font-semibold text-gray-700 flex items-center">
-            <Calculator className="h-4 w-4 mr-2" />
-            Escalas Diagnósticas
-          </h3>
-          <p className="text-xs text-gray-500 mt-1">Herramientas de puntuación y evaluación clínica</p>
-        </div>
-        <div className="space-y-4">
-          {Object.entries(groupedScales).map(([category, scales]) => {
-            const isAISuggestions = category === '🤖 Sugerencias IA';
-            const isSearchResults = category === '🔍 Resultados de Búsqueda';
-            const isParkinson = category === 'Parkinson';
-            
-            return (
-              <div 
-                key={category} 
-                className={`border rounded-lg overflow-hidden ${
-                  isAISuggestions 
-                    ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 shadow-lg' 
-                    : isSearchResults
-                      ? 'border-green-300 bg-gradient-to-r from-green-50 to-teal-50 shadow-lg'
-                      : 'border-gray-200'
-                }`}
-              >
-                {/* Category Header */}
-                <button
-                  onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
-                  className={`w-full p-3 flex items-center justify-between transition-colors ${
-                    isAISuggestions 
-                      ? 'bg-gradient-to-r from-purple-100 to-blue-100 cursor-default' 
-                      : isSearchResults
-                        ? 'bg-gradient-to-r from-green-100 to-teal-100 cursor-default'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-1.5 rounded ${
-                      isAISuggestions 
-                        ? 'bg-purple-200' 
-                        : isSearchResults
-                          ? 'bg-green-200'
-                          : isParkinson 
-                            ? 'bg-orange-100' 
-                            : 'bg-blue-100'
-                    }`}>
-                      <Stethoscope className={`h-4 w-4 ${
-                        isAISuggestions 
-                          ? 'text-purple-700' 
-                          : isSearchResults
-                            ? 'text-green-700'
-                            : isParkinson 
-                              ? 'text-orange-600' 
-                              : 'text-blue-600'
-                      }`} />
-                    </div>
-                    <span className={`font-medium ${
-                      isAISuggestions || isSearchResults ? 'text-purple-900' : 'text-gray-900'
-                    }`}>
-                      {category}
-                    </span>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      isAISuggestions 
-                        ? 'text-purple-700 bg-purple-200' 
-                        : isSearchResults
-                          ? 'text-green-700 bg-green-200'
-                          : 'text-gray-500 bg-gray-200'
-                    }`}>
-                      {scales.length}
-                    </span>
-                    {isAISuggestions && (
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-purple-700 font-medium">Activo</span>
-                      </div>
-                    )}
-                    {isSearchResults && (
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-xs text-green-700 font-medium">Búsqueda</span>
-                      </div>
-                    )}
+      {/* Left Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-full max-w-xs transform bg-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:block lg:w-80 lg:max-w-none lg:transform-none lg:shadow-lg ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex h-full flex-col border-r border-gray-200">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
+            <h2 className="text-lg font-semibold flex items-center">
+              <Calculator className="h-5 w-5 mr-2" />
+              Escalas y Algoritmos
+            </h2>
+            <div className="mt-1 mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-blue-100 text-sm">Herramientas de evaluación neurológica</p>
+              {/* Indicador de IA */}
+              <div className="flex items-center space-x-2">
+                {aiAnalysis.suggestions.length > 0 && (
+                  <div className="flex items-center space-x-1 rounded-full bg-white bg-opacity-20 px-2 py-1">
+                    <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                    <span className="text-xs text-blue-100">IA: {aiAnalysis.suggestions.length}</span>
                   </div>
-                  {!isAISuggestions && !isSearchResults && (
-                    expandedCategories[category] ? 
-                      <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                      <ChevronDown className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              
-              {/* Category Content */}
-              {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
-                <div className="divide-y divide-gray-100">
-                  {scales.map((scale) => (
-                    <div key={scale.id} className="relative">
-                      <button
-                        onClick={() => {
-                          console.log('🔍 Scale button clicked:', scale.id, scale.name);
-                          openScaleModal(scale.id);
-                        }}
-                        className={`w-full p-3 text-left transition-colors ${
-                          clickedScale === scale.id 
-                            ? 'bg-green-100 border-l-4 border-green-500' 
-                            : 'hover:bg-blue-50'
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900 text-sm">{scale.name}</h3>
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{scale.description}</p>
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                        </div>
-                      </button>
-                      <AIBadgeSystem
-                        scaleId={scale.id}
-                        suggestions={aiAnalysis.suggestions}
-                        onScaleClick={openScaleModal}
-                      />
-                    </div>
-                  ))}
+                )}
+                <div className="text-xs text-blue-200">
+                  {notes.length > 0 ? `${notes.length} chars` : 'Sin texto'}
                 </div>
+              </div>
+            </div>
+            <div className="mt-4 rounded-lg bg-white/15 p-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-100" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                  }}
+                  placeholder="Buscar escalas..."
+                  className="w-full rounded-lg border border-white/30 bg-white/20 py-2 pl-9 pr-10 text-sm text-white placeholder-blue-100 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white/70"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-100 transition-colors hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {searchQuery && (
+                <p className="mt-2 text-xs text-blue-100">Buscando: "{searchQuery}"</p>
               )}
             </div>
-          );
-        })}
-        </div>
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-800 mb-2">Instrucciones</h3>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Seleccione una escala del listado</li>
-            <li>• Complete la evaluación en el modal</li>
-            <li>• Los resultados se insertarán automáticamente</li>
-            <li>• Puede modificar las notas manualmente</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    {/* Main Content Area */}
-    <div className="flex-1 p-6">
-      <div className="h-full bg-white rounded-lg shadow">
-        <div className="p-4 border-b">
-          <div className="text-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Notas del Paciente</h2>
+
+            <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setShowScaleList((prev) => !prev)}
+                className="inline-flex items-center rounded-lg bg-white/10 px-3 py-1 font-medium text-blue-100 transition hover:bg-white/20"
+              >
+                <LayoutList className="mr-1.5 h-3.5 w-3.5" />
+                {showScaleList ? 'Ocultar lista' : 'Mostrar lista'}
+              </button>
+              {isMobileView && (
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="inline-flex items-center rounded-lg bg-white/10 px-3 py-1 font-medium text-blue-100 transition hover:bg-white/20"
+                >
+                  Cerrar panel
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex justify-center space-x-2">
+
+          {/* Sección de Examen Físico Neurológico */}
+          <div className="border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-cyan-50 p-4">
+            <button
+              onClick={() => setShowNeurologicalExam(true)}
+              className="flex w-full items-center justify-center space-x-2 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-3 font-medium text-white shadow-md transition hover:from-emerald-700 hover:to-cyan-700 hover:shadow-lg"
+            >
+              <Brain className="h-5 w-5" />
+              <span>Examen Físico Neurológico</span>
+              <Stethoscope className="h-4 w-4" />
+            </button>
+            <p className="mt-2 text-center text-xs text-emerald-700">Evaluación sistemática por esferas neurológicas</p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="mb-4 border-b border-gray-200 pb-4">
+              <h3 className="flex items-center text-sm font-semibold text-gray-700">
+                <Calculator className="mr-2 h-4 w-4" />
+                Escalas Diagnósticas
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">Herramientas de puntuación y evaluación clínica</p>
+            </div>
+
+            {showScaleList ? (
+              <div className="space-y-4">
+                {Object.entries(groupedScales).map(([category, scales]) => {
+                  const isAISuggestions = category === '🤖 Sugerencias IA';
+                  const isSearchResults = category === '🔍 Resultados de Búsqueda';
+                  const isParkinson = category === 'Parkinson';
+
+                  return (
+                    <div
+                      key={category}
+                      className={`border rounded-lg overflow-hidden ${
+                        isAISuggestions
+                          ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 shadow-lg'
+                          : isSearchResults
+                            ? 'border-green-300 bg-gradient-to-r from-green-50 to-teal-50 shadow-lg'
+                            : 'border-gray-200'
+                      }`}
+                    >
+                      {/* Category Header */}
+                      <button
+                        onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
+                        className={`w-full p-3 flex items-center justify-between transition-colors ${
+                          isAISuggestions
+                            ? 'bg-gradient-to-r from-purple-100 to-blue-100 cursor-default'
+                            : isSearchResults
+                              ? 'bg-gradient-to-r from-green-100 to-teal-100 cursor-default'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div className={`p-1.5 rounded ${
+                            isAISuggestions
+                              ? 'bg-purple-200'
+                              : isSearchResults
+                                ? 'bg-green-200'
+                                : isParkinson
+                                  ? 'bg-orange-100'
+                                  : 'bg-blue-100'
+                          }`}>
+                            <Stethoscope className={`h-4 w-4 ${
+                              isAISuggestions
+                                ? 'text-purple-700'
+                                : isSearchResults
+                                  ? 'text-green-700'
+                                  : isParkinson
+                                    ? 'text-orange-600'
+                                    : 'text-blue-600'
+                            }`} />
+                          </div>
+                          <span className={`font-medium ${
+                            isAISuggestions || isSearchResults ? 'text-purple-900' : 'text-gray-900'
+                          }`}>
+                            {category}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            isAISuggestions
+                              ? 'text-purple-700 bg-purple-200'
+                              : isSearchResults
+                                ? 'text-green-700 bg-green-200'
+                                : 'text-gray-500 bg-gray-200'
+                          }`}>
+                            {scales.length}
+                          </span>
+                          {isAISuggestions && (
+                            <div className="flex items-center space-x-1">
+                              <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
+                              <span className="text-xs font-medium text-purple-700">Activo</span>
+                            </div>
+                          )}
+                          {isSearchResults && (
+                            <div className="flex items-center space-x-1">
+                              <div className="h-2 w-2 rounded-full bg-green-500" />
+                              <span className="text-xs font-medium text-green-700">Búsqueda</span>
+                            </div>
+                          )}
+                        </div>
+                        {!isAISuggestions && !isSearchResults && (
+                          expandedCategories[category]
+                            ? <ChevronUp className="h-5 w-5 text-gray-400" />
+                            : <ChevronDown className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+
+                      {/* Category Content */}
+                      {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
+                        <div className="divide-y divide-gray-100">
+                          {scales.map((scale) => (
+                            <div key={scale.id} className="relative">
+                              <button
+                                onClick={() => {
+                                  console.log('🔍 Scale button clicked:', scale.id, scale.name);
+                                  openScaleModal(scale.id);
+                                }}
+                                className={`w-full p-3 text-left transition-colors ${
+                                  clickedScale === scale.id
+                                    ? 'bg-green-100 border-l-4 border-green-500'
+                                    : 'hover:bg-blue-50'
+                                }`}
+                              >
+                                <div className="flex items-start space-x-3">
+                                  <div className="flex-1">
+                                    <h3 className="text-sm font-medium text-gray-900">{scale.name}</h3>
+                                    <p className="mt-1 text-xs text-gray-600 line-clamp-2">{scale.description}</p>
+                                  </div>
+                                  <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                                </div>
+                              </button>
+                              <AIBadgeSystem
+                                scaleId={scale.id}
+                                suggestions={aiAnalysis.suggestions}
+                                onScaleClick={openScaleModal}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+                Las escalas están ocultas. Utiliza el interruptor "Mostrar lista" para volver a verlas.
+              </div>
+            )}
+
+            <div className="mt-6 rounded-lg bg-gray-50 p-4">
+              <h3 className="mb-2 font-medium text-gray-800">Instrucciones</h3>
+              <ul className="space-y-1 text-sm text-gray-600">
+                <li>• Seleccione una escala del listado</li>
+                <li>• Complete la evaluación en el modal</li>
+                <li>• Los resultados se insertarán automáticamente</li>
+                <li>• Puede modificar las notas manualmente</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col bg-slate-50 p-4 lg:p-6">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white shadow">
+          <div className="border-b p-4 lg:p-6">
+            <div className="mb-4 text-center">
+              <h2 className="text-lg font-semibold text-gray-900">Notas del Paciente</h2>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={handleSavePatient}
-                className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex items-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
                 title="Guardar paciente en base de datos"
               >
                 <Database className="h-4 w-4" />
@@ -412,7 +522,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               </button>
               <button
                 onClick={copyNotes}
-                className="flex items-center space-x-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="flex items-center space-x-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 hover:bg-gray-200"
               >
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
@@ -420,7 +530,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {isAdminMode && (
                 <button
                   onClick={() => setShowOcrModal(true)}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="flex items-center space-x-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
                   title="Procesar PDF/Imagen con OCR"
                 >
                   <Upload className="h-4 w-4" />
@@ -430,7 +540,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {clearNotes && (
                 <button
                   onClick={clearNotes}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                  className="flex items-center space-x-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700 hover:bg-red-200"
                 >
                   <span>🗑️</span>
                   <span>Limpiar</span>
@@ -444,7 +554,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 `;
                   setNotes(notes + normalExamText);
                 }}
-                className="flex items-center space-x-2 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="flex items-center space-x-2 rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
               >
                 <Plus className="h-4 w-4" />
                 <span>EF normal</span>
@@ -454,72 +564,73 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                   const testText = `Paciente con temblor en reposo y rigidez muscular. Presenta hemiparesia derecha y disartria severa.`;
                   setNotes(notes + (notes ? '\n\n' : '') + testText);
                 }}
-                className="flex items-center space-x-2 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="flex items-center space-x-2 rounded-lg bg-purple-600 px-3 py-2 text-sm text-white hover:bg-purple-700"
               >
                 <Plus className="h-4 w-4" />
                 <span>Test IA</span>
               </button>
+            </div>
+          </div>
+          <div className="flex-1 p-4 lg:p-6">
+            {/* Mensaje de estado del guardado */}
+            {saveStatus && (
+              <div className={`mb-4 flex items-center space-x-2 rounded-lg border p-3 ${
+                saveStatus.success
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-red-200 bg-red-50 text-red-800'
+              }`}
+              >
+                <div className={`h-2 w-2 rounded-full ${
+                  saveStatus.success ? 'bg-green-500' : 'bg-red-500'
+                }`} />
+                <span className="text-sm">{saveStatus.message}</span>
+              </div>
+            )}
+
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="h-full min-h-[18rem] w-full resize-none rounded-lg border border-gray-300 p-4 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              placeholder="Escriba aquí las notas del paciente..."
+            />
           </div>
         </div>
-        <div className="p-4 h-full">
-          {/* Mensaje de estado del guardado */}
-          {saveStatus && (
-            <div className={`mb-4 p-3 rounded-lg border flex items-center space-x-2 ${
-              saveStatus.success 
-                ? 'bg-green-50 text-green-800 border-green-200'
-                : 'bg-red-50 text-red-800 border-red-200'
-            }`}>
-              <div className={`w-2 h-2 rounded-full ${
-                saveStatus.success ? 'bg-green-500' : 'bg-red-500'
-              }`}></div>
-              <span className="text-sm">{saveStatus.message}</span>
-            </div>
-          )}
-
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full h-full resize-none border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
-            placeholder="Escriba aquí las notas del paciente..."
-          />
-        </div>
       </div>
+
+      {/* Modal de guardar paciente */}
+      {showOcrModal && (
+        <OCRProcessorModal
+          isOpen={showOcrModal}
+          onClose={() => setShowOcrModal(false)}
+          onInsert={handleInsertOcrText}
+        />
+      )}
+
+      {showSaveModal && (
+        <SavePatientModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleConfirmSave}
+          extractedData={extractPatientData(notes)}
+          fullNotes={notes}
+          isAdminMode={isAdminMode}
+          currentHospitalContext={currentHospitalContext}
+        />
+      )}
+
+      {/* Modal de Examen Físico Neurológico */}
+      <NeurologicalExamModal
+        isOpen={showNeurologicalExam}
+        onClose={() => setShowNeurologicalExam(false)}
+        onExamCompleted={(examData) => {
+          // Agregar resultados del examen a las notas
+          const examSummary = `\n\n=== EXAMEN FÍSICO NEUROLÓGICO ===\nFecha: ${new Date().toLocaleDateString()}\nExaminador: ${examData.examiner || 'Dr. Usuario'}\n\nHallazgos principales:\n- Estado mental: ${examData.mental_state?.consciousness?.level || 'No evaluado'}\n- Consciencia: ${examData.mental_state?.consciousness?.orientation ? 'Orientado' : 'Desorientado'}\n- Examen realizado completo\n\n`;
+          setNotes(notes + examSummary);
+          setShowNeurologicalExam(false);
+        }}
+        examiner="Dr. Usuario"
+      />
     </div>
-
-    {/* Modal de guardar paciente */}
-    {showOcrModal && (
-      <OCRProcessorModal
-        isOpen={showOcrModal}
-        onClose={() => setShowOcrModal(false)}
-        onInsert={handleInsertOcrText}
-      />
-    )}
-
-    {showSaveModal && (
-      <SavePatientModal
-        isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        onSave={handleConfirmSave}
-        extractedData={extractPatientData(notes)}
-        fullNotes={notes}
-        isAdminMode={isAdminMode}
-        currentHospitalContext={currentHospitalContext}
-      />
-    )}
-
-    {/* Modal de Examen Físico Neurológico */}
-    <NeurologicalExamModal
-      isOpen={showNeurologicalExam}
-      onClose={() => setShowNeurologicalExam(false)}
-      onExamCompleted={(examData) => {
-        // Agregar resultados del examen a las notas
-        const examSummary = `\n\n=== EXAMEN FÍSICO NEUROLÓGICO ===\nFecha: ${new Date().toLocaleDateString()}\nExaminador: ${examData.examiner || 'Dr. Usuario'}\n\nHallazgos principales:\n- Estado mental: ${examData.mental_state?.consciousness?.level || 'No evaluado'}\n- Consciencia: ${examData.mental_state?.consciousness?.orientation ? 'Orientado' : 'Desorientado'}\n- Examen realizado completo\n\n`;
-        setNotes(notes + examSummary);
-        setShowNeurologicalExam(false);
-      }}
-      examiner="Dr. Usuario"
-    />
-  </div>
   );
 };
 
