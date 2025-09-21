@@ -39,7 +39,7 @@ const UserDashboard: React.FC = () => {
   };
 
   const tabContent = {
-    overview: <OverviewTab statistics={statistics} userName={userName} userRole={userRole} onNavigate={setActiveTab} />,
+    overview: <OverviewTab statistics={statistics} userName={userName} onNavigate={setActiveTab} />,
     procedures: <ProcedureLogger />,
     'lumbar-punctures': <LumbarPunctureDashboard />,
     patients: <MyPatients />,
@@ -127,11 +127,10 @@ const UserDashboard: React.FC = () => {
 interface OverviewTabProps {
   statistics: any;
   userName: string;
-  userRole: string;
   onNavigate: (tab: DashboardTab) => void;
 }
 
-const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, userRole, onNavigate }) => {
+const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavigate }) => {
   if (!statistics) {
     return (
       <div className="text-center py-12">
