@@ -327,7 +327,6 @@ export function useCSFAnalysis() {
 
 // Hook for complications tracking
 export function useLPComplications() {
-  const _user = useAuthContext();
   const [complications, setComplications] = useState<LPComplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
