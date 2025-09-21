@@ -3,7 +3,7 @@ import { TrendingUp, BarChart3, Download } from 'lucide-react';
 import { useUserData } from '../../hooks/useUserData';
 
 const UserStatistics: React.FC = () => {
-  const { statistics, procedures, patients, classes, goals, loading } = useUserData();
+  const { statistics, procedures, patients, classes, loading } = useUserData();
   const [timeFilter, setTimeFilter] = useState('all'); // 'all', '30days', '90days', '1year'
 
   if (loading) {
