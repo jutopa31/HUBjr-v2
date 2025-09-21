@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload, LayoutList, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload, LayoutList } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -48,18 +48,12 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Estado para el modal de examen físico neurológico
   const [showNeurologicalExam, setShowNeurologicalExam] = useState(false);
   const [showOcrModal, setShowOcrModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.innerWidth >= 1024;
-  });
   const [isMobileView, setIsMobileView] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 1024;
   });
-  const [showScaleList, setShowScaleList] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.innerWidth >= 1024;
-  });
+  const [isScalesVisible, setIsScalesVisible] = useState(false);
+  const [userCollapsed, setUserCollapsed] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -67,10 +61,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }
 
     const handleResize = () => {
-      const isMobile = window.innerWidth < 1024;
-      setIsMobileView(isMobile);
-      setIsSidebarOpen(isMobile ? false : true);
-      setShowScaleList(isMobile ? false : true);
+      const mobile = window.innerWidth < 1024;
+      setIsMobileView(mobile);
+      setIsScalesVisible((prev) => {
+        if (mobile) {
+          return false;
+        }
+        return userCollapsed ? false : true;
+      });
     };
 
     handleResize();
@@ -79,7 +77,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [userCollapsed]);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -105,6 +103,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     setNotes(mergedNotes);
     setShowOcrModal(false);
   }, [notes, setNotes]);
+
+  const handleToggleScales = useCallback(() => {
+    setIsScalesVisible((prev) => {
+      const next = !prev;
+      setUserCollapsed(!next);
+      return next;
+    });
+  }, []);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -227,63 +233,46 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <p className="text-xs uppercase tracking-wide text-gray-500">Evolucionador</p>
             <h2 className="text-base font-semibold text-gray-900">Notas y escalas neurológicas</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowScaleList((prev) => !prev)}
-              className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm"
-            >
-              <LayoutList className="mr-1 h-3.5 w-3.5" />
-              {showScaleList ? 'Ocultar escala' : 'Mostrar escala'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsSidebarOpen((prev) => !prev)}
-              className="inline-flex items-center rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
-            >
-              {isSidebarOpen ? (
-                <>
-                  <PanelLeftClose className="mr-1.5 h-3.5 w-3.5" />
-                  Ocultar
-                </>
-              ) : (
-                <>
-                  <PanelLeftOpen className="mr-1.5 h-3.5 w-3.5" />
-                  Escalas
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleToggleScales}
+            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
+          >
+            <LayoutList className="mr-1.5 h-3.5 w-3.5" />
+            {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
+          </button>
         </div>
       </div>
 
-      {isMobileView && isSidebarOpen && (
+      {isMobileView && isScalesVisible && (
         <button
           type="button"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={handleToggleScales}
           className="fixed inset-0 z-40 bg-black/40 transition-opacity lg:hidden"
           aria-label="Cerrar panel de escalas"
         />
       )}
 
       {/* Left Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-full max-w-xs transform bg-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:block lg:w-80 lg:max-w-none lg:transform-none lg:shadow-lg ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex h-full flex-col border-r border-gray-200">
+      {isScalesVisible && (
+        <aside
+          className={
+            isMobileView
+              ? 'fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col overflow-y-auto bg-white shadow-xl'
+              : 'hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white'
+          }
+        >
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
-            <h2 className="text-lg font-semibold flex items-center">
-              <Calculator className="h-5 w-5 mr-2" />
+            <h2 className="flex items-center text-lg font-semibold">
+              <Calculator className="mr-2 h-5 w-5" />
               Escalas y Algoritmos
             </h2>
             <div className="mt-1 mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-blue-100 text-sm">Herramientas de evaluación neurológica</p>
+              <p className="text-sm text-blue-100">Herramientas de evaluación neurológica</p>
               {/* Indicador de IA */}
               <div className="flex items-center space-x-2">
                 {aiAnalysis.suggestions.length > 0 && (
-                  <div className="flex items-center space-x-1 rounded-full bg-white bg-opacity-20 px-2 py-1">
+                  <div className="flex items-center space-x-1 rounded-full bg-white/20 px-2 py-1">
                     <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
                     <span className="text-xs text-blue-100">IA: {aiAnalysis.suggestions.length}</span>
                   </div>
@@ -293,7 +282,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 </div>
               </div>
             </div>
-            <div className="mt-4 rounded-lg bg-white/15 p-3">
+            <div className="rounded-lg bg-white/15 p-3">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-100" />
                 <input
@@ -321,26 +310,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 <p className="mt-2 text-xs text-blue-100">Buscando: "{searchQuery}"</p>
               )}
             </div>
-
-            <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setShowScaleList((prev) => !prev)}
-                className="inline-flex items-center rounded-lg bg-white/10 px-3 py-1 font-medium text-blue-100 transition hover:bg-white/20"
-              >
-                <LayoutList className="mr-1.5 h-3.5 w-3.5" />
-                {showScaleList ? 'Ocultar lista' : 'Mostrar lista'}
-              </button>
-              {isMobileView && (
-                <button
-                  type="button"
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="inline-flex items-center rounded-lg bg-white/10 px-3 py-1 font-medium text-blue-100 transition hover:bg-white/20"
-                >
-                  Cerrar panel
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Sección de Examen Físico Neurológico */}
@@ -365,131 +334,125 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               <p className="mt-1 text-xs text-gray-500">Herramientas de puntuación y evaluación clínica</p>
             </div>
 
-            {showScaleList ? (
-              <div className="space-y-4">
-                {Object.entries(groupedScales).map(([category, scales]) => {
-                  const isAISuggestions = category === '🤖 Sugerencias IA';
-                  const isSearchResults = category === '🔍 Resultados de Búsqueda';
-                  const isParkinson = category === 'Parkinson';
+            <div className="space-y-4">
+              {Object.entries(groupedScales).map(([category, scales]) => {
+                const isAISuggestions = category === '🤖 Sugerencias IA';
+                const isSearchResults = category === '🔍 Resultados de Búsqueda';
+                const isParkinson = category === 'Parkinson';
 
-                  return (
-                    <div
-                      key={category}
-                      className={`border rounded-lg overflow-hidden ${
+                return (
+                  <div
+                    key={category}
+                    className={`overflow-hidden rounded-lg border ${
+                      isAISuggestions
+                        ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 shadow-lg'
+                        : isSearchResults
+                          ? 'border-green-300 bg-gradient-to-r from-green-50 to-teal-50 shadow-lg'
+                          : 'border-gray-200'
+                    }`}
+                  >
+                    {/* Category Header */}
+                    <button
+                      onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
+                      className={`flex w-full items-center justify-between p-3 transition-colors ${
                         isAISuggestions
-                          ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 shadow-lg'
+                          ? 'cursor-default bg-gradient-to-r from-purple-100 to-blue-100'
                           : isSearchResults
-                            ? 'border-green-300 bg-gradient-to-r from-green-50 to-teal-50 shadow-lg'
-                            : 'border-gray-200'
+                            ? 'cursor-default bg-gradient-to-r from-green-100 to-teal-100'
+                            : 'bg-gray-50 hover:bg-gray-100'
                       }`}
                     >
-                      {/* Category Header */}
-                      <button
-                        onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
-                        className={`w-full p-3 flex items-center justify-between transition-colors ${
+                      <div className="flex items-center space-x-2">
+                        <div className={`rounded p-1.5 ${
                           isAISuggestions
-                            ? 'bg-gradient-to-r from-purple-100 to-blue-100 cursor-default'
+                            ? 'bg-purple-200'
                             : isSearchResults
-                              ? 'bg-gradient-to-r from-green-100 to-teal-100 cursor-default'
-                              : 'bg-gray-50 hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <div className={`p-1.5 rounded ${
+                              ? 'bg-green-200'
+                              : isParkinson
+                                ? 'bg-orange-100'
+                                : 'bg-blue-100'
+                        }`}>
+                          <Stethoscope className={`h-4 w-4 ${
                             isAISuggestions
-                              ? 'bg-purple-200'
+                              ? 'text-purple-700'
                               : isSearchResults
-                                ? 'bg-green-200'
+                                ? 'text-green-700'
                                 : isParkinson
-                                  ? 'bg-orange-100'
-                                  : 'bg-blue-100'
-                          }`}>
-                            <Stethoscope className={`h-4 w-4 ${
-                              isAISuggestions
-                                ? 'text-purple-700'
-                                : isSearchResults
-                                  ? 'text-green-700'
-                                  : isParkinson
-                                    ? 'text-orange-600'
-                                    : 'text-blue-600'
-                            }`} />
+                                  ? 'text-orange-600'
+                                  : 'text-blue-600'
+                          }`} />
+                        </div>
+                        <span className={`font-medium ${
+                          isAISuggestions || isSearchResults ? 'text-purple-900' : 'text-gray-900'
+                        }`}>
+                          {category}
+                        </span>
+                        <span className={`rounded-full px-2 py-1 text-xs ${
+                          isAISuggestions
+                            ? 'bg-purple-200 text-purple-700'
+                            : isSearchResults
+                              ? 'bg-green-200 text-green-700'
+                              : 'bg-gray-200 text-gray-500'
+                        }`}>
+                          {scales.length}
+                        </span>
+                        {isAISuggestions && (
+                          <div className="flex items-center space-x-1">
+                            <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
+                            <span className="text-xs font-medium text-purple-700">Activo</span>
                           </div>
-                          <span className={`font-medium ${
-                            isAISuggestions || isSearchResults ? 'text-purple-900' : 'text-gray-900'
-                          }`}>
-                            {category}
-                          </span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            isAISuggestions
-                              ? 'text-purple-700 bg-purple-200'
-                              : isSearchResults
-                                ? 'text-green-700 bg-green-200'
-                                : 'text-gray-500 bg-gray-200'
-                          }`}>
-                            {scales.length}
-                          </span>
-                          {isAISuggestions && (
-                            <div className="flex items-center space-x-1">
-                              <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
-                              <span className="text-xs font-medium text-purple-700">Activo</span>
-                            </div>
-                          )}
-                          {isSearchResults && (
-                            <div className="flex items-center space-x-1">
-                              <div className="h-2 w-2 rounded-full bg-green-500" />
-                              <span className="text-xs font-medium text-green-700">Búsqueda</span>
-                            </div>
-                          )}
-                        </div>
-                        {!isAISuggestions && !isSearchResults && (
-                          expandedCategories[category]
-                            ? <ChevronUp className="h-5 w-5 text-gray-400" />
-                            : <ChevronDown className="h-5 w-5 text-gray-400" />
                         )}
-                      </button>
-
-                      {/* Category Content */}
-                      {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
-                        <div className="divide-y divide-gray-100">
-                          {scales.map((scale) => (
-                            <div key={scale.id} className="relative">
-                              <button
-                                onClick={() => {
-                                  console.log('🔍 Scale button clicked:', scale.id, scale.name);
-                                  openScaleModal(scale.id);
-                                }}
-                                className={`w-full p-3 text-left transition-colors ${
-                                  clickedScale === scale.id
-                                    ? 'bg-green-100 border-l-4 border-green-500'
-                                    : 'hover:bg-blue-50'
-                                }`}
-                              >
-                                <div className="flex items-start space-x-3">
-                                  <div className="flex-1">
-                                    <h3 className="text-sm font-medium text-gray-900">{scale.name}</h3>
-                                    <p className="mt-1 text-xs text-gray-600 line-clamp-2">{scale.description}</p>
-                                  </div>
-                                  <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-                                </div>
-                              </button>
-                              <AIBadgeSystem
-                                scaleId={scale.id}
-                                suggestions={aiAnalysis.suggestions}
-                                onScaleClick={openScaleModal}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                        {isSearchResults && (
+                          <div className="flex items-center space-x-1">
+                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                            <span className="text-xs font-medium text-green-700">Búsqueda</span>
+                          </div>
+                        )}
+                      </div>
+                      {!isAISuggestions && !isSearchResults && (
+                        expandedCategories[category]
+                          ? <ChevronUp className="h-5 w-5 text-gray-400" />
+                          : <ChevronDown className="h-5 w-5 text-gray-400" />
                       )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-                Las escalas están ocultas. Utiliza el interruptor "Mostrar lista" para volver a verlas.
-              </div>
-            )}
+                    </button>
+
+                    {/* Category Content */}
+                    {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
+                      <div className="divide-y divide-gray-100">
+                        {scales.map((scale) => (
+                          <div key={scale.id} className="relative">
+                            <button
+                              onClick={() => {
+                                console.log('🔍 Scale button clicked:', scale.id, scale.name);
+                                openScaleModal(scale.id);
+                              }}
+                              className={`w-full p-3 text-left transition-colors ${
+                                clickedScale === scale.id
+                                  ? 'border-l-4 border-green-500 bg-green-100'
+                                  : 'hover:bg-blue-50'
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className="flex-1">
+                                  <h3 className="text-sm font-medium text-gray-900">{scale.name}</h3>
+                                  <p className="mt-1 text-xs text-gray-600 line-clamp-2">{scale.description}</p>
+                                </div>
+                                <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                              </div>
+                            </button>
+                            <AIBadgeSystem
+                              scaleId={scale.id}
+                              suggestions={aiAnalysis.suggestions}
+                              onScaleClick={openScaleModal}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="mt-6 rounded-lg bg-gray-50 p-4">
               <h3 className="mb-2 font-medium text-gray-800">Instrucciones</h3>
@@ -501,15 +464,23 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               </ul>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col bg-slate-50 p-4 lg:p-6">
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white shadow">
           <div className="border-b p-4 lg:p-6">
-            <div className="mb-4 text-center">
+            <div className="mb-4 flex flex-col items-center justify-between gap-3 text-center lg:flex-row lg:text-left">
               <h2 className="text-lg font-semibold text-gray-900">Notas del Paciente</h2>
+              <button
+                type="button"
+                onClick={handleToggleScales}
+                className="hidden items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 lg:inline-flex"
+              >
+                <LayoutList className="h-4 w-4" />
+                {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
+              </button>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               <button
@@ -630,6 +601,17 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
         }}
         examiner="Dr. Usuario"
       />
+
+      {!isScalesVisible && (
+        <button
+          type="button"
+          onClick={handleToggleScales}
+          className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Mostrar escalas"
+        >
+          <Stethoscope className="h-5 w-5" />
+        </button>
+      )}
     </div>
   );
 };

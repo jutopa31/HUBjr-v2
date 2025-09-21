@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2 } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface Patient {
   id?: string;
@@ -20,9 +21,18 @@ interface Patient {
   plan: string;
   pendientes: string;
   fecha: string;
+  assigned_resident_id?: string;
+}
+
+interface ResidentProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
 }
 
 const WardRounds: React.FC = () => {
+  const { user } = useAuthContext();
   const emptyPatient: Patient = {
     cama: '',
     dni: '',
@@ -36,10 +46,12 @@ const WardRounds: React.FC = () => {
     diagnostico: '',
     plan: '',
     pendientes: '',
-    fecha: new Date().toISOString().split('T')[0]
+    fecha: new Date().toISOString().split('T')[0],
+    assigned_resident_id: undefined
   };
 
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
@@ -66,10 +78,14 @@ const WardRounds: React.FC = () => {
   const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<{ id: string; nombre: string; dni: string } | null>(null);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
 
-  // Cargar pacientes desde Supabase
+  // Cargar datos iniciales
   useEffect(() => {
-    loadPatients();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    await Promise.all([loadPatients(), loadResidents()]);
+  };
 
   const loadPatients = async () => {
     try {
@@ -85,6 +101,55 @@ const WardRounds: React.FC = () => {
       alert('Error al cargar pacientes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadResidents = async () => {
+    try {
+      // Get users from auth.users table via a Supabase function or edge function
+      // For now, we'll use a simpler approach by getting users who have created patients
+      const { data, error } = await supabase
+        .from('ward_round_patients')
+        .select('assigned_resident_id')
+        .not('assigned_resident_id', 'is', null);
+
+      if (error) throw error;
+
+      // Get unique resident IDs and fetch their profile data
+      const residentIds = [...new Set(data?.map(p => p.assigned_resident_id).filter(Boolean))];
+
+      if (residentIds.length > 0) {
+        // For a real implementation, you would fetch user profiles from auth.users
+        // For now, we'll create a mock approach or use the user metadata
+        const mockResidents: ResidentProfile[] = residentIds.map(id => ({
+          id: id as string,
+          email: `resident${id}@hospital.com`,
+          full_name: `Residente ${id?.slice(-4)}`,
+          role: 'resident'
+        }));
+
+        setResidents(mockResidents);
+      }
+
+      // Add current user to residents list if they have a profile
+      if (user?.id) {
+        const currentUserProfile: ResidentProfile = {
+          id: user.id,
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario Actual',
+          role: user.user_metadata?.role || 'resident'
+        };
+
+        setResidents(prev => {
+          const exists = prev.find(r => r.id === user.id);
+          if (!exists) {
+            return [currentUserProfile, ...prev];
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.error('Error loading residents:', error);
     }
   };
 
@@ -221,6 +286,32 @@ const WardRounds: React.FC = () => {
     } catch (error) {
       console.error('Error updating patient:', error);
       alert('Error al actualizar paciente');
+    }
+  };
+
+  // Asignar residente a paciente
+  const assignResidentToPatient = async (patientId: string, residentId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('ward_round_patients')
+        .update({ assigned_resident_id: residentId })
+        .eq('id', patientId);
+
+      if (error) throw error;
+
+      // Refresh the patients list to show the new assignment
+      loadPatients();
+
+      // Show success message
+      const resident = residents.find(r => r.id === residentId);
+      const message = residentId
+        ? `Paciente asignado a ${resident?.full_name || 'residente'}`
+        : 'Asignación de residente removida';
+
+      alert(message);
+    } catch (error) {
+      console.error('Error assigning resident:', error);
+      alert('Error al asignar residente');
     }
   };
 
@@ -768,6 +859,25 @@ const WardRounds: React.FC = () => {
                       placeholder="52 años"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Users className="h-4 w-4 inline mr-1" />
+                      Residente Asignado
+                    </label>
+                    <select
+                      value={newPatient.assigned_resident_id || ''}
+                      onChange={(e) => setNewPatient({...newPatient, assigned_resident_id: e.target.value || undefined})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Sin asignar</option>
+                      {residents.map(resident => (
+                        <option key={resident.id} value={resident.id}>
+                          {resident.full_name} ({resident.role === 'resident' ? 'Residente' :
+                           resident.role === 'attending' ? 'Staff' : 'Interno'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </section>
 
@@ -961,7 +1071,7 @@ const WardRounds: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <button
                     onClick={() => handleSort('nombre')}
                     className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
@@ -974,7 +1084,13 @@ const WardRounds: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <div className="col-span-3 hidden md:block">
+                <div className="col-span-2 hidden lg:block">
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <Users className="h-3 w-3 inline mr-1" />
+                    <span>Residente</span>
+                  </div>
+                </div>
+                <div className="col-span-2 hidden md:block">
                   <button
                     onClick={() => handleSort('diagnostico')}
                     className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 justify-start py-1"
@@ -1053,16 +1169,45 @@ const WardRounds: React.FC = () => {
                           <div className="text-sm font-medium text-gray-900">{patient.cama}</div>
                           <div className="text-xs text-gray-500">{patient.edad} años</div>
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-2">
                           <div className="text-sm font-medium text-gray-900">{patient.nombre}</div>
                           <div className="text-xs text-gray-500">
                             <span>DNI: {patient.dni}</span>
                             <span className="sm:hidden"> • {patient.edad} años</span>
                           </div>
                         </div>
-                        <div className="col-span-3 hidden md:block">
+                        <div className="col-span-2 hidden lg:block">
+                          {patient.assigned_resident_id ? (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-xs text-gray-700">
+                                {residents.find(r => r.id === patient.assigned_resident_id)?.full_name || 'Residente'}
+                              </span>
+                            </div>
+                          ) : (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                if (e.target.value) {
+                                  assignResidentToPatient(patient.id!, e.target.value);
+                                }
+                              }}
+                              className="text-xs border border-gray-300 rounded px-1 py-0.5 text-gray-500"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <option value="">Asignar...</option>
+                              {residents.map(resident => (
+                                <option key={resident.id} value={resident.id}>
+                                  {resident.full_name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                        <div className="col-span-2 hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
-                            {patient.diagnostico ? patient.diagnostico.slice(0, 30) + '...' : 'Sin diagnóstico'}
+                            {patient.diagnostico ? patient.diagnostico.slice(0, 25) + '...' : 'Sin diagnóstico'}
                           </div>
                         </div>
                         <div className="col-span-1">

@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight, Building2 } from 'lucide-react';
+import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight, Building2, Filter } from 'lucide-react';
 import { PatientAssessment, HospitalContext } from './types';
 import { getPatientAssessments, deletePatientAssessment, updatePatientAssessment } from './utils/diagnosticAssessmentDB';
 import PatientDetailsModal from './PatientDetailsModal';
 import EditPatientNotesModal from './EditPatientNotesModal';
 import HospitalContextSelector from './HospitalContextSelector';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface SavedPatientsProps {
   isAdminMode?: boolean;
 }
 
 const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) => {
+  const { user } = useAuthContext();
   const [patients, setPatients] = useState<PatientAssessment[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientAssessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hospitalContext, setHospitalContext] = useState<HospitalContext>('Posadas');
+  const [showOnlyMyPatients, setShowOnlyMyPatients] = useState(false);
 
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -29,19 +32,30 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
     loadPatients();
   }, [hospitalContext]);
 
-  // Filtrar pacientes cuando cambie el término de búsqueda
+  // Filtrar pacientes cuando cambie el término de búsqueda o el filtro de usuario
   useEffect(() => {
+    let filtered = patients;
+
+    // Aplicar filtro de usuario si está activado
+    if (showOnlyMyPatients && user?.id) {
+      filtered = filtered.filter(patient =>
+        patient.created_by === user.id ||
+        patient.clinical_notes.toLowerCase().includes(user.email?.toLowerCase() || '') ||
+        patient.clinical_notes.toLowerCase().includes(user.user_metadata?.full_name?.toLowerCase() || '')
+      );
+    }
+
+    // Aplicar filtro de búsqueda
     if (searchTerm.trim()) {
-      const filtered = patients.filter(patient =>
+      filtered = filtered.filter(patient =>
         patient.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         patient.patient_dni.includes(searchTerm) ||
         patient.clinical_notes.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredPatients(filtered);
-    } else {
-      setFilteredPatients(patients);
     }
-  }, [patients, searchTerm]);
+
+    setFilteredPatients(filtered);
+  }, [patients, searchTerm, showOnlyMyPatients, user]);
 
   const loadPatients = async () => {
     try {
@@ -199,8 +213,8 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
         isAdminMode={isAdminMode}
       />
 
-      {/* Search Bar */}
-      <div className="mb-6">
+      {/* Search Bar and Filters */}
+      <div className="mb-6 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
@@ -211,6 +225,24 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
+
+        {/* User Filter Toggle */}
+        {user && (
+          <div className="flex items-center space-x-3">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showOnlyMyPatients}
+                onChange={(e) => setShowOnlyMyPatients(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Solo mis pacientes ({user.user_metadata?.full_name || user.email?.split('@')[0] || 'yo'})
+              </span>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}

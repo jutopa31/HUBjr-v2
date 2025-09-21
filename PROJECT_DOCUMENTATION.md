@@ -15,6 +15,9 @@
 - **Live URL**: https://hubjr-v2.vercel.app/
 - **Target Users**: Neurology residents, medical staff, hospital administrators
 
+### Latest Updates
+- Removed the default "Datos paciente" scaffold from the Evolucionador; the notes field now starts empty and the *Limpiar* action fully clears persisted text (2025-09-21).
+
 ---
 
 ## Technical Architecture

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen, User, Syringe } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -12,6 +12,8 @@ import DashboardInicio from './DashboardInicio';
 import AcademiaManager from './AcademiaManager';
 import { ProtectedRoute } from './components/auth';
 import SimpleUserMenu from './components/auth/SimpleUserMenu';
+import UserDashboard from './components/user/UserDashboard';
+import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -35,12 +37,7 @@ const NeurologyResidencyHub = () => {
       console.log('💾 Restored notes from localStorage');
       return savedNotes;
     }
-    return `Datos paciente:
-
-Antecedentes:
-
-Motivo de consulta:
-`;
+    return '';
   });
 
   // Auto-save notes to localStorage whenever they change
@@ -87,6 +84,8 @@ Motivo de consulta:
 
   const menuItems = [
     { id: 'inicio', icon: Home, label: 'Inicio' },
+    { id: 'user-dashboard', icon: User, label: 'Mi Panel' },
+    { id: 'lumbar-punctures', icon: Syringe, label: 'Punciones Lumbares' },
     { id: 'diagnostic', icon: Calculator, label: 'Evolucionador' },
     { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
     { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
@@ -5167,14 +5166,8 @@ Motivo de consulta:
     );
     
     if (confirmClear) {
-      const templateNotes = `Datos paciente:
-
-Antecedentes:
-
-Motivo de consulta:
-`;
-      setNotes(templateNotes);
-      localStorage.setItem('hubjr-patient-notes', templateNotes);
+      setNotes('');
+      localStorage.setItem('hubjr-patient-notes', '');
     }
   }, []);
 
@@ -5227,6 +5220,14 @@ Motivo de consulta:
         );
       case 'inicio':
         return <DashboardInicio setActiveTab={handleTabChange} openScaleModal={openScaleModal} />;
+      case 'user-dashboard':
+        return <UserDashboard />;
+      case 'lumbar-punctures':
+        return (
+          <ProtectedRoute>
+            <LumbarPunctureDashboard />
+          </ProtectedRoute>
+        );
       case 'academia':
         return <AcademiaManager isAdminMode={isAdminMode} />;
       /* case 'dashboard':
