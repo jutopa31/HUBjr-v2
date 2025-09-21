@@ -240,7 +240,6 @@ export function useLumbarPuncture() {
 
 // Hook for CSF analysis results
 export function useCSFAnalysis() {
-  const _user = useAuthContext();
   const [results, setResults] = useState<CSFAnalysisResults[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
