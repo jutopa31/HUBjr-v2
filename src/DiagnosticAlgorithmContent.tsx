@@ -63,7 +63,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobileView(mobile);
-      setIsScalesVisible((prev) => {
+      setIsScalesVisible(() => {
         if (mobile) {
           return false;
         }
