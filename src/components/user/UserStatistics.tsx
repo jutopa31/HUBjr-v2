@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, BarChart3, Calendar, Download, Filter } from 'lucide-react';
+import { TrendingUp, BarChart3, Download, Filter } from 'lucide-react';
 import { useUserData } from '../../hooks/useUserData';
 
 const UserStatistics: React.FC = () => {
