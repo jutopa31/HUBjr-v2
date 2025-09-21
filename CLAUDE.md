@@ -23,7 +23,7 @@ npm run preview:vite      # Preview Vite production build
 ```bash
 npm run lint              # ESLint checking
 npm run audit:responsive  # Run responsive design audit script
-tsc --noEmit             # TypeScript type checking without compilation
+npx tsc --noEmit         # TypeScript type checking without compilation
 ```
 
 ### Testing
@@ -140,7 +140,7 @@ tsc --noEmit             # TypeScript type checking without compilation
 
 **Before making changes**:
 1. Run `npm run lint` to check for code quality issues
-2. Run `tsc --noEmit` for TypeScript type checking
+2. Run `npx tsc --noEmit` for TypeScript type checking
 3. Test locally with `npm run dev` (Next.js) or `npm run dev:vite` (Vite)
 
 **File Structure Conventions**:
