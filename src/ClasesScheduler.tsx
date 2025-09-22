@@ -94,7 +94,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
           current_attendees: 0,
           created_by: event.created_by,
           created_at: event.created_at,
-          _source: 'calendar' // Add source identifier
+          _source: 'calendar' as const // Add source identifier
         }));
         combinedClasses.push(...convertedEvents);
       }
