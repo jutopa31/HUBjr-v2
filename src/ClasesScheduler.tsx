@@ -17,6 +17,7 @@ interface AcademicClass {
   current_attendees?: number;
   created_by?: string;
   created_at?: string;
+  _source?: 'calendar' | 'academic'; // To distinguish source
 }
 
 interface ClasesSchedulerProps {
@@ -43,21 +44,65 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
     max_attendees: 20
   });
 
-  // Fetch classes from Supabase
+  // Fetch classes from both academic_classes and medical_events (academic type)
   const fetchClasses = async () => {
     setLoading(true);
     try {
-      const { data: classes, error } = await supabase
+      // Fetch from academic_classes table
+      const { data: academicClasses, error: academicError } = await supabase
         .from('academic_classes')
         .select('*')
         .order('start_date', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching academic classes:', error);
-        return;
+      // Fetch academic events from medical_events table
+      const { data: medicalEvents, error: medicalError } = await supabase
+        .from('medical_events')
+        .select('*')
+        .eq('type', 'academic')
+        .order('start_date', { ascending: true });
+
+      if (academicError && !academicError.message?.includes('does not exist')) {
+        console.error('Error fetching academic classes:', academicError);
       }
 
-      setClasses(classes || []);
+      if (medicalError && !medicalError.message?.includes('does not exist')) {
+        console.error('Error fetching medical events:', medicalError);
+      }
+
+      // Combine and normalize the data
+      const combinedClasses: AcademicClass[] = [];
+
+      // Add academic_classes data
+      if (academicClasses) {
+        combinedClasses.push(...academicClasses);
+      }
+
+      // Add academic medical_events data (convert format)
+      if (medicalEvents) {
+        const convertedEvents = medicalEvents.map(event => ({
+          id: event.id,
+          title: event.title,
+          start_date: event.start_date,
+          end_date: event.end_date,
+          type: 'magistral' as const, // Default type for converted events
+          instructor: '',
+          location: event.location || '',
+          description: event.description ? `📅 Del calendario: ${event.description}` : '📅 Evento del calendario principal',
+          materials_url: '',
+          is_mandatory: true,
+          max_attendees: 20,
+          current_attendees: 0,
+          created_by: event.created_by,
+          created_at: event.created_at,
+          _source: 'calendar' // Add source identifier
+        }));
+        combinedClasses.push(...convertedEvents);
+      }
+
+      // Sort by start_date
+      combinedClasses.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+
+      setClasses(combinedClasses);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -243,6 +288,20 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
         </div>
       </div>
 
+      {/* Info Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start space-x-3">
+          <Calendar className="h-5 w-5 text-blue-600 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-blue-800">Eventos Académicos Integrados</h4>
+            <p className="text-sm text-blue-700 mt-1">
+              Esta sección muestra tanto las clases específicas de academia como los eventos académicos
+              creados en el cronograma principal. Los eventos marcados con 📅 provienen del calendario general.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Upcoming Classes */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200">
@@ -269,7 +328,14 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                             <Icon className="h-4 w-4" />
                           </div>
                           <div>
-                            <h4 className="text-lg font-semibold text-gray-900">{classItem.title}</h4>
+                            <div className="flex items-center space-x-2">
+                              <h4 className="text-lg font-semibold text-gray-900">{classItem.title}</h4>
+                              {classItem._source === 'calendar' && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  📅 Calendario
+                                </span>
+                              )}
+                            </div>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color} text-white`}>
                               {config.label}
                             </span>
@@ -306,7 +372,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                         )}
                       </div>
 
-                      {isAdminMode && (
+                      {isAdminMode && classItem._source !== 'calendar' && (
                         <div className="flex space-x-2 ml-4">
                           <button
                             onClick={() => handleEdit(classItem)}
@@ -320,6 +386,13 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
+                        </div>
+                      )}
+                      {isAdminMode && classItem._source === 'calendar' && (
+                        <div className="flex space-x-2 ml-4">
+                          <span className="text-xs text-gray-500 p-2">
+                            Editar en cronograma principal
+                          </span>
                         </div>
                       )}
                     </div>
