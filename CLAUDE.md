@@ -36,19 +36,33 @@ npx tsc --noEmit         # TypeScript type checking without compilation
 - **React 18.2.0** with TypeScript - Frontend framework
 - **Supabase** - Real-time database and authentication backend
 - **Tailwind CSS** - Utility-first CSS framework
-- **Vite** - Alternative fast development build tool
+- **Vite 5.2.0** - Alternative fast development build tool
+- **Lucide React** - Icon system for medical interfaces
+- **TypeScript 5.2.2** - Type safety and development experience
 
 ### Core Application Structure
 
 **Main Entry Point**: `src/neurology_residency_hub.tsx` - The primary application hub (extensive component, 1700+ lines)
 
-**Key Components**:
+**Core Medical Components**:
 - `src/WardRounds.tsx` - Patient ward management system
 - `src/SavedPatients.tsx` - Patient data persistence and management
 - `src/EventManagerSupabase.tsx` - Real-time calendar and event management
 - `src/DiagnosticAlgorithmContent.tsx` - Medical assessment scales and algorithms
 - `src/ScaleModal.tsx` - Modal interface for neurological evaluations
-- `src/components/auth/` - Authentication system components
+- `src/components/LumbarPuncture*.tsx` - Lumbar puncture procedure management
+- `src/components/NeurologicalExamModal.tsx` - Comprehensive neurological examination interface
+
+**Feature Modules**:
+- `src/AcademiaManager.tsx` - Academic schedule and education management
+- `src/PendientesManager.tsx` - Task and pending items management
+- `src/RecursosManager.tsx` - Resource management system
+- `src/AIBadgeSystem.tsx` - AI-powered badge and achievement system
+- `src/GoogleCalendarIntegration.tsx` - External calendar synchronization
+
+**Authentication & User Management**:
+- `src/components/auth/` - Complete authentication system
+- `src/components/user/` - User-specific components (MyPatients, EducationTracker, Goals, etc.)
 
 **Authentication Architecture**:
 - `AuthProvider.tsx` - React context for authentication state
@@ -86,7 +100,14 @@ npx tsc --noEmit         # TypeScript type checking without compilation
 
 **Key Tables**:
 - `medical_events` - Calendar events with categorization
-- Patient data tables (refer to DATABASE_SETUP.md for schema)
+- `tasks` - Task and pending items management
+- `lumbar_puncture_logs` - Lumbar puncture procedure tracking
+- `user_tracking_tables` - User progress and statistics
+- `resident_profiles` - Resident profile information
+- `diagnostic_assessments` - Medical assessment results
+- Patient data tables (comprehensive schema in DATABASE_SETUP.md and SQL files)
+
+**Database Setup**: Multiple SQL setup files in `/database/` directory and root SQL files provide complete schema setup
 
 ### Build Configuration
 
@@ -134,7 +155,43 @@ npx tsc --noEmit         # TypeScript type checking without compilation
 
 **Production**: Vercel deployment with environment variables configured in dashboard
 **Development**: Both Next.js and Vite development servers available
-**Environment Variables**: Copy `.env.example` to `.env` and configure all required API keys
+**Environment Variables**: Copy `.env.example` to `.env` and configure required API keys
+
+**Required Variables**:
+- `SUPABASE_URL` & `SUPABASE_ANON_KEY` - Database connectivity
+- Optional: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY` - AI features
+- Optional: `REACT_APP_GOOGLE_CLIENT_ID`, `REACT_APP_GOOGLE_API_KEY` - Calendar integration
+- Optional: `ENCRYPTION_KEY` - Medical data encryption for HIPAA compliance
+
+**Fallback Configuration**: Supabase client includes hardcoded fallback credentials for development
+
+### Hooks & Services Architecture
+
+**Custom Hooks**:
+- `useAuth.ts` - Authentication state management
+- `useLumbarPuncture.ts` - Lumbar puncture procedure state
+- `useUserData.ts` - User profile and statistics
+- `useEscapeKey.ts` - Modal escape key handling
+
+**Services**:
+- `services/api.ts` - API communication layer
+- `services/neurologicalExamService.ts` - Neurological examination logic
+- `services/ocrService.ts` - Optical character recognition for medical documents
+- `utils/supabase.js` - Database client configuration with fallback credentials
+- `utils/patientDataExtractor.ts` - Patient data processing utilities
+- `aiTextAnalyzer.ts` - AI-powered text analysis for medical content
+
+### Medical Data Processing
+
+**Assessment Systems**:
+- `calculateScaleScore.ts` - Standardized neurological scale calculations
+- `utils/diagnosticAssessmentDB.ts` - Assessment result persistence
+- Complete implementation of NIHSS, Glasgow Coma Scale, UPDRS I-IV, and 15+ other scales
+
+**Document Processing**:
+- OCR integration for medical document analysis
+- AI-powered text extraction and clinical note processing
+- Lumbar puncture result analysis and storage
 
 ### Development Workflow
 
@@ -142,11 +199,21 @@ npx tsc --noEmit         # TypeScript type checking without compilation
 1. Run `npm run lint` to check for code quality issues
 2. Run `npx tsc --noEmit` for TypeScript type checking
 3. Test locally with `npm run dev` (Next.js) or `npm run dev:vite` (Vite)
+4. Use `npm run audit:responsive` to check responsive design
+
+**Database Setup Requirements**:
+1. Execute SQL files in `/database/` directory for complete schema
+2. Run root-level SQL files for specific feature setup
+3. Ensure RLS policies are configured for data security
 
 **File Structure Conventions**:
 - Main application components in `src/` root
-- Reusable UI components in `src/components/`
+- Feature-specific components in `src/components/[feature]/`
 - Authentication system in `src/components/auth/`
+- User-specific features in `src/components/user/`
+- Admin features in `src/components/admin/`
 - Utility functions in `src/utils/`
-- TypeScript type definitions in `src/types/` or co-located with components
+- TypeScript type definitions in `src/types/` (comprehensive type system)
+- Custom hooks in `src/hooks/`
+- Services in `src/services/`
 - API routes in `pages/api/` (Next.js) or `api/` (legacy)

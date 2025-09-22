@@ -24,7 +24,21 @@ const EventManagerSupabase: React.FC = () => {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+
+    // If it's Saturday (6) or Sunday (0), show next week
+    // Otherwise show current week
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 2; // Sunday: 1 day, Saturday: 2 days
+      const nextMonday = new Date(today);
+      nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+      return nextMonday;
+    }
+
+    return today;
+  });
   const [showClases, setShowClases] = useState(true);
   const [showTareas, setShowTareas] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<MedicalEvent | null>(null);
