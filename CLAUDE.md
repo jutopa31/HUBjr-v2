@@ -27,7 +27,7 @@ npx tsc --noEmit         # TypeScript type checking without compilation
 ```
 
 ### Testing
-**Note**: No test framework is currently configured. Manual testing is performed using development servers.
+**Note**: No test framework is currently configured. Manual testing is performed using development servers. Playwright is available as a dependency for potential E2E testing implementation.
 
 ## Architecture Overview
 
