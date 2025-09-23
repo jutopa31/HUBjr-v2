@@ -5483,7 +5483,11 @@ const NeurologyResidencyHub = () => {
           </ProtectedRoute>
         );
       case 'pendientes':
-        return <PendientesManager />;
+        return (
+          <ProtectedRoute>
+            <PendientesManager />
+          </ProtectedRoute>
+        );
       /* case 'clinical':
         return (
           <div className="space-y-6">
