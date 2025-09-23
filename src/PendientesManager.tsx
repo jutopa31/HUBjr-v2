@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle, Trash2, Edit3, Save, X, Filter, Calendar, Users } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
 import { syncAllPendientes, completeTaskAndClearPatientPendientes } from './utils/pendientesSync';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface Task {
   id?: string;
@@ -18,6 +19,7 @@ interface Task {
 }
 
 const PendientesManager: React.FC = () => {
+  const { user } = useAuthContext();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -27,6 +29,7 @@ const PendientesManager: React.FC = () => {
   const [filterSource, setFilterSource] = useState<string>('all');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newTask, setNewTask] = useState<Task>({
     title: '',
     description: '',
@@ -37,17 +40,26 @@ const PendientesManager: React.FC = () => {
 
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
+    if (!user) {
+      console.log('No user authenticated, skipping task fetch');
+      return;
+    }
+
     setLoading(true);
+    setError(null);
+
     try {
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.error('Supabase fetch error:', error);
+
         if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
-          console.warn('La tabla tasks no existe en Supabase. Creando estructura de ejemplo...');
+          setError('La tabla de tareas no está configurada en la base de datos. Por favor, ejecute el script fix_tasks_table_security.sql');
+          console.warn('La tabla tasks no existe en Supabase. Mostrando datos de ejemplo...');
           setTasks([
             {
               id: '1',
@@ -56,7 +68,8 @@ const PendientesManager: React.FC = () => {
               priority: 'high',
               status: 'pending',
               due_date: '2025-01-15',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              created_by: user.id
             },
             {
               id: '2',
@@ -65,15 +78,22 @@ const PendientesManager: React.FC = () => {
               priority: 'medium',
               status: 'in_progress',
               due_date: '2025-01-10',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              created_by: user.id
             }
           ]);
+        } else if (error.code === '42501') {
+          setError('Sin permisos para acceder a las tareas. Verifique las políticas RLS.');
+        } else {
+          setError(`Error al cargar tareas: ${error.message}`);
         }
       } else {
         setTasks(tasks || []);
+        setError(null);
       }
     } catch (err) {
       console.error('Error al obtener tareas:', err);
+      setError('Error de conexión al cargar las tareas');
       setTasks([]);
     }
     setLoading(false);
@@ -100,32 +120,48 @@ const PendientesManager: React.FC = () => {
   // Add new task
   const addTask = async () => {
     if (!newTask.title.trim()) return;
-    
+    if (!user) {
+      setError('Debe estar autenticado para crear tareas');
+      return;
+    }
+
     setLoading(true);
+    setError(null);
+
     try {
+      const taskData = {
+        ...newTask,
+        created_by: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{
-          ...newTask,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
+        .insert([taskData])
         .select();
-      
+
       if (error) {
         console.error('Error adding task:', error);
+        if (error.code === 'PGRST116') {
+          setError('Tabla de tareas no configurada. Ejecute fix_tasks_table_security.sql');
+        } else if (error.code === '42501') {
+          setError('Sin permisos para crear tareas. Verifique las políticas RLS.');
+        } else {
+          setError(`Error al crear tarea: ${error.message}`);
+        }
+
         // Fallback to local state if Supabase fails
         const localTask: Task = {
           id: Date.now().toString(),
-          ...newTask,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          ...taskData
         };
         setTasks([localTask, ...tasks]);
       } else {
         setTasks([...data, ...tasks]);
+        setError(null);
       }
-      
+
       setNewTask({
         title: '',
         description: '',
@@ -136,26 +172,34 @@ const PendientesManager: React.FC = () => {
       setShowForm(false);
     } catch (err) {
       console.error('Error adding task:', err);
+      setError('Error de conexión al crear la tarea');
     }
     setLoading(false);
   };
 
   // Update task status
   const updateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
+    if (!user) {
+      setError('Debe estar autenticado para actualizar tareas');
+      return;
+    }
+
     try {
+      setError(null);
+
       // Si la tarea se está marcando como completada y es del pase de sala, usar la función especializada
       const task = tasks.find(t => t.id === taskId);
       if (newStatus === 'completed' && task?.source === 'ward_rounds') {
         const success = await completeTaskAndClearPatientPendientes(taskId, true);
         if (success) {
           // Update local state
-          setTasks(tasks.map(t => 
-            t.id === taskId 
+          setTasks(tasks.map(t =>
+            t.id === taskId
               ? { ...t, status: newStatus, updated_at: new Date().toISOString() }
               : t
           ));
         } else {
-          alert('Error al completar la tarea del pase de sala');
+          setError('Error al completar la tarea del pase de sala');
         }
         return;
       }
@@ -163,23 +207,30 @@ const PendientesManager: React.FC = () => {
       // Para tareas normales, actualización estándar
       const { error } = await supabase
         .from('tasks')
-        .update({ 
+        .update({
           status: newStatus,
           updated_at: new Date().toISOString()
         })
         .eq('id', taskId);
-      
+
       if (error) {
         console.error('Error updating task:', error);
+        if (error.code === '42501') {
+          setError('Sin permisos para actualizar esta tarea');
+        } else {
+          setError(`Error al actualizar tarea: ${error.message}`);
+        }
+        return;
       }
-      
-      setTasks(tasks.map(task => 
-        task.id === taskId 
+
+      setTasks(tasks.map(task =>
+        task.id === taskId
           ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
           : task
       ));
     } catch (err) {
       console.error('Error updating task status:', err);
+      setError('Error de conexión al actualizar la tarea');
     }
   };
 
@@ -243,11 +294,45 @@ const PendientesManager: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (user) {
+      fetchTasks();
+    }
+  }, [user]);
+
+  // Show authentication message if user is not logged in
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <CheckSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-500 mb-2">Autenticación Requerida</h3>
+          <p className="text-gray-400">Debe iniciar sesión para ver y gestionar las tareas pendientes.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-600 hover:text-red-800"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -438,7 +523,9 @@ const PendientesManager: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <h2 className="text-xl font-semibold">Lista de Tareas ({filteredTasks.length})</h2>
-          <div className="text-sm text-gray-500">{loading ? 'Sincronizando...' : 'Conectado a Supabase'}</div>
+          <div className="text-sm text-gray-500">
+            {loading ? 'Sincronizando...' : error ? 'Error de conexión' : 'Conectado a Supabase'}
+          </div>
         </div>
 
         {filteredTasks.length === 0 ? (
