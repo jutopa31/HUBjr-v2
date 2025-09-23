@@ -81,29 +81,30 @@ USING (true);
 ALTER TABLE public.user_resource_favorites ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for user_resource_favorites
+-- Note: user_id is VARCHAR(255), so we cast auth.uid() to text
 -- Users can only view their own favorites
 CREATE POLICY "Users can view their own resource favorites"
 ON public.user_resource_favorites FOR SELECT
 TO authenticated
-USING (user_id = auth.uid());
+USING (user_id = auth.uid()::text);
 
 -- Users can only insert their own favorites
 CREATE POLICY "Users can insert their own resource favorites"
 ON public.user_resource_favorites FOR INSERT
 TO authenticated
-WITH CHECK (user_id = auth.uid());
+WITH CHECK (user_id = auth.uid()::text);
 
 -- Users can only update their own favorites
 CREATE POLICY "Users can update their own resource favorites"
 ON public.user_resource_favorites FOR UPDATE
 TO authenticated
-USING (user_id = auth.uid());
+USING (user_id = auth.uid()::text);
 
 -- Users can only delete their own favorites
 CREATE POLICY "Users can delete their own resource favorites"
 ON public.user_resource_favorites FOR DELETE
 TO authenticated
-USING (user_id = auth.uid());
+USING (user_id = auth.uid()::text);
 
 -- ============================================================================
 -- 4. Enable RLS on academic_classes table
@@ -153,22 +154,23 @@ TO authenticated
 USING (true);
 
 -- Users can insert their own attendance records
+-- Note: user_id is VARCHAR(255), so we cast auth.uid() to text
 CREATE POLICY "Users can insert their own attendance records"
 ON public.class_attendance FOR INSERT
 TO authenticated
-WITH CHECK (user_id = auth.uid());
+WITH CHECK (user_id = auth.uid()::text);
 
 -- Users can update their own attendance records
 CREATE POLICY "Users can update their own attendance records"
 ON public.class_attendance FOR UPDATE
 TO authenticated
-USING (user_id = auth.uid());
+USING (user_id = auth.uid()::text);
 
 -- Users can delete their own attendance records
 CREATE POLICY "Users can delete their own attendance records"
 ON public.class_attendance FOR DELETE
 TO authenticated
-USING (user_id = auth.uid());
+USING (user_id = auth.uid()::text);
 
 -- ============================================================================
 -- 6. Grant appropriate permissions to authenticated role
