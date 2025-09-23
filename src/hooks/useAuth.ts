@@ -28,7 +28,7 @@ export function useAuth() {
             error.message.includes('invalid claim') ||
             error.message.includes('jwt expired')) {
           console.log('Invalid session detected, clearing auth state');
-          supabase.auth.signOut();
+          supabase.auth.signOut({ scope: 'local' });
           setState(prev => ({ ...prev, session: null, user: null, error: null, loading: false }));
         } else {
           setState(prev => ({ ...prev, error: error.message, loading: false }));
@@ -104,7 +104,7 @@ export function useAuth() {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
       return { error: null };
     } catch (error) {

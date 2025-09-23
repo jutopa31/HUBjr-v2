@@ -32,11 +32,15 @@ if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
 // Initialize Supabase client
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
+    // Better configuration for production deployment
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
     // Clear invalid sessions automatically
     onAuthTokenRefresh: (event, session) => {
       if (!session) {
         console.log('Session refresh failed, clearing auth state');
-        supabase.auth.signOut();
+        supabase.auth.signOut({ scope: 'local' }); // Use local scope to avoid 403
       }
     }
   }
@@ -53,7 +57,7 @@ export const isSupabaseConfigured = () => {
 // Helper function to clear corrupted auth state
 export const clearAuthState = async () => {
   console.log('Clearing corrupted auth state...');
-  
+
   // Clear localStorage tokens
   if (typeof window !== 'undefined') {
     Object.keys(localStorage).forEach(key => {
@@ -62,9 +66,27 @@ export const clearAuthState = async () => {
       }
     });
   }
-  
-  // Sign out from Supabase
-  await supabase.auth.signOut();
-  
+
+  // Sign out from Supabase with local scope to avoid 403 errors
+  await supabase.auth.signOut({ scope: 'local' });
+
   console.log('Auth state cleared');
+};
+
+// Enhanced logout function for production compatibility
+export const logoutUser = async () => {
+  try {
+    // Try local logout first (works in production)
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) {
+      console.warn('Local logout failed, clearing manually:', error);
+      await clearAuthState();
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('Logout error:', err);
+    // Fallback: clear auth state manually
+    await clearAuthState();
+    return { success: true, fallback: true };
+  }
 };
