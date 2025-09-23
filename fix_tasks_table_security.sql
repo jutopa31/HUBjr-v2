@@ -41,24 +41,23 @@ ON public.tasks FOR SELECT
 TO authenticated
 USING (true);
 
--- Allow authenticated users to insert tasks (with their user ID)
-CREATE POLICY "Users can insert their own tasks"
+-- Allow authenticated users to insert tasks
+CREATE POLICY "Users can insert tasks"
 ON public.tasks FOR INSERT
 TO authenticated
-WITH CHECK (created_by = auth.uid() OR created_by IS NULL);
+WITH CHECK (true);
 
--- Allow users to update tasks they created, or allow status updates for all
--- For now, allow all authenticated users to update any task for collaborative workflow
-CREATE POLICY "Users can update their own tasks"
+-- Allow authenticated users to update any task (collaborative workflow)
+CREATE POLICY "Users can update tasks"
 ON public.tasks FOR UPDATE
 TO authenticated
 USING (true);
 
--- Allow users to delete their own tasks
-CREATE POLICY "Users can delete their own tasks"
+-- Allow authenticated users to delete any task
+CREATE POLICY "Users can delete tasks"
 ON public.tasks FOR DELETE
 TO authenticated
-USING (created_by = auth.uid() OR created_by IS NULL);
+USING (true);
 
 -- ============================================================================
 -- 3. Create indexes for better performance
