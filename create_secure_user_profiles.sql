@@ -76,10 +76,10 @@ SELECT
     lp.*,
     up_resident.full_name as resident_name,
     up_resident.training_level as resident_level,
-    up_supervisor.full_name as supervisor_name
+    -- Supervisor is a text field, use it directly
+    COALESCE(lp.supervisor, 'Unknown Supervisor') as supervisor_name
 FROM public.lumbar_punctures lp
-LEFT JOIN public.user_profiles up_resident ON lp.resident_id = up_resident.id
-LEFT JOIN public.user_profiles up_supervisor ON lp.supervisor_id = up_supervisor.id;
+LEFT JOIN public.user_profiles up_resident ON lp.resident_id = up_resident.id;
 
 -- Grant permissions on the view
 GRANT SELECT ON public.lumbar_punctures_with_names TO authenticated;

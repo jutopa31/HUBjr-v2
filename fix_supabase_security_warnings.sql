@@ -20,13 +20,8 @@ SELECT
          WHERE id = lp.resident_id),
         'Unknown Resident'
     ) as resident_name,
-    -- Get supervisor name from user_metadata in a secure way
-    COALESCE(
-        (SELECT raw_user_meta_data->>'full_name'
-         FROM auth.users
-         WHERE id = lp.supervisor_id),
-        'Unknown Supervisor'
-    ) as supervisor_name,
+    -- Supervisor is already a text field, so use it directly
+    COALESCE(lp.supervisor, 'Unknown Supervisor') as supervisor_name,
     -- Get training level from user_metadata
     COALESCE(
         (SELECT raw_user_meta_data->>'training_level'
