@@ -48,10 +48,11 @@ TO authenticated
 WITH CHECK (created_by = auth.uid() OR created_by IS NULL);
 
 -- Allow users to update tasks they created, or allow status updates for all
+-- For now, allow all authenticated users to update any task for collaborative workflow
 CREATE POLICY "Users can update their own tasks"
 ON public.tasks FOR UPDATE
 TO authenticated
-USING (created_by = auth.uid() OR created_by IS NULL);
+USING (true);
 
 -- Allow users to delete their own tasks
 CREATE POLICY "Users can delete their own tasks"
