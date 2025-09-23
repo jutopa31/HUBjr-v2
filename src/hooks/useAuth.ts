@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase } from '../utils/supabase';
+import { supabase, forceLogout } from '../utils/supabase';
 
 export interface AuthState {
   user: User | null;
@@ -102,17 +102,37 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' });
-      if (error) throw error;
-      return { error: null };
+      // Check if we're dealing with cached/production environment
+      const isProduction = process.env.NODE_ENV === 'production' ||
+                          (typeof window !== 'undefined' && window.location.hostname !== 'localhost');
+
+      if (isProduction) {
+        console.log('Production logout: using comprehensive cache clearing');
+        // Use the enhanced force logout to clear ALL browser storage
+        await forceLogout();
+        return { error: null };
+      } else {
+        // Local development - try API logout first
+        try {
+          const { error } = await supabase.auth.signOut({ scope: 'local' });
+          if (error) {
+            console.warn('Local API logout failed, using force logout:', error);
+            await forceLogout();
+          }
+          return { error: null };
+        } catch (apiError) {
+          console.warn('Local logout completely failed, using force logout:', apiError);
+          await forceLogout();
+          return { error: null };
+        }
+      }
     } catch (error) {
-      const authError = error as AuthError;
-      setState(prev => ({ ...prev, error: authError.message }));
-      return { error: authError };
-    } finally {
-      setState(prev => ({ ...prev, loading: false }));
+      console.error('Logout error, using force logout as ultimate fallback:', error);
+      // Ultimate fallback: force logout clears everything
+      await forceLogout();
+      return { error: null };
     }
   }, []);
 

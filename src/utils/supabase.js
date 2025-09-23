@@ -76,17 +76,100 @@ export const clearAuthState = async () => {
 // Enhanced logout function for production compatibility
 export const logoutUser = async () => {
   try {
-    // Try local logout first (works in production)
-    const { error } = await supabase.auth.signOut({ scope: 'local' });
-    if (error) {
-      console.warn('Local logout failed, clearing manually:', error);
-      await clearAuthState();
+    // Check if we're in production or cached environment
+    const isProduction = process.env.NODE_ENV === 'production' ||
+                        (typeof window !== 'undefined' && window.location.hostname !== 'localhost');
+
+    if (isProduction) {
+      console.log('Production logout: using force logout to clear all cached data');
+      // Use force logout for production to clear ALL browser storage
+      await forceLogout();
+      return { success: true, method: 'force' };
+    } else {
+      // Local development - try API logout first
+      try {
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) {
+          console.warn('Local logout failed, using force logout:', error);
+          await forceLogout();
+          return { success: true, method: 'force_fallback' };
+        }
+        return { success: true, method: 'api' };
+      } catch (apiError) {
+        console.warn('API logout completely failed, using force logout:', apiError);
+        await forceLogout();
+        return { success: true, method: 'force_fallback' };
+      }
     }
-    return { success: true };
   } catch (err) {
     console.error('Logout error:', err);
-    // Fallback: clear auth state manually
-    await clearAuthState();
+    // Ultimate fallback: force logout
+    await forceLogout();
     return { success: true, fallback: true };
+  }
+};
+
+// Force logout - completely clears all auth state and reloads page
+export const forceLogout = async () => {
+  console.log('Force logout initiated - clearing ALL browser storage');
+
+  if (typeof window !== 'undefined') {
+    try {
+      // Clear ALL localStorage (more aggressive approach)
+      localStorage.clear();
+
+      // Clear ALL sessionStorage
+      sessionStorage.clear();
+
+      // Clear ALL cookies for this domain
+      document.cookie.split(";").forEach(cookie => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        // Clear cookie for current path and root path
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + window.location.hostname;
+      });
+
+      // Clear IndexedDB if it exists (some browsers store auth data here)
+      if ('indexedDB' in window) {
+        try {
+          const databases = await indexedDB.databases();
+          await Promise.all(
+            databases.map(db => {
+              if (db.name && (db.name.includes('supabase') || db.name.includes('auth'))) {
+                return new Promise((resolve) => {
+                  const deleteReq = indexedDB.deleteDatabase(db.name);
+                  deleteReq.onsuccess = () => resolve(true);
+                  deleteReq.onerror = () => resolve(false);
+                });
+              }
+            })
+          );
+        } catch (err) {
+          console.log('IndexedDB clearing failed:', err);
+        }
+      }
+
+      // Clear any Service Worker cache
+      if ('serviceWorker' in navigator && 'caches' in window) {
+        try {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map(cacheName => caches.delete(cacheName))
+          );
+        } catch (err) {
+          console.log('Cache clearing failed:', err);
+        }
+      }
+
+      console.log('All browser storage cleared');
+
+    } catch (err) {
+      console.error('Error during storage clearing:', err);
+    }
+
+    // Force navigation to clear any remaining state
+    window.location.replace(window.location.origin);
   }
 };
