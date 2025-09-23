@@ -164,9 +164,21 @@ export function useUserData(): UseUserDataReturn {
       const query = buildQuery('user_procedures', filters);
       const { data, error: queryError } = await query.order('date_performed', { ascending: false });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        // If it's a 404 error (table doesn't exist), just set empty array
+        if (queryError.code === 'PGRST116' || queryError.message.includes('does not exist')) {
+          setProcedures([]);
+          return;
+        }
+        throw queryError;
+      }
       setProcedures(data || []);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setProcedures([]);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading procedures');
     } finally {
       setProceduresLoading(false);
@@ -196,9 +208,21 @@ export function useUserData(): UseUserDataReturn {
 
       const { data, error: queryError } = await query.order('procedure_date', { ascending: false });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        // If it's a 404 error (table doesn't exist), just set empty array
+        if (queryError.code === 'PGRST116' || queryError.message.includes('does not exist')) {
+          setLumbarPunctures([]);
+          return;
+        }
+        throw queryError;
+      }
       setLumbarPunctures(data || []);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setLumbarPunctures([]);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading lumbar punctures');
     } finally {
       setLumbarPuncturesLoading(false);
@@ -219,9 +243,21 @@ export function useUserData(): UseUserDataReturn {
         .eq('user_id', user.id)
         .single();
 
-      if (queryError && queryError.code !== 'PGRST116') throw queryError; // PGRST116 is "not found"
+      if (queryError && queryError.code !== 'PGRST116') {
+        // If it's a 404 error (table doesn't exist), just set null
+        if (queryError.message.includes('does not exist')) {
+          setResidentProfile(null);
+          return;
+        }
+        throw queryError;
+      }
       setResidentProfile(data || null);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setResidentProfile(null);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading resident profile');
     } finally {
       setProfileLoading(false);
@@ -239,9 +275,21 @@ export function useUserData(): UseUserDataReturn {
       const query = buildQuery('user_patients', filters);
       const { data, error: queryError } = await query.order('date_assigned', { ascending: false });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        // If it's a 404 error (table doesn't exist), just set empty array
+        if (queryError.code === 'PGRST116' || queryError.message.includes('does not exist')) {
+          setPatients([]);
+          return;
+        }
+        throw queryError;
+      }
       setPatients(data || []);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setPatients([]);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading patients');
     } finally {
       setPatientsLoading(false);
@@ -259,9 +307,21 @@ export function useUserData(): UseUserDataReturn {
       const query = buildQuery('user_classes', filters);
       const { data, error: queryError } = await query.order('date_attended', { ascending: false });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        // If it's a 404 error (table doesn't exist), just set empty array
+        if (queryError.code === 'PGRST116' || queryError.message.includes('does not exist')) {
+          setClasses([]);
+          return;
+        }
+        throw queryError;
+      }
       setClasses(data || []);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setClasses([]);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading classes');
     } finally {
       setClassesLoading(false);
@@ -279,9 +339,21 @@ export function useUserData(): UseUserDataReturn {
       const query = buildQuery('user_reviews', filters);
       const { data, error: queryError } = await query.order('date_reviewed', { ascending: false });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        // If it's a 404 error (table doesn't exist), just set empty array
+        if (queryError.code === 'PGRST116' || queryError.message.includes('does not exist')) {
+          setReviews([]);
+          return;
+        }
+        throw queryError;
+      }
       setReviews(data || []);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setReviews([]);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading reviews');
     } finally {
       setReviewsLoading(false);
@@ -299,9 +371,21 @@ export function useUserData(): UseUserDataReturn {
       const query = buildQuery('user_goals', filters);
       const { data, error: queryError } = await query.order('created_at', { ascending: false });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        // If it's a 404 error (table doesn't exist), just set empty array
+        if (queryError.code === 'PGRST116' || queryError.message.includes('does not exist')) {
+          setGoals([]);
+          return;
+        }
+        throw queryError;
+      }
       setGoals(data || []);
     } catch (err) {
+      // Suppress errors for missing tables (404s)
+      if (err instanceof Error && (err.message.includes('does not exist') || err.message.includes('404'))) {
+        setGoals([]);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error loading goals');
     } finally {
       setGoalsLoading(false);

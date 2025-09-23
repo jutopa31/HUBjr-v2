@@ -168,7 +168,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               <p className="text-sm font-medium text-gray-600">Procedimientos</p>
               <p className="text-2xl font-semibold text-gray-900">{statistics.procedures.total}</p>
               <p className="text-xs text-green-600">
-                {statistics.procedures.successRate.toFixed(1)}% éxito
+                {(statistics.procedures.successRate ?? 0).toFixed(1)}% éxito
               </p>
             </div>
           </div>
@@ -190,7 +190,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               </p>
               <p className="text-xs text-green-600">
                 {statistics.procedures.lumbarPuncturesSuccessRate ?
-                  `${statistics.procedures.lumbarPuncturesSuccessRate.toFixed(1)}% éxito` :
+                  `${(statistics.procedures.lumbarPuncturesSuccessRate ?? 0).toFixed(1)}% éxito` :
                   'Sin datos'
                 }
               </p>
@@ -223,7 +223,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               <p className="text-sm font-medium text-gray-600">Educación</p>
               <p className="text-2xl font-semibold text-gray-900">{statistics.education.totalHours}h</p>
               <p className="text-xs text-gray-500">
-                {statistics.education.averageScore ? `${statistics.education.averageScore.toFixed(1)} promedio` : 'Sin evaluaciones'}
+                {statistics.education.averageScore ? `${(statistics.education.averageScore ?? 0).toFixed(1)} promedio` : 'Sin evaluaciones'}
               </p>
             </div>
           </div>

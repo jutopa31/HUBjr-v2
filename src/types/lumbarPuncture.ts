@@ -3,6 +3,8 @@
 export interface LumbarPuncture {
   id: string;
   resident_id: string;
+  resident_name?: string; // Added for shared access display
+  resident_level?: string; // Added for resident level display
   patient_id?: string;
   patient_initials: string;
   patient_age?: number;
@@ -318,6 +320,7 @@ export interface LPFilters {
   date_to?: string;
   indication?: string;
   supervisor?: string;
+  resident_id?: string; // Added for filtering by resident
   successful?: boolean;
   complication_type?: string;
   trainee_role?: string;

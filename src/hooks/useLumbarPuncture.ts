@@ -22,7 +22,7 @@ export function useLumbarPuncture() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all lumbar punctures for the current user
+  // Fetch all lumbar punctures (shared access) with optional filtering
   const fetchProcedures = useCallback(async (searchParams?: LPSearchParams) => {
     if (!user) return;
 
@@ -30,10 +30,15 @@ export function useLumbarPuncture() {
     setError(null);
 
     try {
+      // Use the view that includes resident names
       let query = supabase
-        .from('lumbar_punctures')
-        .select('*')
-        .eq('resident_id', user.id);
+        .from('lumbar_punctures_with_names')
+        .select('*');
+
+      // Only filter by resident if specified in search params
+      if (searchParams?.filters?.resident_id) {
+        query = query.eq('resident_id', searchParams.filters.resident_id);
+      }
 
       // Apply filters
       if (searchParams?.filters) {
@@ -640,5 +645,111 @@ export function useLPStatistics() {
     fetchStats,
     fetchMonthlyStats,
     fetchAnalytics
+  };
+}
+
+// Hook for fetching available residents and supervisors for filtering
+export function useLPFilters() {
+  const [residents, setResidents] = useState<{ id: string; name: string; level?: string }[]>([]);
+  const [supervisors, setSupervisors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchFilters = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Get unique residents who have performed lumbar punctures
+      const { data: residentData } = await supabase
+        .from('lumbar_punctures_with_names')
+        .select('resident_id, resident_name, resident_level')
+        .not('resident_name', 'is', null);
+
+      // Get unique supervisors
+      const { data: supervisorData } = await supabase
+        .from('lumbar_punctures')
+        .select('supervisor')
+        .not('supervisor', 'is', null);
+
+      // Process residents (remove duplicates)
+      const uniqueResidents = residentData?.reduce((acc: any[], current) => {
+        if (!acc.find(item => item.id === current.resident_id)) {
+          acc.push({
+            id: current.resident_id,
+            name: current.resident_name,
+            level: current.resident_level
+          });
+        }
+        return acc;
+      }, []) || [];
+
+      // Process supervisors (remove duplicates)
+      const uniqueSupervisors = [...new Set(
+        supervisorData?.map(item => item.supervisor).filter(Boolean) || []
+      )];
+
+      setResidents(uniqueResidents);
+      setSupervisors(uniqueSupervisors);
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFilters();
+  }, [fetchFilters]);
+
+  return {
+    residents,
+    supervisors,
+    loading,
+    refetch: fetchFilters
+  };
+}
+
+// Hook for department-wide statistics
+export function useDepartmentLPStats() {
+  const [departmentStats, setDepartmentStats] = useState<any>(null);
+  const [residentComparison, setResidentComparison] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDepartmentStats = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Get department-wide statistics
+      const { data: deptData, error: deptError } = await supabase
+        .rpc('get_department_lp_stats');
+
+      if (deptError) throw deptError;
+
+      // Get resident comparison data
+      const { data: comparisonData, error: comparisonError } = await supabase
+        .rpc('get_resident_lp_comparison');
+
+      if (comparisonError) throw comparisonError;
+
+      setDepartmentStats(deptData?.[0] || null);
+      setResidentComparison(comparisonData || []);
+    } catch (err) {
+      console.error('Error fetching department stats:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch department statistics');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDepartmentStats();
+  }, [fetchDepartmentStats]);
+
+  return {
+    departmentStats,
+    residentComparison,
+    loading,
+    error,
+    refetch: fetchDepartmentStats
   };
 }

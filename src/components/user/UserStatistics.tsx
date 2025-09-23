@@ -104,7 +104,7 @@ const UserStatistics: React.FC = () => {
           </div>
           <div className="mt-4">
             <p className="text-sm text-blue-700">
-              Tasa de éxito: {statistics.procedures.successRate.toFixed(1)}%
+              Tasa de éxito: {(statistics.procedures.successRate ?? 0).toFixed(1)}%
             </p>
           </div>
         </div>
@@ -139,7 +139,7 @@ const UserStatistics: React.FC = () => {
           <div className="mt-4">
             <p className="text-sm text-purple-700">
               {statistics.education.averageScore ?
-                `Promedio: ${statistics.education.averageScore.toFixed(1)}` :
+                `Promedio: ${(statistics.education.averageScore ?? 0).toFixed(1)}` :
                 'Sin evaluaciones'
               }
             </p>
@@ -158,7 +158,7 @@ const UserStatistics: React.FC = () => {
           </div>
           <div className="mt-4">
             <p className="text-sm text-orange-700">
-              {statistics.goals.completionRate.toFixed(1)}% completado
+              {(statistics.goals.completionRate ?? 0).toFixed(1)}% completado
             </p>
           </div>
         </div>

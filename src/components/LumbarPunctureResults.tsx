@@ -16,7 +16,8 @@ import {
   Target,
   BarChart3
 } from 'lucide-react';
-import { useLumbarPuncture, useLPStatistics } from '../hooks/useLumbarPuncture';
+import { useLumbarPuncture, useLPStatistics, useLPFilters, useDepartmentLPStats } from '../hooks/useLumbarPuncture';
+import { useAuthContext } from '../components/auth/AuthProvider';
 import { LumbarPuncture, LPFilters, LPSearchParams } from '../types/lumbarPuncture';
 
 interface LumbarPunctureResultsProps {
@@ -25,8 +26,11 @@ interface LumbarPunctureResultsProps {
 }
 
 export default function LumbarPunctureResults({ onEdit, onView }: LumbarPunctureResultsProps) {
+  const { user } = useAuthContext();
   const { procedures, loading, error, fetchProcedures, deleteProcedure } = useLumbarPuncture();
   const { stats, analytics, loading: statsLoading } = useLPStatistics();
+  const { departmentStats, residentComparison, loading: deptStatsLoading } = useDepartmentLPStats();
+  const { residents, supervisors, loading: filtersLoading } = useLPFilters();
 
   const [searchParams, setSearchParams] = useState<LPSearchParams>({
     search: '',
@@ -170,48 +174,156 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
           </div>
         </div>
 
+        {/* Quick Filter Toggle */}
+        <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-blue-900">Vista de Procedimientos</h3>
+              <p className="text-xs text-blue-700">
+                {searchParams.filters?.resident_id
+                  ? `Mostrando procedimientos de: ${residents.find(r => r.id === searchParams.filters?.resident_id)?.name || 'Usuario seleccionado'}`
+                  : 'Mostrando todos los procedimientos del departamento'
+                }
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleFilter({ resident_id: undefined })}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  !searchParams.filters?.resident_id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-50'
+                }`}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => handleFilter({ resident_id: user?.id })}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  searchParams.filters?.resident_id === user?.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-50'
+                }`}
+              >
+                Solo Míos
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Quick Stats */}
-        {stats && !statsLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <Target className="h-8 w-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-blue-800">Total de Procedimientos</p>
-                  <p className="text-2xl font-bold text-blue-900">{stats.total_procedures}</p>
+        {((searchParams.filters?.resident_id && stats && !statsLoading) ||
+          (!searchParams.filters?.resident_id && departmentStats && !deptStatsLoading)) && (
+          <div className="space-y-4 mb-6">
+            {!searchParams.filters?.resident_id && (
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Estadísticas del Departamento</h3>
+                <p className="text-sm text-gray-600">Vista general de todos los procedimientos del servicio</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Target className="h-8 w-8 text-blue-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-blue-800">Total de Procedimientos</p>
+                    <p className="text-2xl font-bold text-blue-900">
+                      {searchParams.filters?.resident_id
+                        ? stats?.total_procedures || 0
+                        : departmentStats?.total_procedures || 0
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-green-800">Tasa de Éxito</p>
+                    <p className="text-2xl font-bold text-green-900">
+                      {searchParams.filters?.resident_id
+                        ? (stats?.success_rate ?? 0).toFixed(1)
+                        : (departmentStats?.success_rate ?? 0).toFixed(1)
+                      }%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Activity className="h-8 w-8 text-yellow-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-yellow-800">
+                      {searchParams.filters?.resident_id ? 'Intentos Promedio' : 'Residentes Activos'}
+                    </p>
+                    <p className="text-2xl font-bold text-yellow-900">
+                      {searchParams.filters?.resident_id
+                        ? (stats?.average_attempts ?? 0).toFixed(1)
+                        : departmentStats?.total_residents || 0
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-8 w-8 text-red-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">
+                      {searchParams.filters?.resident_id ? 'Complicaciones' : 'Promedio de Intentos'}
+                    </p>
+                    <p className="text-2xl font-bold text-red-900">
+                      {searchParams.filters?.resident_id
+                        ? stats?.complications_count || 0
+                        : (departmentStats?.average_attempts ?? 0).toFixed(1)
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">Tasa de Éxito</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.success_rate.toFixed(1)}%</p>
+            {/* Department-wide resident comparison */}
+            {!searchParams.filters?.resident_id && residentComparison.length > 0 && (
+              <div className="bg-white rounded-lg p-6 border border-gray-200">
+                <h4 className="text-md font-medium text-gray-900 mb-4">Comparación entre Residentes</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2">Residente</th>
+                        <th className="text-center py-2">Procedimientos</th>
+                        <th className="text-center py-2">Éxito (%)</th>
+                        <th className="text-center py-2">Promedio Intentos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {residentComparison.slice(0, 10).map((resident, index) => (
+                        <tr key={index} className="border-b">
+                          <td className="py-2 font-medium text-blue-600">
+                            {resident.resident_name}
+                          </td>
+                          <td className="text-center py-2">{resident.total_procedures}</td>
+                          <td className="text-center py-2">
+                            <span className={`font-medium ${
+                              resident.success_rate >= 80 ? 'text-green-600' :
+                              resident.success_rate >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {(resident.success_rate ?? 0).toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="text-center py-2">{(resident.average_attempts ?? 0).toFixed(1)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <Activity className="h-8 w-8 text-yellow-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-yellow-800">Intentos Promedio</p>
-                  <p className="text-2xl font-bold text-yellow-900">{stats.average_attempts.toFixed(1)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-red-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-red-800">Complicaciones</p>
-                  <p className="text-2xl font-bold text-red-900">{stats.complications_count}</p>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -230,7 +342,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <span className="text-sm text-gray-700 truncate">{item.indication}</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-900">{item.count}</span>
-                        <span className="text-xs text-green-600">({item.success_rate.toFixed(0)}% éxito)</span>
+                        <span className="text-xs text-green-600">({(item.success_rate ?? 0).toFixed(0)}% éxito)</span>
                       </div>
                     </div>
                   ))}
@@ -247,7 +359,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-900">{item.count} procedimientos</span>
                         <span className={`text-xs ${getDifficultyColor(item.difficulty)}`}>
-                          {item.success_rate.toFixed(0)}% éxito
+                          {(item.success_rate ?? 0).toFixed(0)}% éxito
                         </span>
                       </div>
                     </div>
@@ -264,7 +376,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <span className="text-sm text-gray-700 truncate">{item.supervisor}</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-900">{item.procedures}</span>
-                        <span className="text-xs text-blue-600">({item.avg_success_rate.toFixed(0)}% avg)</span>
+                        <span className="text-xs text-blue-600">({(item.avg_success_rate ?? 0).toFixed(0)}% avg)</span>
                       </div>
                     </div>
                   ))}
@@ -280,7 +392,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <span className="text-sm text-gray-700 capitalize">{item.complication_type.replace('_', ' ')}</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-900">{item.count}</span>
-                        <span className="text-xs text-red-600">({item.percentage.toFixed(1)}%)</span>
+                        <span className="text-xs text-red-600">({(item.percentage ?? 0).toFixed(1)}%)</span>
                       </div>
                     </div>
                   ))}
@@ -337,7 +449,58 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
         {/* Advanced Filters */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Resident</label>
+                <select
+                  value={searchParams.filters?.resident_id || ''}
+                  onChange={(e) => handleFilter({ resident_id: e.target.value || undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={filtersLoading}
+                >
+                  <option value="">All Residents</option>
+                  {residents.map(resident => (
+                    <option key={resident.id} value={resident.id}>
+                      {resident.name} {resident.level && `(${resident.level})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Supervisor</label>
+                <select
+                  value={searchParams.filters?.supervisor || ''}
+                  onChange={(e) => handleFilter({ supervisor: e.target.value || undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={filtersLoading}
+                >
+                  <option value="">All Supervisors</option>
+                  {supervisors.map(supervisor => (
+                    <option key={supervisor} value={supervisor}>
+                      {supervisor}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Success Status</label>
+                <select
+                  value={searchParams.filters?.successful !== undefined ? searchParams.filters.successful.toString() : ''}
+                  onChange={(e) => handleFilter({
+                    successful: e.target.value ? e.target.value === 'true' : undefined
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">All</option>
+                  <option value="true">Successful</option>
+                  <option value="false">Unsuccessful</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
                 <input
@@ -356,21 +519,6 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                   onChange={(e) => handleFilter({ date_to: e.target.value || undefined })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Success Status</label>
-                <select
-                  value={searchParams.filters?.successful !== undefined ? searchParams.filters.successful.toString() : ''}
-                  onChange={(e) => handleFilter({
-                    successful: e.target.value ? e.target.value === 'true' : undefined
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All</option>
-                  <option value="true">Successful</option>
-                  <option value="false">Unsuccessful</option>
-                </select>
               </div>
 
               <div>
@@ -431,6 +579,9 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                     Supervisor
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Residente
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rol
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -474,6 +625,19 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-gray-400 mr-2" />
                         {procedure.supervisor}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 text-blue-400 mr-2" />
+                        <div>
+                          <div className="font-medium text-blue-600">
+                            {procedure.resident_name || 'Desconocido'}
+                          </div>
+                          {procedure.resident_level && (
+                            <div className="text-xs text-gray-500">{procedure.resident_level}</div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

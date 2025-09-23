@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Primary Development
 ```bash
-npm run dev          # Next.js development server (auto-detects port, usually 3001)
+npm run dev          # Next.js development server (auto-detects port, usually 3000)
 npm run build        # Production build with Next.js
 npm run start        # Start production server
 npm run lint         # ESLint checking and error detection
@@ -159,6 +159,7 @@ npx tsc --noEmit         # TypeScript type checking without compilation
 
 **Required Variables**:
 - `SUPABASE_URL` & `SUPABASE_ANON_KEY` - Database connectivity
+- `NEXT_PUBLIC_SUPABASE_URL` & `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Public Supabase client access
 - Optional: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY` - AI features
 - Optional: `REACT_APP_GOOGLE_CLIENT_ID`, `REACT_APP_GOOGLE_API_KEY` - Calendar integration
 - Optional: `ENCRYPTION_KEY` - Medical data encryption for HIPAA compliance
