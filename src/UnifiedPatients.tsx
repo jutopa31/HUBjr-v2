@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Search, Plus, Filter, Eye, Edit, Trash2, Calendar, User,
+  Search, Plus, Edit, User,
   FileText, Brain, Syringe, Activity, ChevronRight, Building2,
-  Stethoscope, FlaskConical, Target, CheckCircle
+  CheckCircle, Users
 } from 'lucide-react';
 import { PatientAssessment, HospitalContext } from './types';
 import { useAuthContext } from './components/auth/AuthProvider';
