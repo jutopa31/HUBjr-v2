@@ -8,6 +8,7 @@ import NeurologicalExamModal from './components/NeurologicalExamModal';
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface DiagnosticAlgorithmContentProps {
   notes: string;
@@ -32,6 +33,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   isAdminMode = false,
   currentHospitalContext = 'Posadas'
 }) => {
+  const { hasPrivilege, hasHospitalContextAccess } = useAuthContext();
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
     'Parkinson': false,
@@ -584,7 +586,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           onSave={handleConfirmSave}
           extractedData={extractPatientData(notes)}
           fullNotes={notes}
-          isAdminMode={isAdminMode}
+          isAdminMode={isAdminMode || hasPrivilege('full_admin') || hasHospitalContextAccess}
           currentHospitalContext={currentHospitalContext}
         />
       )}

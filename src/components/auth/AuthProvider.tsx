@@ -1,11 +1,15 @@
 import React, { createContext, useContext } from 'react';
 import { useAuth, AuthState } from '../../hooks/useAuth';
+import { AdminPrivilegeType } from '../../utils/diagnosticAssessmentDB';
 
 interface AuthContextType extends AuthState {
   signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<any>;
   resetPassword: (email: string) => Promise<any>;
+  hasPrivilege: (privilegeType: AdminPrivilegeType) => boolean;
+  refreshPrivileges: () => Promise<void>;
+  checkUserPrivileges: (user: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

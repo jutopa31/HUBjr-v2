@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Trash2, Calendar, User, FileText, Brain, RefreshCw, ChevronRight, Building2, Filter } from 'lucide-react';
 import { PatientAssessment, HospitalContext } from './types';
-import { getPatientAssessments, deletePatientAssessment, updatePatientAssessment } from './utils/diagnosticAssessmentDB';
+import { deletePatientAssessment, updatePatientAssessment, getPatientAssessmentsWithPrivileges } from './utils/diagnosticAssessmentDB';
 import PatientDetailsModal from './PatientDetailsModal';
 import EditPatientNotesModal from './EditPatientNotesModal';
 import HospitalContextSelector from './HospitalContextSelector';
@@ -12,7 +12,7 @@ interface SavedPatientsProps {
 }
 
 const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) => {
-  const { user } = useAuthContext();
+  const { user, hasHospitalContextAccess, hasPrivilege } = useAuthContext();
   const [patients, setPatients] = useState<PatientAssessment[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientAssessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +23,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
   const [error, setError] = useState<string | null>(null);
   const [hospitalContext, setHospitalContext] = useState<HospitalContext>('Posadas');
   const [showOnlyMyPatients, setShowOnlyMyPatients] = useState(false);
+  const [privilegeInfo, setPrivilegeInfo] = useState<any>(null);
 
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -62,19 +63,50 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
       setLoading(true);
       setError(null);
 
-      // Solo pasar el contexto si está en modo admin, sino usar por defecto Posadas
-      const contextToUse = isAdminMode ? hospitalContext : 'Posadas';
-      const result = await getPatientAssessments(contextToUse);
+      if (!user?.email) {
+        setError('Usuario no autenticado');
+        return;
+      }
+
+      // Use privilege-based access control
+      const userHasPrivileges = hasHospitalContextAccess || hasPrivilege('full_admin');
+      const effectiveAdminMode = isAdminMode && userHasPrivileges;
+
+      // Determine context based on user privileges
+      let contextToUse: HospitalContext | undefined = undefined;
+
+      if (effectiveAdminMode) {
+        // User has privileges and admin mode is on - use selected context
+        contextToUse = hospitalContext;
+      } else {
+        // User doesn't have privileges or admin mode is off - force Posadas only
+        contextToUse = 'Posadas';
+      }
+
+      const result = await getPatientAssessmentsWithPrivileges(
+        user.email,
+        contextToUse,
+        false // Don't force context, respect privileges
+      );
 
       if (result.success && result.data) {
         setPatients(result.data);
         setFilteredPatients(result.data);
+        setPrivilegeInfo(result.privilegeInfo);
+
+        console.log(`📊 Loaded ${result.data.length} patients for context: ${contextToUse}`, {
+          userEmail: user.email,
+          hasPrivileges: userHasPrivileges,
+          context: contextToUse,
+          privilegeInfo: result.privilegeInfo
+        });
       } else {
         setError(result.error || 'Error al cargar pacientes');
+        console.error('❌ Error loading patients:', result.error);
       }
     } catch (error) {
       setError('Error inesperado al cargar pacientes');
-      console.error('Error loading patients:', error);
+      console.error('❌ Unexpected error loading patients:', error);
     } finally {
       setLoading(false);
     }
@@ -206,12 +238,24 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
         </div>
       </div>
 
-      {/* Hospital Context Selector (Admin Only) */}
+      {/* Hospital Context Selector (Privileged Users Only) */}
       <HospitalContextSelector
         currentContext={hospitalContext}
         onContextChange={setHospitalContext}
-        isAdminMode={isAdminMode}
+        isAdminMode={isAdminMode && (hasHospitalContextAccess || hasPrivilege('full_admin'))}
       />
+
+      {/* Privilege Information */}
+      {privilegeInfo && user && (hasHospitalContextAccess || hasPrivilege('full_admin')) && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-2 text-sm text-blue-800">
+            <Building2 className="h-4 w-4" />
+            <span className="font-medium">Acceso Privilegiado:</span>
+            <span>Contextos disponibles: {privilegeInfo.allowedContexts?.join(', ')}</span>
+            <span>• Contexto actual: {privilegeInfo.currentContext}</span>
+          </div>
+        </div>
+      )}
 
       {/* Search Bar and Filters */}
       <div className="mb-6 space-y-4">

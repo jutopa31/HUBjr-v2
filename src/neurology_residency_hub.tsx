@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen, User, Syringe } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
-import { Scale, ScaleResult } from './types';
+import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
 import PendientesManager from './PendientesManager';
@@ -13,6 +13,7 @@ import AcademiaManager from './AcademiaManager';
 import { ProtectedRoute } from './components/auth';
 import SimpleUserMenu from './components/auth/SimpleUserMenu';
 import UserDashboard from './components/user/UserDashboard';
+import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
 
 // Import types from separate file
@@ -48,6 +49,9 @@ const NeurologyResidencyHub = () => {
   // Estados para el sistema de administración
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Estado para el contexto hospitalario global
+  const [currentHospitalContext, setCurrentHospitalContext] = useState<HospitalContext>('Posadas');
   
   // Estados para Google Calendar (removido - ahora usando Supabase)
   
@@ -5207,16 +5211,23 @@ const NeurologyResidencyHub = () => {
     switch (activeTab) {
       case 'diagnostic':
         return (
-          <DiagnosticAlgorithmContent
-            notes={notes}
-            setNotes={setNotes}
-            copyNotes={copyNotes}
-            clearNotes={clearNotes}
-            openScaleModal={openScaleModal}
-            medicalScales={medicalScales}
-            isAdminMode={isAdminMode}
-            currentHospitalContext={'Posadas'}
-          />
+          <>
+            <HospitalContextSelector
+              currentContext={currentHospitalContext}
+              onContextChange={setCurrentHospitalContext}
+              isAdminMode={isAdminMode}
+            />
+            <DiagnosticAlgorithmContent
+              notes={notes}
+              setNotes={setNotes}
+              copyNotes={copyNotes}
+              clearNotes={clearNotes}
+              openScaleModal={openScaleModal}
+              medicalScales={medicalScales}
+              isAdminMode={isAdminMode}
+              currentHospitalContext={currentHospitalContext}
+            />
+          </>
         );
       case 'inicio':
         return <DashboardInicio setActiveTab={handleTabChange} openScaleModal={openScaleModal} />;
@@ -5546,15 +5557,22 @@ const NeurologyResidencyHub = () => {
         ); */
       default:
         return (
-          <DiagnosticAlgorithmContent
-            notes={notes}
-            setNotes={setNotes}
-            copyNotes={copyNotes}
-            openScaleModal={openScaleModal}
-            medicalScales={medicalScales}
-            isAdminMode={isAdminMode}
-            currentHospitalContext={'Posadas'}
-          />
+          <>
+            <HospitalContextSelector
+              currentContext={currentHospitalContext}
+              onContextChange={setCurrentHospitalContext}
+              isAdminMode={isAdminMode}
+            />
+            <DiagnosticAlgorithmContent
+              notes={notes}
+              setNotes={setNotes}
+              copyNotes={copyNotes}
+              openScaleModal={openScaleModal}
+              medicalScales={medicalScales}
+              isAdminMode={isAdminMode}
+              currentHospitalContext={currentHospitalContext}
+            />
+          </>
         );
     }
   };

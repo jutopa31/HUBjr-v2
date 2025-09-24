@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useEscapeKey from './hooks/useEscapeKey';
-import { Lock, Eye, EyeOff, X, Brain, Settings, Stethoscope } from 'lucide-react';
+import { Lock, Eye, EyeOff, X, Brain, Settings, Stethoscope, UserCheck } from 'lucide-react';
 import AIConfigPanel from './AIConfigPanel';
 import NeurologicalExamModal from './components/NeurologicalExamModal';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface AdminAuthModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   onClose,
   onAuthenticate
 }) => {
+  const { user, hasPrivilege, hasHospitalContextAccess } = useAuthContext();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +27,23 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
 
   // Contraseña simple para demo - en producción debería ser más segura
   const ADMIN_PASSWORD = 'admin2025';
+
+  // Check if user has admin privileges automatically
+  useEffect(() => {
+    if (isOpen && user?.email) {
+      const userHasAdminPrivilege = hasPrivilege('full_admin') || hasHospitalContextAccess;
+
+      if (userHasAdminPrivilege) {
+        console.log(`🔓 User ${user.email} has admin privileges - auto-authenticating`);
+        setIsAuthenticated(true);
+        onAuthenticate();
+        setError('');
+      } else {
+        console.log(`🔒 User ${user.email} does not have admin privileges - password required`);
+        setIsAuthenticated(false);
+      }
+    }
+  }, [isOpen, user, hasPrivilege, hasHospitalContextAccess, onAuthenticate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,15 +190,27 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl w-96 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Lock className="h-6 w-6 text-orange-600" />
+            <div className={`p-2 rounded-lg ${
+              user && (hasPrivilege('full_admin') || hasHospitalContextAccess)
+                ? 'bg-green-100'
+                : 'bg-orange-100'
+            }`}>
+              {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) ? (
+                <UserCheck className="h-6 w-6 text-green-600" />
+              ) : (
+                <Lock className="h-6 w-6 text-orange-600" />
+              )}
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
                 Acceso Administrativo
               </h2>
               <p className="text-sm text-gray-600">
-                Ingrese la contraseña para editar contenidos
+                {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) ? (
+                  <>Usuario autorizado: <span className="font-medium text-green-600">{user.email}</span></>
+                ) : (
+                  'Ingrese la contraseña para editar contenidos'
+                )}
               </p>
             </div>
           </div>
@@ -191,70 +222,104 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña de Administrador
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10"
-                placeholder="Ingrese la contraseña"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
+        <div>
+          {/* Show privilege info if user is authenticated */}
+          {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h3 className="text-sm font-medium text-green-800 mb-2">Privilegios de Usuario</h3>
+              <ul className="text-xs text-green-700 space-y-1">
+                {hasPrivilege('full_admin') && <li>✅ Administrador completo</li>}
+                {hasHospitalContextAccess && <li>✅ Acceso a contextos hospitalarios</li>}
+                <li>✅ Acceso automático sin contraseña</li>
+              </ul>
+            </div>
+          )}
+
+          {/* Only show password form if user doesn't have privileges */}
+          {!(user && (hasPrivilege('full_admin') || hasHospitalContextAccess)) && (
+            <>
+              <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña de Administrador
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10"
+                    placeholder="Ingrese la contraseña"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                {error && (
+                  <p className="mt-2 text-sm text-red-600">{error}</p>
                 )}
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-xs text-yellow-800">
+                  <strong>Nota:</strong> El modo de edición le permite modificar:
+                </p>
+                <ul className="text-xs text-yellow-700 mt-1 ml-4 list-disc">
+                  <li>Asignaciones semanales de residentes e internos</li>
+                  <li>Eventos del calendario académico</li>
+                  <li>Información de actividades</li>
+                </ul>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                >
+                  {isLoading ? 'Verificando...' : 'Acceder'}
+                </button>
+              </div>
+            </form>
+
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-600">
+                  <strong>Para demo:</strong> Contraseña: <code className="bg-gray-200 px-1 rounded">admin2025</code>
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Show access button for privileged users */}
+          {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={() => {
+                  setIsAuthenticated(true);
+                  onAuthenticate();
+                }}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Acceder al Panel de Administración
               </button>
             </div>
-            {error && (
-              <p className="mt-2 text-sm text-red-600">{error}</p>
-            )}
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-xs text-yellow-800">
-              <strong>Nota:</strong> El modo de edición le permite modificar:
-            </p>
-            <ul className="text-xs text-yellow-700 mt-1 ml-4 list-disc">
-              <li>Asignaciones semanales de residentes e internos</li>
-              <li>Eventos del calendario académico</li>
-              <li>Información de actividades</li>
-            </ul>
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
-            >
-              {isLoading ? 'Verificando...' : 'Acceder'}
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-600">
-            <strong>Para demo:</strong> Contraseña: <code className="bg-gray-200 px-1 rounded">admin2025</code>
-          </p>
+          )}
         </div>
       </div>
     </div>

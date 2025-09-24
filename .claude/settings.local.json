@@ -36,7 +36,8 @@
       "WebFetch(domain:hubjr-v2.vercel.app)",
       "WebSearch",
       "WebFetch(domain:link.springer.com)",
-      "WebFetch(domain:www.researchgate.net)"
+      "WebFetch(domain:www.researchgate.net)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

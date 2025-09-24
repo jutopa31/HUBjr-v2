@@ -1,33 +1,39 @@
 # Repository Guidelines
-
+ 
 ## Project Structure & Module Organization
-- Core React UI, hooks, and shared logic live in `src/`; feature entry points such as `src/eurology_residency_hub.tsx` orchestrate shared modules.
-- Place reusable presentation components in `src/components/`, business logic in `src/services/` or `src/utils/`, and Supabase helpers inside `src/services/`.
-- Next.js routes live in `pages/`; backend handlers live in `pages/api/`. Keep standalone Node jobs under `api/` and static assets under `public/`.
-- Co-locate tests with their subjects or group them under `__tests__/`. Database DDL belongs in `database/`. Never commit build outputs like `.next/` or `dist/`.
-
+- Source lives in `src/` (UI, hooks, services, utils). Feature entry points like `src/eurology_residency_hub.tsx` compose shared modules.
+- Reusable UI in `src/components/`; business logic and Supabase helpers in `src/services/`; utilities in `src/utils/`.
+- Next.js routes in `pages/`; API handlers in `pages/api/`; background jobs in `api/`; static files in `public/`.
+- Tests co-located or under `__tests__/`. Database DDL in `database/`.
+- Do not commit build outputs (e.g., `.next/`, `dist/`).
+ 
 ## Build, Test, and Development Commands
-- `pm run dev`: start the primary Next.js development server.
-- `pm run dev:vite`: launch the Vite preview for rapid UI iterations.
-- `pm run build` then `pm run start`: produce and verify the production bundle.
-- `pm run build:vite` and `pm run preview:vite`: exercise the alternate Vite pipeline.
-- `pm run lint` or `pm run lint -- --fix`: lint and auto format the codebase.
-- `pm run typecheck`: enforce strict TypeScript before shipping.
-
+- `pm run dev` — start Next.js dev server.
+- `pm run dev:vite` — Vite preview for fast UI iteration.
+- `pm run build` then `pm run start` — build and run production bundle.
+- `pm run build:vite` and `pm run preview:vite` — alternate Vite pipeline.
+- `pm run lint` or `pm run lint -- --fix` — lint and auto-format.
+- `pm run typecheck` — strict TypeScript checks.
+ 
 ## Coding Style & Naming Conventions
-- TypeScript is strict; write only functional React components.
-- Use PascalCase for exported components, camelCase for helpers, and UPPER_SNAKE_CASE for constants.
-- Arrange Tailwind classes as layout -> color -> typography. Rely on ESLint and Prettier rather than manual formatting.
-
+- TypeScript (strict). Functional React components only.
+- Naming: Components `PascalCase`, helpers `camelCase`, constants `UPPER_SNAKE_CASE`.
+- Tailwind class order: layout → color → typography.
+- Rely on ESLint + Prettier; avoid manual formatting tweaks.
+ 
 ## Testing Guidelines
-- Cover feature work with Vitest or Playwright, especially around patient CRUD and scheduling flows.
-- Name files `Component.test.tsx` or place scenario suites inside `__tests__/`.
-- Run the relevant `pm run test:*` scripts and ensure the changed user paths are exercised.
-
+- Use Vitest/Playwright. Prioritize patient CRUD and scheduling flows.
+- Name tests `Component.test.tsx` or place suites in `__tests__/`.
+- Run `pm run test:*` as appropriate; ensure changed user paths are covered.
+ 
 ## Commit & Pull Request Guidelines
-- Follow conventional commits (`feat:`, `fix:`, `refactor:`) with tight scopes and descriptive messages.
-- Pull requests need a concise summary, linked issues, verification commands, and UI screenshots when appropriate.
-
+- Conventional commits (`feat:`, `fix:`, `refactor:`, etc.) with tight scope.
+- PRs include: concise summary, linked issues, verification commands, and screenshots for UI changes.
+ 
 ## Security & Configuration Tips
-- Copy `.env.example` to `.env.local` for local runs and keep secrets out of git.
-- Keep Supabase service keys server side, scrub patient identifiers from logs, and confirm any production data use with the product owner.
+- Copy `.env.example` to `.env.local`; never commit secrets.
+- Keep Supabase service keys server-side. Scrub patient identifiers from logs.
+- Confirm any production data use with the product owner.
+ 
+## Agent-Specific Notes
+- Follow this file’s guidance across the repo. Prefer small, focused changes. When adding files, keep modules in the directories above and mirror existing patterns.

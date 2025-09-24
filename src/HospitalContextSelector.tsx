@@ -1,6 +1,7 @@
 import React from 'react';
 import { Building2, ChevronDown } from 'lucide-react';
 import { HospitalContext } from './types';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface HospitalContextSelectorProps {
   currentContext: HospitalContext;
@@ -13,8 +14,12 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
   onContextChange,
   isAdminMode
 }) => {
-  // Solo mostrar si está en modo admin
-  if (!isAdminMode) {
+  const { hasPrivilege, hasHospitalContextAccess } = useAuthContext();
+
+  // Solo mostrar si tiene privilegios o está en modo admin
+  const canAccessHospitalSelector = hasPrivilege('full_admin') || hasHospitalContextAccess || isAdminMode;
+
+  if (!canAccessHospitalSelector) {
     return null;
   }
 
@@ -42,7 +47,14 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
           <Building2 className="h-5 w-5 text-gray-500" />
           <div>
             <h3 className="text-sm font-medium text-gray-900">Contexto de Hospital</h3>
-            <p className="text-xs text-gray-500">Solo disponible en modo administrador</p>
+            <p className="text-xs text-gray-500">
+              {hasPrivilege('full_admin')
+                ? 'Acceso de administrador completo'
+                : hasHospitalContextAccess
+                ? 'Acceso autorizado a contextos hospitalarios'
+                : 'Solo disponible en modo administrador'
+              }
+            </p>
           </div>
         </div>
 

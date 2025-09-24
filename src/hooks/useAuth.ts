@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, forceLogout } from '../utils/supabase';
+import { hasAdminPrivilege, hasHospitalContextAccess, AdminPrivilegeType } from '../utils/diagnosticAssessmentDB';
 
 export interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
   error: string | null;
+  hasHospitalContextAccess?: boolean;
+  privileges?: AdminPrivilegeType[];
 }
 
 
@@ -16,8 +19,58 @@ export function useAuth() {
     session: null,
     loading: true,
     error: null,
+    hasHospitalContextAccess: false,
+    privileges: [],
   });
 
+  // Function to check and update user privileges
+  const checkUserPrivileges = useCallback(async (user: User | null) => {
+    if (!user?.email) {
+      setState(prev => ({
+        ...prev,
+        hasHospitalContextAccess: false,
+        privileges: []
+      }));
+      return;
+    }
+
+    try {
+      // Check hospital context access
+      const contextAccess = await hasHospitalContextAccess(user.email);
+
+      // Check for specific admin privileges
+      const privilegeTypes: AdminPrivilegeType[] = [
+        'hospital_context_access',
+        'full_admin',
+        'lumbar_puncture_admin',
+        'scale_management',
+        'user_management'
+      ];
+
+      const userPrivileges: AdminPrivilegeType[] = [];
+
+      for (const privilegeType of privilegeTypes) {
+        const privilege = await hasAdminPrivilege(user.email, privilegeType);
+        if (privilege.success && privilege.hasPrivilege) {
+          userPrivileges.push(privilegeType);
+        }
+      }
+
+      setState(prev => ({
+        ...prev,
+        hasHospitalContextAccess: contextAccess.success ? contextAccess.hasAccess : false,
+        privileges: userPrivileges
+      }));
+
+    } catch (error) {
+      console.error('Error checking user privileges:', error);
+      setState(prev => ({
+        ...prev,
+        hasHospitalContextAccess: false,
+        privileges: []
+      }));
+    }
+  }, []);
 
   useEffect(() => {
     // Get initial session
@@ -40,7 +93,11 @@ export function useAuth() {
           user: session?.user ?? null,
           loading: false,
         }));
-        
+
+        // Check user privileges after setting session
+        if (session?.user) {
+          checkUserPrivileges(session.user);
+        }
       }
     });
 
@@ -55,6 +112,16 @@ export function useAuth() {
         loading: false,
       }));
 
+      // Check user privileges when auth state changes
+      if (session?.user) {
+        await checkUserPrivileges(session.user);
+      } else {
+        setState(prev => ({
+          ...prev,
+          hasHospitalContextAccess: false,
+          privileges: []
+        }));
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -155,7 +222,17 @@ export function useAuth() {
     }
   }, []);
 
+  // Helper function to check if user has a specific privilege
+  const hasPrivilege = useCallback((privilegeType: AdminPrivilegeType): boolean => {
+    return state.privileges?.includes(privilegeType) ?? false;
+  }, [state.privileges]);
 
+  // Helper function to refresh privileges
+  const refreshPrivileges = useCallback(async () => {
+    if (state.user) {
+      await checkUserPrivileges(state.user);
+    }
+  }, [state.user, checkUserPrivileges]);
 
   return {
     ...state,
@@ -163,5 +240,8 @@ export function useAuth() {
     signIn,
     signOut,
     resetPassword,
+    hasPrivilege,
+    refreshPrivileges,
+    checkUserPrivileges,
   };
 }

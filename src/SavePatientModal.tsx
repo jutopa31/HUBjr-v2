@@ -3,6 +3,7 @@ import useEscapeKey from './hooks/useEscapeKey';
 import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2 } from 'lucide-react';
 import { ExtractedPatientData, cleanPatientName } from './utils/patientDataExtractor';
 import { SavePatientData, HospitalContext } from './types';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface SavePatientModalProps {
   isOpen: boolean;
@@ -23,12 +24,16 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   isAdminMode = false,
   currentHospitalContext = 'Posadas'
 }) => {
+  const { hasPrivilege, hasHospitalContextAccess } = useAuthContext();
   const [patientName, setPatientName] = useState(extractedData.name || '');
   const [patientAge, setPatientAge] = useState(extractedData.age || '');
   const [patientDni, setPatientDni] = useState(extractedData.dni || '');
   const [hospitalContext, setHospitalContext] = useState<HospitalContext>(currentHospitalContext);
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Check if user has privileges to access hospital context selector
+  const canAccessHospitalSelector = hasPrivilege('full_admin') || hasHospitalContextAccess || isAdminMode;
 
   useEscapeKey(onClose, isOpen);
 
@@ -185,8 +190,8 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
               </div>
             </div>
 
-            {/* Selector de Hospital (solo admin) */}
-            {isAdminMode && (
+            {/* Selector de Hospital (solo para usuarios con privilegios) */}
+            {canAccessHospitalSelector && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Building2 className="h-4 w-4 inline mr-1" />
@@ -202,7 +207,12 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
                   <option value="Julian">Consultorios Julian</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Este selector solo está disponible en modo administrador
+                  {hasPrivilege('full_admin')
+                    ? 'Acceso de administrador completo'
+                    : hasHospitalContextAccess
+                    ? 'Acceso autorizado a contextos hospitalarios'
+                    : 'Acceso temporal de administrador'
+                  }
                 </p>
               </div>
             )}

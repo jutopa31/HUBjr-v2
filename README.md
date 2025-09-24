@@ -8,23 +8,27 @@
 
 ## 🏥 Overview
 
-**HUBJR** (Neurology Residency Hub) is a comprehensive digital platform designed specifically for neurology residents at Hospital Nacional Posadas. It provides essential clinical tools, diagnostic algorithms, educational resources, and administrative management in a unified interface.
+**HUBJR** (Neurology Residency Hub) is a comprehensive digital platform designed specifically for neurology residents at Hospital Nacional Posadas. It provides essential clinical tools, diagnostic algorithms, educational resources, and administrative management in a unified interface with secure multi-hospital context support.
 
 ### ✨ Key Features
 
 - **🧠 Medical Scales & Assessments**: Complete implementation of NIHSS, Glasgow Coma Scale, UPDRS, mRS, and 15+ other neurological assessment tools
 - **📊 Diagnostic Algorithms**: Evidence-based diagnostic pathways for neurological conditions
+- **🏥 Multi-Hospital Context**: Secure separation between Hospital Posadas and Consultorios Julian with privilege-based access
+- **🔐 Admin Privilege System**: Database-level user privilege management with automatic authentication
 - **📅 Event Management**: Supabase-powered real-time calendar for academic and clinical events
-- **📝 Patient Notes**: AI-assisted clinical documentation tools
+- **📝 Patient Notes**: AI-assisted clinical documentation tools with context-aware saving
 - **🎯 Personalized Dashboard**: Tailored interface for neurology residents
 
 ## 🚀 Current Status: STABLE ✅
 
-- **Version**: 2.3.1 (Production Deployment)
+- **Version**: 2.4.0 (Production Deployment with Admin Privilege System)
 - **Repository**: https://github.com/jutopa31/HUBjr-v2
 - **Live URL**: https://hubjr-v2.vercel.app/
-- **Technology Stack**: React + TypeScript + Next.js + Supabase
+- **Technology Stack**: React + TypeScript + Next.js + Supabase + Admin Privileges + Hospital Context Management
 - **Deployment**: Active production deployment on Vercel
+- **Security**: Database-level privilege system with RLS policies
+- **Multi-Context Support**: Secure hospital data separation
 
 ## 🛠️ Technical Architecture
 
@@ -36,21 +40,32 @@
 
 ### Backend & Database
 - **Next.js API Routes** for serverless functions
-- **Supabase** for real-time database and authentication
+- **Supabase** for real-time database, authentication, and privilege management
+- **Row Level Security (RLS)** for database-level access control
+- **Admin Privilege System** with audit trail
 - **Vercel** for deployment and hosting
 
 ### Key Components
-- `neurology_residency_hub.tsx` - Main application hub
+- `neurology_residency_hub.tsx` - Main application hub with hospital context management
+- `DiagnosticAlgorithmContent.tsx` - Clinical decision support with context-aware patient saving
+- `AdminAuthModal.tsx` - Privilege-based authentication with auto-login for authorized users
+- `HospitalContextSelector.tsx` - Secure hospital context switching interface
+- `SavePatientModal.tsx` - Context-aware patient saving with privilege validation
 - `EventManagerSupabase.tsx` - Real-time event management
-- `DiagnosticAlgorithmContent.tsx` - Clinical decision support
 - `ScaleModal.tsx` - Medical assessment tools
+
+### Security & Privilege System
+- `setup_admin_privileges.sql` - Complete privilege system setup
+- `src/utils/diagnosticAssessmentDB.ts` - Privilege checking functions
+- `src/hooks/useAuth.ts` - Enhanced authentication with privilege detection
+- Database-level enforcement with comprehensive audit trail
 
 ## 🔧 Development
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
-- Supabase account (for database)
+- Supabase account (for database and privilege system)
 
 ### Environment Setup
 ```bash
@@ -62,8 +77,19 @@ cd HUBjr-v2
 npm install
 
 # Set up environment variables
-cp .env.example .env.local
-# Add your Supabase credentials
+cp .env.example .env
+# Add your Supabase credentials (both server and client-side):
+# SUPABASE_URL=your_supabase_url
+# SUPABASE_ANON_KEY=your_supabase_anon_key
+# NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Database Setup (Required)
+```sql
+-- Execute in Supabase SQL Editor:
+-- Run setup_admin_privileges.sql for privilege system
+-- This grants admin access to julian.martin.alonso@gmail.com
 ```
 
 ### Available Scripts
@@ -86,6 +112,49 @@ npm run build:vite   # Vite production build
 npm run lint         # ESLint checking
 npm run typecheck    # TypeScript validation
 ```
+
+## 🔐 Security & Hospital Context System
+
+### Admin Privilege System
+The platform implements a comprehensive database-level privilege system:
+
+#### Privilege Types
+- **`hospital_context_access`** - Access to multiple hospital contexts (Posadas + Julian)
+- **`full_admin`** - Complete administrative access to all system functions
+- **`lumbar_puncture_admin`** - Administrative access to lumbar puncture system
+- **`scale_management`** - Permission to manage medical scales
+- **`user_management`** - User administration capabilities
+
+#### Security Features
+- **Database-Level Enforcement** - RLS policies prevent unauthorized access
+- **Automatic Authentication** - Privileged users bypass password requirements
+- **Audit Trail** - Complete logging of privilege grants, modifications, and usage
+- **Row Level Security** - Supabase RLS policies enforce access at database level
+
+### Hospital Context Management
+Secure data separation between different medical institutions:
+
+#### Hospital Contexts
+- **Hospital Posadas** (Default) - Public hospital, available to all users
+- **Consultorios Julian** (Privileged) - Private consultations, restricted access
+
+#### User Experience
+- **Privileged Users** (`julian.martin.alonso@gmail.com`)
+  - ✅ Hospital context selector visible in diagnostic interface
+  - ✅ Can switch between Posadas and Julian contexts
+  - ✅ Auto-authentication in admin functions
+  - ✅ Green privilege indicators in UI
+
+- **Standard Users**
+  - ✅ Default Posadas context only
+  - ✅ No hospital context switching interface
+  - ✅ Password required for admin functions
+  - ✅ Clean interface without privilege elements
+
+#### Context-Aware Features
+- **Patient Saving** - Evolucionador (DiagnosticAlgorithmContent) respects selected hospital context
+- **Data Filtering** - All patient lists filtered by user's accessible contexts
+- **Secure Isolation** - Julian patients never visible to unauthorized users
 
 ## 🏥 Medical Features
 

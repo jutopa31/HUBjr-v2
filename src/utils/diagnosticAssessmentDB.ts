@@ -3,6 +3,27 @@ import { supabase } from './supabase';
 import { PatientAssessment, SavePatientData, SavedScaleResult } from '../types';
 import { ExtractedPatientData, ExtractedScale } from './patientDataExtractor';
 
+// Admin privilege types
+export type AdminPrivilegeType =
+  | 'hospital_context_access'
+  | 'full_admin'
+  | 'lumbar_puncture_admin'
+  | 'scale_management'
+  | 'user_management';
+
+// Interface for admin privileges
+interface AdminPrivilege {
+  id: string;
+  user_email: string;
+  privilege_type: AdminPrivilegeType;
+  privilege_value: any;
+  description?: string;
+  granted_by?: string;
+  granted_at: string;
+  expires_at?: string;
+  is_active: boolean;
+}
+
 // Interface para pacientes del pase de sala
 interface WardRoundPatient {
   id?: string;
@@ -424,6 +445,203 @@ export async function archiveWardPatient(
     return {
       success: false,
       error: 'Error inesperado al archivar paciente'
+    };
+  }
+}
+
+// ===============================
+// ADMIN PRIVILEGE FUNCTIONS
+// ===============================
+
+/**
+ * Checks if a user has a specific admin privilege
+ * @param userEmail - User's email address
+ * @param privilegeType - Type of privilege to check
+ * @returns Promise with privilege check result
+ */
+export async function hasAdminPrivilege(
+  userEmail: string,
+  privilegeType: AdminPrivilegeType
+): Promise<{ success: boolean; hasPrivilege: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .rpc('has_admin_privilege', {
+        user_email_param: userEmail,
+        privilege_type_param: privilegeType
+      });
+
+    if (error) {
+      console.error('❌ Error checking admin privilege:', error);
+      return {
+        success: false,
+        hasPrivilege: false,
+        error: `Error checking privilege: ${error.message}`
+      };
+    }
+
+    return {
+      success: true,
+      hasPrivilege: data === true
+    };
+  } catch (error) {
+    console.error('❌ Unexpected error checking privilege:', error);
+    return {
+      success: false,
+      hasPrivilege: false,
+      error: 'Unexpected error checking privilege'
+    };
+  }
+}
+
+/**
+ * Gets all privileges for a user
+ * @param userEmail - User's email address
+ * @returns Promise with user's privileges
+ */
+export async function getUserPrivileges(
+  userEmail: string
+): Promise<{ success: boolean; privileges: AdminPrivilege[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_user_privileges', {
+        user_email_param: userEmail
+      });
+
+    if (error) {
+      console.error('❌ Error getting user privileges:', error);
+      return {
+        success: false,
+        privileges: [],
+        error: `Error getting privileges: ${error.message}`
+      };
+    }
+
+    return {
+      success: true,
+      privileges: data || []
+    };
+  } catch (error) {
+    console.error('❌ Unexpected error getting privileges:', error);
+    return {
+      success: false,
+      privileges: [],
+      error: 'Unexpected error getting privileges'
+    };
+  }
+}
+
+/**
+ * Checks if user has hospital context access privilege
+ * @param userEmail - User's email address
+ * @returns Promise with hospital context access result
+ */
+export async function hasHospitalContextAccess(
+  userEmail: string
+): Promise<{ success: boolean; hasAccess: boolean; error?: string }> {
+  // Check for specific hospital context access privilege
+  const contextAccess = await hasAdminPrivilege(userEmail, 'hospital_context_access');
+
+  if (!contextAccess.success) {
+    return {
+      success: false,
+      hasAccess: false,
+      error: contextAccess.error
+    };
+  }
+
+  // If user has specific hospital context access, return true
+  if (contextAccess.hasPrivilege) {
+    return {
+      success: true,
+      hasAccess: true
+    };
+  }
+
+  // Also check for full admin access
+  const fullAdmin = await hasAdminPrivilege(userEmail, 'full_admin');
+
+  if (!fullAdmin.success) {
+    return {
+      success: false,
+      hasAccess: false,
+      error: fullAdmin.error
+    };
+  }
+
+  return {
+    success: true,
+    hasAccess: fullAdmin.hasPrivilege
+  };
+}
+
+/**
+ * Enhanced version of getPatientAssessments that considers user privileges
+ * @param userEmail - User's email address
+ * @param hospitalContext - Hospital context to filter by
+ * @param forceContext - Force a specific context regardless of privileges
+ * @returns Promise with filtered patient assessments
+ */
+export async function getPatientAssessmentsWithPrivileges(
+  userEmail: string,
+  hospitalContext?: 'Posadas' | 'Julian',
+  forceContext: boolean = false
+): Promise<{ success: boolean; data?: PatientAssessment[]; error?: string; privilegeInfo?: any }> {
+  try {
+    // Check user's hospital context access
+    const accessCheck = await hasHospitalContextAccess(userEmail);
+
+    if (!accessCheck.success) {
+      return {
+        success: false,
+        error: accessCheck.error
+      };
+    }
+
+    const hasContextAccess = accessCheck.hasAccess;
+
+    // Determine which contexts the user can access
+    let allowedContexts: ('Posadas' | 'Julian')[] = ['Posadas']; // Default: everyone can see Posadas
+
+    if (hasContextAccess) {
+      allowedContexts = ['Posadas', 'Julian']; // Privileged users can see both
+    }
+
+    // If a specific context is requested and user doesn't have access, deny
+    if (hospitalContext === 'Julian' && !hasContextAccess && !forceContext) {
+      return {
+        success: false,
+        error: 'Access denied: You do not have permission to view Consultorios Julian patients'
+      };
+    }
+
+    // If user has access or requesting Posadas, proceed with normal query
+    let contextToQuery: 'Posadas' | 'Julian' | undefined = hospitalContext;
+
+    // If no specific context requested, default based on privileges
+    if (!contextToQuery) {
+      contextToQuery = 'Posadas'; // Default to Posadas
+    }
+
+    const result = await getPatientAssessments(contextToQuery);
+
+    if (result.success) {
+      return {
+        ...result,
+        privilegeInfo: {
+          hasContextAccess,
+          allowedContexts,
+          currentContext: contextToQuery
+        }
+      };
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error('❌ Error getting patient assessments with privileges:', error);
+    return {
+      success: false,
+      error: 'Unexpected error checking patient access'
     };
   }
 }
