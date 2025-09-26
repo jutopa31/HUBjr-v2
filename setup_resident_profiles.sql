@@ -1,10 +1,10 @@
 -- Setup resident profiles table for main branch
 -- Run this script in your Supabase SQL editor
 
--- Create resident_profiles table
+-- Create simplified resident_profiles table
 CREATE TABLE IF NOT EXISTS resident_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,  -- Removed FK constraint to avoid auth.users dependency
 
   -- Personal Information
   first_name TEXT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS resident_profiles (
 
   -- Training Information
   training_level TEXT NOT NULL CHECK (training_level IN ('R1', 'R2', 'R3', 'R4', 'R5', 'fellow', 'attending', 'intern')),
-  current_rotation TEXT,
+  current_rotation TEXT DEFAULT 'Neurología General',
 
   -- Status
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'on_leave', 'graduated', 'transferred', 'suspended')),
