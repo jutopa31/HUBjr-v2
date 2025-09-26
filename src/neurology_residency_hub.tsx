@@ -15,6 +15,7 @@ import SimpleUserMenu from './components/auth/SimpleUserMenu';
 import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
+import ResidentManagement from './components/ResidentManagement';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -96,6 +97,7 @@ const NeurologyResidencyHub = () => {
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
     { id: 'academia', icon: BookOpen, label: 'Academia' },
     { id: 'schedule', icon: Calendar, label: 'Cronograma' },
+    { id: 'resident-management', icon: Settings, label: 'Gestión de Residentes' },
     // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
     // { id: 'clinical', icon: Activity, label: 'Registro Asistencial' },
     // { id: 'evaluations', icon: Award, label: 'Evaluaciones' },
@@ -5481,6 +5483,12 @@ const NeurologyResidencyHub = () => {
         ); */
       case 'schedule':
         return <EventManagerSupabase />;
+      case 'resident-management':
+        return (
+          <ProtectedRoute>
+            <ResidentManagement />
+          </ProtectedRoute>
+        );
       case 'ward-rounds':
         return (
           <ProtectedRoute>
