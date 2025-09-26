@@ -1,39 +1,34 @@
 # Repository Guidelines
- 
+
 ## Project Structure & Module Organization
-- Source lives in `src/` (UI, hooks, services, utils). Feature entry points like `src/eurology_residency_hub.tsx` compose shared modules.
-- Reusable UI in `src/components/`; business logic and Supabase helpers in `src/services/`; utilities in `src/utils/`.
-- Next.js routes in `pages/`; API handlers in `pages/api/`; background jobs in `api/`; static files in `public/`.
-- Tests co-located or under `__tests__/`. Database DDL in `database/`.
-- Do not commit build outputs (e.g., `.next/`, `dist/`).
- 
+- App source lives in src/, with features composed from entry files like src/eurology_residency_hub.tsx.
+- Shared UI sits in src/components/; business logic and Supabase helpers in src/services/; cross-cutting utilities in src/utils/.
+- Next.js routes reside in pages/; API handlers in pages/api/; background jobs in pi/; static assets stay under public/.
+- Tests live alongside code or inside __tests__/; database DDL is tracked in database/.
+
 ## Build, Test, and Development Commands
-- `pm run dev` â€” start Next.js dev server.
-- `pm run dev:vite` â€” Vite preview for fast UI iteration.
-- `pm run build` then `pm run start` â€” build and run production bundle.
-- `pm run build:vite` and `pm run preview:vite` â€” alternate Vite pipeline.
-- `pm run lint` or `pm run lint -- --fix` â€” lint and auto-format.
-- `pm run typecheck` â€” strict TypeScript checks.
- 
+- pm run dev — start the Next.js dev server.
+- pm run dev:vite — launch the fast Vite preview for UI prototyping.
+- pm run build && pm run start — produce and serve the production bundle.
+- pm run lint [-- --fix] — run ESLint/Prettier checks, optionally auto-fixing.
+- pm run typecheck — execute strict TypeScript validation.
+
 ## Coding Style & Naming Conventions
-- TypeScript (strict). Functional React components only.
-- Naming: Components `PascalCase`, helpers `camelCase`, constants `UPPER_SNAKE_CASE`.
-- Tailwind class order: layout â†’ color â†’ typography.
-- Rely on ESLint + Prettier; avoid manual formatting tweaks.
- 
+- TypeScript-only, strict mode; React components must be functional.
+- Name components with PascalCase, helpers with camelCase, and constants with UPPER_SNAKE_CASE.
+- Follow Tailwind order: layout ? color ? typography. Rely on ESLint + Prettier; avoid manual formatting tweaks.
+- Default to ASCII when editing or creating files unless existing content requires otherwise.
+
 ## Testing Guidelines
-- Use Vitest/Playwright. Prioritize patient CRUD and scheduling flows.
-- Name tests `Component.test.tsx` or place suites in `__tests__/`.
-- Run `pm run test:*` as appropriate; ensure changed user paths are covered.
- 
+- Use Vitest and Playwright; prioritize patient CRUD, patient detail, scale workflows, and navigation flows.
+- Name UI test suites Component.test.tsx or place them in __tests__/ with descriptive filenames.
+- Run targeted suites via pm run test:* before submitting changes.
+
 ## Commit & Pull Request Guidelines
-- Conventional commits (`feat:`, `fix:`, `refactor:`, etc.) with tight scope.
-- PRs include: concise summary, linked issues, verification commands, and screenshots for UI changes.
- 
+- Use Conventional Commit prefixes (eat:, ix:, efactor:, etc.) with a narrow scope.
+- PRs must summarize changes, link relevant issues, list verification commands, and include UI screenshots when applicable.
+
 ## Security & Configuration Tips
-- Copy `.env.example` to `.env.local`; never commit secrets.
-- Keep Supabase service keys server-side. Scrub patient identifiers from logs.
-- Confirm any production data use with the product owner.
- 
-## Agent-Specific Notes
-- Follow this fileâ€™s guidance across the repo. Prefer small, focused changes. When adding files, keep modules in the directories above and mirror existing patterns.
+- Copy .env.example to .env.local; never commit secrets or Supabase keys.
+- Keep production data access coordinated with the product owner and scrub patient identifiers from logs.
+- VERSION_COMPARISON.md remains untracked to avoid merge conflicts until migration is finalized.

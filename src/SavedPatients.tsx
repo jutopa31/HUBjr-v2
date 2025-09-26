@@ -209,7 +209,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
     return (
       <div className="h-full flex flex-col items-center justify-center p-6">
         <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mb-4" />
-        <div className="text-lg text-gray-600">Cargando pacientes guardados...</div>
+        <div className="text-lg text-gray-600">Cargando Pacientes ambulatorio...</div>
       </div>
     );
   }
@@ -221,7 +221,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
             <FileText className="h-8 w-8 mr-3 text-blue-600" />
-            Pacientes Guardados
+            Pacientes ambulatorio
           </h1>
           <p className="text-gray-600 mt-1">
             Evaluaciones diagnósticas guardadas desde Algoritmos Diagnósticos
@@ -343,7 +343,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
             {patients.length === 0 ? (
               <>
                 <FileText className="h-16 w-16 text-gray-300 mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-2">No hay pacientes guardados</h3>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">No hay Pacientes ambulatorio</h3>
                 <p className="text-gray-600 text-center max-w-md">
                   Los pacientes se guardarán aquí cuando use la función "Guardar Paciente" 
                   en la sección de Algoritmos Diagnósticos.
@@ -366,7 +366,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
               <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 md:sticky md:top-0 z-10">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pacientes guardados desde Algoritmos Diagnósticos
+                    Pacientes ambulatorio desde Algoritmos Diagnósticos
                   </div>
                   <div className="text-xs text-gray-500">
                     Haz clic en las filas para expandir los detalles
@@ -562,3 +562,4 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
 };
 
 export default SavedPatients;
+

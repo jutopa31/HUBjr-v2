@@ -105,7 +105,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
     {
       id: 'saved-patients',
       title: 'Ver Pacientes',
-      subtitle: 'Pacientes Guardados',
+      subtitle: 'Pacientes ambulatorio',
       icon: FileText,
       color: 'bg-purple-600 hover:bg-purple-700',
       action: () => setActiveTab('saved-patients')

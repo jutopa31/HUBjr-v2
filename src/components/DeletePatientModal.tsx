@@ -69,7 +69,7 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
                 disabled={isProcessing}
               />
               <Archive className="h-5 w-5 text-blue-600" />
-              <span className="font-medium text-blue-900">Guardar en "Pacientes Guardados"</span>
+              <span className="font-medium text-blue-900">Guardar en "Pacientes ambulatorio"</span>
             </label>
 
             {/* Delete Option */}

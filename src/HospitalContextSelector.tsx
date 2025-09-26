@@ -2,6 +2,10 @@ import React from 'react';
 import { Building2, ChevronDown } from 'lucide-react';
 import { HospitalContext } from './types';
 import { useAuthContext } from './components/auth/AuthProvider';
+import {
+  HOSPITAL_CONTEXT_OPTIONS,
+  getHospitalContextOption
+} from './services/hospitalContextService';
 
 interface HospitalContextSelectorProps {
   currentContext: HospitalContext;
@@ -16,29 +20,14 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
 }) => {
   const { hasPrivilege, hasHospitalContextAccess } = useAuthContext();
 
-  // Solo mostrar si tiene privilegios o está en modo admin
+  // Solo mostrar si tiene privilegios o esta en modo admin
   const canAccessHospitalSelector = hasPrivilege('full_admin') || hasHospitalContextAccess || isAdminMode;
 
   if (!canAccessHospitalSelector) {
     return null;
   }
 
-  const contextOptions: { value: HospitalContext; label: string; color: string; description: string }[] = [
-    {
-      value: 'Posadas',
-      label: 'Hospital Posadas',
-      color: 'bg-blue-100 text-blue-800 border-blue-200',
-      description: 'Pacientes del Hospital Nacional Posadas'
-    },
-    {
-      value: 'Julian',
-      label: 'Consultorios Julian',
-      color: 'bg-green-100 text-green-800 border-green-200',
-      description: 'Pacientes de consultorios particulares'
-    }
-  ];
-
-  const currentOption = contextOptions.find(opt => opt.value === currentContext);
+  const currentOption = getHospitalContextOption(currentContext);
 
   return (
     <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
@@ -52,8 +41,7 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
                 ? 'Acceso de administrador completo'
                 : hasHospitalContextAccess
                 ? 'Acceso autorizado a contextos hospitalarios'
-                : 'Solo disponible en modo administrador'
-              }
+                : 'Solo disponible en modo administrador'}
             </p>
           </div>
         </div>
@@ -68,7 +56,7 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
               hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             `}
           >
-            {contextOptions.map((option) => (
+            {HOSPITAL_CONTEXT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -78,15 +66,15 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
         </div>
       </div>
 
-      {/* Descripción del contexto actual */}
+      {/* Descripcion del contexto actual */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-xs text-gray-600">
           <span className="font-medium">Contexto actual:</span> {currentOption?.description}
         </p>
         <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-          <span>• Solo visible en modo administrador</span>
-          <span>• Los datos se filtran automáticamente</span>
-          <span>• Por defecto: Hospital Posadas</span>
+          <span> Solo visible en modo administrador</span>
+          <span> Los datos se filtran automaticamente</span>
+          <span> Por defecto: Hospital Posadas</span>
         </div>
       </div>
     </div>
