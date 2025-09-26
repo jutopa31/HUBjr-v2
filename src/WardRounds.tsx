@@ -106,32 +106,50 @@ const WardRounds: React.FC = () => {
 
   const loadResidents = async () => {
     try {
-      // Get users from auth.users table via a Supabase function or edge function
-      // For now, we'll use a simpler approach by getting users who have created patients
-      const { data, error } = await supabase
-        .from('ward_round_patients')
-        .select('assigned_resident_id')
-        .not('assigned_resident_id', 'is', null);
+      // Try to get resident profiles from the database first
+      const { data: residentProfiles, error: profilesError } = await supabase
+        .from('resident_profiles')
+        .select('id, user_id, first_name, last_name, email, training_level, status')
+        .eq('status', 'active')
+        .order('training_level', { ascending: true });
 
-      if (error) throw error;
+      let residents: ResidentProfile[] = [];
 
-      // Get unique resident IDs and fetch their profile data
-      const residentIds = [...new Set(data?.map(p => p.assigned_resident_id).filter(Boolean))];
-
-      if (residentIds.length > 0) {
-        // For a real implementation, you would fetch user profiles from auth.users
-        // For now, we'll create a mock approach or use the user metadata
-        const mockResidents: ResidentProfile[] = residentIds.map(id => ({
-          id: id as string,
-          email: `resident${id}@hospital.com`,
-          full_name: `Residente ${id?.slice(-4)}`,
-          role: 'resident'
+      // If resident profiles exist, use them
+      if (!profilesError && residentProfiles && residentProfiles.length > 0) {
+        console.log('✅ Loading residents from resident_profiles table');
+        residents = residentProfiles.map(profile => ({
+          id: profile.user_id, // Use user_id for consistency with assigned_resident_id
+          email: profile.email,
+          full_name: `${profile.first_name} ${profile.last_name}`,
+          role: profile.training_level.toLowerCase().includes('r') ? 'resident' :
+                profile.training_level === 'attending' ? 'attending' : 'intern'
         }));
+      } else {
+        // Fallback: use the original approach for backward compatibility
+        console.log('⚠️ resident_profiles table not found or empty, using fallback method');
 
-        setResidents(mockResidents);
+        const { data, error } = await supabase
+          .from('ward_round_patients')
+          .select('assigned_resident_id')
+          .not('assigned_resident_id', 'is', null);
+
+        if (error) throw error;
+
+        // Get unique resident IDs and create basic profiles
+        const residentIds = [...new Set(data?.map(p => p.assigned_resident_id).filter(Boolean))];
+
+        if (residentIds.length > 0) {
+          residents = residentIds.map(id => ({
+            id: id as string,
+            email: `resident${id}@hospital.com`,
+            full_name: `Residente ${id?.slice(-4)}`,
+            role: 'resident'
+          }));
+        }
       }
 
-      // Add current user to residents list if they have a profile
+      // Always add current user to residents list if they're authenticated
       if (user?.id) {
         const currentUserProfile: ResidentProfile = {
           id: user.id,
@@ -140,16 +158,18 @@ const WardRounds: React.FC = () => {
           role: user.user_metadata?.role || 'resident'
         };
 
-        setResidents(prev => {
-          const exists = prev.find(r => r.id === user.id);
-          if (!exists) {
-            return [currentUserProfile, ...prev];
-          }
-          return prev;
-        });
+        const exists = residents.find(r => r.id === user.id);
+        if (!exists) {
+          residents = [currentUserProfile, ...residents];
+        }
       }
+
+      console.log(`📋 Loaded ${residents.length} residents`);
+      setResidents(residents);
     } catch (error) {
-      console.error('Error loading residents:', error);
+      console.error('❌ Error loading residents:', error);
+      // Set empty array so the component still works
+      setResidents([]);
     }
   };
 
