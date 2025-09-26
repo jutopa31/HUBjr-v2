@@ -106,63 +106,8 @@ const WardRounds: React.FC = () => {
 
   const loadResidents = async () => {
     try {
-      // Get all active resident profiles from the database
-      const { data: residentProfiles, error: profilesError } = await supabase
-        .from('resident_profiles')
-        .select('id, user_id, first_name, last_name, email, training_level, status')
-        .eq('status', 'active')
-        .order('training_level', { ascending: true });
-
-      if (profilesError) {
-        console.error('Error fetching resident profiles:', profilesError);
-        // Fallback to basic user data if resident profiles are not available
-        await loadBasicUserData();
-        return;
-      }
-
-      if (residentProfiles && residentProfiles.length > 0) {
-        // Convert resident profiles to the format expected by the component
-        const formattedResidents: ResidentProfile[] = residentProfiles.map(profile => ({
-          id: profile.user_id, // Use user_id for consistency with assigned_resident_id
-          email: profile.email,
-          full_name: `${profile.first_name} ${profile.last_name}`,
-          role: profile.training_level.toLowerCase().includes('r') ? 'resident' :
-                profile.training_level === 'attending' ? 'attending' : 'intern'
-        }));
-
-        setResidents(formattedResidents);
-      } else {
-        // If no resident profiles exist, fall back to basic user data
-        await loadBasicUserData();
-      }
-
-      // Add current user to residents list if they have a profile and aren't already included
-      if (user?.id) {
-        setResidents(prev => {
-          const exists = prev.find(r => r.id === user.id);
-          if (!exists) {
-            const currentUserProfile: ResidentProfile = {
-              id: user.id,
-              email: user.email || '',
-              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario Actual',
-              role: user.user_metadata?.role || 'resident'
-            };
-            return [currentUserProfile, ...prev];
-          }
-          return prev;
-        });
-      }
-    } catch (error) {
-      console.error('Error loading residents:', error);
-      // Fallback to basic user data in case of any error
-      await loadBasicUserData();
-    }
-  };
-
-  // Fallback function for when resident profiles are not available
-  const loadBasicUserData = async () => {
-    try {
-      // Get users who have been assigned to patients
+      // Get users from auth.users table via a Supabase function or edge function
+      // For now, we'll use a simpler approach by getting users who have created patients
       const { data, error } = await supabase
         .from('ward_round_patients')
         .select('assigned_resident_id')
@@ -170,22 +115,41 @@ const WardRounds: React.FC = () => {
 
       if (error) throw error;
 
-      // Get unique resident IDs
+      // Get unique resident IDs and fetch their profile data
       const residentIds = [...new Set(data?.map(p => p.assigned_resident_id).filter(Boolean))];
 
       if (residentIds.length > 0) {
-        // Create basic profiles for assigned residents
-        const basicResidents: ResidentProfile[] = residentIds.map(id => ({
+        // For a real implementation, you would fetch user profiles from auth.users
+        // For now, we'll create a mock approach or use the user metadata
+        const mockResidents: ResidentProfile[] = residentIds.map(id => ({
           id: id as string,
-          email: `usuario${id?.slice(-4)}@hospital.com`,
-          full_name: `Usuario ${id?.slice(-4)}`,
+          email: `resident${id}@hospital.com`,
+          full_name: `Residente ${id?.slice(-4)}`,
           role: 'resident'
         }));
 
-        setResidents(basicResidents);
+        setResidents(mockResidents);
+      }
+
+      // Add current user to residents list if they have a profile
+      if (user?.id) {
+        const currentUserProfile: ResidentProfile = {
+          id: user.id,
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario Actual',
+          role: user.user_metadata?.role || 'resident'
+        };
+
+        setResidents(prev => {
+          const exists = prev.find(r => r.id === user.id);
+          if (!exists) {
+            return [currentUserProfile, ...prev];
+          }
+          return prev;
+        });
       }
     } catch (error) {
-      console.error('Error loading basic user data:', error);
+      console.error('Error loading residents:', error);
     }
   };
 
