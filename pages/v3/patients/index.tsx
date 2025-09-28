@@ -20,7 +20,7 @@ export default function PatientsPage() {
   }, [router.isReady, router.query.id]);
 
   const openDetail = (id: string) => {
-    const next = { pathname: router.pathname, query: { ...router.query, id } };
+    const next = { pathname: router.pathname, query: { ...router.query, id } } as const;
     router.replace(next, undefined, { shallow: true });
   };
 
@@ -33,7 +33,7 @@ export default function PatientsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       {data.error && (
-        <div className="bg-red-50 text-red-700 border-b border-red-200 px-4 py-2 text-sm">{data.error} — showing fallback if available.</div>
+        <div className="bg-red-50 text-red-700 border-b border-red-200 px-4 py-2 text-sm">{data.error} showing fallback if available.</div>
       )}
       <PatientsFilters
         search={query.search}
@@ -44,7 +44,7 @@ export default function PatientsPage() {
         onStatus={setStatus}
       />
       <div className="p-4 space-y-3">
-        {loading && <div className="text-sm text-gray-500">Loading…</div>}
+        {loading && <div className="text-sm text-gray-500">Loading</div>}
         {!loading && data.data.length === 0 && <div className="text-sm text-gray-500">No patients found. Try adjusting filters.</div>}
         <PatientsList rows={data.data} onSelect={openDetail} />
         <div className="flex items-center justify-between pt-2">

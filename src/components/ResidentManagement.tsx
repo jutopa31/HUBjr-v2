@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Users, UserCheck, UserX, Save, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Users, Save, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface ResidentProfile {
