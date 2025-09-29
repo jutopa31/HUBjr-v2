@@ -9,7 +9,7 @@ type Row = {
   dni: string;
   cama: string;
   fecha_interconsulta: string; // YYYY-MM-DD
-  respuesta?: string;
+  respuesta?: string | null;
   created_at?: string;
 };
 
@@ -143,7 +143,7 @@ const Interconsultas: React.FC = () => {
           className="mt-3 w-full border rounded px-3 py-2 text-sm"
           placeholder="Respuesta (opcional)"
           rows={3}
-          value={form.respuesta}
+          value={form.respuesta ?? ''}
           onChange={(e) => setForm({ ...form, respuesta: e.target.value })}
         />
         <div className="mt-3 flex gap-2">
@@ -222,4 +222,3 @@ const InlineRespuesta: React.FC<{ id: string; initial: string; onSave: (id: stri
 };
 
 export default Interconsultas;
-
