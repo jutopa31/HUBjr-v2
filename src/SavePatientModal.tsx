@@ -49,6 +49,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
     setSaveResult(null);
 
     try {
+      console.log('[SavePatientModal] handleSave -> start');
       const saveData: SavePatientData = {
         patient_name: cleanPatientName(patientName),
         patient_age: patientAge,
@@ -63,6 +64,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
         }))
       };
 
+      console.log('[SavePatientModal] handleSave -> payload:', saveData);
       await onSave(saveData);
       setSaveResult({ success: true, message: 'Paciente guardado exitosamente' });
       
@@ -73,6 +75,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
       }, 2000);
 
     } catch (error) {
+      console.error('[SavePatientModal] handleSave error:', error);
       setSaveResult({ 
         success: false, 
         message: `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}` 

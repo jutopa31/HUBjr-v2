@@ -140,6 +140,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Función para confirmar el guardado
   const handleConfirmSave = async (patientData: SavePatientData) => {
     try {
+      console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
       const result = await savePatientAssessment(patientData);
       
       if (result.success) {
@@ -155,6 +156,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         throw new Error(result.error || 'Error desconocido');
       }
     } catch (error) {
+      console.error('[DiagnosticAlgorithm] handleConfirmSave error:', error);
       setSaveStatus({
         success: false,
         message: `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`

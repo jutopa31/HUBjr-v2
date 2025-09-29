@@ -15,20 +15,27 @@ export interface InterconsultaRow {
 
 export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; error?: string }>{
   try {
+    console.log('[InterconsultasService] listInterconsultas -> fetching for hospital_context="Posadas"');
     const { data, error } = await supabase
       .from('interconsultas')
       .select('*')
       .eq('hospital_context', 'Posadas')
       .order('created_at', { ascending: false });
-    if (error) return { data: [], error: error.message };
+    if (error) {
+      console.error('[InterconsultasService] listInterconsultas error:', error);
+      return { data: [], error: error.message };
+    }
+    console.log('[InterconsultasService] listInterconsultas -> rows:', (data || []).length);
     return { data: (data || []) as InterconsultaRow[] };
   } catch (e: any) {
+    console.error('[InterconsultasService] listInterconsultas unexpected error:', e);
     return { data: [], error: e?.message || 'Unknown error' };
   }
 }
 
 export async function createInterconsulta(payload: InterconsultaRow): Promise<{ success: boolean; error?: string }>{
   try {
+    console.log('[InterconsultasService] createInterconsulta -> payload:', payload);
     const { error } = await supabase
       .from('interconsultas')
       .insert([
@@ -41,23 +48,33 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
           hospital_context: 'Posadas'
         }
       ]);
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      console.error('[InterconsultasService] createInterconsulta error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[InterconsultasService] createInterconsulta -> success');
     return { success: true };
   } catch (e: any) {
+    console.error('[InterconsultasService] createInterconsulta unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }
 
 export async function updateRespuesta(id: string, respuesta: string): Promise<{ success: boolean; error?: string }>{
   try {
+    console.log('[InterconsultasService] updateRespuesta -> id:', id);
     const { error } = await supabase
       .from('interconsultas')
       .update({ respuesta })
       .eq('id', id);
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      console.error('[InterconsultasService] updateRespuesta error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[InterconsultasService] updateRespuesta -> success');
     return { success: true };
   } catch (e: any) {
+    console.error('[InterconsultasService] updateRespuesta unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }
-

@@ -11,6 +11,7 @@ export interface SimpleInterconsulta {
 // Guarda una interconsulta como paciente del Pase de Sala (ward_round_patients)
 export async function saveToWardRounds(ic: SimpleInterconsulta): Promise<{ success: boolean; error?: string }>{
   try {
+    console.log('[InterconsultasUtils] saveToWardRounds -> payload:', ic);
     const { error } = await supabase
       .from('ward_round_patients')
       .insert([
@@ -31,9 +32,14 @@ export async function saveToWardRounds(ic: SimpleInterconsulta): Promise<{ succe
           assigned_resident_id: null
         }
       ]);
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      console.error('[InterconsultasUtils] saveToWardRounds error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[InterconsultasUtils] saveToWardRounds -> success');
     return { success: true };
   } catch (e: any) {
+    console.error('[InterconsultasUtils] saveToWardRounds unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }
@@ -41,6 +47,7 @@ export async function saveToWardRounds(ic: SimpleInterconsulta): Promise<{ succe
 // Guarda una interconsulta en pacientes guardados (diagnostic_assessments)
 export async function saveToSavedPatients(ic: SimpleInterconsulta): Promise<{ success: boolean; error?: string }>{
   try {
+    console.log('[InterconsultasUtils] saveToSavedPatients -> payload:', ic);
     const clinicalNotes = `INTERCONSULTA\n\nPaciente: ${ic.nombre} (DNI ${ic.dni})\nCama: ${ic.cama}\nFecha: ${ic.fecha_interconsulta}\n\nRespuesta: ${ic.respuesta || ''}`;
 
     const { error } = await supabase
@@ -57,10 +64,14 @@ export async function saveToSavedPatients(ic: SimpleInterconsulta): Promise<{ su
           status: 'active'
         }
       ]);
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      console.error('[InterconsultasUtils] saveToSavedPatients error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[InterconsultasUtils] saveToSavedPatients -> success');
     return { success: true };
   } catch (e: any) {
+    console.error('[InterconsultasUtils] saveToSavedPatients unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }
-

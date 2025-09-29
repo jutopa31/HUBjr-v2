@@ -87,11 +87,14 @@ const WardRounds: React.FC = () => {
 
   // Cargar datos iniciales
   useEffect(() => {
+    console.log('[WardRounds] Mount -> loading initial data');
     loadData();
   }, []);
 
   const loadData = async () => {
+    console.log('[WardRounds] loadData -> start');
     await Promise.all([loadPatients(), loadResidents()]);
+    console.log('[WardRounds] loadData -> done');
   };
 
   const loadPatients = async () => {
@@ -102,9 +105,10 @@ const WardRounds: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('[WardRounds] loadPatients -> rows:', (data || []).length);
       setPatients(data || []);
     } catch (error) {
-      console.error('Error loading patients:', error);
+      console.error('[WardRounds] Error loading patients:', error);
       alert('Error al cargar pacientes');
     } finally {
       setLoading(false);
@@ -273,18 +277,21 @@ const WardRounds: React.FC = () => {
 
     try {
       setIsSavingNewPatient(true);
-      const { error } = await supabase
+      console.log('[WardRounds] addPatient -> payload:', newPatient);
+      const { data, error } = await supabase
         .from('ward_round_patients')
-        .insert([newPatient]);
+        .insert([newPatient])
+        .select();
 
       if (error) throw error;
+      console.log('[WardRounds] addPatient -> inserted:', data);
 
       setNewPatient(emptyPatient);
       setShowAddForm(false);
       setDniError(''); // Limpiar error al cerrar
       await loadPatients();
     } catch (error) {
-      console.error('Error adding patient:', error);
+      console.error('[WardRounds] Error adding patient:', error);
       alert('Error al agregar paciente');
     } finally {
       setIsSavingNewPatient(false);
@@ -300,6 +307,7 @@ const WardRounds: React.FC = () => {
     }
 
     try {
+      console.log('[WardRounds] updatePatient -> id:', id, 'payload:', updatedPatient);
       const { error } = await supabase
         .from('ward_round_patients')
         .update(updatedPatient)
@@ -318,7 +326,7 @@ const WardRounds: React.FC = () => {
       setDniError(''); // Limpiar error al cerrar
       loadPatients();
     } catch (error) {
-      console.error('Error updating patient:', error);
+      console.error('[WardRounds] Error updating patient:', error);
       alert('Error al actualizar paciente');
     }
   };
@@ -326,6 +334,7 @@ const WardRounds: React.FC = () => {
   // Asignar residente a paciente
   const assignResidentToPatient = async (patientId: string, residentId: string | null) => {
     try {
+      console.log('[WardRounds] assignResidentToPatient -> patientId:', patientId, 'residentId:', residentId);
       const { error } = await supabase
         .from('ward_round_patients')
         .update({ assigned_resident_id: residentId })
@@ -344,7 +353,7 @@ const WardRounds: React.FC = () => {
 
       alert(message);
     } catch (error) {
-      console.error('Error assigning resident:', error);
+      console.error('[WardRounds] Error assigning resident:', error);
       alert('Error al asignar residente');
     }
   };

@@ -28,8 +28,13 @@ const Interconsultas: React.FC = () => {
   const fetchAll = async () => {
     setLoading(true);
     setError(null);
+    console.log('[Interconsultas] fetchAll -> start');
     const res = await listInterconsultas();
-    if (res.error) setError(res.error);
+    if (res.error) {
+      console.error('[Interconsultas] fetchAll error:', res.error);
+      setError(res.error);
+    }
+    console.log('[Interconsultas] fetchAll -> rows:', (res.data || []).length);
     setRows(res.data || []);
     setLoading(false);
   };
@@ -42,8 +47,10 @@ const Interconsultas: React.FC = () => {
       return;
     }
     setError(null);
+    console.log('[Interconsultas] handleCreate -> payload:', form);
     const { success, error } = await createInterconsulta(form);
     if (!success) {
+      console.error('[Interconsultas] handleCreate error:', error);
       setError(error || 'Error al crear interconsulta');
       return;
     }
@@ -52,8 +59,10 @@ const Interconsultas: React.FC = () => {
   };
 
   const handleUpdateRespuesta = async (id: string, respuesta: string) => {
+    console.log('[Interconsultas] handleUpdateRespuesta -> id:', id);
     const { success, error } = await updateRespuesta(id, respuesta);
     if (!success) {
+      console.error('[Interconsultas] handleUpdateRespuesta error:', error);
       setError(error || 'Error al guardar respuesta');
     } else {
       setError(null);
@@ -62,6 +71,7 @@ const Interconsultas: React.FC = () => {
   };
 
   const handleGuardarPase = async (row: Row) => {
+    console.log('[Interconsultas] handleGuardarPase -> row:', row);
     const { success, error } = await saveToWardRounds({
       nombre: row.nombre,
       dni: row.dni,
@@ -69,11 +79,15 @@ const Interconsultas: React.FC = () => {
       fecha_interconsulta: row.fecha_interconsulta,
       respuesta: row.respuesta || ''
     });
-    if (!success) setError(error || 'No se pudo guardar en Pase');
+    if (!success) {
+      console.error('[Interconsultas] handleGuardarPase error:', error);
+      setError(error || 'No se pudo guardar en Pase');
+    }
     else setError(null);
   };
 
   const handleGuardarPacientes = async (row: Row) => {
+    console.log('[Interconsultas] handleGuardarPacientes -> row:', row);
     const { success, error } = await saveToSavedPatients({
       nombre: row.nombre,
       dni: row.dni,
@@ -81,7 +95,10 @@ const Interconsultas: React.FC = () => {
       fecha_interconsulta: row.fecha_interconsulta,
       respuesta: row.respuesta || ''
     });
-    if (!success) setError(error || 'No se pudo guardar en Pacientes');
+    if (!success) {
+      console.error('[Interconsultas] handleGuardarPacientes error:', error);
+      setError(error || 'No se pudo guardar en Pacientes');
+    }
     else setError(null);
   };
 
