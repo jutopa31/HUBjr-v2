@@ -33,6 +33,8 @@ interface ResidentProfile {
 
 const WardRounds: React.FC = () => {
   const { user } = useAuthContext();
+  // Feature flag: toggle DNI duplicate verification
+  const ENABLE_DNI_CHECK = false;
   const emptyPatient: Patient = {
     cama: '',
     dni: '',
@@ -72,6 +74,11 @@ const WardRounds: React.FC = () => {
   // Estados para validación de DNI duplicado
   const [dniError, setDniError] = useState<string>('');
   const [isDniChecking, setIsDniChecking] = useState(false);
+  // Debounce handler para validar DNI sin bucles de "procesando"
+  const dniValidationTimeout = React.useRef<number | null>(null);
+
+  // Estado de guardado para evitar dobles envíos y loops de UI
+  const [isSavingNewPatient, setIsSavingNewPatient] = useState(false);
 
   // Estados para el modal de eliminar/archivar paciente
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -175,6 +182,10 @@ const WardRounds: React.FC = () => {
 
   // Función para validar DNI duplicado
   const validateDNI = async (dni: string, excludeId?: string) => {
+    if (!ENABLE_DNI_CHECK) {
+      setDniError('');
+      return true;
+    }
     if (!dni.trim()) {
       setDniError('');
       return true;
@@ -261,6 +272,7 @@ const WardRounds: React.FC = () => {
     }
 
     try {
+      setIsSavingNewPatient(true);
       const { error } = await supabase
         .from('ward_round_patients')
         .insert([newPatient]);
@@ -270,10 +282,12 @@ const WardRounds: React.FC = () => {
       setNewPatient(emptyPatient);
       setShowAddForm(false);
       setDniError(''); // Limpiar error al cerrar
-      loadPatients();
+      await loadPatients();
     } catch (error) {
       console.error('Error adding patient:', error);
       alert('Error al agregar paciente');
+    } finally {
+      setIsSavingNewPatient(false);
     }
   };
 
@@ -320,7 +334,7 @@ const WardRounds: React.FC = () => {
       if (error) throw error;
 
       // Refresh the patients list to show the new assignment
-      loadPatients();
+      await loadPatients();
 
       // Show success message
       const resident = residents.find(r => r.id === residentId);
@@ -343,7 +357,7 @@ const WardRounds: React.FC = () => {
 
   // Cerrar modal de eliminación
   const closeDeleteModal = () => {
-    if (isProcessingDeletion) return; // No permitir cerrar si está procesando
+    // Permitir cierre programático incluso si está procesando
     setShowDeleteModal(false);
     setSelectedPatientForDeletion(null);
   };
@@ -375,6 +389,9 @@ const WardRounds: React.FC = () => {
         if (!archiveResult.success) {
           if (archiveResult.duplicate) {
             alert(`Paciente ya existe en archivo. ${archiveResult.error}`);
+            // Cerrar modal para evitar sensación de bloqueo
+            setIsProcessingDeletion(false);
+            closeDeleteModal();
             return; // No continuar con la eliminación
           } else {
             throw new Error(archiveResult.error || 'Error al archivar paciente');
@@ -405,7 +422,9 @@ const WardRounds: React.FC = () => {
       if (error) throw error;
 
       // Éxito
-      loadPatients();
+      await loadPatients();
+      // Cerrar modal de forma explícita ahora que terminó el proceso
+      setIsProcessingDeletion(false);
       closeDeleteModal();
 
       if (action === 'archive') {
@@ -455,7 +474,7 @@ const WardRounds: React.FC = () => {
       
       setEditingPendientesId(null);
       setTempPendientes('');
-      loadPatients();
+      await loadPatients();
     } catch (error) {
       console.error('Error updating pendientes:', error);
       alert('Error al actualizar pendientes');
@@ -838,9 +857,18 @@ const WardRounds: React.FC = () => {
                           const dni = e.target.value;
                           setNewPatient({...newPatient, dni});
                           // Validar DNI después de un breve delay
-                          if (dni.trim()) {
-                            setTimeout(() => validateDNI(dni), 500);
+                          // Limpiar timeout previo para evitar múltiples validaciones simultáneas
+                          if (dniValidationTimeout.current) {
+                            clearTimeout(dniValidationTimeout.current as unknown as number);
+                          }
+                          if (ENABLE_DNI_CHECK) {
+                            if (dni.trim()) {
+                              dniValidationTimeout.current = window.setTimeout(() => validateDNI(dni), 500);
+                            } else {
+                              setDniError('');
+                            }
                           } else {
+                            // Checker disabled
                             setDniError('');
                           }
                         }}
@@ -849,7 +877,7 @@ const WardRounds: React.FC = () => {
                         }`}
                         placeholder="12345678"
                       />
-                      {isDniChecking && (
+                      {ENABLE_DNI_CHECK && isDniChecking && (
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                           <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
                         </div>
@@ -1056,15 +1084,15 @@ const WardRounds: React.FC = () => {
               </button>
               <button
                 onClick={addPatient}
-                disabled={!!dniError || isDniChecking}
+                disabled={!!dniError || (ENABLE_DNI_CHECK && isDniChecking) || isSavingNewPatient}
                 className={`px-4 py-2 rounded-lg text-sm ${
-                  dniError || isDniChecking
+                  dniError || (ENABLE_DNI_CHECK && isDniChecking) || isSavingNewPatient
                     ? 'bg-gray-400 cursor-not-allowed text-white'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
                 title={dniError ? 'Resuelva el error de DNI para continuar' : ''}
               >
-                {isDniChecking ? 'Verificando DNI...' : 'Guardar Paciente'}
+                {isSavingNewPatient ? 'Guardando...' : ((ENABLE_DNI_CHECK && isDniChecking) ? 'Verificando DNI...' : 'Guardar Paciente')}
               </button>
             </div>
           </div>

@@ -72,3 +72,16 @@ export interface SavePatientData {
 
 // Tipos para contexto de hospital
 export type HospitalContext = 'Posadas' | 'Julian';
+
+// Interconsulta interface
+export interface Interconsulta {
+  id?: string;
+  nombre: string;
+  dni: string;
+  cama: string;
+  fecha_interconsulta: string; // YYYY-MM-DD
+  respuesta?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}

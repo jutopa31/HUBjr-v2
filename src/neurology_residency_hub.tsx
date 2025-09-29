@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen, User, Syringe } from 'lucide-react';
+import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen, User, Syringe, MessageSquare } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -16,6 +16,7 @@ import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
 import ResidentManagement from './components/ResidentManagement';
+import Interconsultas from './Interconsultas';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -93,6 +94,7 @@ const NeurologyResidencyHub = () => {
     { id: 'lumbar-punctures', icon: Syringe, label: 'Punciones Lumbares' },
     { id: 'diagnostic', icon: Calculator, label: 'Evolucionador' },
     { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
+    { id: 'interconsultas', icon: MessageSquare, label: 'Interconsultas' },
     { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
     { id: 'academia', icon: BookOpen, label: 'Academia' },
@@ -5499,6 +5501,12 @@ const NeurologyResidencyHub = () => {
         return (
           <ProtectedRoute>
             <SavedPatients isAdminMode={isAdminMode} />
+          </ProtectedRoute>
+        );
+      case 'interconsultas':
+        return (
+          <ProtectedRoute>
+            <Interconsultas />
           </ProtectedRoute>
         );
       case 'pendientes':
