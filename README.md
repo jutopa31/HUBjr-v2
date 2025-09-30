@@ -92,6 +92,9 @@ cp .env.example .env
 -- This grants admin access to julian.martin.alonso@gmail.com
 ```
 
+Additional DDLs:
+- Interconsultas: see `database/interconsultas_setup.txt`
+
 ### Available Scripts
 
 **Development:**
@@ -256,4 +259,11 @@ This software is designed for educational and clinical support purposes. Always 
 
 **Developed by**: Dr. Julián Alonso, Chief Neurology Resident  
 **Institution**: Hospital Nacional Posadas - Servicio de Neurología  
-**Last Updated**: September 2, 2025
+**Last Updated**: September 29, 2025
+## 📝 Recent Changes
+
+- 2025-09-29: Fixed Interconsultas type mismatch (`respuesta: string | null`) and normalized textarea bindings to avoid null value errors.
+- 2025-09-29: Added robust console logging for Interconsultas, Ward Rounds, and Save Patient flows to aid production debugging.
+- 2025-09-29: Introduced a small auth guard in Interconsultas — write actions require authentication; unauthenticated users see a friendly notice and disabled actions.
+- 2025-09-29: Added timeout protection (12s) around Supabase calls in Interconsultas service to avoid UI hangs when RLS or network blocks requests.
+- 2025-09-29: Added Supabase DDL for `interconsultas` at `database/interconsultas_setup.txt` (table, indexes, RLS, policies).

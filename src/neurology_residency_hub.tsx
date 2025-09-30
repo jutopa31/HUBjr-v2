@@ -17,6 +17,7 @@ import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
 import ResidentManagement from './components/ResidentManagement';
 import Interconsultas from './Interconsultas';
+import PacientesPostAlta from './PacientesPostAlta';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -95,6 +96,7 @@ const NeurologyResidencyHub = () => {
     { id: 'diagnostic', icon: Calculator, label: 'Evolucionador' },
     { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
     { id: 'interconsultas', icon: MessageSquare, label: 'Interconsultas' },
+    { id: 'pacientes-post-alta', icon: Users, label: 'Post alta + Ambulatorio' },
     { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
     { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
     { id: 'academia', icon: BookOpen, label: 'Academia' },
@@ -5507,6 +5509,12 @@ const NeurologyResidencyHub = () => {
         return (
           <ProtectedRoute>
             <Interconsultas />
+          </ProtectedRoute>
+        );
+      case 'pacientes-post-alta':
+        return (
+          <ProtectedRoute>
+            <PacientesPostAlta />
           </ProtectedRoute>
         );
       case 'pendientes':

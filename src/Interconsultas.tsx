@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, Save, Download } from 'lucide-react';
 import { createInterconsulta, listInterconsultas, updateRespuesta } from './services/interconsultasService';
 import { saveToSavedPatients, saveToWardRounds } from './utils/interconsultasUtils';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 type Row = {
   id?: string;
@@ -16,6 +17,7 @@ type Row = {
 const required = (v: string) => v && v.trim().length > 0;
 
 const Interconsultas: React.FC = () => {
+  const { user } = useAuthContext();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,11 @@ const Interconsultas: React.FC = () => {
   useEffect(() => { fetchAll(); }, []);
 
   const handleCreate = async () => {
+    if (!user) {
+      console.warn('[Interconsultas] handleCreate blocked: unauthenticated');
+      setError('Debes iniciar sesión para agregar interconsultas');
+      return;
+    }
     if (!isValid) {
       setError('Completa los campos requeridos: nombre, DNI, cama y fecha');
       return;
@@ -71,6 +78,11 @@ const Interconsultas: React.FC = () => {
   };
 
   const handleGuardarPase = async (row: Row) => {
+    if (!user) {
+      console.warn('[Interconsultas] handleGuardarPase blocked: unauthenticated');
+      setError('Debes iniciar sesión para guardar en Pase de Sala');
+      return;
+    }
     console.log('[Interconsultas] handleGuardarPase -> row:', row);
     const { success, error } = await saveToWardRounds({
       nombre: row.nombre,
@@ -87,6 +99,11 @@ const Interconsultas: React.FC = () => {
   };
 
   const handleGuardarPacientes = async (row: Row) => {
+    if (!user) {
+      console.warn('[Interconsultas] handleGuardarPacientes blocked: unauthenticated');
+      setError('Debes iniciar sesión para guardar en Pacientes');
+      return;
+    }
     console.log('[Interconsultas] handleGuardarPacientes -> row:', row);
     const { success, error } = await saveToSavedPatients({
       nombre: row.nombre,
@@ -122,6 +139,12 @@ const Interconsultas: React.FC = () => {
           <button onClick={exportCSV} className="px-3 py-2 text-sm bg-white border rounded inline-flex items-center gap-2"><Download className="h-4 w-4"/>Exportar CSV</button>
         </div>
       </div>
+
+      {!user && (
+        <div className="mb-4 p-3 rounded border border-yellow-200 bg-yellow-50 text-sm text-yellow-800">
+          Debes iniciar sesión para crear o guardar interconsultas.
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">{error}</div>
@@ -166,7 +189,7 @@ const Interconsultas: React.FC = () => {
         <div className="mt-3 flex gap-2">
           <button
             onClick={handleCreate}
-            disabled={!isValid || loading}
+            disabled={!isValid || loading || !user}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded text-white ${isValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'} `}
           >
             <Plus className="h-4 w-4"/>Agregar

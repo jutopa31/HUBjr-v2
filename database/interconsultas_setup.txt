@@ -1,0 +1,86 @@
+-- Supabase DDL for `public.interconsultas`
+-- Matches app expectations in src/services/interconsultasService.ts
+
+-- Enable UUID generation (if not already enabled)
+create extension if not exists pgcrypto;
+
+-- Table
+create table if not exists public.interconsultas (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  dni text not null,
+  cama text not null,
+  fecha_interconsulta date not null, -- app sends 'YYYY-MM-DD'
+  respuesta text null,
+  hospital_context text not null default 'Posadas',
+  user_id uuid null references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- updated_at trigger
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_interconsultas_set_updated_at on public.interconsultas;
+create trigger trg_interconsultas_set_updated_at
+before update on public.interconsultas
+for each row execute function public.set_updated_at();
+
+-- Indexes
+create index if not exists interconsultas_hc_created_at_idx
+  on public.interconsultas (hospital_context, created_at desc);
+
+create index if not exists interconsultas_fecha_idx
+  on public.interconsultas (fecha_interconsulta);
+
+-- Row Level Security
+alter table public.interconsultas enable row level security;
+
+-- Policies (allow authenticated users scoped to 'Posadas')
+drop policy if exists interconsultas_select on public.interconsultas;
+create policy interconsultas_select
+on public.interconsultas
+for select
+to authenticated
+using (hospital_context = 'Posadas');
+
+drop policy if exists interconsultas_insert on public.interconsultas;
+create policy interconsultas_insert
+on public.interconsultas
+for insert
+to authenticated
+with check (hospital_context = 'Posadas');
+
+drop policy if exists interconsultas_update on public.interconsultas;
+create policy interconsultas_update
+on public.interconsultas
+for update
+to authenticated
+using (hospital_context = 'Posadas')
+with check (hospital_context = 'Posadas');
+
+-- Optional: allow delete for authenticated (usually keep restricted)
+-- drop policy if exists interconsultas_delete on public.interconsultas;
+-- create policy interconsultas_delete
+-- on public.interconsultas
+-- for delete
+-- to authenticated
+-- using (hospital_context = 'Posadas');
+
+-- Optional: development-only read access for anon (do not enable in prod)
+-- create policy interconsultas_select_anon
+-- on public.interconsultas
+-- for select
+-- to anon
+-- using (hospital_context = 'Posadas');
+
+-- Manual test
+-- insert into public.interconsultas (nombre, dni, cama, fecha_interconsulta, respuesta)
+-- values ('Juan Perez', '12345678', 'C-12', '2025-09-29', 'Evaluar en 24h');
+

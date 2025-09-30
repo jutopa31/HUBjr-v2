@@ -16,7 +16,12 @@
 - **Target Users**: Neurology residents, medical staff, hospital administrators
 
 ### Latest Updates
-- Removed the default "Datos paciente" scaffold from the Evolucionador; the notes field now starts empty and the *Limpiar* action fully clears persisted text (2025-09-21).
+- Fixed Interconsultas type mismatch and null-safe bindings to resolve production build errors (2025-09-29).
+- Added detailed console logs across Interconsultas, Ward Rounds, and Save Patient flows for production debugging (2025-09-29).
+- Implemented auth guard in Interconsultas to require authentication for write actions (2025-09-29).
+- Added 12s timeout protection to Interconsultas Supabase calls to surface errors instead of hanging (2025-09-29).
+- Provided Supabase SQL DDL for `public.interconsultas` in `database/interconsultas_setup.txt` (2025-09-29).
+- Removed the default "Datos paciente" scaffold from el Evolucionador; notes start empty and Limpiar fully clears persisted text (2025-09-21).
 
 ---
 

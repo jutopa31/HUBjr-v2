@@ -1,5 +1,15 @@
 import { supabase } from '../utils/supabase';
 
+// Utility: timeout wrapper to avoid UI hanging on slow/failing requests
+async function withTimeout<T>(promise: PromiseLike<T>, ms = 12000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms);
+    Promise.resolve(promise)
+      .then((v) => { clearTimeout(timer); resolve(v); })
+      .catch((e: any) => { clearTimeout(timer); reject(e); });
+  });
+}
+
 export interface InterconsultaRow {
   id?: string;
   nombre: string;
@@ -16,11 +26,14 @@ export interface InterconsultaRow {
 export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; error?: string }>{
   try {
     console.log('[InterconsultasService] listInterconsultas -> fetching for hospital_context="Posadas"');
-    const { data, error } = await supabase
+    const resp1: any = await withTimeout(
+      supabase
       .from('interconsultas')
       .select('*')
       .eq('hospital_context', 'Posadas')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+    );
+    const { data, error } = resp1 || {};
     if (error) {
       console.error('[InterconsultasService] listInterconsultas error:', error);
       return { data: [], error: error.message };
@@ -36,7 +49,8 @@ export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; 
 export async function createInterconsulta(payload: InterconsultaRow): Promise<{ success: boolean; error?: string }>{
   try {
     console.log('[InterconsultasService] createInterconsulta -> payload:', payload);
-    const { error } = await supabase
+    const resp2: any = await withTimeout(
+      supabase
       .from('interconsultas')
       .insert([
         {
@@ -47,7 +61,9 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
           respuesta: payload.respuesta || null,
           hospital_context: 'Posadas'
         }
-      ]);
+      ])
+    );
+    const { error } = resp2 || {};
     if (error) {
       console.error('[InterconsultasService] createInterconsulta error:', error);
       return { success: false, error: error.message };
@@ -63,10 +79,13 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
 export async function updateRespuesta(id: string, respuesta: string): Promise<{ success: boolean; error?: string }>{
   try {
     console.log('[InterconsultasService] updateRespuesta -> id:', id);
-    const { error } = await supabase
+    const resp3: any = await withTimeout(
+      supabase
       .from('interconsultas')
       .update({ respuesta })
-      .eq('id', id);
+      .eq('id', id)
+    );
+    const { error } = resp3 || {};
     if (error) {
       console.error('[InterconsultasService] updateRespuesta error:', error);
       return { success: false, error: error.message };
