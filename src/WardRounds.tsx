@@ -79,6 +79,7 @@ const WardRounds: React.FC = () => {
 
   // Estado de guardado para evitar dobles envíos y loops de UI
   const [isSavingNewPatient, setIsSavingNewPatient] = useState(false);
+  const [isUpdatingPatient, setIsUpdatingPatient] = useState(false);
 
   // Estados para el modal de eliminar/archivar paciente
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -300,18 +301,48 @@ const WardRounds: React.FC = () => {
 
   // Actualizar paciente existente
   const updatePatient = async (id: string, updatedPatient: Patient) => {
-    // Validar DNI antes de actualizar (excluyendo el paciente actual)
-    const isValidDNI = await validateDNI(updatedPatient.dni, id);
-    if (!isValidDNI) {
-      return; // No actualizar si hay duplicado
+    // Prevent multiple simultaneous updates
+    if (isUpdatingPatient) {
+      console.log('[WardRounds] updatePatient -> already updating, skipping');
+      return;
     }
+
+    setIsUpdatingPatient(true);
 
     try {
       console.log('[WardRounds] updatePatient -> id:', id, 'payload:', updatedPatient);
-      const { error } = await supabase
+
+      // Validar DNI antes de actualizar (excluyendo el paciente actual)
+      const isValidDNI = await validateDNI(updatedPatient.dni, id);
+      if (!isValidDNI) {
+        setIsUpdatingPatient(false);
+        return; // No actualizar si hay duplicado
+      }
+
+      // Enhanced debugging for production
+      const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+      console.log('[WardRounds] Environment:', isProduction ? 'production' : 'development');
+
+      // Check user session with timeout
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Session check timeout')), 5000)
+      );
+
+      try {
+        const sessionResult = await Promise.race([sessionPromise, timeoutPromise]);
+        console.log('[WardRounds] User session status:', (sessionResult as any)?.data?.session ? 'authenticated' : 'not authenticated');
+      } catch (sessionError) {
+        console.error('[WardRounds] Session check failed:', sessionError);
+      }
+
+      const { data, error } = await supabase
         .from('ward_round_patients')
         .update(updatedPatient)
-        .eq('id', id);
+        .eq('id', id)
+        .select(); // Add select to see what was actually updated
+
+      console.log('[WardRounds] Update response:', { data, error });
 
       if (error) throw error;
 
@@ -327,7 +358,28 @@ const WardRounds: React.FC = () => {
       loadPatients();
     } catch (error) {
       console.error('[WardRounds] Error updating patient:', error);
-      alert('Error al actualizar paciente');
+
+      // Enhanced error reporting for production debugging
+      const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+      const errorDetails = {
+        environment: isProduction ? 'production' : 'development',
+        patientId: id,
+        error: error,
+        errorMessage: (error as any)?.message || 'Unknown error',
+        errorCode: (error as any)?.code || 'no_code',
+        errorDetails: (error as any)?.details || 'no_details',
+        timestamp: new Date().toISOString(),
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
+        url: typeof window !== 'undefined' ? window.location.href : 'unknown'
+      };
+
+      console.error('[WardRounds] Detailed error info:', errorDetails);
+
+      // More informative alert for debugging
+      const errorMsg = `Error al actualizar paciente${isProduction ? ' (ver consola para detalles)' : ''}:\n${(error as any)?.message || 'Error desconocido'}`;
+      alert(errorMsg);
+    } finally {
+      setIsUpdatingPatient(false);
     }
   };
 
@@ -1672,16 +1724,16 @@ const WardRounds: React.FC = () => {
                     updatePatient(editingId, editingPatient);
                   }
                 }}
-                disabled={!!dniError || isDniChecking}
+                disabled={!!dniError || isDniChecking || isUpdatingPatient}
                 className={`px-4 py-2 rounded-lg flex items-center space-x-2 text-sm ${
-                  dniError || isDniChecking
+                  dniError || isDniChecking || isUpdatingPatient
                     ? 'bg-gray-400 cursor-not-allowed text-white'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
-                title={dniError ? 'Resuelva el error de DNI para continuar' : ''}
+                title={dniError ? 'Resuelva el error de DNI para continuar' : isUpdatingPatient ? 'Guardando...' : ''}
               >
                 <Save className="h-4 w-4" />
-                <span>{isDniChecking ? 'Verificando DNI...' : 'Guardar Cambios'}</span>
+                <span>{isDniChecking ? 'Verificando DNI...' : isUpdatingPatient ? 'Guardando...' : 'Guardar Cambios'}</span>
               </button>
             </div>
           </div>

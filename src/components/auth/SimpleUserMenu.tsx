@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { User } from 'lucide-react';
+import { User, Trash2 } from 'lucide-react';
 import { useAuthContext } from './AuthProvider';
 import AuthModal from './AuthModal';
+import { forceLogout } from '../../utils/supabase';
 
 function SimpleUserMenu() {
   const { user, signOut, loading } = useAuthContext();
@@ -11,6 +12,14 @@ function SimpleUserMenu() {
   const openLogin = () => {
     setShowAuthModal(true);
   };
+
+  const clearCacheAndReload = async () => {
+    if (window.confirm('¿Limpiar todo el cache y recargar? Esto cerrará tu sesión.')) {
+      await forceLogout();
+    }
+  };
+
+  const isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
   if (loading) {
     return (
@@ -23,14 +32,27 @@ function SimpleUserMenu() {
   if (!user) {
     return (
       <>
-        <button
-          onClick={openLogin}
-          className="w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-        >
-          <User className="h-4 w-4 mr-2" />
-          Iniciar Sesión
-        </button>
-        
+        <div className="w-full space-y-2">
+          <button
+            onClick={openLogin}
+            className="w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <User className="h-4 w-4 mr-2" />
+            Iniciar Sesión
+          </button>
+
+          {isDevelopment && (
+            <button
+              onClick={clearCacheAndReload}
+              className="w-full flex items-center justify-center px-3 py-2 text-xs text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
+              title="Limpiar cache de autenticación (solo desarrollo)"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Limpiar Cache
+            </button>
+          )}
+        </div>
+
         {showAuthModal && ReactDOM.createPortal(
           <AuthModal
             isOpen={showAuthModal}
@@ -63,6 +85,18 @@ function SimpleUserMenu() {
         >
           Cerrar Sesión
         </button>
+
+        {/* Debug button for development */}
+        {isDevelopment && (
+          <button
+            onClick={clearCacheAndReload}
+            className="w-full px-3 py-2 text-xs text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50"
+            title="Limpiar cache de autenticación (solo desarrollo)"
+          >
+            <Trash2 className="h-3 w-3 mr-1 inline" />
+            Limpiar Cache
+          </button>
+        )}
       </div>
 
       {showAuthModal && ReactDOM.createPortal(
