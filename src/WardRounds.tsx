@@ -323,18 +323,14 @@ const WardRounds: React.FC = () => {
       const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
       console.log('[WardRounds] Environment:', isProduction ? 'production' : 'development');
 
-      // Check user session with timeout
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Session check timeout')), 5000)
-      );
-
-      try {
-        const sessionResult = await Promise.race([sessionPromise, timeoutPromise]);
-        console.log('[WardRounds] User session status:', (sessionResult as any)?.data?.session ? 'authenticated' : 'not authenticated');
-      } catch (sessionError) {
-        console.error('[WardRounds] Session check failed:', sessionError);
-      }
+      // Optional session check (don't block the main operation)
+      supabase.auth.getSession()
+        .then((sessionResult) => {
+          console.log('[WardRounds] User session status:', (sessionResult as any)?.data?.session ? 'authenticated' : 'not authenticated');
+        })
+        .catch((sessionError) => {
+          console.log('[WardRounds] Session check failed (non-blocking):', sessionError.message);
+        });
 
       const { data, error } = await supabase
         .from('ward_round_patients')
@@ -464,18 +460,12 @@ const WardRounds: React.FC = () => {
       if (action === 'archive') {
         console.log('[WardRounds] Starting archive process...');
 
-        // Primero obtener toda la información del paciente con timeout
-        const fetchPromise = supabase
+        // Obtener toda la información del paciente (simplified, no timeout)
+        const { data: fullPatientData, error: fetchError } = await supabase
           .from('ward_round_patients')
           .select('*')
           .eq('id', id)
           .single();
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout obteniendo datos del paciente')), 10000)
-        );
-
-        const { data: fullPatientData, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
         if (fetchError) {
           throw new Error(`Error al obtener datos del paciente: ${fetchError.message}`);
@@ -483,13 +473,8 @@ const WardRounds: React.FC = () => {
 
         console.log('[WardRounds] Patient data fetched, starting archive...');
 
-        // Intentar archivar el paciente con timeout
-        const archivePromise = archiveWardPatient(fullPatientData, 'Posadas');
-        const archiveTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout archivando paciente')), 15000)
-        );
-
-        const archiveResult = await Promise.race([archivePromise, archiveTimeoutPromise]) as any;
+        // Intentar archivar el paciente (simplified, will use auto-recovery instead of manual timeout)
+        const archiveResult = await archiveWardPatient(fullPatientData, 'Posadas');
 
         if (!archiveResult.success) {
           if (archiveResult.duplicate) {
@@ -509,39 +494,28 @@ const WardRounds: React.FC = () => {
 
       console.log('[WardRounds] Deleting related tasks...');
 
-      // Eliminar tareas relacionadas con timeout
-      const deleteTasksPromise = supabase
-        .from('tasks')
-        .delete()
-        .eq('patient_id', id)
-        .eq('source', 'ward_rounds');
-
-      const tasksTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout eliminando tareas')), 8000)
-      );
-
+      // Eliminar tareas relacionadas (simplified)
       try {
-        const { error: tasksError } = await Promise.race([deleteTasksPromise, tasksTimeoutPromise]) as any;
+        const { error: tasksError } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('patient_id', id)
+          .eq('source', 'ward_rounds');
+
         if (tasksError) {
           console.warn('Error al eliminar tareas relacionadas:', tasksError);
         }
-      } catch (tasksTimeoutError) {
-        console.warn('Timeout eliminando tareas, continuando...');
+      } catch (tasksError) {
+        console.warn('Failed to delete tasks, continuing...');
       }
 
       console.log('[WardRounds] Deleting patient from ward...');
 
-      // Eliminar el paciente del pase de sala con timeout
-      const deletePatientPromise = supabase
+      // Eliminar el paciente del pase de sala (simplified)
+      const { error } = await supabase
         .from('ward_round_patients')
         .delete()
         .eq('id', id);
-
-      const patientTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout eliminando paciente del pase')), 10000)
-      );
-
-      const { error } = await Promise.race([deletePatientPromise, patientTimeoutPromise]) as any;
 
       if (error) throw error;
 
