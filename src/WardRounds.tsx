@@ -421,7 +421,32 @@ const WardRounds: React.FC = () => {
     // Permitir cierre programático incluso si está procesando
     setShowDeleteModal(false);
     setSelectedPatientForDeletion(null);
+    setIsProcessingDeletion(false); // Always reset processing state
   };
+
+  // Auto-recovery function for stuck states
+  const forceResetDeletionState = () => {
+    console.log('[WardRounds] Force resetting deletion state...');
+    setIsProcessingDeletion(false);
+    setShowDeleteModal(false);
+    setSelectedPatientForDeletion(null);
+    loadPatients(); // Refresh data
+  };
+
+  // Auto-recovery timeout (reset stuck states after 30 seconds)
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (isProcessingDeletion) {
+      timeout = setTimeout(() => {
+        console.warn('[WardRounds] Auto-recovery: resetting stuck deletion state');
+        forceResetDeletionState();
+        alert('La operación tardó demasiado y fue cancelada. Intenta nuevamente.');
+      }, 30000);
+    }
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [isProcessingDeletion]);
 
   // Ejecutar acción de eliminación o archivo
   const handleDeleteAction = async (action: 'delete' | 'archive') => {
@@ -432,20 +457,39 @@ const WardRounds: React.FC = () => {
     try {
       const { id, nombre: patientName } = selectedPatientForDeletion;
 
+      // Enhanced logging for production debugging
+      const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+      console.log(`[WardRounds] ${action} action for patient:`, { id, patientName, isProduction });
+
       if (action === 'archive') {
-        // Primero obtener toda la información del paciente
-        const { data: fullPatientData, error: fetchError } = await supabase
+        console.log('[WardRounds] Starting archive process...');
+
+        // Primero obtener toda la información del paciente con timeout
+        const fetchPromise = supabase
           .from('ward_round_patients')
           .select('*')
           .eq('id', id)
           .single();
 
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout obteniendo datos del paciente')), 10000)
+        );
+
+        const { data: fullPatientData, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
         if (fetchError) {
           throw new Error(`Error al obtener datos del paciente: ${fetchError.message}`);
         }
 
-        // Intentar archivar el paciente
-        const archiveResult = await archiveWardPatient(fullPatientData, 'Posadas');
+        console.log('[WardRounds] Patient data fetched, starting archive...');
+
+        // Intentar archivar el paciente con timeout
+        const archivePromise = archiveWardPatient(fullPatientData, 'Posadas');
+        const archiveTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout archivando paciente')), 15000)
+        );
+
+        const archiveResult = await Promise.race([archivePromise, archiveTimeoutPromise]) as any;
 
         if (!archiveResult.success) {
           if (archiveResult.duplicate) {
@@ -463,22 +507,41 @@ const WardRounds: React.FC = () => {
         console.log('✅ Paciente archivado exitosamente, procediendo con eliminación del pase...');
       }
 
-      // Eliminar tareas relacionadas
-      const { error: tasksError } = await supabase
+      console.log('[WardRounds] Deleting related tasks...');
+
+      // Eliminar tareas relacionadas con timeout
+      const deleteTasksPromise = supabase
         .from('tasks')
         .delete()
         .eq('patient_id', id)
         .eq('source', 'ward_rounds');
 
-      if (tasksError) {
-        console.warn('Error al eliminar tareas relacionadas:', tasksError);
+      const tasksTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout eliminando tareas')), 8000)
+      );
+
+      try {
+        const { error: tasksError } = await Promise.race([deleteTasksPromise, tasksTimeoutPromise]) as any;
+        if (tasksError) {
+          console.warn('Error al eliminar tareas relacionadas:', tasksError);
+        }
+      } catch (tasksTimeoutError) {
+        console.warn('Timeout eliminando tareas, continuando...');
       }
 
-      // Eliminar el paciente del pase de sala
-      const { error } = await supabase
+      console.log('[WardRounds] Deleting patient from ward...');
+
+      // Eliminar el paciente del pase de sala con timeout
+      const deletePatientPromise = supabase
         .from('ward_round_patients')
         .delete()
         .eq('id', id);
+
+      const patientTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout eliminando paciente del pase')), 10000)
+      );
+
+      const { error } = await Promise.race([deletePatientPromise, patientTimeoutPromise]) as any;
 
       if (error) throw error;
 
@@ -496,7 +559,39 @@ const WardRounds: React.FC = () => {
 
     } catch (error) {
       console.error('Error processing deletion:', error);
-      alert(`Error al ${action === 'archive' ? 'archivar' : 'eliminar'} paciente: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+
+      // Enhanced error reporting
+      const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+
+      const detailedError = {
+        action,
+        patient: selectedPatientForDeletion,
+        error: errorMessage,
+        isProduction,
+        timestamp: new Date().toISOString()
+      };
+
+      console.error('[WardRounds] Detailed deletion error:', detailedError);
+
+      // User-friendly error messages
+      let userMessage = `Error al ${action === 'archive' ? 'archivar' : 'eliminar'} paciente`;
+
+      if (errorMessage.includes('Timeout')) {
+        userMessage += ': La operación tardó demasiado. Intenta nuevamente.';
+      } else if (errorMessage.includes('duplicate') || errorMessage.includes('existe')) {
+        userMessage += ': El paciente ya existe en el archivo.';
+      } else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+        userMessage += ': Problema de conexión. Verifica tu internet.';
+      } else {
+        userMessage += `: ${errorMessage}`;
+      }
+
+      if (isProduction) {
+        userMessage += '\n\n(Ver consola para más detalles)';
+      }
+
+      alert(userMessage);
     } finally {
       setIsProcessingDeletion(false);
     }
