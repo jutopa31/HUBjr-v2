@@ -5,6 +5,8 @@ import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
 import { useAuthContext } from './components/auth/AuthProvider';
+import { robustQuery, formatQueryError } from './utils/queryHelpers';
+import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 
 interface Patient {
   id?: string;
@@ -102,17 +104,29 @@ const WardRounds: React.FC = () => {
 
   const loadPatients = async () => {
     try {
-      const { data, error } = await supabase
-        .from('ward_round_patients')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const result = await robustQuery(
+        () => supabase
+          .from('ward_round_patients')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        {
+          timeout: 8000,
+          retries: 2,
+          operationName: 'loadPatients'
+        }
+      );
+
+      const { data, error } = result as any;
 
       if (error) throw error;
       console.log('[WardRounds] loadPatients -> rows:', (data || []).length);
       setPatients(data || []);
     } catch (error) {
       console.error('[WardRounds] Error loading patients:', error);
-      alert('Error al cargar pacientes');
+      const errorMessage = formatQueryError(error);
+      alert(`Error al cargar pacientes: ${errorMessage}`);
+      // Set empty array so UI isn't completely broken
+      setPatients([]);
     } finally {
       setLoading(false);
     }
@@ -120,19 +134,28 @@ const WardRounds: React.FC = () => {
 
   const loadResidents = async () => {
     try {
-      // Try to get resident profiles from the database first
-      const { data: residentProfiles, error: profilesError } = await supabase
-        .from('resident_profiles')
-        .select('id, user_id, first_name, last_name, email, training_level, status')
-        .eq('status', 'active')
-        .order('training_level', { ascending: true });
+      // Try to get resident profiles from the database first (with timeout)
+      const result = await robustQuery(
+        () => supabase
+          .from('resident_profiles')
+          .select('id, user_id, first_name, last_name, email, training_level, status')
+          .eq('status', 'active')
+          .order('training_level', { ascending: true }),
+        {
+          timeout: 8000,
+          retries: 2,
+          operationName: 'loadResidents'
+        }
+      );
+
+      const { data: residentProfiles, error: profilesError } = result as any;
 
       let residents: ResidentProfile[] = [];
 
       // If resident profiles exist, use them
       if (!profilesError && residentProfiles && residentProfiles.length > 0) {
         console.log('✅ Loading residents from resident_profiles table');
-        residents = residentProfiles.map(profile => ({
+        residents = residentProfiles.map((profile: any) => ({
           id: profile.user_id, // Use user_id for consistency with assigned_resident_id
           email: profile.email,
           full_name: `${profile.first_name} ${profile.last_name}`,
@@ -900,19 +923,18 @@ const WardRounds: React.FC = () => {
     }, 500);
   };
 
-  // Show loading state while auth is initializing OR while data is loading
-  if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-gray-600">
-          {authLoading ? 'Inicializando...' : 'Cargando pacientes...'}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
+    <LoadingWithRecovery
+      isLoading={authLoading || loading}
+      onRetry={() => {
+        console.log('[WardRounds] Manual retry triggered by user');
+        setLoading(true);
+        loadData();
+      }}
+      loadingMessage={authLoading ? 'Inicializando...' : 'Cargando pacientes...'}
+      recoveryTimeout={15000}
+    >
+      <div className="h-full flex flex-col p-6 overflow-hidden">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -1833,7 +1855,8 @@ const WardRounds: React.FC = () => {
         onConfirmDelete={handleDeleteAction}
         isProcessing={isProcessingDeletion}
       />
-    </div>
+      </div>
+    </LoadingWithRecovery>
   );
 };
 

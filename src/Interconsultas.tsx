@@ -3,6 +3,7 @@ import { Plus, Save, Download } from 'lucide-react';
 import { createInterconsulta, listInterconsultas, updateRespuesta } from './services/interconsultasService';
 import { saveToSavedPatients, saveToWardRounds } from './utils/interconsultasUtils';
 import { useAuthContext } from './components/auth/AuthProvider';
+import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 
 type Row = {
   id?: string;
@@ -172,9 +173,18 @@ const Interconsultas: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Interconsultas</h1>
+    <LoadingWithRecovery
+      isLoading={loading}
+      onRetry={() => {
+        console.log('[Interconsultas] Manual retry triggered by user');
+        fetchAll();
+      }}
+      loadingMessage="Cargando interconsultas..."
+      recoveryTimeout={15000}
+    >
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Interconsultas</h1>
         <div className="flex gap-2">
           <button onClick={fetchAll} className="px-3 py-2 text-sm bg-gray-100 border rounded">Actualizar</button>
           <button onClick={exportCSV} className="px-3 py-2 text-sm bg-white border rounded inline-flex items-center gap-2"><Download className="h-4 w-4"/>Exportar CSV</button>
@@ -291,7 +301,8 @@ const Interconsultas: React.FC = () => {
           <div className="p-6 text-sm text-gray-500">No hay interconsultas registradas.</div>
         )}
       </div>
-    </div>
+      </div>
+    </LoadingWithRecovery>
   );
 };
 

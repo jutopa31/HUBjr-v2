@@ -1,14 +1,5 @@
 import { supabase } from '../utils/supabase';
-
-// Utility: timeout wrapper to avoid UI hanging on slow/failing requests
-async function withTimeout<T>(promise: PromiseLike<T>, ms = 12000): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms);
-    Promise.resolve(promise)
-      .then((v) => { clearTimeout(timer); resolve(v); })
-      .catch((e: any) => { clearTimeout(timer); reject(e); });
-  });
-}
+import { robustQuery } from '../utils/queryHelpers';
 
 export interface InterconsultaRow {
   id?: string;
@@ -26,14 +17,20 @@ export interface InterconsultaRow {
 export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; error?: string }>{
   try {
     console.log('[InterconsultasService] listInterconsultas -> fetching for hospital_context="Posadas"');
-    const resp1: any = await withTimeout(
-      supabase
-      .from('interconsultas')
-      .select('*')
-      .eq('hospital_context', 'Posadas')
-      .order('created_at', { ascending: false })
+    const result: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .select('*')
+        .eq('hospital_context', 'Posadas')
+        .order('created_at', { ascending: false }),
+      {
+        timeout: 8000,
+        retries: 2,
+        operationName: 'listInterconsultas'
+      }
     );
-    const { data, error } = resp1 || {};
+
+    const { data, error } = result || {};
     if (error) {
       console.error('[InterconsultasService] listInterconsultas error:', error);
       return { data: [], error: error.message };
@@ -49,19 +46,20 @@ export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; 
 export async function createInterconsulta(payload: InterconsultaRow): Promise<{ success: boolean; error?: string }>{
   try {
     console.log('[InterconsultasService] createInterconsulta -> payload:', payload);
-    const resp2: any = await withTimeout(
-      supabase
-      .from('interconsultas')
-      .insert([
-        {
-          nombre: payload.nombre,
-          dni: payload.dni,
-          cama: payload.cama,
-          fecha_interconsulta: payload.fecha_interconsulta,
-          respuesta: payload.respuesta || null,
-          hospital_context: 'Posadas'
-        }
-      ])
+    const resp2: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .insert([
+          {
+            nombre: payload.nombre,
+            dni: payload.dni,
+            cama: payload.cama,
+            fecha_interconsulta: payload.fecha_interconsulta,
+            respuesta: payload.respuesta || null,
+            hospital_context: 'Posadas'
+          }
+        ]),
+      { timeout: 8000, retries: 2, operationName: 'createInterconsulta' }
     );
     const { error } = resp2 || {};
     if (error) {
@@ -79,11 +77,12 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
 export async function updateRespuesta(id: string, respuesta: string): Promise<{ success: boolean; error?: string }>{
   try {
     console.log('[InterconsultasService] updateRespuesta -> id:', id);
-    const resp3: any = await withTimeout(
-      supabase
-      .from('interconsultas')
-      .update({ respuesta })
-      .eq('id', id)
+    const resp3: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .update({ respuesta })
+        .eq('id', id),
+      { timeout: 8000, retries: 2, operationName: 'updateRespuesta' }
     );
     const { error } = resp3 || {};
     if (error) {
