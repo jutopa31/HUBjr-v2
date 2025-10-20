@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, BookOpen, Users, FileText, Heart, AlertTriangle } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
+import { useAuthContext } from './components/auth/AuthProvider';
 
 interface MedicalEvent {
   id?: string;
@@ -18,8 +19,10 @@ interface MedicalEvent {
 }
 
 const EventManagerSupabase: React.FC = () => {
+  const { loading: authLoading } = useAuthContext();
   const [events, setEvents] = useState<MedicalEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
@@ -145,22 +148,20 @@ const EventManagerSupabase: React.FC = () => {
         }
       }
 
-      if (!loading) {
-        // Reset form and refresh events
-        setNewEvent({
-          title: '',
-          start_date: '',
-          end_date: '',
-          type: 'clinical',
-          location: '',
-          description: '',
-          is_recurring: false,
-          recurrence_pattern: 'weekly',
-          recurrence_end: ''
-        });
-        setShowForm(false);
-        await fetchEvents();
-      }
+      // Reset form and refresh events after successful creation
+      setNewEvent({
+        title: '',
+        start_date: '',
+        end_date: '',
+        type: 'clinical',
+        location: '',
+        description: '',
+        is_recurring: false,
+        recurrence_pattern: 'weekly',
+        recurrence_end: ''
+      });
+      setShowForm(false);
+      await fetchEvents();
     } catch (error) {
       console.error('Error creating event:', error);
       alert('Error al crear evento');
@@ -243,10 +244,33 @@ const EventManagerSupabase: React.FC = () => {
     return icons[type] || Users;
   };
 
-  // Load events on component mount
+  // Wait for auth to be ready before loading data
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (!authLoading) {
+      console.log('[EventManager] Auth ready, session validated');
+      setAuthReady(true);
+    }
+  }, [authLoading]);
+
+  // Safety timeout: if auth doesn't become ready in 10 seconds, force proceed
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!authReady) {
+        console.warn('[EventManager] Auth timeout after 10s, forcing data load');
+        setAuthReady(true);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, [authReady]);
+
+  // Load events only after auth is ready
+  useEffect(() => {
+    if (authReady) {
+      console.log('[EventManager] Loading events after auth ready');
+      fetchEvents();
+    }
+  }, [authReady]);
 
   // Helper functions for calendar views
   const getWeekDays = (date: Date) => {
