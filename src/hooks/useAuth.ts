@@ -23,8 +23,7 @@ export function useAuth() {
     privileges: [],
   });
 
-  // Guard to prevent multiple simultaneous session clears
-  const sessionClearInProgress = React.useRef(false);
+  // Guard to prevent duplicate auth initialization
   const authInitialized = React.useRef(false);
 
   // Function to check and update user privileges
@@ -81,45 +80,23 @@ export function useAuth() {
     if (authInitialized.current) return;
     authInitialized.current = true;
 
-    console.log('[useAuth] Initializing auth...');
+    console.log('[useAuth] Initializing auth (SessionGuard already validated)...');
 
-    // Get initial session
+    // Get initial session (already validated by SessionGuard)
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        // Handle invalid token/session errors
-        if (error.message.includes('missing sub claim') ||
-            error.message.includes('invalid claim') ||
-            error.message.includes('jwt expired')) {
-          console.log('[useAuth] Invalid/stale session detected, clearing auth state');
-
-          // Prevent multiple simultaneous clears
-          if (!sessionClearInProgress.current) {
-            sessionClearInProgress.current = true;
-
-            // Clear stale session silently (don't trigger auth state change loop)
-            supabase.auth.signOut({ scope: 'local' }).finally(() => {
-              sessionClearInProgress.current = false;
-              console.log('[useAuth] Stale session cleared, auth ready');
-              // Set state to ready with no user
-              setState({
-                session: null,
-                user: null,
-                error: null,
-                loading: false,
-                hasHospitalContextAccess: false,
-                privileges: []
-              });
-            });
-          } else {
-            // If clear is already in progress, just set loading to false
-            setState(prev => ({ ...prev, session: null, user: null, error: null, loading: false }));
-          }
-        } else {
-          console.error('[useAuth] Session error:', error.message);
-          setState(prev => ({ ...prev, error: error.message, loading: false }));
-        }
+        console.warn('[useAuth] Session error (should have been caught by SessionGuard):', error.message);
+        // Set to clean state
+        setState({
+          session: null,
+          user: null,
+          error: null,
+          loading: false,
+          hasHospitalContextAccess: false,
+          privileges: []
+        });
       } else {
-        console.log('[useAuth] Valid session found, user:', session?.user?.email || 'none');
+        console.log('[useAuth] Session loaded, user:', session?.user?.email || 'none');
         setState(prev => ({
           ...prev,
           session,
@@ -140,25 +117,22 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[useAuth] Auth state changed:', event, 'user:', session?.user?.email || 'none');
 
-      // Only update state if not currently clearing a stale session
-      if (!sessionClearInProgress.current) {
+      setState(prev => ({
+        ...prev,
+        session,
+        user: session?.user ?? null,
+        loading: false,
+      }));
+
+      // Check user privileges when auth state changes
+      if (session?.user) {
+        await checkUserPrivileges(session.user);
+      } else {
         setState(prev => ({
           ...prev,
-          session,
-          user: session?.user ?? null,
-          loading: false,
+          hasHospitalContextAccess: false,
+          privileges: []
         }));
-
-        // Check user privileges when auth state changes
-        if (session?.user) {
-          await checkUserPrivileges(session.user);
-        } else {
-          setState(prev => ({
-            ...prev,
-            hasHospitalContextAccess: false,
-            privileges: []
-          }));
-        }
       }
     });
 

@@ -21,6 +21,9 @@ const Interconsultas: React.FC = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [savingPaseId, setSavingPaseId] = useState<string | null>(null);
+  const [savingPacientesId, setSavingPacientesId] = useState<string | null>(null);
 
   const [form, setForm] = useState<Row>({ nombre: '', dni: '', cama: '', fecha_interconsulta: new Date().toISOString().slice(0, 10), respuesta: '' });
   const isValid = useMemo(() => (
@@ -83,6 +86,15 @@ const Interconsultas: React.FC = () => {
       setError('Debes iniciar sesión para guardar en Pase de Sala');
       return;
     }
+    if (!row.id) {
+      setError('Error: ID de interconsulta no disponible');
+      return;
+    }
+
+    setSavingPaseId(row.id);
+    setError(null);
+    setSuccessMessage(null);
+
     console.log('[Interconsultas] handleGuardarPase -> row:', row);
     const { success, error } = await saveToWardRounds({
       nombre: row.nombre,
@@ -91,11 +103,21 @@ const Interconsultas: React.FC = () => {
       fecha_interconsulta: row.fecha_interconsulta,
       respuesta: row.respuesta || ''
     });
+
+    setSavingPaseId(null);
+
     if (!success) {
       console.error('[Interconsultas] handleGuardarPase error:', error);
-      setError(error || 'No se pudo guardar en Pase');
+      setError(error || 'No se pudo guardar en Pase de Sala');
+    } else {
+      setError(null);
+      const message = `✓ Paciente "${row.nombre}" guardado exitosamente en Pase de Sala`;
+      setSuccessMessage(message);
+      // Immediate visual feedback with browser alert
+      window.alert(message);
+      // Auto-dismiss success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
     }
-    else setError(null);
   };
 
   const handleGuardarPacientes = async (row: Row) => {
@@ -104,6 +126,15 @@ const Interconsultas: React.FC = () => {
       setError('Debes iniciar sesión para guardar en Pacientes');
       return;
     }
+    if (!row.id) {
+      setError('Error: ID de interconsulta no disponible');
+      return;
+    }
+
+    setSavingPacientesId(row.id);
+    setError(null);
+    setSuccessMessage(null);
+
     console.log('[Interconsultas] handleGuardarPacientes -> row:', row);
     const { success, error } = await saveToSavedPatients({
       nombre: row.nombre,
@@ -112,11 +143,21 @@ const Interconsultas: React.FC = () => {
       fecha_interconsulta: row.fecha_interconsulta,
       respuesta: row.respuesta || ''
     });
+
+    setSavingPacientesId(null);
+
     if (!success) {
       console.error('[Interconsultas] handleGuardarPacientes error:', error);
       setError(error || 'No se pudo guardar en Pacientes');
+    } else {
+      setError(null);
+      const message = `✓ Paciente "${row.nombre}" guardado exitosamente en Pacientes Guardados`;
+      setSuccessMessage(message);
+      // Immediate visual feedback with browser alert
+      window.alert(message);
+      // Auto-dismiss success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
     }
-    else setError(null);
   };
 
   const exportCSV = () => {
@@ -148,6 +189,10 @@ const Interconsultas: React.FC = () => {
 
       {error && (
         <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">{error}</div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4 p-3 rounded border border-green-200 bg-green-50 text-sm text-green-700">{successMessage}</div>
       )}
 
       {/* Formulario de nueva interconsulta */}
@@ -222,8 +267,20 @@ const Interconsultas: React.FC = () => {
                     <InlineRespuesta id={r.id!} initial={r.respuesta || ''} onSave={handleUpdateRespuesta} />
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap flex gap-2">
-                    <button onClick={() => handleGuardarPase(r)} className="px-2 py-1 border rounded text-xs">Guardar al pase</button>
-                    <button onClick={() => handleGuardarPacientes(r)} className="px-2 py-1 border rounded text-xs">Guardar en pacientes</button>
+                    <button
+                      onClick={() => handleGuardarPase(r)}
+                      disabled={savingPaseId === r.id || !user}
+                      className={`px-2 py-1 border rounded text-xs ${savingPaseId === r.id ? 'bg-blue-50 text-blue-600 border-blue-300' : 'hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {savingPaseId === r.id ? 'Guardando...' : 'Guardar al pase'}
+                    </button>
+                    <button
+                      onClick={() => handleGuardarPacientes(r)}
+                      disabled={savingPacientesId === r.id || !user}
+                      className={`px-2 py-1 border rounded text-xs ${savingPacientesId === r.id ? 'bg-blue-50 text-blue-600 border-blue-300' : 'hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {savingPacientesId === r.id ? 'Guardando...' : 'Guardar en pacientes'}
+                    </button>
                   </td>
                 </tr>
               ))}

@@ -59,15 +59,14 @@ const WardRounds: React.FC = () => {
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
   const [loading, setLoading] = useState(true);
-  const [authReady, setAuthReady] = useState(false);
-  
+
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
+
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  
+
   // Estados para edición inline de pendientes
   const [editingPendientesId, setEditingPendientesId] = useState<string | null>(null);
   const [tempPendientes, setTempPendientes] = useState<string>('');
@@ -87,33 +86,13 @@ const WardRounds: React.FC = () => {
   const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<{ id: string; nombre: string; dni: string } | null>(null);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
 
-  // Wait for auth to be ready before loading data
+  // Load data once auth is ready (SessionGuard ensures clean auth state)
   useEffect(() => {
     if (!authLoading) {
-      console.log('[WardRounds] Auth ready, session validated');
-      setAuthReady(true);
-    }
-  }, [authLoading]);
-
-  // Safety timeout: if auth doesn't become ready in 10 seconds, force proceed
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!authReady && !authLoading) {
-        console.warn('[WardRounds] Auth timeout reached, forcing auth ready state');
-        setAuthReady(true);
-      }
-    }, 10000); // 10 second timeout
-
-    return () => clearTimeout(timeout);
-  }, [authReady, authLoading]);
-
-  // Cargar datos iniciales ONLY after auth is ready
-  useEffect(() => {
-    if (authReady) {
-      console.log('[WardRounds] Auth ready -> loading initial data');
+      console.log('[WardRounds] Auth ready (validated by SessionGuard) -> loading data');
       loadData();
     }
-  }, [authReady]);
+  }, [authLoading]);
 
   const loadData = async () => {
     console.log('[WardRounds] loadData -> start');
@@ -922,11 +901,11 @@ const WardRounds: React.FC = () => {
   };
 
   // Show loading state while auth is initializing OR while data is loading
-  if (authLoading || !authReady || loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg text-gray-600">
-          {authLoading ? 'Validando sesión...' : 'Cargando pacientes...'}
+          {authLoading ? 'Inicializando...' : 'Cargando pacientes...'}
         </div>
       </div>
     );

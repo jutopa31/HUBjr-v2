@@ -9,6 +9,7 @@ export interface SimpleInterconsulta {
 }
 
 // Guarda una interconsulta como paciente del Pase de Sala (ward_round_patients)
+// Note: hospital_context column can be added later via database migration
 export async function saveToWardRounds(ic: SimpleInterconsulta): Promise<{ success: boolean; error?: string }>{
   try {
     console.log('[InterconsultasUtils] saveToWardRounds -> payload:', ic);
