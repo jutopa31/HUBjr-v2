@@ -1,37 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Home, 
-  Calendar, 
-  Users, 
-  Brain, 
-  Activity, 
+import {
+  Home,
+  Calendar,
+  Users,
+  Brain,
   FileText,
-  Stethoscope,
   TrendingUp,
   CheckCircle
 } from 'lucide-react';
-import { getDashboardMetrics, getTodayEvents, getScaleUsageStats, getWeeklyActivitySummary } from './utils/dashboardQueries';
+import { getTodayEvents } from './utils/dashboardQueries';
+import PendientesResumidos from './components/PendientesResumidos';
 
 interface DashboardInicioProps {
   setActiveTab: (tab: string) => void;
   openScaleModal: (scaleId: string) => void;
 }
 
-const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openScaleModal }) => {
+const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [metrics, setMetrics] = useState({
-    patientsEvaluated: 0,
-    scalesCompleted: 0,
-    wardRounds: 0,
-    monthlyActivities: 0
-  });
   const [todayEvents, setTodayEvents] = useState<any[]>([]);
-  const [scaleStats, setScaleStats] = useState<any[]>([]);
-  const [weeklyStats, setWeeklyStats] = useState({
-    evaluations: 0,
-    patients: 0,
-    events: 0
-  });
 
   // Actualizar hora cada minuto
   useEffect(() => {
@@ -42,31 +29,18 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
     return () => clearInterval(timer);
   }, []);
 
-  // Cargar métricas desde Supabase
+  // Cargar eventos de hoy
   useEffect(() => {
-    const loadDashboardData = async () => {
+    const loadTodayEvents = async () => {
       try {
-        // Cargar métricas principales
-        const dashboardMetrics = await getDashboardMetrics();
-        setMetrics(dashboardMetrics);
-
-        // Cargar eventos de hoy
         const events = await getTodayEvents();
         setTodayEvents(events);
-
-        // Cargar estadísticas de escalas
-        const scales = await getScaleUsageStats();
-        setScaleStats(scales);
-
-        // Cargar resumen semanal
-        const weekly = await getWeeklyActivitySummary();
-        setWeeklyStats(weekly);
       } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        console.error('Error loading today events:', error);
       }
     };
 
-    loadDashboardData();
+    loadTodayEvents();
   }, []);
 
   const formatDate = (date: Date) => {
@@ -120,12 +94,6 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
     }
   ];
 
-  // Mapear colores para las escalas más usadas
-  const getScaleColor = (index: number) => {
-    const colors = ['text-red-600', 'text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
-    return colors[index % colors.length];
-  };
-
   // Función para formatear hora desde evento
   const formatEventTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -160,67 +128,36 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
 
       {/* Contenido Principal */}
       <div className="p-6 space-y-6">
-        {/* Métricas Principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Pacientes Evaluados */}
-          <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Pacientes Evaluados</p>
-                <p className="text-3xl font-bold text-blue-600">{metrics.patientsEvaluated}</p>
-                <p className="text-xs text-gray-500 mt-1">Este mes</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Escalas Completadas */}
-          <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Escalas Completadas</p>
-                <p className="text-3xl font-bold text-green-600">{metrics.scalesCompleted}</p>
-                <p className="text-xs text-gray-500 mt-1">Total aplicadas</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Brain className="h-8 w-8 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Pases de Sala */}
-          <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Pases de Sala</p>
-                <p className="text-3xl font-bold text-purple-600">{metrics.wardRounds}</p>
-                <p className="text-xs text-gray-500 mt-1">Esta semana</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Stethoscope className="h-8 w-8 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Actividades del Mes */}
-          <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-orange-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Actividades del Mes</p>
-                <p className="text-3xl font-bold text-orange-600">{metrics.monthlyActivities}</p>
-                <p className="text-xs text-gray-500 mt-1">Eventos completados</p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-full">
-                <Activity className="h-8 w-8 text-orange-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Fila Principal: Actividades de Hoy + Accesos Rápidos */}
+        {/* Fila Principal: Accesos Rápidos + Actividades de Hoy */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Accesos Rápidos */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+              Accesos Rápidos
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {quickAccessButtons.map((button) => {
+                const IconComponent = button.icon;
+                return (
+                  <button
+                    key={button.id}
+                    onClick={button.action}
+                    className={`p-4 ${button.color} text-white rounded-lg transition-colors text-left`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-semibold text-sm mb-1">{button.title}</div>
+                        <div className="text-xs opacity-90">{button.subtitle}</div>
+                      </div>
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Panel de Actividades de Hoy */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center justify-between mb-4">
@@ -276,104 +213,10 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab, openSca
               Nueva Evaluación
             </button>
           </div>
-
-          {/* Accesos Rápidos */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
-              Accesos Rápidos
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              {quickAccessButtons.map((button) => {
-                const IconComponent = button.icon;
-                return (
-                  <button
-                    key={button.id}
-                    onClick={button.action}
-                    className={`p-4 ${button.color} text-white rounded-lg transition-colors text-left`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-semibold text-sm mb-1">{button.title}</div>
-                        <div className="text-xs opacity-90">{button.subtitle}</div>
-                      </div>
-                      <IconComponent className="h-6 w-6" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
-        {/* Fila Inferior: Escalas Frecuentes + Resumen Semanal */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Escalas Más Usadas */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Brain className="h-5 w-5 mr-2 text-purple-600" />
-              Escalas Más Usadas
-            </h3>
-            <div className="space-y-3">
-              {scaleStats.length > 0 ? scaleStats.map((scale, index) => (
-                <div key={scale.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`font-semibold ${getScaleColor(index)}`}>{scale.name}</div>
-                    <span className="text-sm text-gray-600">{scale.uses} usos</span>
-                  </div>
-                  <button
-                    onClick={() => openScaleModal(scale.name.toLowerCase())}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                  >
-                    Aplicar
-                  </button>
-                </div>
-              )) : (
-                <div className="text-center text-gray-500 py-4">
-                  <p>No hay datos de escalas aún</p>
-                  <button
-                    onClick={() => setActiveTab('diagnostic')}
-                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    Realizar primera evaluación →
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Resumen de Actividad */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-green-600" />
-              Resumen Semanal
-            </h3>
-            <div className="space-y-4">
-              <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">Esta Semana</div>
-                <div className="text-sm text-gray-600 mt-2">
-                  <span className="font-medium">{weeklyStats.evaluations}</span> evaluaciones • 
-                  <span className="font-medium"> {weeklyStats.patients}</span> pacientes • 
-                  <span className="font-medium"> {weeklyStats.events}</span> eventos
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="p-2 bg-blue-50 rounded">
-                  <div className="text-lg font-bold text-blue-600">12</div>
-                  <div className="text-xs text-gray-600">Lun-Mié</div>
-                </div>
-                <div className="p-2 bg-green-50 rounded">
-                  <div className="text-lg font-bold text-green-600">8</div>
-                  <div className="text-xs text-gray-600">Jue-Vie</div>
-                </div>
-                <div className="p-2 bg-purple-50 rounded">
-                  <div className="text-lg font-bold text-purple-600">4</div>
-                  <div className="text-xs text-gray-600">Fin Semana</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Fila Inferior: Pendientes Resumidos */}
+        <PendientesResumidos setActiveTab={setActiveTab} />
       </div>
     </div>
   );
