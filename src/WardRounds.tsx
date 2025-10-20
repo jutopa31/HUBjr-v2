@@ -444,21 +444,21 @@ const WardRounds: React.FC = () => {
   };
 
   // Auto-recovery function for stuck states
-  const forceResetDeletionState = () => {
+  const forceResetDeletionState = async () => {
     console.log('[WardRounds] Force resetting deletion state...');
     setIsProcessingDeletion(false);
     setShowDeleteModal(false);
     setSelectedPatientForDeletion(null);
-    loadPatients(); // Refresh data
+    await loadPatients(); // Refresh data
   };
 
   // Auto-recovery timeout (reset stuck states after 30 seconds)
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (isProcessingDeletion) {
-      timeout = setTimeout(() => {
+      timeout = setTimeout(async () => {
         console.warn('[WardRounds] Auto-recovery: resetting stuck deletion state');
-        forceResetDeletionState();
+        await forceResetDeletionState();
         alert('La operación tardó demasiado y fue cancelada. Intenta nuevamente.');
       }, 30000);
     }
@@ -502,10 +502,8 @@ const WardRounds: React.FC = () => {
         if (!archiveResult.success) {
           if (archiveResult.duplicate) {
             alert(`Paciente ya existe en archivo. ${archiveResult.error}`);
-            // Cerrar modal para evitar sensación de bloqueo
-            setIsProcessingDeletion(false);
-            closeDeleteModal();
-            return; // No continuar con la eliminación
+            // No continuar con la eliminación - let finally block handle cleanup
+            throw new Error(`Duplicate patient: ${archiveResult.error}`);
           } else {
             throw new Error(archiveResult.error || 'Error al archivar paciente');
           }
