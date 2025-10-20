@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, forceLogout } from '../utils/supabase';
 import { hasAdminPrivilege, hasHospitalContextAccess, AdminPrivilegeType } from '../utils/diagnosticAssessmentDB';
@@ -22,6 +22,10 @@ export function useAuth() {
     hasHospitalContextAccess: false,
     privileges: [],
   });
+
+  // Guard to prevent multiple simultaneous session clears
+  const sessionClearInProgress = React.useRef(false);
+  const authInitialized = React.useRef(false);
 
   // Function to check and update user privileges
   const checkUserPrivileges = useCallback(async (user: User | null) => {
@@ -73,20 +77,49 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
+    // Prevent duplicate initialization
+    if (authInitialized.current) return;
+    authInitialized.current = true;
+
+    console.log('[useAuth] Initializing auth...');
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         // Handle invalid token/session errors
-        if (error.message.includes('missing sub claim') || 
+        if (error.message.includes('missing sub claim') ||
             error.message.includes('invalid claim') ||
             error.message.includes('jwt expired')) {
-          console.log('Invalid session detected, clearing auth state');
-          supabase.auth.signOut({ scope: 'local' });
-          setState(prev => ({ ...prev, session: null, user: null, error: null, loading: false }));
+          console.log('[useAuth] Invalid/stale session detected, clearing auth state');
+
+          // Prevent multiple simultaneous clears
+          if (!sessionClearInProgress.current) {
+            sessionClearInProgress.current = true;
+
+            // Clear stale session silently (don't trigger auth state change loop)
+            supabase.auth.signOut({ scope: 'local' }).finally(() => {
+              sessionClearInProgress.current = false;
+              console.log('[useAuth] Stale session cleared, auth ready');
+              // Set state to ready with no user
+              setState({
+                session: null,
+                user: null,
+                error: null,
+                loading: false,
+                hasHospitalContextAccess: false,
+                privileges: []
+              });
+            });
+          } else {
+            // If clear is already in progress, just set loading to false
+            setState(prev => ({ ...prev, session: null, user: null, error: null, loading: false }));
+          }
         } else {
+          console.error('[useAuth] Session error:', error.message);
           setState(prev => ({ ...prev, error: error.message, loading: false }));
         }
       } else {
+        console.log('[useAuth] Valid session found, user:', session?.user?.email || 'none');
         setState(prev => ({
           ...prev,
           session,
@@ -104,23 +137,28 @@ export function useAuth() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setState(prev => ({
-        ...prev,
-        session,
-        user: session?.user ?? null,
-        loading: false,
-      }));
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[useAuth] Auth state changed:', event, 'user:', session?.user?.email || 'none');
 
-      // Check user privileges when auth state changes
-      if (session?.user) {
-        await checkUserPrivileges(session.user);
-      } else {
+      // Only update state if not currently clearing a stale session
+      if (!sessionClearInProgress.current) {
         setState(prev => ({
           ...prev,
-          hasHospitalContextAccess: false,
-          privileges: []
+          session,
+          user: session?.user ?? null,
+          loading: false,
         }));
+
+        // Check user privileges when auth state changes
+        if (session?.user) {
+          await checkUserPrivileges(session.user);
+        } else {
+          setState(prev => ({
+            ...prev,
+            hasHospitalContextAccess: false,
+            privileges: []
+          }));
+        }
       }
     });
 
