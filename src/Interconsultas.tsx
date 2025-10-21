@@ -21,6 +21,7 @@ const Interconsultas: React.FC = () => {
   const { user } = useAuthContext();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [savingPaseId, setSavingPaseId] = useState<string | null>(null);
@@ -57,9 +58,15 @@ const Interconsultas: React.FC = () => {
       setError('Completa los campos requeridos: nombre, DNI, cama y fecha');
       return;
     }
+    if (creating) {
+      console.warn('[Interconsultas] handleCreate blocked: already creating');
+      return;
+    }
     setError(null);
+    setCreating(true);
     console.log('[Interconsultas] handleCreate -> payload:', form);
     const { success, error } = await createInterconsulta(form);
+    setCreating(false);
     if (!success) {
       console.error('[Interconsultas] handleCreate error:', error);
       setError(error || 'Error al crear interconsulta');
@@ -244,10 +251,10 @@ const Interconsultas: React.FC = () => {
         <div className="mt-3 flex gap-2">
           <button
             onClick={handleCreate}
-            disabled={!isValid || loading || !user}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded text-white ${isValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'} `}
+            disabled={!isValid || loading || creating || !user}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded text-white ${(isValid && !creating) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'} disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            <Plus className="h-4 w-4"/>Agregar
+            <Plus className="h-4 w-4"/>{creating ? 'Guardando...' : 'Agregar'}
           </button>
         </div>
       </div>

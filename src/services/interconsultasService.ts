@@ -59,7 +59,7 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
             hospital_context: 'Posadas'
           }
         ]),
-      { timeout: 8000, retries: 2, operationName: 'createInterconsulta' }
+      { timeout: 15000, retries: 2, operationName: 'createInterconsulta' }
     );
     const { error } = resp2 || {};
     if (error) {
