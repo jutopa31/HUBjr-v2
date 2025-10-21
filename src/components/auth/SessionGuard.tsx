@@ -29,11 +29,17 @@ export function SessionGuard({ children }: SessionGuardProps) {
     if (hasValidated.current) return;
     hasValidated.current = true;
 
+    // Emergency timeout - if validation takes too long, render app anyway
+    const emergencyTimeout = setTimeout(() => {
+      console.error('[SessionGuard] EMERGENCY: Validation timeout after 5 seconds, rendering app anyway');
+      setIsValidating(false);
+    }, 5000);
+
     const validateSession = async () => {
       console.log('[SessionGuard] Starting session validation...');
 
       try {
-        // Get current session
+        // Get current session with timeout
         const { data: { session }, error } = await supabase.auth.getSession();
 
         // Check for invalid session errors
@@ -91,6 +97,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
         // Session validation complete
         console.log('[SessionGuard] Validation complete, allowing app to render');
+        clearTimeout(emergencyTimeout);
         setIsValidating(false);
 
       } catch (err) {
@@ -105,6 +112,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
         }
 
         // Allow app to render anyway (better than staying stuck)
+        clearTimeout(emergencyTimeout);
         setIsValidating(false);
         setValidationError('Error validating session');
       }
@@ -112,6 +120,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
     // Start validation
     validateSession();
+
+    // Cleanup function
+    return () => {
+      clearTimeout(emergencyTimeout);
+    };
   }, []);
 
   // Show loading state while validating
