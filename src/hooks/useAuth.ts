@@ -38,35 +38,53 @@ export function useAuth() {
     }
 
     try {
-      // Check hospital context access
-      const contextAccess = await hasHospitalContextAccess(user.email);
+      // Add timeout to prevent privilege check from hanging
+      const privilegeCheckPromise = (async () => {
+        const userEmail = user.email!; // Already checked above
 
-      // Check for specific admin privileges
-      const privilegeTypes: AdminPrivilegeType[] = [
-        'hospital_context_access',
-        'full_admin',
-        'lumbar_puncture_admin',
-        'scale_management',
-        'user_management'
-      ];
+        // Check hospital context access
+        const contextAccess = await hasHospitalContextAccess(userEmail);
 
-      const userPrivileges: AdminPrivilegeType[] = [];
+        // Check for specific admin privileges
+        const privilegeTypes: AdminPrivilegeType[] = [
+          'hospital_context_access',
+          'full_admin',
+          'lumbar_puncture_admin',
+          'scale_management',
+          'user_management'
+        ];
 
-      for (const privilegeType of privilegeTypes) {
-        const privilege = await hasAdminPrivilege(user.email, privilegeType);
-        if (privilege.success && privilege.hasPrivilege) {
-          userPrivileges.push(privilegeType);
+        const userPrivileges: AdminPrivilegeType[] = [];
+
+        for (const privilegeType of privilegeTypes) {
+          const privilege = await hasAdminPrivilege(userEmail, privilegeType);
+          if (privilege.success && privilege.hasPrivilege) {
+            userPrivileges.push(privilegeType);
+          }
         }
-      }
+
+        return {
+          hasHospitalContextAccess: contextAccess.success ? contextAccess.hasAccess : false,
+          privileges: userPrivileges
+        };
+      })();
+
+      // Race between privilege check and 3-second timeout
+      const timeoutPromise = new Promise<{ hasHospitalContextAccess: boolean; privileges: AdminPrivilegeType[] }>((_, reject) =>
+        setTimeout(() => reject(new Error('Privilege check timeout')), 3000)
+      );
+
+      const result = await Promise.race([privilegeCheckPromise, timeoutPromise]);
 
       setState(prev => ({
         ...prev,
-        hasHospitalContextAccess: contextAccess.success ? contextAccess.hasAccess : false,
-        privileges: userPrivileges
+        hasHospitalContextAccess: result.hasHospitalContextAccess,
+        privileges: result.privileges
       }));
 
     } catch (error) {
       console.error('Error checking user privileges:', error);
+      // Set default values on error or timeout
       setState(prev => ({
         ...prev,
         hasHospitalContextAccess: false,
@@ -82,8 +100,19 @@ export function useAuth() {
 
     console.log('[useAuth] Initializing auth (SessionGuard already validated)...');
 
+    // Emergency timeout to prevent loading bootloop
+    const emergencyTimeout = setTimeout(() => {
+      console.error('[useAuth] EMERGENCY: getSession timeout after 5 seconds, setting loading to false');
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Session load timeout'
+      }));
+    }, 5000);
+
     // Get initial session (already validated by SessionGuard)
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      clearTimeout(emergencyTimeout);
       if (error) {
         console.warn('[useAuth] Session error (should have been caught by SessionGuard):', error.message);
         // Set to clean state
@@ -136,7 +165,10 @@ export function useAuth() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(emergencyTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
 
