@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload, LayoutList } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
@@ -57,6 +57,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [isScalesVisible, setIsScalesVisible] = useState(false);
   const [userCollapsed, setUserCollapsed] = useState(true);
 
+  // Estado y ref para el dropdown de patologías rápidas
+  const [showPathologyDropdown, setShowPathologyDropdown] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -89,6 +93,44 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   console.log('🤖 DiagnosticAlgorithm - AI Analysis:', aiAnalysis);
   console.log('🔍 DiagnosticAlgorithm - medicalScales received:', medicalScales?.length || 0);
   console.log('🔍 DiagnosticAlgorithm - medicalScales data:', medicalScales?.map(s => ({ id: s.id, name: s.name, hasItems: !!s.items?.length })));
+
+  // Array de patologías frecuentes
+  const commonPathologies = [
+    { label: 'Hipertensión arterial', abbreviation: 'HTA' },
+    { label: 'Diabetes mellitus', abbreviation: 'DBT' },
+    { label: 'Tabaquismo', abbreviation: 'TBQ' },
+    { label: 'Dislipemia', abbreviation: 'DLP' },
+    { label: 'Obesidad', abbreviation: 'Obesidad' },
+    { label: 'Enfermedad pulmonar obstructiva crónica', abbreviation: 'EPOC' },
+    { label: 'Cardiopatía', abbreviation: 'Cardiopatía' },
+    { label: 'Fibrilación auricular', abbreviation: 'FA' },
+    { label: 'Enfermedad renal crónica', abbreviation: 'ERC' },
+    { label: 'Hipotiroidismo', abbreviation: 'Hipotiroidismo' },
+    { label: 'ACV previo', abbreviation: 'ACV previo' },
+    { label: 'Epilepsia', abbreviation: 'Epilepsia' },
+    { label: 'Migraña', abbreviation: 'Migraña' },
+    { label: 'Demencia', abbreviation: 'Demencia' },
+    { label: 'Enfermedad de Parkinson', abbreviation: 'Enf. Parkinson' }
+  ];
+
+  // Función para insertar texto en la posición del cursor
+  const insertAtCursor = useCallback((text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newText = notes.substring(0, start) + text + ' ' + notes.substring(end);
+
+    setNotes(newText);
+
+    // Restaurar foco y posición del cursor después del texto insertado
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + text.length + 1; // +1 por el espacio
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
+  }, [notes, setNotes]);
 
   const handleInsertOcrText = useCallback((extractedText: string) => {
     const cleanedText = extractedText.trim();
@@ -544,6 +586,59 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                 <Plus className="h-4 w-4" />
                 <span>Test IA</span>
               </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowPathologyDropdown(!showPathologyDropdown)}
+                  className="flex items-center space-x-2 rounded-lg bg-teal-600 px-3 py-2 text-sm text-white hover:bg-teal-700"
+                  title="Insertar antecedentes patológicos frecuentes"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Antecedentes</span>
+                </button>
+                {showPathologyDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowPathologyDropdown(false)}
+                    />
+                    <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
+                      <div className="sticky top-0 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-cyan-50 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-gray-900">Antecedentes Frecuentes</h3>
+                          <button
+                            onClick={() => setShowPathologyDropdown(false)}
+                            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-600">Click para insertar en el cursor</p>
+                      </div>
+                      <div className="divide-y divide-gray-100">
+                        {commonPathologies.map((pathology, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              insertAtCursor(pathology.abbreviation);
+                            }}
+                            className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-teal-50"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">{pathology.label}</p>
+                            </div>
+                            <div className="ml-3 flex items-center space-x-2">
+                              <span className="rounded-full bg-teal-100 px-2 py-1 text-xs font-semibold text-teal-700">
+                                {pathology.abbreviation}
+                              </span>
+                              <ChevronRight className="h-4 w-4 text-gray-400" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex-1 p-4 lg:p-6">
@@ -563,6 +658,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             )}
 
             <textarea
+              ref={textareaRef}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="h-full min-h-[18rem] w-full resize-none rounded-lg border border-gray-300 p-4 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
