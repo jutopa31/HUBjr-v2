@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2025-10-23]
+
+### Fixed
+- **Hospital Context Synchronization in Evolucionador (Diagnostic Algorithm)**: Resolved critical issue where patients were not being saved to the correct hospital context
+  - Fixed `SavePatientModal` to properly sync with global hospital context using `useEffect`
+  - Eliminated duplicate hospital context selectors causing state desynchronization
+  - Implemented single global hospital context selector in main layout
+  - Removed redundant selectors from `SavedPatients` component
+  - Removed hospital context selector from `SavePatientModal` to prevent user confusion
+  - Added visual banner in save modal clearly indicating target hospital context
+  - **Impact**: Patients now save correctly to selected hospital context (Posadas/Julian)
+  - **Root Cause**: Modal had independent state that didn't update when global context changed
+  - **Solution**: Centralized hospital context management with single source of truth
+
+### Changed
+- Increased privilege check timeout from 3 to 10 seconds to handle multiple sequential database calls
+  - Prevents "Privilege check timeout" errors during authentication
+  - Improves reliability of hospital context access verification
+- Enhanced logging for hospital context operations with clear emoji indicators (🏥)
+  - `[SavePatientModal]` logs now show context updates and save operations
+  - `[SavedPatients]` logs track context synchronization
+  - `[DiagnosticAlgorithm]` logs display context when opening save modal
+- Success messages now include hospital context name for clarity
+  - "Paciente guardado exitosamente en Hospital Posadas"
+  - "Paciente guardado exitosamente en Consultorios Julian"
+
+### Removed
+- Duplicate hospital context selectors across multiple components
+- `isAdminMode` prop from `SavePatientModal` (no longer needed)
+- `useAuthContext` import from `DiagnosticAlgorithmContent` (unused after refactor)
+
 ## [2025-09-30]
 
 ### Fixed

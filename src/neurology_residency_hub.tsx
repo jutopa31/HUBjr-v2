@@ -5217,23 +5217,16 @@ const NeurologyResidencyHub = () => {
     switch (activeTab) {
       case 'diagnostic':
         return (
-          <>
-            <HospitalContextSelector
-              currentContext={currentHospitalContext}
-              onContextChange={setCurrentHospitalContext}
-              isAdminMode={isAdminMode}
-            />
-            <DiagnosticAlgorithmContent
-              notes={notes}
-              setNotes={setNotes}
-              copyNotes={copyNotes}
-              clearNotes={clearNotes}
-              openScaleModal={openScaleModal}
-              medicalScales={medicalScales}
-              isAdminMode={isAdminMode}
-              currentHospitalContext={currentHospitalContext}
-            />
-          </>
+          <DiagnosticAlgorithmContent
+            notes={notes}
+            setNotes={setNotes}
+            copyNotes={copyNotes}
+            clearNotes={clearNotes}
+            openScaleModal={openScaleModal}
+            medicalScales={medicalScales}
+            isAdminMode={isAdminMode}
+            currentHospitalContext={currentHospitalContext}
+          />
         );
       case 'inicio':
         return <DashboardInicio setActiveTab={handleTabChange} openScaleModal={openScaleModal} />;
@@ -5502,7 +5495,10 @@ const NeurologyResidencyHub = () => {
       case 'saved-patients':
         return (
           <ProtectedRoute>
-            <SavedPatients isAdminMode={isAdminMode} />
+            <SavedPatients
+              isAdminMode={isAdminMode}
+              currentHospitalContext={currentHospitalContext}
+            />
           </ProtectedRoute>
         );
       case 'interconsultas':
@@ -5581,22 +5577,15 @@ const NeurologyResidencyHub = () => {
         ); */
       default:
         return (
-          <>
-            <HospitalContextSelector
-              currentContext={currentHospitalContext}
-              onContextChange={setCurrentHospitalContext}
-              isAdminMode={isAdminMode}
-            />
-            <DiagnosticAlgorithmContent
-              notes={notes}
-              setNotes={setNotes}
-              copyNotes={copyNotes}
-              openScaleModal={openScaleModal}
-              medicalScales={medicalScales}
-              isAdminMode={isAdminMode}
-              currentHospitalContext={currentHospitalContext}
-            />
-          </>
+          <DiagnosticAlgorithmContent
+            notes={notes}
+            setNotes={setNotes}
+            copyNotes={copyNotes}
+            openScaleModal={openScaleModal}
+            medicalScales={medicalScales}
+            isAdminMode={isAdminMode}
+            currentHospitalContext={currentHospitalContext}
+          />
         );
     }
   };
@@ -5726,6 +5715,17 @@ const NeurologyResidencyHub = () => {
 
       {/* Main content */}
       <div className={`flex-1 flex flex-col overflow-hidden lg:ml-0 ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-6'} ${activeTab !== 'diagnostic' && activeTab !== 'inicio' ? 'pt-20 lg:pt-6' : 'pt-16 lg:pt-0'}`}>
+        {/* Selector Global de Contexto Hospitalario */}
+        {isAdminMode && (
+          <div className="px-6 pt-6 pb-0">
+            <HospitalContextSelector
+              currentContext={currentHospitalContext}
+              onContextChange={setCurrentHospitalContext}
+              isAdminMode={isAdminMode}
+            />
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto">
           {renderContent()}
         </div>

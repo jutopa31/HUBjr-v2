@@ -4,14 +4,17 @@ import { PatientAssessment, HospitalContext } from './types';
 import { deletePatientAssessment, updatePatientAssessment, getPatientAssessmentsWithPrivileges } from './utils/diagnosticAssessmentDB';
 import PatientDetailsModal from './PatientDetailsModal';
 import EditPatientNotesModal from './EditPatientNotesModal';
-import HospitalContextSelector from './HospitalContextSelector';
 import { useAuthContext } from './components/auth/AuthProvider';
 
 interface SavedPatientsProps {
   isAdminMode?: boolean;
+  currentHospitalContext?: HospitalContext;
 }
 
-const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) => {
+const SavedPatients: React.FC<SavedPatientsProps> = ({
+  isAdminMode = false,
+  currentHospitalContext = 'Posadas'
+}) => {
   const { user, hasHospitalContextAccess, hasPrivilege } = useAuthContext();
   const [patients, setPatients] = useState<PatientAssessment[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<PatientAssessment[]>([]);
@@ -21,12 +24,18 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hospitalContext, setHospitalContext] = useState<HospitalContext>('Posadas');
+  const [hospitalContext, setHospitalContext] = useState<HospitalContext>(currentHospitalContext);
   const [showOnlyMyPatients, setShowOnlyMyPatients] = useState(false);
   const [privilegeInfo, setPrivilegeInfo] = useState<any>(null);
 
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // Sincronizar el contexto local con el prop externo
+  useEffect(() => {
+    console.log('[SavedPatients] 🏥 Contexto hospitalario actualizado desde prop:', currentHospitalContext);
+    setHospitalContext(currentHospitalContext);
+  }, [currentHospitalContext]);
 
   // Cargar pacientes al montar el componente y cuando cambie el contexto
   useEffect(() => {
@@ -237,13 +246,6 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({ isAdminMode = false }) =>
           </button>
         </div>
       </div>
-
-      {/* Hospital Context Selector (Privileged Users Only) */}
-      <HospitalContextSelector
-        currentContext={hospitalContext}
-        onContextChange={setHospitalContext}
-        isAdminMode={isAdminMode && (hasHospitalContextAccess || hasPrivilege('full_admin'))}
-      />
 
       {/* Privilege Information */}
       {privilegeInfo && user && (hasHospitalContextAccess || hasPrivilege('full_admin')) && (

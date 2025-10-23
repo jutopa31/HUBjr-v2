@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useEscapeKey from './hooks/useEscapeKey';
 import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2 } from 'lucide-react';
 import { ExtractedPatientData, cleanPatientName } from './utils/patientDataExtractor';
 import { SavePatientData, HospitalContext } from './types';
-import { useAuthContext } from './components/auth/AuthProvider';
 
 interface SavePatientModalProps {
   isOpen: boolean;
@@ -11,7 +10,6 @@ interface SavePatientModalProps {
   onSave: (patientData: SavePatientData) => Promise<void>;
   extractedData: ExtractedPatientData;
   fullNotes: string;
-  isAdminMode?: boolean;
   currentHospitalContext?: HospitalContext;
 }
 
@@ -21,10 +19,8 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   onSave,
   extractedData,
   fullNotes,
-  isAdminMode = false,
   currentHospitalContext = 'Posadas'
 }) => {
-  const { hasPrivilege, hasHospitalContextAccess } = useAuthContext();
   const [patientName, setPatientName] = useState(extractedData.name || '');
   const [patientAge, setPatientAge] = useState(extractedData.age || '');
   const [patientDni, setPatientDni] = useState(extractedData.dni || '');
@@ -32,8 +28,11 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  // Check if user has privileges to access hospital context selector
-  const canAccessHospitalSelector = hasPrivilege('full_admin') || hasHospitalContextAccess || isAdminMode;
+  // Actualizar el contexto hospitalario cuando cambia el prop
+  useEffect(() => {
+    console.log('[SavePatientModal] Contexto hospitalario actualizado:', currentHospitalContext);
+    setHospitalContext(currentHospitalContext);
+  }, [currentHospitalContext]);
 
   useEscapeKey(onClose, isOpen);
 
@@ -50,6 +49,8 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
 
     try {
       console.log('[SavePatientModal] handleSave -> start');
+      console.log('[SavePatientModal] 🏥 Contexto hospitalario seleccionado:', hospitalContext);
+      console.log('[SavePatientModal] 📋 Contexto desde prop:', currentHospitalContext);
       const saveData: SavePatientData = {
         patient_name: cleanPatientName(patientName),
         patient_age: patientAge,
@@ -64,9 +65,11 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
         }))
       };
 
-      console.log('[SavePatientModal] handleSave -> payload:', saveData);
+      console.log('[SavePatientModal] handleSave -> payload completo:', saveData);
+      console.log('[SavePatientModal] ✅ Guardando en contexto:', saveData.hospital_context);
       await onSave(saveData);
-      setSaveResult({ success: true, message: 'Paciente guardado exitosamente' });
+      const contextLabel = hospitalContext === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas';
+      setSaveResult({ success: true, message: `Paciente guardado exitosamente en ${contextLabel}` });
       
       // Cerrar modal después de 2 segundos
       setTimeout(() => {
@@ -114,6 +117,24 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
             >
               <X className="h-6 w-6" />
             </button>
+          </div>
+        </div>
+
+        {/* Banner de Contexto Hospitalario */}
+        <div className={`px-6 py-3 border-b ${
+          hospitalContext === 'Julian'
+            ? 'bg-purple-50 border-purple-200'
+            : 'bg-blue-50 border-blue-200'
+        }`}>
+          <div className="flex items-center justify-center space-x-2">
+            <Building2 className={`h-4 w-4 ${
+              hospitalContext === 'Julian' ? 'text-purple-600' : 'text-blue-600'
+            }`} />
+            <span className={`text-sm font-semibold ${
+              hospitalContext === 'Julian' ? 'text-purple-800' : 'text-blue-800'
+            }`}>
+              Guardando en: {hospitalContext === 'Julian' ? '🏥 Consultorios Julian' : '🏥 Hospital Posadas'}
+            </span>
           </div>
         </div>
 
@@ -192,33 +213,6 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
                 />
               </div>
             </div>
-
-            {/* Selector de Hospital (solo para usuarios con privilegios) */}
-            {canAccessHospitalSelector && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Building2 className="h-4 w-4 inline mr-1" />
-                  Hospital/Contexto
-                </label>
-                <select
-                  value={hospitalContext}
-                  onChange={(e) => setHospitalContext(e.target.value as HospitalContext)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isSaving}
-                >
-                  <option value="Posadas">Hospital Posadas</option>
-                  <option value="Julian">Consultorios Julian</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  {hasPrivilege('full_admin')
-                    ? 'Acceso de administrador completo'
-                    : hasHospitalContextAccess
-                    ? 'Acceso autorizado a contextos hospitalarios'
-                    : 'Acceso temporal de administrador'
-                  }
-                </p>
-              </div>
-            )}
 
             {/* Vista previa de las notas */}
             <div>

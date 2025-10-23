@@ -8,7 +8,6 @@ import NeurologicalExamModal from './components/NeurologicalExamModal';
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
-import { useAuthContext } from './components/auth/AuthProvider';
 
 interface DiagnosticAlgorithmContentProps {
   notes: string;
@@ -33,7 +32,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   isAdminMode = false,
   currentHospitalContext = 'Posadas'
 }) => {
-  const { hasPrivilege, hasHospitalContextAccess } = useAuthContext();
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
     'Parkinson': false,
@@ -165,8 +163,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   // Función para manejar el guardado de paciente
   const handleSavePatient = () => {
+    console.log('[DiagnosticAlgorithm] 🏥 Abriendo modal con contexto:', currentHospitalContext);
     const extractedData = extractPatientData(notes);
-    
+
     if (!validatePatientData(extractedData) && notes.trim().length === 0) {
       setSaveStatus({
         success: false,
@@ -174,7 +173,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       });
       return;
     }
-    
+
     setShowSaveModal(true);
     setSaveStatus(null);
   };
@@ -183,12 +182,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const handleConfirmSave = async (patientData: SavePatientData) => {
     try {
       console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
+      console.log('[DiagnosticAlgorithm] 🏥 Guardando con contexto:', patientData.hospital_context);
       const result = await savePatientAssessment(patientData);
-      
+
       if (result.success) {
+        const contextLabel = patientData.hospital_context === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas';
         setSaveStatus({
           success: true,
-          message: 'Paciente guardado exitosamente en la base de datos.'
+          message: `Paciente guardado exitosamente en ${contextLabel}.`
         });
         setShowSaveModal(false);
         
@@ -684,7 +685,6 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           onSave={handleConfirmSave}
           extractedData={extractPatientData(notes)}
           fullNotes={notes}
-          isAdminMode={isAdminMode || hasPrivilege('full_admin') || hasHospitalContextAccess}
           currentHospitalContext={currentHospitalContext}
         />
       )}

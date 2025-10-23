@@ -69,9 +69,9 @@ export function useAuth() {
         };
       })();
 
-      // Race between privilege check and 3-second timeout
+      // Race between privilege check and 10-second timeout (increased from 3s to handle multiple DB calls)
       const timeoutPromise = new Promise<{ hasHospitalContextAccess: boolean; privileges: AdminPrivilegeType[] }>((_, reject) =>
-        setTimeout(() => reject(new Error('Privilege check timeout')), 3000)
+        setTimeout(() => reject(new Error('Privilege check timeout')), 10000)
       );
 
       const result = await Promise.race([privilegeCheckPromise, timeoutPromise]);
