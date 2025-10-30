@@ -10,26 +10,221 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Monochrome base: black background, white text */
+  --bg-primary: #0b0b0b;
+  --bg-secondary: #151515;
+  --bg-tertiary: #1e1e1e;
+  --bg-hover: #262626;
+  --border-primary: #3a3a3a;
+  --border-secondary: #4c4c4c;
+  --text-primary: #ffffff;
+  --text-secondary: #c7c7c7;
+  --text-tertiary: #9b9b9b;
+
+  /* Section accent defaults (sober, adjustable by StyleAgent) */
+  --accent-dashboard: #9ca3af; /* gray-400 */
+  --accent-patients: #7dd3fc;  /* sky-300 (muted) */
+  --accent-resources: #93c5fd; /* blue-300 (muted) */
+  --accent-admin: #a5b4fc;     /* indigo-300 (muted) */
+
+  /* Current scoped accent, set by [data-section] or StyleAgent */
+  --accent: var(--accent-dashboard);
+  --on-accent: #111111; /* computed by StyleAgent at runtime for contrast */
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f3f4f6;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  background-color: var(--bg-primary);
 }
 
 /* Ensure full height layout for medical application */
 html, body, #root {
   height: 100%;
+  background-color: var(--bg-primary);
+}
+
+/* Section scoping for accent alias */
+body[data-section='dashboard'] { --accent: var(--accent-dashboard); }
+body[data-section='patients']  { --accent: var(--accent-patients); }
+body[data-section='resources'] { --accent: var(--accent-resources); }
+body[data-section='admin']     { --accent: var(--accent-admin); }
+
+/* Headings and banners: high-contrast, sober accents */
+h1, h2 {
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+}
+
+/* Subtle accent underline for headings */
+h1 { border-bottom: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); padding-bottom: 0.35rem; }
+h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); padding-bottom: 0.25rem; }
+
+/* Generic banner style; rely on accent for a left border/tab */
+.banner {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-left: 4px solid var(--accent);
+}
+
+/* Accent helpers */
+.text-accent { color: var(--accent) !important; }
+.border-accent { border-color: var(--accent) !important; }
+.bg-accent { background-color: var(--accent) !important; color: var(--on-accent) !important; }
+.ring-accent { --tw-ring-color: var(--accent) !important; }
+
+/* Buttons using accent and monochrome base */
+.btn-accent {
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 65%, #000 35%);
+}
+.btn-accent:hover {
+  filter: brightness(0.95);
+}
+.btn-soft {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+.btn-soft:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Success action button (sober green) */
+.btn-success {
+  background-color: #4ade80; /* green-400 muted */
+  color: #111111;
+  border: 1px solid color-mix(in srgb, #4ade80 65%, #000 35%);
+}
+.btn-success:hover {
+  filter: brightness(0.95);
+}
+
+/* Global dark theme defaults */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #525252 #2a2a2a;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #525252;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}
+
+/* Global form element styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input:not([type]),
+input[type="search"],
+textarea,
+select {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #3b82f6 !important;
+  ring-color: #3b82f6 !important;
+  background-color: var(--bg-tertiary) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Button defaults */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Table styling */
+table {
+  color: var(--text-primary);
+}
+
+th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+td {
+  border-color: var(--border-primary);
+}
+
+tr:hover {
+  background-color: var(--bg-tertiary);
 }
 
 
+/* --- Responsive & domain-specific styles remain below --- */
+
+/* Utility overrides to ensure high-contrast dark theme across legacy Tailwind classes */
+body .bg-white { background-color: var(--bg-secondary) !important; color: var(--text-primary) !important; }
+body .bg-gray-50 { background-color: var(--bg-tertiary) !important; color: var(--text-primary) !important; }
+body .bg-gray-100 { background-color: var(--bg-secondary) !important; }
+body .bg-gray-200 { background-color: var(--bg-hover) !important; }
+body .bg-gray-300 { background-color: var(--bg-hover) !important; }
+body .bg-gray-400 { background-color: var(--bg-hover) !important; }
+body .hover\:bg-gray-50:hover, body .hover\:bg-gray-100:hover, body .hover\:bg-gray-200:hover { background-color: var(--bg-hover) !important; }
+body .text-white { color: var(--text-primary) !important; }
+body [class*="bg-"][class*="-50"] { background-color: var(--bg-secondary) !important; }
+body [class*="border-"][class*="-200"], body [class*="border-"][class*="-300"] { border-color: var(--border-primary) !important; }
+body .border-gray-200, body .border-gray-300 { border-color: var(--border-primary) !important; }
+body .text-gray-900 { color: var(--text-primary) !important; }
+body .text-gray-800, body .text-gray-700 { color: var(--text-secondary) !important; }
+body .text-gray-600, body .text-gray-500, body .text-gray-400 { color: var(--text-tertiary) !important; }
+
+/* Map legacy brand colors to current accent */
+body .text-blue-600, body .text-purple-600, body .text-green-600 { color: var(--accent) !important; }
+body .bg-blue-600, body .bg-green-600, body .bg-purple-600 { background-color: var(--accent) !important; color: var(--on-accent) !important; }
+body [class*="text-blue-"], body [class*="text-purple-"], body [class*="text-green-"] { color: var(--accent) !important; }
+/* tone down light badge backgrounds to dark-neutral for readability */
+body .bg-blue-100, body .bg-purple-100, body .bg-green-100, body .bg-red-100, body .bg-yellow-50 { background-color: var(--bg-secondary) !important; color: var(--text-secondary) !important; border: 1px solid var(--border-primary) !important; }
+
+/* Ensure headings are readable within key containers */
+.banner h1, .banner h2, .banner h3, .medical-card h1, .medical-card h2, .medical-card h3 { color: var(--text-primary) !important; }
+.banner p, .medical-card .text-gray-600, .medical-card .text-gray-500 { color: var(--text-secondary) !important; }
 /* Enhanced expandable rows animations */
 .expandable-row {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -68,15 +263,16 @@ html, body, #root {
 
 /* Enhanced medical cards */
 .medical-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .medical-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: var(--border-secondary);
+  background: var(--bg-tertiary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Ward Rounds Table Grid Layout */
@@ -287,7 +483,7 @@ html, body, #root {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -296,12 +492,14 @@ html, body, #root {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 0.5rem;
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* Medical form improvements */

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Brain, Settings, CheckSquare, Users, FolderOpen, Menu, X, BookOpen, User, Syringe, MessageSquare } from 'lucide-react';
+import { Home, Calculator, Calendar, Menu, Settings, CheckSquare, Users, FolderOpen, BookOpen, User, Syringe, MessageSquare } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -11,13 +11,13 @@ import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
 import AcademiaManager from './AcademiaManager';
 import { ProtectedRoute } from './components/auth';
-import SimpleUserMenu from './components/auth/SimpleUserMenu';
 import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
 import ResidentManagement from './components/ResidentManagement';
 import Interconsultas from './Interconsultas';
 import PacientesPostAlta from './PacientesPostAlta';
+import Sidebar from './components/layout/Sidebar';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -5631,93 +5631,23 @@ const NeurologyResidencyHub = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg flex flex-col transition-transform duration-300 ease-in-out lg:transition-none`}>
-        {/* Mobile close button */}
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="p-6 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Brain className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="font-bold text-lg">Neurología</h1>
-                <p className="text-sm text-gray-600">Hospital Posadas</p>
-              </div>
-            </div>
-          </div>
-          <SimpleUserMenu />
-        </div>
-        
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => handleTabChange(item.id)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeTab === item.id
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                    {item.id === 'communication' && notifications > 0 && (
-                      <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {notifications}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          
-          {/* Botón de acceso administrativo */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            {isAdminMode ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs font-medium text-green-800">Modo Administrador</span>
-                </div>
-                <p className="text-xs text-green-700 mb-2">Puede editar eventos y asignaciones</p>
-                <button
-                  onClick={() => {
-                    setIsAdminMode(false);
-                  }}
-                  className="w-full text-xs bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Salir del Modo Admin
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-orange-50 hover:text-orange-700 transition-colors border border-orange-200"
-              >
-                <Settings className="h-5 w-5" />
-                <span>Acceso Admin</span>
-              </button>
-            )}
-          </div>
-        </nav>
-      </div>
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        notifications={notifications}
+        isAdminMode={isAdminMode}
+        setIsAdminMode={setIsAdminMode}
+        setShowAuthModal={setShowAuthModal}
+        menuItems={menuItems}
+      />
 
       {/* Main content */}
-      <div className={`flex-1 flex flex-col overflow-hidden lg:ml-0 ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-6'} ${activeTab !== 'diagnostic' && activeTab !== 'inicio' ? 'pt-20 lg:pt-6' : 'pt-16 lg:pt-0'}`}>
+      <div className={`flex-1 flex flex-col overflow-hidden lg:ml-0 bg-[#1a1a1a] ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-4'} ${activeTab !== 'diagnostic' && activeTab !== 'inicio' ? 'pt-20 lg:pt-4' : 'pt-16 lg:pt-0'}`}>
         {/* Selector Global de Contexto Hospitalario */}
         {isAdminMode && (
-          <div className="px-6 pt-6 pb-0">
+          <div className="px-4 pt-4 pb-0">
             <HospitalContextSelector
               currentContext={currentHospitalContext}
               onContextChange={setCurrentHospitalContext}

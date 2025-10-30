@@ -170,6 +170,18 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
     }
   };
 
+  // Apply section accent for this view
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
+
   // Función para alternar la expansión de una fila
   const toggleRowExpansion = (patientId: string) => {
     const newExpandedRows = new Set(expandedRows);
@@ -239,7 +251,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
         <div className="flex space-x-3">
           <button
             onClick={loadPatients}
-            className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+            className="flex items-center space-x-2 btn-soft px-4 py-2 rounded-lg"
           >
             <RefreshCw className="h-4 w-4" />
             <span>Actualizar</span>

@@ -63,11 +63,11 @@ const UserDashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
+      <div className="banner rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Panel Personal - {userName}</h1>
-            <p className="text-blue-100 mt-1">
+            <p className="mt-1" style={{ color: "var(--text-secondary)" }}>
               {getRoleLabel(userRole)} • Servicio de Neurología
             </p>
           </div>
@@ -76,15 +76,15 @@ const UserDashboard: React.FC = () => {
               <>
                 <div className="text-center">
                   <div className="text-2xl font-bold">{statistics.procedures.total}</div>
-                  <div className="text-blue-100">Procedimientos</div>
+                  <div style={{ color: "var(--text-secondary)" }}>Procedimientos</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold">{statistics.patients.active}</div>
-                  <div className="text-blue-100">Pacientes Activos</div>
+                  <div style={{ color: "var(--text-secondary)" }}>Pacientes Activos</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold">{statistics.education.totalHours}h</div>
-                  <div className="text-blue-100">Horas de Estudio</div>
+                  <div style={{ color: "var(--text-secondary)" }}>Horas de Estudio</div>
                 </div>
               </>
             )}

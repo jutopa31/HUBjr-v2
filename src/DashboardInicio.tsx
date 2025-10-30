@@ -65,7 +65,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
       title: 'Nueva Evaluación',
       subtitle: 'Algoritmos Diagnósticos',
       icon: Brain,
-      color: 'bg-blue-600 hover:bg-blue-700',
+      color: 'bg-[#3a3a3a] hover:bg-[#444444] border border-gray-700',
       action: () => setActiveTab('diagnostic')
     },
     {
@@ -73,7 +73,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
       title: 'Agregar al Pase',
       subtitle: 'Pase de Sala',
       icon: Users,
-      color: 'bg-green-600 hover:bg-green-700',
+      color: 'bg-[#3a3a3a] hover:bg-[#444444] border border-gray-700',
       action: () => setActiveTab('ward-rounds')
     },
     {
@@ -81,7 +81,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
       title: 'Ver Pacientes',
       subtitle: 'Pacientes ambulatorio',
       icon: FileText,
-      color: 'bg-purple-600 hover:bg-purple-700',
+      color: 'bg-[#3a3a3a] hover:bg-[#444444] border border-gray-700',
       action: () => setActiveTab('saved-patients')
     },
     {
@@ -89,7 +89,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
       title: 'Cronograma',
       subtitle: 'Eventos Programados',
       icon: Calendar,
-      color: 'bg-orange-600 hover:bg-orange-700',
+      color: 'bg-[#3a3a3a] hover:bg-[#444444] border border-gray-700',
       action: () => setActiveTab('schedule')
     }
   ];
@@ -105,52 +105,50 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
 
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto bg-[#1a1a1a]">
       {/* Header Principal */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-4 border-b border-gray-700">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-white bg-opacity-20 rounded-full">
-              <Home className="h-8 w-8" />
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-white bg-opacity-10 rounded-lg">
+              <Home className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">¡Bienvenidos!</h1>
-              <p className="text-blue-100 text-lg">Residencia de Neurología</p>
-              <p className="text-blue-200 text-sm">Hospital Nacional Posadas - Servicio de Neurología</p>
+              <h1 className="text-xl font-semibold">¡Bienvenidos!</h1>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{formatTime(currentTime)}</div>
-            <div className="text-blue-200 capitalize">{formatDate(currentTime)}</div>
+            <div className="text-lg font-semibold">{formatTime(currentTime)}</div>
+            <div className="text-gray-400 text-xs capitalize">{formatDate(currentTime)}</div>
           </div>
         </div>
       </div>
 
       {/* Contenido Principal */}
-      <div className="p-6 space-y-6">
+      <div className="p-4 space-y-4">
         {/* Fila Principal: Accesos Rápidos + Actividades de Hoy */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Accesos Rápidos */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+          <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-4">
+            <h3 className="text-base font-semibold text-gray-200 mb-3 flex items-center">
+              <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
               Accesos Rápidos
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {quickAccessButtons.map((button) => {
                 const IconComponent = button.icon;
                 return (
                   <button
                     key={button.id}
                     onClick={button.action}
-                    className={`p-4 ${button.color} text-white rounded-lg transition-colors text-left`}
+                    className={`p-3 ${button.color} text-white rounded-md transition-colors text-left`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="font-semibold text-sm mb-1">{button.title}</div>
-                        <div className="text-xs opacity-90">{button.subtitle}</div>
+                        <div className="font-medium text-sm mb-0.5">{button.title}</div>
+                        <div className="text-xs opacity-80">{button.subtitle}</div>
                       </div>
-                      <IconComponent className="h-6 w-6" />
+                      <IconComponent className="h-5 w-5" />
                     </div>
                   </button>
                 );
@@ -159,15 +157,15 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
           </div>
 
           {/* Panel de Actividades de Hoy */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+          <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-gray-200 flex items-center">
+                <Calendar className="h-4 w-4 mr-2 text-blue-500" />
                 Actividades de Hoy
               </h3>
               <button
                 onClick={() => setActiveTab('schedule')}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-blue-400 hover:text-blue-300 text-sm font-medium"
               >
                 Ver todo →
               </button>
@@ -175,30 +173,30 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
 
 
             {/* Lista de actividades */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {todayEvents.length > 0 ? todayEvents.map((event, index) => (
-                <div key={index} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded">
-                  <div className="flex-shrink-0 w-16 text-sm font-medium text-blue-600">
+                <div key={index} className="flex items-center space-x-3 p-2 hover:bg-[#333333] rounded-md">
+                  <div className="flex-shrink-0 w-14 text-xs font-medium text-blue-400">
                     {formatEventTime(event.start_date)}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">{event.title}</div>
-                    <div className="text-sm text-gray-600">{event.location || 'Ubicación no especificada'}</div>
+                    <div className="font-medium text-sm text-gray-200">{event.title}</div>
+                    <div className="text-xs text-gray-500">{event.location || 'Ubicación no especificada'}</div>
                     {event.description && (
-                      <div className="text-xs text-gray-500 mt-1">{event.description}</div>
+                      <div className="text-xs text-gray-600 mt-0.5">{event.description}</div>
                     )}
                   </div>
-                  <div className="p-1 bg-green-100 rounded-full">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  <div className="p-1 bg-green-950/30 rounded-full">
+                    <CheckCircle className="h-3 w-3 text-green-500" />
                   </div>
                 </div>
               )) : (
                 <div className="text-center text-gray-500 py-4">
-                  <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <Calendar className="h-6 w-6 mx-auto mb-2 text-gray-600" />
                   <p className="text-sm">No hay actividades programadas para hoy</p>
                   <button
                     onClick={() => setActiveTab('schedule')}
-                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="mt-2 text-blue-400 hover:text-blue-300 text-sm font-medium"
                   >
                     Ver cronograma completo →
                   </button>
@@ -208,7 +206,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
 
             <button
               onClick={() => setActiveTab('diagnostic')}
-              className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 font-medium"
+              className="w-full mt-3 bg-[#3a3a3a] hover:bg-[#444444] border border-gray-700 text-white py-2 px-3 rounded-md font-medium text-sm transition-colors"
             >
               Nueva Evaluación
             </button>

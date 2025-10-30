@@ -46,6 +46,18 @@ const WardRoundsComplete: React.FC = () => {
     loadPatients();
   }, []);
 
+  // Apply section accent for this view
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
+
   const loadPatients = async () => {
     try {
       console.log('🔍 Intentando conectar con Supabase...');
@@ -211,7 +223,7 @@ const WardRoundsComplete: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between banner rounded-lg p-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pase de Sala - Neurología</h1>
           <p className="text-gray-600">

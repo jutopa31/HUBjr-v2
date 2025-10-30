@@ -38,6 +38,18 @@ const PendientesManager: React.FC = () => {
     due_date: ''
   });
 
+  // Apply section accent for this view
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
+
   // Fetch tasks from Supabase
   const fetchTasks = async () => {
     if (!user) {
@@ -334,19 +346,19 @@ const PendientesManager: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
+      <div className="banner rounded-lg shadow-lg p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center space-x-3">
-            <CheckSquare className="h-8 w-8" />
+            <CheckSquare className="h-8 w-8 text-accent" />
             <div>
               <h1 className="text-3xl font-bold">Pendientes</h1>
-              <p className="text-purple-100 text-lg">Lista de tareas y recordatorios</p>
+              <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>Lista de tareas y recordatorios</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex w-full items-center justify-center space-x-2 rounded-lg bg-white bg-opacity-20 px-4 py-2 transition-all hover:bg-opacity-30 sm:w-auto"
+              className="flex w-full items-center justify-center space-x-2 rounded-lg px-4 py-2 transition-all btn-soft sm:w-auto"
               disabled={loading}
             >
               <Plus className="h-5 w-5" />
@@ -354,7 +366,7 @@ const PendientesManager: React.FC = () => {
             </button>
             <button
               onClick={handleSyncWithWardRounds}
-              className="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 bg-opacity-80 px-4 py-2 text-white transition-all hover:bg-opacity-100 sm:w-auto"
+              className="flex w-full items-center justify-center space-x-2 rounded-lg px-4 py-2 transition-all btn-accent sm:w-auto"
               disabled={syncing || loading}
             >
               <Users className="h-5 w-5" />
@@ -365,31 +377,31 @@ const PendientesManager: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="medical-card">
         <div className="flex items-center justify-between px-4 py-3 md:hidden">
-          <div className="flex items-center gap-2 text-gray-700">
-            <Filter className="h-5 w-5 text-gray-500" />
+          <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+            <Filter className="h-5 w-5" />
             <span className="text-sm font-medium">Filtros</span>
           </div>
           <button
             onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-            className="text-sm font-medium text-purple-600"
+            className="text-sm font-medium text-accent"
           >
             {isFilterPanelOpen ? 'Ocultar' : 'Mostrar'}
           </button>
         </div>
         <div className={`${isFilterPanelOpen ? 'block' : 'hidden'} px-4 pb-4 md:block md:px-6 md:pb-6`}>
           <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Filter className="hidden h-5 w-5 text-gray-500 md:block" />
+            <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+              <Filter className="hidden h-5 w-5 md:block" />
               <span className="hidden text-sm font-medium md:inline">Filtros:</span>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Estado:</label>
+              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Estado:</label>
               <select 
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded border border-gray-300 px-3 py-1 text-sm"
+                className="rounded px-3 py-1 text-sm"
               >
                 <option value="all">Todos</option>
                 <option value="pending">Pendientes</option>
@@ -398,11 +410,11 @@ const PendientesManager: React.FC = () => {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Prioridad:</label>
+              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Prioridad:</label>
               <select 
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
-                className="rounded border border-gray-300 px-3 py-1 text-sm"
+                className="rounded px-3 py-1 text-sm"
               >
                 <option value="all">Todas</option>
                 <option value="high">Alta</option>
@@ -411,18 +423,18 @@ const PendientesManager: React.FC = () => {
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Origen:</label>
+              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Origen:</label>
               <select 
                 value={filterSource}
                 onChange={(e) => setFilterSource(e.target.value)}
-                className="rounded border border-gray-300 px-3 py-1 text-sm"
+                className="rounded px-3 py-1 text-sm"
               >
                 <option value="all">Todas</option>
                 <option value="ward_rounds">Pase de Sala</option>
                 <option value="manual">Manuales</option>
               </select>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               {filteredTasks.length} de {tasks.length} tareas
             </div>
           </div>
@@ -431,41 +443,41 @@ const PendientesManager: React.FC = () => {
 
       {/* New Task Form */}
       {showForm && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Nueva Tarea</h3>
+        <div className="medical-card p-6">
+          <h3 className="text-lg font-semibold mb-4">Nueva Tarea</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Título *
               </label>
               <input
                 type="text"
                 value={newTask.title}
                 onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
                 placeholder="Ingresa el título de la tarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Descripción
               </label>
               <textarea
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500 h-24"
+                className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent h-24"
                 placeholder="Descripción detallada (opcional)"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Prioridad
                 </label>
                 <select
                   value={newTask.priority}
                   onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as Task['priority'] })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                  className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
                 >
                   <option value="low">Baja</option>
                   <option value="medium">Media</option>
@@ -473,13 +485,13 @@ const PendientesManager: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Estado
                 </label>
                 <select
                   value={newTask.status}
                   onChange={(e) => setNewTask({ ...newTask, status: e.target.value as Task['status'] })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                  className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
                 >
                   <option value="pending">Pendiente</option>
                   <option value="in_progress">En Progreso</option>
@@ -487,14 +499,14 @@ const PendientesManager: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Fecha límite
                 </label>
                 <input
                   type="date"
                   value={newTask.due_date}
                   onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                  className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
                 />
               </div>
             </div>
@@ -502,14 +514,14 @@ const PendientesManager: React.FC = () => {
               <button
                 onClick={addTask}
                 disabled={loading || !newTask.title.trim()}
-                className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 btn-accent disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
               >
                 <Save className="h-4 w-4" />
                 <span>{loading ? 'Guardando...' : 'Guardar Tarea'}</span>
               </button>
               <button
                 onClick={() => setShowForm(false)}
-                className="flex items-center space-x-2 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 btn-soft px-4 py-2 rounded-lg transition-colors"
               >
                 <X className="h-4 w-4" />
                 <span>Cancelar</span>
@@ -520,19 +532,19 @@ const PendientesManager: React.FC = () => {
       )}
 
       {/* Tasks List */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="medical-card p-6">
         <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <h2 className="text-xl font-semibold">Lista de Tareas ({filteredTasks.length})</h2>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {loading ? 'Sincronizando...' : error ? 'Error de conexión' : 'Conectado a Supabase'}
           </div>
         </div>
 
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12">
-            <CheckSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-500 mb-2">No hay tareas</h3>
-            <p className="text-gray-400">
+            <CheckSquare className="h-16 w-16 mx-auto mb-4" style={{ color: 'var(--text-tertiary)' }} />
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>No hay tareas</h3>
+            <p style={{ color: 'var(--text-tertiary)' }}>
               {tasks.length === 0 
                 ? 'Agrega tu primera tarea para comenzar'
                 : 'No hay tareas que coincidan con los filtros seleccionados'
@@ -550,9 +562,7 @@ const PendientesManager: React.FC = () => {
               return (
                 <div 
                   key={task.id}
-                  className={`border border-gray-200 rounded-lg p-4 transition-all hover:shadow-md ${
-                    task.status === 'completed' ? 'bg-gray-50 opacity-75' : 'bg-white'
-                  } ${isOverdue ? 'border-red-300 bg-red-50' : ''}`}
+                  className={`rounded-lg p-4 transition-all hover:shadow-md medical-card`}
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="flex-1">
@@ -572,7 +582,7 @@ const PendientesManager: React.FC = () => {
                         </button>
                         
                         <h3 className={`font-medium ${
-                          task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'
+                          task.status === 'completed' ? 'line-through' : ''
                         }`}>
                           {task.title}
                         </h3>
@@ -584,31 +594,29 @@ const PendientesManager: React.FC = () => {
                           </span>
                         )}
                         
-                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${priorityDisplay.color}`}>
+                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs btn-soft`} style={{ border: '1px solid var(--border-primary)' }}>
                           <PriorityIcon className="h-3 w-3" />
                           <span>{priorityDisplay.label}</span>
                         </div>
                         
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${statusDisplay.color}`}>
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs btn-soft`} style={{ border: '1px solid var(--border-primary)' }}>
                           {statusDisplay.label}
                         </span>
 
                         {isOverdue && (
-                          <span className="inline-block px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                          <span className="inline-block px-2 py-1 rounded-full text-xs btn-soft" style={{ border: '1px solid var(--border-primary)' }}>
                             Vencida
                           </span>
                         )}
                       </div>
                       
                       {task.description && (
-                        <p className={`text-sm mb-2 ${
-                          task.status === 'completed' ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
+                        <p className={`text-sm mb-2`} style={{ color: task.status === 'completed' ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}>
                           {task.description}
                         </p>
                       )}
                       
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                         {task.due_date && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
@@ -632,7 +640,7 @@ const PendientesManager: React.FC = () => {
                       <select
                         value={task.status}
                         onChange={(e) => updateTaskStatus(task.id!, e.target.value as Task['status'])}
-                        className="text-xs border border-gray-300 rounded px-2 py-1"
+                        className="text-xs rounded px-2 py-1"
                       >
                         <option value="pending">Pendiente</option>
                         <option value="in_progress">En Progreso</option>
@@ -641,14 +649,14 @@ const PendientesManager: React.FC = () => {
                       
                       <button
                         onClick={() => setEditingTask(task.id!)}
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        className="p-1 transition-colors btn-soft"
                       >
                         <Edit3 className="h-4 w-4" />
                       </button>
                       
                       <button
                         onClick={() => deleteTask(task.id!)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 transition-colors btn-soft"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

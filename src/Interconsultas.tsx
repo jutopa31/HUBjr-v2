@@ -47,6 +47,17 @@ const Interconsultas: React.FC = () => {
   };
 
   useEffect(() => { fetchAll(); }, []);
+  // Section accent for readability
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
 
   const handleCreate = async () => {
     if (!user) {
@@ -190,46 +201,49 @@ const Interconsultas: React.FC = () => {
       recoveryTimeout={15000}
     >
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Interconsultas</h1>
-        <div className="flex gap-2">
-          <button onClick={fetchAll} className="px-3 py-2 text-sm bg-gray-100 border rounded">Actualizar</button>
-          <button onClick={exportCSV} className="px-3 py-2 text-sm bg-white border rounded inline-flex items-center gap-2"><Download className="h-4 w-4"/>Exportar CSV</button>
+        <div className="flex items-center justify-between mb-6 banner rounded-lg p-4">
+          <h1 className="text-2xl font-bold">Interconsultas</h1>
+          <div className="flex gap-2">
+            <button onClick={fetchAll} className="px-3 py-2 text-sm btn-soft rounded">Actualizar</button>
+            <button onClick={exportCSV} className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2"><Download className="h-4 w-4"/>Exportar CSV</button>
+          </div>
         </div>
-      </div>
 
       {!user && (
-        <div className="mb-4 p-3 rounded border border-yellow-200 bg-yellow-50 text-sm text-yellow-800">
+        <div className="mb-4 p-3 rounded medical-card text-sm">
           Debes iniciar sesión para crear o guardar interconsultas.
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">{error}</div>
+        <div className="mb-4 p-3 rounded medical-card text-sm">{error}</div>
       )}
 
       {successMessage && (
-        <div className="mb-4 p-3 rounded border border-green-200 bg-green-50 text-sm text-green-700">{successMessage}</div>
+        <div className="mb-4 p-3 rounded medical-card text-sm">{successMessage}</div>
       )}
 
       {/* Formulario de nueva interconsulta */}
-      <div className="bg-white rounded-lg border p-4 mb-6">
+      <div className="medical-card p-4 mb-6">
         <h2 className="font-medium mb-3">Nueva interconsulta</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
             className="border rounded px-3 py-2 text-sm"
+            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
             placeholder="Nombre"
             value={form.nombre}
             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
           />
           <input
             className="border rounded px-3 py-2 text-sm"
+            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
             placeholder="DNI"
             value={form.dni}
             onChange={(e) => setForm({ ...form, dni: e.target.value })}
           />
           <input
             className="border rounded px-3 py-2 text-sm"
+            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
             placeholder="Cama"
             value={form.cama}
             onChange={(e) => setForm({ ...form, cama: e.target.value })}
@@ -237,12 +251,14 @@ const Interconsultas: React.FC = () => {
           <input
             type="date"
             className="border rounded px-3 py-2 text-sm"
+            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
             value={form.fecha_interconsulta}
             onChange={(e) => setForm({ ...form, fecha_interconsulta: e.target.value })}
           />
         </div>
         <textarea
           className="mt-3 w-full border rounded px-3 py-2 text-sm"
+          style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
           placeholder="Respuesta (opcional)"
           rows={3}
           value={form.respuesta ?? ''}
@@ -252,7 +268,7 @@ const Interconsultas: React.FC = () => {
           <button
             onClick={handleCreate}
             disabled={!isValid || loading || creating || !user}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded text-white ${(isValid && !creating) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'} disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded ${(isValid && !creating) ? 'btn-accent' : 'btn-soft'} disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <Plus className="h-4 w-4"/>{creating ? 'Guardando...' : 'Agregar'}
           </button>
@@ -260,11 +276,11 @@ const Interconsultas: React.FC = () => {
       </div>
 
       {/* Listado */}
-      <div className="bg-white rounded-lg border">
+      <div className="medical-card">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-left">
+              <tr className="text-left">
                 <th className="px-3 py-2">Fecha</th>
                 <th className="px-3 py-2">Nombre</th>
                 <th className="px-3 py-2">DNI</th>
@@ -287,14 +303,14 @@ const Interconsultas: React.FC = () => {
                     <button
                       onClick={() => handleGuardarPase(r)}
                       disabled={savingPaseId === r.id || !user}
-                      className={`px-2 py-1 border rounded text-xs ${savingPaseId === r.id ? 'bg-blue-50 text-blue-600 border-blue-300' : 'hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`px-2 py-1 rounded text-xs ${savingPaseId === r.id ? 'btn-accent' : 'btn-soft'} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {savingPaseId === r.id ? 'Guardando...' : 'Guardar al pase'}
                     </button>
                     <button
                       onClick={() => handleGuardarPacientes(r)}
                       disabled={savingPacientesId === r.id || !user}
-                      className={`px-2 py-1 border rounded text-xs ${savingPacientesId === r.id ? 'bg-blue-50 text-blue-600 border-blue-300' : 'hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`px-2 py-1 rounded text-xs ${savingPacientesId === r.id ? 'btn-accent' : 'btn-soft'} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {savingPacientesId === r.id ? 'Guardando...' : 'Guardar en pacientes'}
                     </button>
@@ -305,7 +321,7 @@ const Interconsultas: React.FC = () => {
           </table>
         </div>
         {rows.length === 0 && (
-          <div className="p-6 text-sm text-gray-500">No hay interconsultas registradas.</div>
+          <div className="p-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>No hay interconsultas registradas.</div>
         )}
       </div>
       </div>
@@ -321,6 +337,7 @@ const InlineRespuesta: React.FC<{ id: string; initial: string; onSave: (id: stri
     <div className="flex items-center gap-2">
       <input
         className="border rounded px-2 py-1 w-full"
+        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
         placeholder="Escribe respuesta"
         value={value}
         onChange={(e) => { setValue(e.target.value); setDirty(true); }}
@@ -328,7 +345,7 @@ const InlineRespuesta: React.FC<{ id: string; initial: string; onSave: (id: stri
       <button
         onClick={() => { onSave(id, value); setDirty(false); }}
         disabled={!dirty}
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${dirty ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${dirty ? 'btn-accent' : 'btn-soft'}`}
       >
         <Save className="h-3 w-3"/>Guardar
       </button>
@@ -337,3 +354,11 @@ const InlineRespuesta: React.FC<{ id: string; initial: string; onSave: (id: stri
 };
 
 export default Interconsultas;
+
+
+
+
+
+
+
+

@@ -48,6 +48,17 @@ const PacientesPostAlta: React.FC = () => {
   };
 
   useEffect(() => { fetchAll(); }, []);
+  // Section accent for readability
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
 
   const handleCreate = async () => {
     if (!user) {
@@ -104,27 +115,27 @@ const PacientesPostAlta: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 banner rounded-lg p-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Post alta + Ambulatorio</h1>
-          <p className="text-sm text-gray-600 mt-1">Pacientes programados para consulta hoy ({today})</p>
+          <h1 className="text-2xl font-bold">Post alta + Ambulatorio</h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Pacientes programados para consulta hoy ({today})</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={fetchAll} className="px-3 py-2 text-sm bg-gray-100 border rounded">Actualizar</button>
-          <button onClick={exportCSV} className="px-3 py-2 text-sm bg-white border rounded inline-flex items-center gap-2">
+          <button onClick={fetchAll} className="px-3 py-2 text-sm btn-soft rounded">Actualizar</button>
+          <button onClick={exportCSV} className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2">
             <Download className="h-4 w-4"/>Exportar CSV
           </button>
         </div>
       </div>
 
       {!user && (
-        <div className="mb-4 p-3 rounded border border-yellow-200 bg-yellow-50 text-sm text-yellow-800">
+        <div className="mb-4 p-3 rounded medical-card text-sm">
           Debes iniciar sesión para crear o modificar pacientes post alta.
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">{error}</div>
+        <div className="mb-4 p-3 rounded medical-card text-sm">{error}</div>
       )}
 
       {/* Formulario de nuevo paciente */}
@@ -157,7 +168,7 @@ const PacientesPostAlta: React.FC = () => {
           />
         </div>
         <textarea
-          className="mt-3 w-full border rounded px-3 py-2 text-sm"
+          className="mt-3 w-full border rounded px-3 py-2 text-sm" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)", borderColor: "var(--border-primary)" }}
           placeholder="Pendiente (opcional)"
           rows={3}
           value={form.pendiente ?? ''}
@@ -167,7 +178,7 @@ const PacientesPostAlta: React.FC = () => {
           <button
             onClick={handleCreate}
             disabled={!isValid || loading || !user}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded text-white ${isValid ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'} `}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded ${isValid ? 'btn-accent' : 'btn-soft'} `}
           >
             <Plus className="h-4 w-4"/>Agregar
           </button>
@@ -175,11 +186,11 @@ const PacientesPostAlta: React.FC = () => {
       </div>
 
       {/* Listado */}
-      <div className="bg-white rounded-lg border">
+      <div className="medical-card">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-left">
+              <tr className="text-left">
                 <th className="px-3 py-2">Fecha</th>
                 <th className="px-3 py-2">DNI</th>
                 <th className="px-3 py-2">Nombre</th>
@@ -203,7 +214,7 @@ const PacientesPostAlta: React.FC = () => {
           </table>
         </div>
         {rows.length === 0 && (
-          <div className="p-6 text-sm text-gray-500">No hay pacientes ambulatorios programados para hoy.</div>
+          <div className="p-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>No hay pacientes ambulatorios programados para hoy.</div>
         )}
       </div>
     </div>
@@ -218,6 +229,7 @@ const InlinePendiente: React.FC<{ id: string; initial: string; onSave: (id: stri
     <div className="flex items-center gap-2">
       <input
         className="border rounded px-2 py-1 w-full"
+        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
         placeholder="Escribe pendiente"
         value={value}
         onChange={(e) => { setValue(e.target.value); setDirty(true); }}
@@ -225,7 +237,7 @@ const InlinePendiente: React.FC<{ id: string; initial: string; onSave: (id: stri
       <button
         onClick={() => { onSave(id, value); setDirty(false); }}
         disabled={!dirty}
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${dirty ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${dirty ? 'btn-accent' : 'btn-soft'}`}
       >
         <Save className="h-3 w-3"/>Guardar
       </button>
@@ -234,3 +246,6 @@ const InlinePendiente: React.FC<{ id: string; initial: string; onSave: (id: stri
 };
 
 export default PacientesPostAlta;
+
+
+

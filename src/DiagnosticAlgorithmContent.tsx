@@ -278,12 +278,12 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Evolucionador</p>
-            <h2 className="text-base font-semibold text-gray-900">Notas y escalas neurológicas</h2>
+            <h2 className="text-base font-semibold text-gray-200">Notas y escalas neurológicas</h2>
           </div>
           <button
             type="button"
             onClick={handleToggleScales}
-            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
+            className="inline-flex items-center rounded-full bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
           >
             <LayoutList className="mr-1.5 h-3.5 w-3.5" />
             {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
@@ -532,7 +532,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={handleSavePatient}
-                className="flex items-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                className="flex items-center space-x-2 rounded-lg bg-blue-900 px-3 py-2 text-sm text-white hover:bg-blue-800 border border-blue-800"
                 title="Guardar paciente en base de datos"
               >
                 <Database className="h-4 w-4" />
@@ -540,7 +540,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               </button>
               <button
                 onClick={copyNotes}
-                className="flex items-center space-x-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
               >
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
@@ -548,7 +548,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {isAdminMode && (
                 <button
                   onClick={() => setShowOcrModal(true)}
-                  className="flex items-center space-x-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
+                  className="flex items-center space-x-2 rounded-lg bg-indigo-700 px-3 py-2 text-sm text-white hover:bg-indigo-600"
                   title="Procesar PDF/Imagen con OCR"
                 >
                   <Upload className="h-4 w-4" />
@@ -558,7 +558,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {clearNotes && (
                 <button
                   onClick={clearNotes}
-                  className="flex items-center space-x-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700 hover:bg-red-200"
+                  className="flex items-center space-x-2 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-300 hover:bg-red-950/60 border border-red-800"
                 >
                   <span>🗑️</span>
                   <span>Limpiar</span>
@@ -572,7 +572,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 `;
                   setNotes(notes + normalExamText);
                 }}
-                className="flex items-center space-x-2 rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
+                className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
               >
                 <Plus className="h-4 w-4" />
                 <span>EF normal</span>
@@ -582,7 +582,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                   const testText = `Paciente con temblor en reposo y rigidez muscular. Presenta hemiparesia derecha y disartria severa.`;
                   setNotes(notes + (notes ? '\n\n' : '') + testText);
                 }}
-                className="flex items-center space-x-2 rounded-lg bg-purple-600 px-3 py-2 text-sm text-white hover:bg-purple-700"
+                className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
               >
                 <Plus className="h-4 w-4" />
                 <span>Test IA</span>
@@ -590,7 +590,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               <div className="relative">
                 <button
                   onClick={() => setShowPathologyDropdown(!showPathologyDropdown)}
-                  className="flex items-center space-x-2 rounded-lg bg-teal-600 px-3 py-2 text-sm text-white hover:bg-teal-700"
+                  className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
                   title="Insertar antecedentes patológicos frecuentes"
                 >
                   <Plus className="h-4 w-4" />
@@ -706,7 +706,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
         <button
           type="button"
           onClick={handleToggleScales}
-          className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-blue-700 p-4 text-white shadow-lg transition hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           aria-label="Mostrar escalas"
         >
           <Stethoscope className="h-5 w-5" />

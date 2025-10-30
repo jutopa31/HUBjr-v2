@@ -74,13 +74,13 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'text-red-600 bg-red-100';
+        return 'text-red-400 bg-red-950/30 border-red-800';
       case 'medium':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-yellow-400 bg-yellow-950/30 border-yellow-800';
       case 'low':
-        return 'text-green-600 bg-green-100';
+        return 'text-green-400 bg-green-950/30 border-green-800';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-gray-400 bg-gray-800 border-gray-700';
     }
   };
 
@@ -100,11 +100,11 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'in_progress':
-        return <Clock className="h-4 w-4 text-blue-600" />;
+        return <Clock className="h-3.5 w-3.5 text-blue-400" />;
       case 'pending':
-        return <AlertCircle className="h-4 w-4 text-orange-600" />;
+        return <AlertCircle className="h-3.5 w-3.5 text-orange-400" />;
       default:
-        return <CheckSquare className="h-4 w-4 text-gray-600" />;
+        return <CheckSquare className="h-3.5 w-3.5 text-gray-400" />;
     }
   };
 
@@ -118,18 +118,18 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-          <CheckSquare className="h-5 w-5 mr-2 text-indigo-600" />
+    <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-semibold text-gray-200 flex items-center">
+          <CheckSquare className="h-4 w-4 mr-2 text-indigo-400" />
           Pendientes
         </h3>
         <button
           onClick={() => setActiveTab('pendientes')}
-          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
+          className="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center"
         >
           Ver todos
-          <ArrowRight className="h-4 w-4 ml-1" />
+          <ArrowRight className="h-3 w-3 ml-1" />
         </button>
       </div>
 
@@ -142,14 +142,14 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors"
+              className="flex items-center justify-between p-2 hover:bg-[#333333] rounded-md border border-gray-800 transition-colors"
             >
-              <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
                 <div className="flex-shrink-0">
                   {getStatusIcon(task.status)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate text-sm">
+                  <div className="font-medium text-gray-200 truncate text-sm">
                     {task.title}
                   </div>
                   {task.description && (
@@ -166,7 +166,7 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
                   </span>
                 )}
                 <span
-                  className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityColor(task.priority)}`}
+                  className={`text-xs px-2 py-0.5 rounded-md font-medium border ${getPriorityColor(task.priority)}`}
                 >
                   {getPriorityLabel(task.priority)}
                 </span>
@@ -175,15 +175,15 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-8">
-          <CheckSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+        <div className="text-center text-gray-500 py-6">
+          <CheckSquare className="h-8 w-8 mx-auto mb-2 text-gray-600" />
           <p className="text-sm font-medium">No hay pendientes activos</p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Todas las tareas están completadas
           </p>
           <button
             onClick={() => setActiveTab('pendientes')}
-            className="mt-3 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+            className="mt-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium"
           >
             Crear nueva tarea →
           </button>
@@ -192,7 +192,7 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
 
       <button
         onClick={() => setActiveTab('pendientes')}
-        className="w-full mt-4 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 font-medium text-sm transition-colors"
+        className="w-full mt-3 bg-[#3a3a3a] hover:bg-[#444444] border border-gray-700 text-white py-2 px-3 rounded-md font-medium text-sm transition-colors"
       >
         Gestionar Pendientes
       </button>

@@ -147,11 +147,11 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="medical-card p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Stethoscope className="h-6 w-6 text-blue-600 mr-2" />
+            <h2 className="text-2xl font-bold flex items-center">
+              <Stethoscope className="h-6 w-6 text-accent mr-2" />
               Registros de Punciones Lumbares
             </h2>
             <p className="text-gray-600">Seguimiento y análisis de sus procedimientos de punción lumbar</p>
@@ -159,14 +159,14 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
           <div className="flex space-x-2">
             <button
               onClick={() => setShowStats(!showStats)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center"
+              className="px-4 py-2 text-sm font-medium btn-soft rounded-lg flex items-center"
             >
               <BarChart3 className="h-4 w-4 mr-2" />
               {showStats ? 'Ocultar Estadísticas' : 'Mostrar Estadísticas'}
             </button>
             <button
               onClick={exportToCsv}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center"
+              className="px-4 py-2 text-sm font-medium btn-soft rounded-lg flex items-center"
             >
               <Download className="h-4 w-4 mr-2" />
               Exportar CSV
@@ -175,11 +175,11 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
         </div>
 
         {/* Quick Filter Toggle */}
-        <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+        <div className="mb-4 p-4 banner rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-blue-900">Vista de Procedimientos</h3>
-              <p className="text-xs text-blue-700">
+              <h3 className="text-sm font-medium">Vista de Procedimientos</h3>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                 {searchParams.filters?.resident_id
                   ? `Mostrando procedimientos de: ${residents.find(r => r.id === searchParams.filters?.resident_id)?.name || 'Usuario seleccionado'}`
                   : 'Mostrando todos los procedimientos del departamento'
@@ -190,9 +190,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
               <button
                 onClick={() => handleFilter({ resident_id: undefined })}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  !searchParams.filters?.resident_id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-50'
+                  !searchParams.filters?.resident_id ? 'btn-accent' : 'btn-soft'
                 }`}
               >
                 Todos
@@ -200,9 +198,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
               <button
                 onClick={() => handleFilter({ resident_id: user?.id })}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  searchParams.filters?.resident_id === user?.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-50'
+                  searchParams.filters?.resident_id === user?.id ? 'btn-accent' : 'btn-soft'
                 }`}
               >
                 Solo Míos
@@ -217,17 +213,17 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
           <div className="space-y-4 mb-6">
             {!searchParams.filters?.resident_id && (
               <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Estadísticas del Departamento</h3>
+                <h3 className="text-lg font-medium  mb-2">Estadísticas del Departamento</h3>
                 <p className="text-sm text-gray-600">Vista general de todos los procedimientos del servicio</p>
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
+              <div className="medical-card rounded-lg p-4">
                 <div className="flex items-center">
-                  <Target className="h-8 w-8 text-blue-600" />
+                  <Target className="h-8 w-8 text-accent" />
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-blue-800">Total de Procedimientos</p>
-                    <p className="text-2xl font-bold text-blue-900">
+                    <p className="text-sm font-medium ">Total de Procedimientos</p>
+                    <p className="text-2xl font-bold ">
                       {searchParams.filters?.resident_id
                         ? stats?.total_procedures || 0
                         : departmentStats?.total_procedures || 0
@@ -237,12 +233,12 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 </div>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-4">
+              <div className="medical-card rounded-lg p-4">
                 <div className="flex items-center">
                   <CheckCircle className="h-8 w-8 text-green-600" />
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-green-800">Tasa de Éxito</p>
-                    <p className="text-2xl font-bold text-green-900">
+                    <p className="text-sm font-medium ">Tasa de Éxito</p>
+                    <p className="text-2xl font-bold ">
                       {searchParams.filters?.resident_id
                         ? (stats?.success_rate ?? 0).toFixed(1)
                         : (departmentStats?.success_rate ?? 0).toFixed(1)
@@ -290,7 +286,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
             {/* Department-wide resident comparison */}
             {!searchParams.filters?.resident_id && residentComparison.length > 0 && (
               <div className="bg-white rounded-lg p-6 border border-gray-200">
-                <h4 className="text-md font-medium text-gray-900 mb-4">Comparación entre Residentes</h4>
+                <h4 className="text-md font-medium  mb-4">Comparación entre Residentes</h4>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
@@ -304,7 +300,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                     <tbody>
                       {residentComparison.slice(0, 10).map((resident, index) => (
                         <tr key={index} className="border-b">
-                          <td className="py-2 font-medium text-blue-600">
+                          <td className="py-2 font-medium text-accent">
                             {resident.resident_name}
                           </td>
                           <td className="text-center py-2">{resident.total_procedures}</td>
@@ -330,18 +326,18 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
         {/* Detailed Analytics */}
         {showStats && analytics && (
           <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Análisis Detallado</h3>
+            <h3 className="text-lg font-medium  mb-4">Análisis Detallado</h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Indication Breakdown */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Indicaciones Más Comunes</h4>
+                <h4 className="text-md font-medium  mb-3">Indicaciones Más Comunes</h4>
                 <div className="space-y-2">
                   {analytics.indication_breakdown.slice(0, 5).map((item, index) => (
                     <div key={index} className="flex justify-between items-center">
                       <span className="text-sm text-gray-700 truncate">{item.indication}</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">{item.count}</span>
+                        <span className="text-sm font-medium ">{item.count}</span>
                         <span className="text-xs text-green-600">({(item.success_rate ?? 0).toFixed(0)}% éxito)</span>
                       </div>
                     </div>
@@ -351,13 +347,13 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
 
               {/* Difficulty Distribution */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Dificultad vs Tasa de Éxito</h4>
+                <h4 className="text-md font-medium  mb-3">Dificultad vs Tasa de Éxito</h4>
                 <div className="space-y-2">
                   {analytics.difficulty_trends.map((item, index) => (
                     <div key={index} className="flex justify-between items-center">
                       <span className="text-sm text-gray-700">Dificultad {item.difficulty}</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">{item.count} procedimientos</span>
+                        <span className="text-sm font-medium ">{item.count} procedimientos</span>
                         <span className={`text-xs ${getDifficultyColor(item.difficulty)}`}>
                           {(item.success_rate ?? 0).toFixed(0)}% éxito
                         </span>
@@ -369,14 +365,14 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
 
               {/* Supervisor Performance */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Supervisor Performance</h4>
+                <h4 className="text-md font-medium  mb-3">Supervisor Performance</h4>
                 <div className="space-y-2">
                   {analytics.supervisor_stats.slice(0, 5).map((item, index) => (
                     <div key={index} className="flex justify-between items-center">
                       <span className="text-sm text-gray-700 truncate">{item.supervisor}</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">{item.procedures}</span>
-                        <span className="text-xs text-blue-600">({(item.avg_success_rate ?? 0).toFixed(0)}% avg)</span>
+                        <span className="text-sm font-medium ">{item.procedures}</span>
+                        <span className="text-xs text-accent">({(item.avg_success_rate ?? 0).toFixed(0)}% avg)</span>
                       </div>
                     </div>
                   ))}
@@ -385,13 +381,13 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
 
               {/* Complication Rates */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Complication Types</h4>
+                <h4 className="text-md font-medium  mb-3">Complication Types</h4>
                 <div className="space-y-2">
                   {analytics.complication_rates.map((item, index) => (
                     <div key={index} className="flex justify-between items-center">
                       <span className="text-sm text-gray-700 capitalize">{item.complication_type.replace('_', ' ')}</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">{item.count}</span>
+                        <span className="text-sm font-medium ">{item.count}</span>
                         <span className="text-xs text-red-600">({(item.percentage ?? 0).toFixed(1)}%)</span>
                       </div>
                     </div>
@@ -404,7 +400,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="medical-card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div className="flex-1 max-w-lg">
             <div className="relative">
@@ -554,11 +550,11 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
       )}
 
       {/* Results Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="medical-card overflow-hidden">
         {procedures.length === 0 ? (
           <div className="text-center py-12">
             <Stethoscope className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No procedures found</h3>
+            <h3 className="text-lg font-medium  mb-2">No procedures found</h3>
             <p className="text-gray-600">Start by recording your first lumbar puncture procedure.</p>
           </div>
         ) : (
@@ -604,13 +600,13 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
               <tbody className="bg-white divide-y divide-gray-200">
                 {procedures.map((procedure) => (
                   <tr key={procedure.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                         {new Date(procedure.procedure_date).toLocaleDateString()}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <div>
                         <div className="font-medium">{procedure.patient_initials}</div>
                         {procedure.patient_age && (
@@ -618,20 +614,20 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <div className="max-w-xs truncate">{procedure.indication}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-gray-400 mr-2" />
                         {procedure.supervisor}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-blue-400 mr-2" />
                         <div>
-                          <div className="font-medium text-blue-600">
+                          <div className="font-medium text-accent">
                             {procedure.resident_name || 'Desconocido'}
                           </div>
                           {procedure.resident_level && (
@@ -640,7 +636,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <span className="capitalize">{procedure.trainee_role?.replace('_', ' ')}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -655,10 +651,10 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       {procedure.attempts_count}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <div className="flex items-center">
                         {getComplicationCount(procedure) > 0 ? (
                           <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
@@ -677,7 +673,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => onView?.(procedure)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-accent hover:"
                           title="View details"
                         >
                           <Eye className="h-4 w-4" />
@@ -715,3 +711,4 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
     </div>
   );
 }
+

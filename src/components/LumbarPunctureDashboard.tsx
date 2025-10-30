@@ -13,6 +13,16 @@ interface LumbarPunctureDashboardProps {
 export default function LumbarPunctureDashboard({ className = '' }: LumbarPunctureDashboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedProcedure, setSelectedProcedure] = useState<LumbarPuncture | null>(null);
+  React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
 
   const handleCreateNew = () => {
     setSelectedProcedure(null);
@@ -85,20 +95,20 @@ export default function LumbarPunctureDashboard({ className = '' }: LumbarPunctu
     <div className={`space-y-6 ${className}`}>
       {/* Navigation Header */}
       {viewMode === 'list' && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between banner rounded-lg p-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Stethoscope className="h-6 w-6 text-blue-600 mr-2" />
+            <h1 className="text-2xl font-bold flex items-center">
+              <Stethoscope className="h-6 w-6 text-accent mr-2" />
               Gestión de Punciones Lumbares
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
               Seguimiento y análisis integral de procedimientos de punción lumbar
             </p>
           </div>
 
           <button
             onClick={handleCreateNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+            className="px-4 py-2 btn-accent rounded-lg flex items-center space-x-2 transition-colors"
           >
             <Plus className="h-4 w-4" />
             <span>Nuevo Procedimiento</span>
@@ -121,9 +131,9 @@ interface ProcedureDetailViewProps {
 
 function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg">
+    <div className="medical-card">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-primary)' }}>
         <div>
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
             <Eye className="h-5 w-5 text-blue-600 mr-2" />
@@ -134,16 +144,16 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
           </p>
         </div>
         <div className="flex space-x-2">
-          <button
-            onClick={onEdit}
-            className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
-          >
+            <button
+              onClick={onEdit}
+              className="px-4 py-2 text-sm font-medium btn-soft rounded-lg"
+            >
             Editar
           </button>
-          <button
-            onClick={onBack}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-          >
+            <button
+              onClick={onBack}
+              className="px-4 py-2 text-sm font-medium btn-soft rounded-lg"
+            >
             Volver a la Lista
           </button>
         </div>

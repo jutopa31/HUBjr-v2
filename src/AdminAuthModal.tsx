@@ -80,27 +80,27 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   if (isAuthenticated) {
     return (
       <>
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-96 p-6">
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
+          <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-96 p-6 border border-gray-800">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Settings className="h-6 w-6 text-green-600" />
+                <div className="p-2 bg-green-950/40 rounded-lg border border-green-800">
+                  <Settings className="h-6 w-6 text-green-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-gray-200">
                     Panel de Administración
                   </h2>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-400">
                     Gestiona la configuración del sistema
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1 hover:bg-[#3a3a3a] rounded-lg transition-colors"
               >
-                <X className="h-5 w-5 text-gray-500" />
+                <X className="h-5 w-5 text-gray-400" />
               </button>
             </div>
 
@@ -108,14 +108,14 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
               {/* Configuración de IA */}
               <button
                 onClick={() => setShowAIConfig(true)}
-                className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg hover:from-purple-100 hover:to-blue-100 transition-colors"
+                className="w-full flex items-center space-x-3 p-4 bg-purple-950/40 border border-purple-800 rounded-lg hover:bg-purple-950/60 transition-colors"
               >
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Brain className="h-6 w-6 text-purple-600" />
+                <div className="p-2 bg-purple-900/50 rounded-lg">
+                  <Brain className="h-6 w-6 text-purple-400" />
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-medium text-gray-900">Configuración de IA</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-medium text-gray-200">Configuración de IA</h3>
+                  <p className="text-sm text-gray-400">
                     Gestiona API keys y funciones de inteligencia artificial
                   </p>
                 </div>
@@ -126,23 +126,23 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
               {/* Examen Neurológico Interactivo */}
               <button
                 onClick={() => setShowNeurologicalExam(true)}
-                className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
+                className="w-full flex items-center space-x-3 p-4 bg-blue-950/40 border border-blue-800 rounded-lg hover:bg-blue-950/60 transition-colors"
               >
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Stethoscope className="h-6 w-6 text-blue-600" />
+                <div className="p-2 bg-blue-900/50 rounded-lg">
+                  <Stethoscope className="h-6 w-6 text-blue-400" />
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-medium text-gray-900">Examen Neurológico</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-medium text-gray-200">Examen Neurológico</h3>
+                  <p className="text-sm text-gray-400">
                     Sistema interactivo paso a paso para evaluación completa
                   </p>
                 </div>
               </button>
 
               {/* Otras configuraciones futuras */}
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">Funciones Disponibles</h3>
-                <ul className="text-sm text-gray-600 space-y-1">
+              <div className="p-4 bg-[#333333] border border-gray-700 rounded-lg">
+                <h3 className="font-medium text-gray-200 mb-2">Funciones Disponibles</h3>
+                <ul className="text-sm text-gray-400 space-y-1">
                   <li>• Configuración de IA y API Keys ✅</li>
                   <li>• Procesador OCR para documentos médicos ✅</li>
                   <li>• Examen Neurológico Interactivo 🚧 (Nuevo)</li>
@@ -156,7 +156,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             <div className="flex justify-end space-x-3 pt-6">
               <button
                 onClick={handleClose}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-200 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border border-gray-700"
               >
                 Cerrar
               </button>
@@ -186,28 +186,28 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-96 p-6">
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
+      <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-96 p-6 border border-gray-800">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
+            <div className={`p-2 rounded-lg border ${
               user && (hasPrivilege('full_admin') || hasHospitalContextAccess)
-                ? 'bg-green-100'
-                : 'bg-orange-100'
+                ? 'bg-green-950/40 border-green-800'
+                : 'bg-orange-950/40 border-orange-800'
             }`}>
               {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) ? (
-                <UserCheck className="h-6 w-6 text-green-600" />
+                <UserCheck className="h-6 w-6 text-green-400" />
               ) : (
-                <Lock className="h-6 w-6 text-orange-600" />
+                <Lock className="h-6 w-6 text-orange-400" />
               )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-200">
                 Acceso Administrativo
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) ? (
-                  <>Usuario autorizado: <span className="font-medium text-green-600">{user.email}</span></>
+                  <>Usuario autorizado: <span className="font-medium text-green-400">{user.email}</span></>
                 ) : (
                   'Ingrese la contraseña para editar contenidos'
                 )}
@@ -216,18 +216,18 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-[#3a3a3a] rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5 text-gray-400" />
           </button>
         </div>
 
         <div>
           {/* Show privilege info if user is authenticated */}
           {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h3 className="text-sm font-medium text-green-800 mb-2">Privilegios de Usuario</h3>
-              <ul className="text-xs text-green-700 space-y-1">
+            <div className="mb-4 p-4 bg-green-950/40 border border-green-800 rounded-lg">
+              <h3 className="text-sm font-medium text-green-300 mb-2">Privilegios de Usuario</h3>
+              <ul className="text-xs text-green-400 space-y-1">
                 {hasPrivilege('full_admin') && <li>✅ Administrador completo</li>}
                 {hasHospitalContextAccess && <li>✅ Acceso a contextos hospitalarios</li>}
                 <li>✅ Acceso automático sin contraseña</li>
@@ -240,7 +240,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             <>
               <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
                   Contraseña de Administrador
                 </label>
                 <div className="relative">
@@ -248,14 +248,14 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10"
+                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 bg-[#333333] text-gray-200"
                     placeholder="Ingrese la contraseña"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -265,15 +265,15 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   </button>
                 </div>
                 {error && (
-                  <p className="mt-2 text-sm text-red-600">{error}</p>
+                  <p className="mt-2 text-sm text-red-400">{error}</p>
                 )}
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-xs text-yellow-800">
+              <div className="bg-yellow-950/40 border border-yellow-800 rounded-lg p-3">
+                <p className="text-xs text-yellow-300">
                   <strong>Nota:</strong> El modo de edición le permite modificar:
                 </p>
-                <ul className="text-xs text-yellow-700 mt-1 ml-4 list-disc">
+                <ul className="text-xs text-yellow-400 mt-1 ml-4 list-disc">
                   <li>Asignaciones semanales de residentes e internos</li>
                   <li>Eventos del calendario académico</li>
                   <li>Información de actividades</li>
@@ -284,23 +284,23 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-2 text-gray-200 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border border-gray-700"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                  className="flex-1 px-4 py-2 bg-orange-700 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors"
                 >
                   {isLoading ? 'Verificando...' : 'Acceder'}
                 </button>
               </div>
             </form>
 
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-600">
-                  <strong>Para demo:</strong> Contraseña: <code className="bg-gray-200 px-1 rounded">admin2025</code>
+              <div className="mt-4 p-3 bg-[#333333] border border-gray-700 rounded-lg">
+                <p className="text-xs text-gray-400">
+                  <strong>Para demo:</strong> Contraseña: <code className="bg-[#3a3a3a] px-1 rounded text-gray-300">admin2025</code>
                 </p>
               </div>
             </>
@@ -314,7 +314,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   setIsAuthenticated(true);
                   onAuthenticate();
                 }}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-6 py-2 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors"
               >
                 Acceder al Panel de Administración
               </button>

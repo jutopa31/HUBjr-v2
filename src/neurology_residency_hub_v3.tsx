@@ -33,12 +33,12 @@ const NeurologyResidencyHubV3: React.FC = () => {
   }, [activeSection, hospitalContext]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-10 border-b border-slate-900 bg-slate-950/80 backdrop-blur">
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <header className="sticky top-0 z-10 backdrop-blur" style={{ borderBottom: '1px solid var(--border-primary)', backgroundColor: 'color-mix(in srgb, var(--bg-primary) 85%, transparent)' }}>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-6">
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-semibold">HubJR v3 Simplified</h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Early skeleton. Navigation is functional while views are implemented iteratively.
             </p>
           </div>
@@ -48,11 +48,7 @@ const NeurologyResidencyHubV3: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveSection(item.id)}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
-                  activeSection === item.id
-                    ? 'bg-sky-500 text-slate-950'
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-slate-100'
-                }`}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${activeSection === item.id ? 'btn-accent' : 'btn-soft'}`}
               >
                 {item.label}
               </button>
@@ -60,7 +56,7 @@ const NeurologyResidencyHubV3: React.FC = () => {
           </nav>
         </div>
       </header>
-      <main className="flex flex-1 justify-center bg-slate-950">
+      <main className="flex flex-1 justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="flex w-full max-w-6xl flex-1 flex-col gap-6 p-6">{sectionContent}</div>
       </main>
     </div>

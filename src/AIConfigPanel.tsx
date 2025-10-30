@@ -107,25 +107,25 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-800">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+        <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+              <div className="p-2 bg-white/10 rounded-lg">
                 <Brain className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold">Configuración de IA</h2>
-                <p className="text-purple-100 text-sm">
+                <h2 className="text-lg font-semibold">Configuración de IA</h2>
+                <p className="text-gray-400 text-sm">
                   Gestiona la integración de inteligencia artificial
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
               <Settings className="h-5 w-5" />
             </button>
@@ -135,56 +135,56 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
         <div className="p-6 space-y-6">
           {/* Estado Actual */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-950/40 border border-blue-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-blue-900">Estado IA</span>
+                <Activity className="h-5 w-5 text-blue-400" />
+                <span className="font-medium text-blue-300">Estado IA</span>
               </div>
-              <p className="text-2xl font-bold text-blue-900 mt-1">
+              <p className="text-xl font-bold text-blue-300 mt-1">
                 {config.enabled ? 'Activa' : 'Inactiva'}
               </p>
-              <p className="text-xs text-blue-700">
+              <p className="text-xs text-blue-400">
                 {enabledFeatures} funciones habilitadas
               </p>
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-green-950/40 border border-green-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-900">Uso Hoy</span>
+                <DollarSign className="h-5 w-5 text-green-400" />
+                <span className="font-medium text-green-300">Uso Hoy</span>
               </div>
-              <p className="text-2xl font-bold text-green-900 mt-1">
+              <p className="text-xl font-bold text-green-300 mt-1">
                 ${config.usage.costToday.toFixed(3)}
               </p>
-              <p className="text-xs text-green-700">
+              <p className="text-xs text-green-400">
                 {config.usage.requestsToday} solicitudes
               </p>
             </div>
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="bg-purple-950/40 border border-purple-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-purple-600" />
-                <span className="font-medium text-purple-900">Proveedor</span>
+                <Brain className="h-5 w-5 text-purple-400" />
+                <span className="font-medium text-purple-300">Proveedor</span>
               </div>
-              <p className="text-lg font-bold text-purple-900 mt-1">
+              <p className="text-base font-bold text-purple-300 mt-1">
                 {currentProvider?.name || 'No seleccionado'}
               </p>
-              <p className="text-xs text-purple-700">{config.model}</p>
+              <p className="text-xs text-purple-400">{config.model}</p>
             </div>
           </div>
 
           {/* Configuración General */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+            <h3 className="text-base font-semibold text-gray-200 flex items-center space-x-2">
               <Settings className="h-5 w-5" />
               <span>Configuración General</span>
             </h3>
 
             {/* Enable/Disable IA */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-[#333333] rounded-lg border border-gray-700">
               <div>
-                <h4 className="font-medium text-gray-900">Habilitar IA</h4>
-                <p className="text-sm text-gray-600">
+                <h4 className="font-medium text-gray-200">Habilitar IA</h4>
+                <p className="text-sm text-gray-400">
                   Activar/desactivar todas las funciones de IA
                 </p>
               </div>
@@ -195,13 +195,13 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                   onChange={(e) => setConfig(prev => ({ ...prev, enabled: e.target.checked }))}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
               </label>
             </div>
 
             {/* Proveedor */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-400">
                 Proveedor de IA
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -210,8 +210,8 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     key={provider.id}
                     className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${
                       config.provider === provider.id
-                        ? 'border-purple-600 ring-2 ring-purple-600 bg-purple-50'
-                        : 'border-gray-300 bg-white hover:bg-gray-50'
+                        ? 'border-purple-600 ring-2 ring-purple-600 bg-purple-950/40'
+                        : 'border-gray-700 bg-[#333333] hover:bg-[#3a3a3a]'
                     }`}
                   >
                     <input
@@ -225,16 +225,16 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     <div className="flex w-full items-center justify-between">
                       <div className="flex items-center">
                         <div className="text-sm">
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-gray-200">
                             {provider.name}
                           </div>
-                          <div className="text-gray-500">
+                          <div className="text-gray-400">
                             {provider.description}
                           </div>
                         </div>
                       </div>
                       {config.provider === provider.id && (
-                        <Check className="h-5 w-5 text-purple-600" />
+                        <Check className="h-5 w-5 text-purple-400" />
                       )}
                     </div>
                   </label>
@@ -245,7 +245,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
             {/* API Key */}
             {currentProvider?.requiresApiKey && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-400">
                   API Key
                 </label>
                 <div className="relative">
@@ -253,14 +253,14 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     type={showApiKey ? 'text' : 'password'}
                     value={config.apiKey}
                     onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 pr-20"
+                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 pr-20 bg-[#333333] text-gray-200"
                     placeholder={`Ingrese su ${currentProvider.name} API Key`}
                   />
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
                     <button
                       type="button"
                       onClick={() => setShowApiKey(!showApiKey)}
-                      className="p-1 text-gray-400 hover:text-gray-600"
+                      className="p-1 text-gray-400 hover:text-gray-300"
                     >
                       {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -268,10 +268,10 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                       type="button"
                       onClick={handleTestConnection}
                       disabled={testingConnection || !config.apiKey}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                      className="p-1 text-gray-400 hover:text-gray-300 disabled:opacity-50"
                     >
                       {testingConnection ? (
-                        <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
+                        <div className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-gray-400 rounded-full" />
                       ) : (
                         <Key className="h-4 w-4" />
                       )}
@@ -279,13 +279,13 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 {connectionStatus === 'success' && (
-                  <p className="text-sm text-green-600 flex items-center space-x-1">
+                  <p className="text-sm text-green-400 flex items-center space-x-1">
                     <Check className="h-4 w-4" />
                     <span>Conexión exitosa</span>
                   </p>
                 )}
                 {connectionStatus === 'error' && (
-                  <p className="text-sm text-red-600 flex items-center space-x-1">
+                  <p className="text-sm text-red-400 flex items-center space-x-1">
                     <AlertCircle className="h-4 w-4" />
                     <span>Error de conexión - Verifique la API Key</span>
                   </p>
@@ -296,13 +296,13 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
             {/* Modelo */}
             {availableModels.length > 0 && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-400">
                   Modelo
                 </label>
                 <select
                   value={config.model}
                   onChange={(e) => setConfig(prev => ({ ...prev, model: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-[#333333] text-gray-200"
                 >
                   {availableModels.map((model) => (
                     <option key={model.id} value={model.id}>
@@ -316,18 +316,18 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
 
           {/* Funciones */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-200">
               Funciones de IA
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {currentProvider?.supportedFeatures.map((feature) => (
                 <div
                   key={feature.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-[#333333] rounded-lg border border-gray-700"
                 >
                   <div>
-                    <h4 className="font-medium text-gray-900">{feature.name}</h4>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
+                    <h4 className="font-medium text-gray-200">{feature.name}</h4>
+                    <p className="text-sm text-gray-400">{feature.description}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -337,7 +337,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                       disabled={!config.enabled}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600 peer-disabled:opacity-50"></div>
+                    <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600 peer-disabled:opacity-50"></div>
                   </label>
                 </div>
               ))}
@@ -345,10 +345,10 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Botones */}
-          <div className="flex justify-between pt-6 border-t border-gray-200">
+          <div className="flex justify-between pt-6 border-t border-gray-800">
             <button
               onClick={handleReset}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 text-gray-300 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border border-gray-700"
             >
               <RotateCcw className="h-4 w-4" />
               <span>Restablecer</span>
@@ -356,14 +356,14 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
             <div className="flex space-x-3">
               <button
                 onClick={onClose}
-                className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-6 py-2 text-gray-200 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border border-gray-700"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                className="flex items-center space-x-2 px-6 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 transition-colors"
               >
                 {isSaving ? (
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />

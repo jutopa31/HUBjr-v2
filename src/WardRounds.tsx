@@ -88,6 +88,18 @@ const WardRounds: React.FC = () => {
   const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<{ id: string; nombre: string; dni: string } | null>(null);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
 
+  // Apply section accent for this view
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.section = 'patients';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete (document.body as any).dataset.section;
+      }
+    };
+  }, []);
+
   // Load data once auth is ready (SessionGuard ensures clean auth state)
   useEffect(() => {
     if (!authLoading) {
@@ -934,9 +946,9 @@ const WardRounds: React.FC = () => {
       loadingMessage={authLoading ? 'Inicializando...' : 'Cargando pacientes...'}
       recoveryTimeout={15000}
     >
-      <div className="h-full flex flex-col p-6 overflow-hidden">
+      <div className="h-full flex flex-col p-6 overflow-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between banner rounded-lg p-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pase de Sala - Neurología</h1>
           <p className="text-gray-600">
@@ -951,14 +963,14 @@ const WardRounds: React.FC = () => {
         <div className="flex space-x-3">
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="flex items-center space-x-2 btn-success px-4 py-2 rounded-lg"
           >
             <Plus className="h-4 w-4" />
             <span>Agregar Paciente</span>
           </button>
           <button
             onClick={exportToPDF}
-            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            className="flex items-center space-x-2 btn-soft px-4 py-2 rounded-lg"
           >
             <Download className="h-4 w-4" />
             <span>Exportar PDF</span>
@@ -970,15 +982,15 @@ const WardRounds: React.FC = () => {
       {showAddForm && (
         <div className="modal-overlay">
           <div className="modal-content max-w-2xl w-full h-[85vh] flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
-              <h2 className="text-lg font-semibold text-gray-900">Agregar Nuevo Paciente</h2>
+            <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}>
+              <h2 className="text-lg font-semibold">Agregar Nuevo Paciente</h2>
               <button
                 onClick={() => {
                   setShowAddForm(false);
                   setNewPatient(emptyPatient);
                   setDniError(''); // Clear DNI error when closing
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
+                className="p-1 rounded-md btn-soft"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -986,24 +998,24 @@ const WardRounds: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
 
               {/* Sección 1: Datos Básicos */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
-                  <User className="h-5 w-5 text-blue-600 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Datos del Paciente</h3>
+                  <User className="h-5 w-5 text-accent mr-2" />
+                  <h3 className="text-sm font-semibold">Datos del Paciente</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Cama</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Cama</label>
                     <input
                       type="text"
                       value={newPatient.cama}
                       onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none ring-accent"
                       placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">DNI</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>DNI</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -1027,9 +1039,7 @@ const WardRounds: React.FC = () => {
                             setDniError('');
                           }
                         }}
-                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          dniError ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                        }`}
+                        className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none ring-accent`}
                         placeholder="12345678"
                       />
                       {ENABLE_DNI_CHECK && isDniChecking && (
@@ -1085,7 +1095,7 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 2: Historia Clínica */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Clipboard className="h-5 w-5 text-green-600 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
