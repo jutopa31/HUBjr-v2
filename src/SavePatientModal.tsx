@@ -255,7 +255,10 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
           <button
             onClick={handleSave}
             disabled={isSaving || !patientName.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+            className="px-4 py-2 rounded-lg disabled:opacity-50 flex items-center space-x-2 transition-all"
+            style={{ backgroundColor: '#3b82f6', color: '#ffffff', border: '1px solid #2563eb' }}
+            onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#2563eb')}
+            onMouseLeave={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#3b82f6')}
           >
             <Save className="h-4 w-4" />
             <span>{isSaving ? 'Guardando...' : 'Guardar Paciente'}</span>

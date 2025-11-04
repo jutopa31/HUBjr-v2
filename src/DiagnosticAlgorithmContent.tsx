@@ -532,7 +532,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={handleSavePatient}
-                className="flex items-center space-x-2 rounded-lg bg-blue-900 px-3 py-2 text-sm text-white hover:bg-blue-800 border border-blue-800"
+                className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm border transition-all"
+                style={{ backgroundColor: '#3b82f6', color: '#ffffff', borderColor: '#2563eb' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
                 title="Guardar paciente en base de datos"
               >
                 <Database className="h-4 w-4" />
