@@ -21,7 +21,6 @@ import Sidebar from './components/layout/Sidebar';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
-import UpdrsModal from './components/UpdrsModal';
 
 const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -5595,21 +5594,13 @@ const NeurologyResidencyHub = () => {
   const modalRoot = typeof window !== 'undefined' ? document.getElementById('modal-root') : null;
   
   
-  // Create modal content (usar modal especializado para UPDRS)
+  // Create modal content
   const modalContent = selectedScale ? (
-    selectedScale.id.startsWith('updrs') ? (
-      <UpdrsModal
-        scale={selectedScale}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-      />
-    ) : (
-      <ScaleModal
-        scale={selectedScale}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-      />
-    )
+    <ScaleModal
+      scale={selectedScale}
+      onClose={handleModalClose}
+      onSubmit={handleModalSubmit}
+    />
   ) : null;
   
   // Try portal first, fallback to regular rendering
