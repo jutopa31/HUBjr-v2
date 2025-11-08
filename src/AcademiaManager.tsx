@@ -33,7 +33,7 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
-                <GraduationCap className="h-6 w-6 text-indigo-600" />
+                <GraduationCap className="h-6 w-6 text-blue-700" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Academia</h1>
@@ -43,7 +43,7 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
 
             {isAdminMode && (
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-gray-800">
                   Modo Admin
                 </span>
               </div>
@@ -66,7 +66,7 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     isActive
-                      ? 'border-indigo-500 text-indigo-600'
+                      ? 'border-blue-600 text-blue-700'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >

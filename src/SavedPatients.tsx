@@ -215,7 +215,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
 
     const badgeStyles = {
       'Posadas': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Julian': 'bg-green-100 text-green-800 border-green-200'
+      'Julian': 'bg-green-100 text-gray-800 border-green-200'
     };
 
     return (
@@ -307,10 +307,10 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-          <span className="text-red-800 text-sm">{error}</span>
+          <span className="text-gray-800 text-sm">{error}</span>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-red-600 hover:text-red-800"
+            className="ml-auto text-blue-700 hover:text-blue-800"
           >
             ×
           </button>
@@ -334,7 +334,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
               <p className="text-sm text-gray-600">Mostrando</p>
               <p className="text-2xl font-bold text-gray-900">{filteredPatients.length}</p>
             </div>
-            <Search className="h-8 w-8 text-green-600" />
+            <Search className="h-8 w-8 text-blue-700" />
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow border">
@@ -345,7 +345,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
                 {patients.reduce((total, patient) => total + (patient.scale_results?.length || 0), 0)}
               </p>
             </div>
-            <Brain className="h-8 w-8 text-purple-600" />
+            <Brain className="h-8 w-8 text-blue-700" />
           </div>
         </div>
       </div>
@@ -440,7 +440,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
                           <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
                               <div className="flex items-center space-x-2">
-                                <span className="severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <span className="severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-gray-800">
                                   {getScaleSummary(patient)}
                                 </span>
                                 {isAdminMode && getHospitalBadge(patient.hospital_context)}
@@ -467,7 +467,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
                                   e.stopPropagation();
                                   patient.id && handleDeletePatient(patient.id);
                                 }}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-blue-700 hover:text-blue-900"
                                 title="Eliminar paciente"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -510,8 +510,8 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
                               <h4 className="font-medium text-gray-700 mb-1">Escalas Aplicadas</h4>
                               <div className="text-gray-600 medical-card p-2 rounded">
                                 <div className="flex items-center">
-                                  <Brain className="h-4 w-4 mr-2 text-purple-600" />
-                                  <span className="font-medium text-purple-800">
+                                  <Brain className="h-4 w-4 mr-2 text-blue-700" />
+                                  <span className="font-medium text-gray-800">
                                     {getScaleSummary(patient)}
                                   </span>
                                 </div>

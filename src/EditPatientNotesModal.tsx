@@ -112,7 +112,7 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
                     patientDni !== (patient.patient_dni || '');
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -237,13 +237,13 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
           {saveResult && (
             <div className={`p-4 rounded-lg flex items-center space-x-3 ${
               saveResult.success 
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-green-50 text-gray-800 border border-green-200'
+                : 'bg-red-50 text-gray-800 border border-red-200'
             }`}>
               {saveResult.success ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-blue-700" />
               ) : (
-                <AlertCircle className="h-5 w-5 text-red-500" />
+                <AlertCircle className="h-5 w-5 text-blue-700" />
               )}
               <span className="text-sm">{saveResult.message}</span>
             </div>

@@ -77,8 +77,8 @@ const MyPatients: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-blue-100 text-blue-800';
-      case 'discharged': return 'bg-green-100 text-green-800';
-      case 'transferred': return 'bg-yellow-100 text-yellow-800';
+      case 'discharged': return 'bg-green-100 text-gray-800';
+      case 'transferred': return 'bg-yellow-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -117,7 +117,7 @@ const MyPatients: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-green-100 rounded-lg">
-            <Users className="h-6 w-6 text-green-600" />
+            <Users className="h-6 w-6 text-blue-700" />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Mis Pacientes</h2>
@@ -138,7 +138,7 @@ const MyPatients: React.FC = () => {
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
 
@@ -335,7 +335,7 @@ const MyPatients: React.FC = () => {
 
                   {patient.outcome && (
                     <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-                      <p className="text-sm text-green-700">
+                      <p className="text-sm text-gray-800">
                         <strong>Resultado del alta:</strong> {patient.outcome}
                       </p>
                     </div>
@@ -352,7 +352,7 @@ const MyPatients: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleEdit(patient)}
-                    className="p-2 text-gray-400 hover:text-green-600 rounded-lg"
+                    className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                     title="Editar paciente"
                   >
                     <Edit className="h-4 w-4" />
@@ -360,7 +360,7 @@ const MyPatients: React.FC = () => {
                   {patient.status === 'active' && (
                     <button
                       onClick={() => handleDischarge(patient)}
-                      className="p-2 text-gray-400 hover:text-green-600 rounded-lg"
+                      className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                       title="Dar de alta"
                     >
                       <CheckCircle className="h-4 w-4" />
@@ -375,7 +375,7 @@ const MyPatients: React.FC = () => {
 
       {/* Patient Details Modal */}
       {selectedPatient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Detalles del Paciente</h2>

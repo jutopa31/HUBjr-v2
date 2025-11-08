@@ -6,109 +6,238 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-npm run dev              # Next.js development server
+npm run dev              # Next.js development server (usually port 3001)
 npm run dev:vite         # Vite development server (http://localhost:5173)
 
 # Build & Deploy
 npm run build            # Production build with Next.js
 npm run start            # Start production server
-npm run build:vite       # Alternative Vite build
+npm run build:vite       # Alternative Vite build (tsc + vite build)
 
 # Quality Assurance
 npm run lint             # ESLint checking
-npx tsc --noEmit        # TypeScript type checking
-npm run audit:responsive # Responsive design audit
+npx tsc --noEmit        # TypeScript type checking without emitting files
+npm run audit:responsive # Responsive design audit script
 ```
 
 ## Architecture Overview
 
-### Main Application
-- **Entry Point**: `src/neurology_residency_hub.tsx` - Central medical residency management interface
+### Main Application Entry Points
+- **Primary Hub**: `src/neurology_residency_hub.tsx` - Main application with sidebar navigation and tab-based routing
+- **V3 Hub**: `src/neurology_residency_hub_v3.tsx` - Newer version with simplified architecture
+- **Pages Router**: `pages/index.js` loads the main neurology hub component
 - **Technology Stack**: Next.js 14 + React 18 + TypeScript + Supabase + Tailwind CSS
-- **Dual Build System**: Next.js (production) + Vite (fast development)
+- **Dual Build System**: Next.js (production) + Vite (fast development alternative)
 
-### Key Components
-- **Authentication**: `src/components/auth/` - Privilege-based authentication system
-- **Medical Features**: `src/DiagnosticAlgorithmContent.tsx`, `src/ScaleModal.tsx`
-- **User Management**: `src/AdminAuthModal.tsx`, `src/HospitalContextSelector.tsx`
-- **Database Integration**: `src/utils/supabase.js`
+### Core Feature Modules
+The application is organized into distinct medical/administrative modules:
+
+- **Evolucionador (Diagnostic)**: `src/DiagnosticAlgorithmContent.tsx` - AI-assisted patient evolution notes with context-aware saving
+- **Pase de Sala (Ward Rounds)**: `src/WardRounds.tsx`, `src/WardRoundsComplete.tsx` - Daily patient rounds tracking
+- **Interconsultas**: `src/Interconsultas.tsx` + `src/services/interconsultasService.ts` - Consultation request management with auth guards
+- **Pendientes (Tasks)**: `src/PendientesManager.tsx` - Task tracking system
+- **Academia**: `src/AcademiaManager.tsx` - Educational resources and class scheduling
+- **Eventos**: `src/EventManagerSupabase.tsx` - Real-time calendar with Supabase integration
+- **Punciones Lumbares**: `src/components/LumbarPunctureDashboard.tsx` - Lumbar puncture tracking
+- **Pacientes Post-Alta**: `src/PacientesPostAlta.tsx` - Post-discharge patient follow-up
+- **Saved Patients**: `src/SavedPatients.tsx` - Patient list with hospital context filtering
+
+### Component Organization
+
+```
+src/
+├── components/
+│   ├── auth/                    # Authentication system
+│   │   ├── AuthProvider.tsx     # Auth context provider
+│   │   ├── AuthModal.tsx        # Login modal
+│   │   ├── SessionGuard.tsx     # Session protection
+│   │   └── ProtectedRoute.tsx   # Route protection wrapper
+│   ├── user/                    # User-specific features
+│   │   ├── UserDashboard.tsx    # Personal resident dashboard
+│   │   ├── MyPatients.tsx       # Personal patient list
+│   │   ├── ResidentProfile.tsx  # Profile management
+│   │   └── ProcedureLogger.tsx  # Procedure tracking
+│   ├── admin/                   # Administrative interfaces
+│   │   ├── UserCreator.tsx      # User management
+│   │   └── OCRProcessorModal.tsx # OCR document processing
+│   ├── layout/
+│   │   └── Sidebar.tsx          # Main navigation sidebar with theme support
+│   ├── patients/                # Patient management components
+│   │   ├── PatientsList.tsx
+│   │   ├── PatientsFilters.tsx
+│   │   └── PatientDetailDrawer.tsx
+│   └── v3/                      # Version 3 components (newer architecture)
+│       ├── dashboard/
+│       ├── patients/
+│       ├── resources/
+│       └── admin/
+├── services/                    # Business logic layer
+│   ├── interconsultasService.ts # Interconsultas CRUD with timeout protection
+│   ├── pacientesPostAltaService.ts
+│   ├── patients.ts              # Patient data service
+│   ├── neurologicalExamService.ts
+│   └── hospitalContextService.ts # Hospital context management
+├── hooks/                       # Custom React hooks
+│   ├── useAuth.ts              # Authentication hook with privilege detection
+│   ├── usePatients.ts          # Patient data management
+│   └── useLumbarPuncture.ts    # Lumbar puncture data
+├── utils/
+│   ├── supabase.js             # Supabase client configuration
+│   ├── diagnosticAssessmentDB.ts # Database operations + privilege checking
+│   ├── patientDataExtractor.ts  # AI text extraction utilities
+│   └── theme.ts                 # Theme utilities
+├── contexts/
+│   └── ThemeContext.tsx         # Dark/light theme context
+└── types.ts                     # Shared TypeScript definitions
+```
 
 ### Hospital Context System
-- **Posadas** (Default): Available to all users
-- **Julian** (Privileged): Restricted access for authorized users
-- Privileged users can switch contexts; standard users see Posadas only
+Multi-hospital data separation with privilege-based access:
+
+- **Contexts**:
+  - `Posadas` (Default): Public hospital, available to all authenticated users
+  - `Julian` (Privileged): Private practice, restricted to authorized users
+
+- **Implementation**:
+  - `HospitalContextSelector.tsx`: UI component for switching contexts
+  - `hospitalContextService.ts`: Business logic for context management
+  - Database column `hospital_context` in tables: `diagnostic_assessments`, `ward_round_patients`, etc.
+  - RLS policies enforce context-based data isolation
+
+- **User Experience**:
+  - Privileged users see context selector in Evolucionador and other relevant interfaces
+  - Standard users automatically default to Posadas context
+  - All saves/queries respect the active hospital context
+
+### Admin Privilege System
+Database-level privilege management (not password-based):
+
+- **Setup**: Execute `setup_admin_privileges.sql` in Supabase SQL Editor
+- **Privilege Types** (defined in `diagnosticAssessmentDB.ts`):
+  - `hospital_context_access` - Multi-hospital context switching
+  - `full_admin` - Complete system access
+  - `lumbar_puncture_admin` - LP system administration
+  - `scale_management` - Medical scale configuration
+  - `user_management` - User administration
+
+- **Pre-configured Admin**: `julian.martin.alonso@gmail.com`
+- **Checking Privileges**: Use `checkUserPrivilege()` function from `utils/diagnosticAssessmentDB.ts`
+- **UI Integration**: `AdminAuthModal.tsx` auto-authenticates privileged users
 
 ## Environment Setup
 
-Required environment variables:
+Required environment variables in `.env` or `.env.local`:
 ```env
+# Server-side Supabase config
 SUPABASE_URL=your-supabase-url
 SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Client-side Supabase config (NEXT_PUBLIC prefix required)
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ## Database Setup
 
-**Critical**: Execute `setup_admin_privileges.sql` in Supabase for privilege system.
-- Creates admin privilege tables and policies
-- Pre-configures access for `julian.martin.alonso@gmail.com`
+### Critical Setup Steps
+1. **Admin Privileges**: Run `setup_admin_privileges.sql` to create privilege system
+2. **Patient Tables**: Run `supabase_diagnostic_assessments.sql` for patient data tables
+3. **Ward Rounds**: Run `database/setup_ward_round_patients.sql`
+4. **Interconsultas**: Run `database/interconsultas_setup.txt`
+5. **Lumbar Punctures**: Run `database/setup_enhanced_lumbar_puncture.sql`
+6. **Post-Alta Patients**: Run `database/pacientes_post_alta_setup.sql`
+7. **Resident Profiles**: Run `database/resident_profiles_schema.sql`
+
+### Key Database Tables
+- `diagnostic_assessments` - Patient evolution notes from Evolucionador
+- `ward_round_patients` - Daily ward round patient data
+- `interconsultas` - Consultation requests with status tracking
+- `lumbar_puncture_logs` - LP procedure records
+- `pacientes_post_alta` - Post-discharge patient tracking
+- `resident_profiles` - User profile data
+- `admin_privileges` - Privilege management system
+- `medical_events` - Calendar events
+
+### RLS Policy Pattern
+All tables use Row Level Security with patterns like:
+```sql
+-- For VARCHAR user_id columns
+auth.uid()::text = user_id
+
+-- For UUID user_id columns
+auth.uid() = user_id
+
+-- For hospital context filtering
+hospital_context IN (SELECT accessible_context FROM user_contexts WHERE user_id = auth.uid())
+```
 
 ## Development Workflow
 
 ### Before Making Changes
 1. `npm run lint` - Check code quality
-2. `npx tsc --noEmit` - TypeScript validation
-3. Test with `npm run dev`
+2. `npx tsc --noEmit` - TypeScript validation (critical - catches type errors)
+3. Test with `npm run dev` on default port or `npm run dev:vite` on 5173
+
+### Adding New Features
+1. **Database First**: Create table schema with RLS policies in a new `.sql` file
+2. **Service Layer**: Add business logic in `src/services/[feature]Service.ts`
+3. **TypeScript Types**: Define interfaces in `src/types.ts` or feature-specific type files
+4. **Component**: Create UI component in appropriate `src/components/` subdirectory
+5. **Integration**: Add navigation in `neurology_residency_hub.tsx` sidebar menu
 
 ### Database Changes
 1. **Always implement RLS policies** for new tables
-2. Use `auth.uid()::text` for VARCHAR user_id columns
-3. Use `auth.uid()` for UUID columns
-4. Test with different user privilege levels
+2. **User ID columns**: Use `auth.uid()::text` for VARCHAR, `auth.uid()` for UUID
+3. **Hospital Context**: Add `hospital_context VARCHAR` column for multi-hospital features
+4. **Test privilege levels**: Verify with both admin and standard user accounts
+5. **Audit trail**: Consider adding `created_at`, `updated_at`, `created_by` columns
 
 ### Code Conventions
-- Functional React components with TypeScript
-- Tailwind CSS for styling
-- Medical data requires input validation and null safety
-- Follow existing patterns in `src/components/` organization
+- **Components**: Functional components with TypeScript, use explicit return types for complex functions
+- **Styling**: Tailwind CSS classes, dark mode support via `dark:` prefix
+- **State Management**: React hooks (useState, useEffect), custom hooks in `src/hooks/`
+- **API Calls**: Wrap Supabase calls in try-catch, implement timeout protection for user-facing queries
+- **Medical Data**: Always validate inputs and handle null/undefined safely
+- **Error Handling**: Log errors to console with descriptive prefixes (e.g., `🔴 Error:`, `⚠️ Warning:`)
+
+### Dark Theme Implementation
+The application supports comprehensive dark theme:
+- **Context**: `src/contexts/ThemeContext.tsx` provides theme state
+- **Detection**: Respects user's system preference via `prefers-color-scheme`
+- **Persistence**: Theme choice saved to localStorage
+- **Application**: Use Tailwind `dark:` variants for dark mode styles
+- **Components**: Most components include dark mode styling
 
 ## Medical Domain Context
 
-### Assessment Scales
-- Complete neurological evaluation tools (NIHSS, Glasgow Coma, UPDRS, etc.)
-- Standardized scoring with null-safe calculations
-- Located in `src/ScaleModal.tsx` and `src/DiagnosticAlgorithmContent.tsx`
+### Assessment Scales (`ScaleModal.tsx`)
+Complete implementation of 15+ neurological assessment tools:
+- NIHSS (stroke severity), Glasgow Coma Scale, UPDRS (Parkinson's), mRS (functional outcome)
+- ASPECTS (stroke imaging), CHA2DS2-VASc/HAS-BLED (anticoagulation risk)
+- ICH Score (hemorrhage prognosis), MMSE/MoCA (cognitive)
+- Standardized scoring with null-safe calculations using `calculateScaleScore.ts`
 
-### Patient Management
-- Real-time patient data with Supabase
-- Hospital context separation for data isolation
-- User-specific tracking with RLS policies
+### Patient Data Features
+- **Evolucionador**: AI-assisted clinical note generation with structured patient data extraction
+- **Real-time Storage**: Immediate Supabase persistence with optimistic UI updates
+- **Hospital Context**: All patient saves respect selected hospital context
+- **Search & Filter**: Patient lists filterable by name, DNI, diagnosis, date range
+- **Data Export**: Export capabilities for clinical records
 
-### Admin Privileges
-Database-level access control with privilege types:
-- `hospital_context_access` - Multi-hospital access
-- `full_admin` - Complete administrative access
-- `lumbar_puncture_admin`, `scale_management`, `user_management`
-
-## File Structure
-
-```
-src/
-├── neurology_residency_hub.tsx    # Main application
-├── components/
-│   ├── auth/                       # Authentication system
-│   ├── user/                       # User-specific features
-│   └── admin/                      # Admin interfaces
-├── utils/supabase.js              # Database client
-├── types.ts                       # TypeScript definitions
-└── hooks/                         # Custom React hooks
-```
+### Interconsultas System
+- **Auth Protection**: Write operations require authentication (see `interconsultasService.ts`)
+- **Timeout Protection**: 12-second timeout on Supabase queries to prevent UI hangs
+- **Status Tracking**: Pendiente, En Proceso, Resuelta, Cancelada states
+- **Specialty Routing**: Different medical specialty categorization
 
 ## Important Notes
 
-1. **Privilege System**: Use database privileges instead of password-based admin access
-2. **Hospital Context**: Ensure patient features respect context separation
-3. **Security First**: Always implement RLS policies for new tables
-4. **Medical Accuracy**: Verify scale calculations against validated standards
-5. **Production Testing**: Test authentication and logout in production environment
+1. **Privilege System**: Always use `checkUserPrivilege()` from `diagnosticAssessmentDB.ts` for privilege checks, never hardcode email checks
+2. **Hospital Context**: Patient-facing features must respect hospital context separation
+3. **Security First**: RLS policies are mandatory for all new patient/medical data tables
+4. **Medical Accuracy**: Verify scale calculations against published medical literature
+5. **Timeout Protection**: User-facing Supabase queries should implement timeout protection (see interconsultas service pattern)
+6. **Null Safety**: Medical data fields frequently contain null values - always use optional chaining and nullish coalescing
+7. **Production Testing**: Authentication flows behave differently in production - test logout and session management thoroughly
+8. **TypeScript Strict**: The codebase uses TypeScript - avoid `any` types, prefer explicit interfaces
+9. **Dual Entry Points**: Be aware of both `neurology_residency_hub.tsx` (v2) and `neurology_residency_hub_v3.tsx` - v2 is currently active

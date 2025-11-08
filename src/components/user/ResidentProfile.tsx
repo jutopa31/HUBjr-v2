@@ -329,7 +329,7 @@ const ResidentProfile: React.FC<ResidentProfileProps> = ({ onClose }) => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Estado</span>
-                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                <span className="px-2 py-1 bg-green-100 text-gray-800 text-xs rounded-full">
                   Activo
                 </span>
               </div>

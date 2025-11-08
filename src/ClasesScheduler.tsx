@@ -406,7 +406,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -429,7 +429,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="text"
                     value={newClass.title}
                     onChange={(e) => setNewClass({...newClass, title: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -442,7 +442,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="datetime-local"
                     value={newClass.start_date}
                     onChange={(e) => setNewClass({...newClass, start_date: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -455,7 +455,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="datetime-local"
                     value={newClass.end_date}
                     onChange={(e) => setNewClass({...newClass, end_date: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -467,7 +467,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                   <select
                     value={newClass.type}
                     onChange={(e) => setNewClass({...newClass, type: e.target.value as any})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {Object.entries(classTypeConfig).map(([type, config]) => (
                       <option key={type} value={type}>{config.label}</option>
@@ -483,7 +483,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="text"
                     value={newClass.instructor}
                     onChange={(e) => setNewClass({...newClass, instructor: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -495,7 +495,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="text"
                     value={newClass.location}
                     onChange={(e) => setNewClass({...newClass, location: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -507,7 +507,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="number"
                     value={newClass.max_attendees}
                     onChange={(e) => setNewClass({...newClass, max_attendees: parseInt(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -519,7 +519,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     value={newClass.description}
                     onChange={(e) => setNewClass({...newClass, description: e.target.value})}
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -542,7 +542,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                       type="checkbox"
                       checked={newClass.is_mandatory}
                       onChange={(e) => setNewClass({...newClass, is_mandatory: e.target.checked})}
-                      className="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      className="mr-2 h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Asistencia obligatoria</span>
                   </label>

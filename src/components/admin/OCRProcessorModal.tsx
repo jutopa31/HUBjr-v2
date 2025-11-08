@@ -138,7 +138,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-200 p-5">
           <div>
@@ -184,7 +184,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
           )}
 
           {error && (
-            <div className="flex items-start space-x-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="flex items-start space-x-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-gray-800">
               <AlertTriangle className="mt-0.5 h-4 w-4" />
               <div>
                 <p className="font-medium">No se pudo procesar el archivo</p>
@@ -209,7 +209,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
                   >
                     {copied ? (
                       <>
-                        <Check className="mr-1 h-4 w-4 text-green-600" /> Copiado
+                        <Check className="mr-1 h-4 w-4 text-blue-700" /> Copiado
                       </>
                     ) : (
                       <>
@@ -231,7 +231,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
                 className="h-52 w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm text-gray-800"
               />
               {result.warnings && (
-                <ul className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800">
+                <ul className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs text-gray-800">
                   {result.warnings.map((warning, index) => (
                     <li key={index}>- {warning}</li>
                   ))}

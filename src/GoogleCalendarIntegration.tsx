@@ -254,7 +254,7 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
         </div>
         
         {isAuthenticated ? (
-          <div className="flex items-center space-x-2 text-green-600">
+          <div className="flex items-center space-x-2 text-gray-800">
             <CheckCircle className="h-4 w-4" />
             <span className="text-sm">Connected</span>
           </div>
@@ -269,8 +269,8 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-center space-x-2">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <span className="text-sm text-red-700">{error}</span>
+            <AlertCircle className="h-4 w-4 text-blue-700" />
+            <span className="text-sm text-gray-800">{error}</span>
           </div>
         </div>
       )}

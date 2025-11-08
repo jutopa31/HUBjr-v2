@@ -87,8 +87,8 @@ const GoalsManager: React.FC = () => {
     switch (status) {
       case 'not_started': return 'bg-gray-100 text-gray-800';
       case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'deferred': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-green-100 text-gray-800';
+      case 'deferred': return 'bg-yellow-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -105,9 +105,9 @@ const GoalsManager: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-orange-100 text-orange-800';
-      case 'low': return 'bg-green-100 text-green-800';
+      case 'high': return 'bg-red-100 text-gray-800';
+      case 'medium': return 'bg-orange-100 text-gray-800';
+      case 'low': return 'bg-green-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -155,7 +155,7 @@ const GoalsManager: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-orange-100 rounded-lg">
-            <Target className="h-6 w-6 text-orange-600" />
+            <Target className="h-6 w-6 text-blue-700" />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Objetivos y Metas</h2>
@@ -190,7 +190,7 @@ const GoalsManager: React.FC = () => {
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+              <CheckCircle className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Completados</p>
@@ -214,7 +214,7 @@ const GoalsManager: React.FC = () => {
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">
-              <Clock className="h-6 w-6 text-red-600" />
+              <Clock className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Vencidos</p>
@@ -241,7 +241,7 @@ const GoalsManager: React.FC = () => {
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
 
@@ -376,7 +376,7 @@ const GoalsManager: React.FC = () => {
                       {getPriorityLabel(goal.priority)}
                     </span>
                     {goal.target_date && isOverdue(goal.target_date) && goal.status !== 'completed' && (
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-red-100 text-gray-800 text-xs rounded-full">
                         Vencido
                       </span>
                     )}
@@ -443,7 +443,7 @@ const GoalsManager: React.FC = () => {
                   )}
 
                   {goal.completion_date && (
-                    <div className="text-sm text-green-600">
+                    <div className="text-sm text-gray-800">
                       <CheckCircle className="h-4 w-4 inline mr-1" />
                       Completado el {formatDate(goal.completion_date)}
                     </div>
@@ -453,14 +453,14 @@ const GoalsManager: React.FC = () => {
                 <div className="flex items-center space-x-2 ml-4">
                   <button
                     onClick={() => handleEdit(goal)}
-                    className="p-2 text-gray-400 hover:text-orange-600 rounded-lg"
+                    className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                     title="Editar objetivo"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(goal.id!)}
-                    className="p-2 text-gray-400 hover:text-red-600 rounded-lg"
+                    className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                     title="Eliminar objetivo"
                   >
                     <Trash2 className="h-4 w-4" />

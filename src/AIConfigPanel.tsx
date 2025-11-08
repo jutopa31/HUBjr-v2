@@ -107,7 +107,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-800">
         {/* Header */}
         <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
@@ -150,26 +150,26 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
 
             <div className="bg-green-950/40 border border-green-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-green-400" />
-                <span className="font-medium text-green-300">Uso Hoy</span>
+                <DollarSign className="h-5 w-5 text-blue-300" />
+                <span className="font-medium text-blue-300">Uso Hoy</span>
               </div>
-              <p className="text-xl font-bold text-green-300 mt-1">
+              <p className="text-xl font-bold text-blue-300 mt-1">
                 ${config.usage.costToday.toFixed(3)}
               </p>
-              <p className="text-xs text-green-400">
+              <p className="text-xs text-blue-400">
                 {config.usage.requestsToday} solicitudes
               </p>
             </div>
 
             <div className="bg-purple-950/40 border border-purple-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-purple-400" />
-                <span className="font-medium text-purple-300">Proveedor</span>
+                <Brain className="h-5 w-5 text-blue-300" />
+                <span className="font-medium text-blue-300">Proveedor</span>
               </div>
-              <p className="text-base font-bold text-purple-300 mt-1">
+              <p className="text-base font-bold text-blue-300 mt-1">
                 {currentProvider?.name || 'No seleccionado'}
               </p>
-              <p className="text-xs text-purple-400">{config.model}</p>
+              <p className="text-xs text-blue-400">{config.model}</p>
             </div>
           </div>
 
@@ -234,7 +234,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                         </div>
                       </div>
                       {config.provider === provider.id && (
-                        <Check className="h-5 w-5 text-purple-400" />
+                        <Check className="h-5 w-5 text-blue-300" />
                       )}
                     </div>
                   </label>
@@ -253,7 +253,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     type={showApiKey ? 'text' : 'password'}
                     value={config.apiKey}
                     onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 pr-20 bg-[#333333] text-gray-200"
+                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-20 bg-[#333333] text-gray-200"
                     placeholder={`Ingrese su ${currentProvider.name} API Key`}
                   />
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
@@ -279,13 +279,13 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 {connectionStatus === 'success' && (
-                  <p className="text-sm text-green-400 flex items-center space-x-1">
+                  <p className="text-sm text-blue-400 flex items-center space-x-1">
                     <Check className="h-4 w-4" />
                     <span>Conexión exitosa</span>
                   </p>
                 )}
                 {connectionStatus === 'error' && (
-                  <p className="text-sm text-red-400 flex items-center space-x-1">
+                  <p className="text-sm text-blue-400 flex items-center space-x-1">
                     <AlertCircle className="h-4 w-4" />
                     <span>Error de conexión - Verifique la API Key</span>
                   </p>

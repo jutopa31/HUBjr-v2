@@ -281,7 +281,7 @@ const PendientesManager: React.FC = () => {
   const getPriorityDisplay = (priority: Task['priority']) => {
     switch (priority) {
       case 'high':
-        return { icon: AlertCircle, color: 'text-red-600 bg-red-50', label: 'Alta' };
+        return { icon: AlertCircle, color: 'text-gray-800 bg-red-50', label: 'Alta' };
       case 'medium':
         return { icon: Clock, color: 'text-yellow-600 bg-yellow-50', label: 'Media' };
       case 'low':
@@ -295,7 +295,7 @@ const PendientesManager: React.FC = () => {
   const getStatusDisplay = (status: Task['status']) => {
     switch (status) {
       case 'completed':
-        return { color: 'bg-green-100 text-green-800', label: 'Completada' };
+        return { color: 'bg-green-100 text-gray-800', label: 'Completada' };
       case 'in_progress':
         return { color: 'bg-blue-100 text-blue-800', label: 'En Progreso' };
       case 'pending':
@@ -330,14 +330,14 @@ const PendientesManager: React.FC = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+            <AlertCircle className="h-5 w-5 text-blue-700 mr-2" />
             <div>
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <h3 className="text-sm font-medium text-gray-800">Error</h3>
+              <p className="text-sm text-gray-700 mt-1">{error}</p>
             </div>
             <button
               onClick={() => setError(null)}
-              className="ml-auto text-red-600 hover:text-red-800"
+              className="ml-auto text-blue-700 hover:text-blue-800"
             >
               <X className="h-4 w-4" />
             </button>
@@ -349,7 +349,7 @@ const PendientesManager: React.FC = () => {
       <div className="banner rounded-lg shadow-lg p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center space-x-3">
-            <CheckSquare className="h-8 w-8 text-accent" />
+            <CheckSquare className="h-8 w-8 text-blue-700" />
             <div>
               <h1 className="text-3xl font-bold">Pendientes</h1>
               <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>Lista de tareas y recordatorios</p>
@@ -385,7 +385,7 @@ const PendientesManager: React.FC = () => {
           </div>
           <button
             onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-            className="text-sm font-medium text-accent"
+            className="text-sm font-medium text-blue-700"
           >
             {isFilterPanelOpen ? 'Ocultar' : 'Mostrar'}
           </button>

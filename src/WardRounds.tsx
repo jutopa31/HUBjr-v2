@@ -1000,7 +1000,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 1: Datos Básicos */}
               <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
-                  <User className="h-5 w-5 text-accent mr-2" />
+                  <User className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold">Datos del Paciente</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1049,7 +1049,7 @@ const WardRounds: React.FC = () => {
                       )}
                     </div>
                     {dniError && (
-                      <p className="mt-1 text-sm text-red-600 font-medium">{dniError}</p>
+                      <p className="mt-1 text-sm text-gray-800 font-medium">{dniError}</p>
                     )}
                   </div>
                   <div>
@@ -1097,7 +1097,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 2: Historia Clínica */}
               <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
-                  <Clipboard className="h-5 w-5 text-green-600 mr-2" />
+                  <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
                 </div>
                 <div className="space-y-4">
@@ -1127,7 +1127,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 3: Examen Físico */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <Stethoscope className="h-5 w-5 text-purple-600 mr-2" />
+                  <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
                 </div>
                 <div>
@@ -1145,7 +1145,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 4: Estudios */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <FlaskConical className="h-5 w-5 text-orange-600 mr-2" />
+                  <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
                 </div>
                 <div>
@@ -1163,7 +1163,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 5: Diagnóstico y Plan */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <Target className="h-5 w-5 text-red-600 mr-2" />
+                  <Target className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
                 </div>
                 <div className="space-y-4">
@@ -1193,7 +1193,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 6: Seguimiento */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <CheckCircle className="h-5 w-5 text-teal-600 mr-2" />
+                  <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
                 </div>
                 <div className="space-y-4">
@@ -1425,10 +1425,10 @@ const WardRounds: React.FC = () => {
                         </div>
                         <div className="col-span-1">
                           <span className={`severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
-                            patient.severidad === 'II' ? 'bg-yellow-100 text-yellow-800' :
-                            patient.severidad === 'III' ? 'bg-orange-100 text-orange-800' :
-                            patient.severidad === 'IV' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                            patient.severidad === 'I' ? 'bg-green-100 text-gray-800' :
+                            patient.severidad === 'II' ? 'bg-yellow-100 text-gray-800' :
+                            patient.severidad === 'III' ? 'bg-orange-100 text-gray-800' :
+                            patient.severidad === 'IV' ? 'bg-red-100 text-gray-800' : 'bg-gray-100 text-gray-800'
                           }`}>
                             {patient.severidad}
                           </span>
@@ -1455,14 +1455,14 @@ const WardRounds: React.FC = () => {
                               <div className="flex sm:flex-col flex-row space-y-0 sm:space-y-1 space-x-1 sm:space-x-0">
                                 <button
                                   onClick={() => saveInlinePendientes(patient.id || '')}
-                                  className="text-green-600 hover:text-green-800 p-1"
+                                  className="text-blue-700 hover:text-blue-900 p-1"
                                   title="Guardar (Ctrl+Enter)"
                                 >
                                   <Check className="h-3 w-3" />
                                 </button>
                                 <button
                                   onClick={cancelEditingPendientes}
-                                  className="text-red-600 hover:text-red-800 p-1"
+                                  className="text-gray-700 hover:text-gray-900 p-1"
                                   title="Cancelar (Esc)"
                                 >
                                   <X className="h-3 w-3" />
@@ -1500,7 +1500,7 @@ const WardRounds: React.FC = () => {
                                 e.stopPropagation();
                                 openDeleteModal(patient.id || '', patient.nombre, patient.dni);
                               }}
-                              className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-blue-700 hover:text-blue-900 hover:bg-red-50 rounded-lg transition-colors"
                               title="Eliminar o archivar paciente"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1643,7 +1643,7 @@ const WardRounds: React.FC = () => {
                       )}
                     </div>
                     {dniError && (
-                      <p className="mt-1 text-sm text-red-600 font-medium">{dniError}</p>
+                      <p className="mt-1 text-sm text-gray-800 font-medium">{dniError}</p>
                     )}
                   </div>
                   <div>
@@ -1672,7 +1672,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 2: Historia Clínica */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <Clipboard className="h-5 w-5 text-green-600 mr-2" />
+                  <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
                 </div>
                 <div className="space-y-4">
@@ -1702,7 +1702,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 3: Examen Físico */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <Stethoscope className="h-5 w-5 text-purple-600 mr-2" />
+                  <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
                 </div>
                 <div>
@@ -1720,7 +1720,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 4: Estudios */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <FlaskConical className="h-5 w-5 text-orange-600 mr-2" />
+                  <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
                 </div>
                 <div>
@@ -1738,7 +1738,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 5: Diagnóstico y Plan */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <Target className="h-5 w-5 text-red-600 mr-2" />
+                  <Target className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
                 </div>
                 <div className="space-y-4">
@@ -1768,7 +1768,7 @@ const WardRounds: React.FC = () => {
               {/* Sección 6: Seguimiento */}
               <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center mb-4">
-                  <CheckCircle className="h-5 w-5 text-teal-600 mr-2" />
+                  <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
                 </div>
                 <div className="space-y-4">

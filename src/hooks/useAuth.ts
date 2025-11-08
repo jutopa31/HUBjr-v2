@@ -42,10 +42,7 @@ export function useAuth() {
       const privilegeCheckPromise = (async () => {
         const userEmail = user.email!; // Already checked above
 
-        // Check hospital context access
-        const contextAccess = await hasHospitalContextAccess(userEmail);
-
-        // Check for specific admin privileges
+        // Check for specific admin privileges - ALL IN PARALLEL
         const privilegeTypes: AdminPrivilegeType[] = [
           'hospital_context_access',
           'full_admin',
@@ -54,24 +51,35 @@ export function useAuth() {
           'user_management'
         ];
 
-        const userPrivileges: AdminPrivilegeType[] = [];
+        // Execute ALL privilege checks in parallel using Promise.all
+        const privilegeChecks = await Promise.all(
+          privilegeTypes.map(async (privilegeType) => {
+            const result = await hasAdminPrivilege(userEmail, privilegeType);
+            return {
+              type: privilegeType,
+              hasPrivilege: result.success && result.hasPrivilege
+            };
+          })
+        );
 
-        for (const privilegeType of privilegeTypes) {
-          const privilege = await hasAdminPrivilege(userEmail, privilegeType);
-          if (privilege.success && privilege.hasPrivilege) {
-            userPrivileges.push(privilegeType);
-          }
-        }
+        // Extract privileges that returned true
+        const userPrivileges: AdminPrivilegeType[] = privilegeChecks
+          .filter(check => check.hasPrivilege)
+          .map(check => check.type);
+
+        // Check if user has hospital_context_access or full_admin
+        const hasContextAccess = userPrivileges.includes('hospital_context_access') ||
+                                 userPrivileges.includes('full_admin');
 
         return {
-          hasHospitalContextAccess: contextAccess.success ? contextAccess.hasAccess : false,
+          hasHospitalContextAccess: hasContextAccess,
           privileges: userPrivileges
         };
       })();
 
-      // Race between privilege check and 10-second timeout (increased from 3s to handle multiple DB calls)
+      // Race between privilege check and 15-second timeout (increased to account for parallel calls)
       const timeoutPromise = new Promise<{ hasHospitalContextAccess: boolean; privileges: AdminPrivilegeType[] }>((_, reject) =>
-        setTimeout(() => reject(new Error('Privilege check timeout')), 10000)
+        setTimeout(() => reject(new Error('Privilege check timeout')), 15000)
       );
 
       const result = await Promise.race([privilegeCheckPromise, timeoutPromise]);

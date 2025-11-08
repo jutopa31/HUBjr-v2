@@ -147,8 +147,8 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
-            <span className="text-sm text-red-700">{error}</span>
+            <AlertTriangle className="h-5 w-5 text-blue-700 mr-2" />
+            <span className="text-sm text-gray-800">{error}</span>
           </div>
         </div>
       )}
@@ -345,9 +345,9 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
                   <div className="flex items-start space-x-3">
                     <div className={`p-2 rounded-lg ${procedure.success ? 'bg-green-100' : 'bg-red-100'}`}>
                       {procedure.success ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <CheckCircle className="h-5 w-5 text-blue-700" />
                       ) : (
-                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <AlertTriangle className="h-5 w-5 text-blue-700" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -394,7 +394,7 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
 
                       {!procedure.success && procedure.complications && (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                          <p className="text-sm text-red-700">
+                          <p className="text-sm text-gray-800">
                             <strong>Complicaciones:</strong> {procedure.complications}
                           </p>
                         </div>
@@ -412,7 +412,7 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
                     </button>
                     <button
                       onClick={() => handleDelete(procedure.id!)}
-                      className="p-2 text-gray-400 hover:text-red-600 rounded-lg"
+                      className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                       title="Eliminar procedimiento"
                     >
                       <X className="h-4 w-4" />

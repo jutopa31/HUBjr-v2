@@ -139,36 +139,36 @@ const PacientesPostAlta: React.FC = () => {
       )}
 
       {/* Formulario de nuevo paciente */}
-      <div className="bg-white rounded-lg border p-4 mb-6">
-        <h2 className="font-medium mb-3">Nuevo paciente ambulatorio</h2>
+      <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-gray-300 dark:border-gray-800 p-4 mb-6">
+        <h2 className="font-medium mb-3 text-gray-900 dark:text-gray-200">Nuevo paciente ambulatorio</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
-            className="border rounded px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
             placeholder="DNI"
             value={form.dni}
             onChange={(e) => setForm({ ...form, dni: e.target.value })}
           />
           <input
-            className="border rounded px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
             placeholder="Nombre"
             value={form.nombre}
             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
           />
           <input
-            className="border rounded px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
             placeholder="Diagnóstico"
             value={form.diagnostico}
             onChange={(e) => setForm({ ...form, diagnostico: e.target.value })}
           />
           <input
             type="date"
-            className="border rounded px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
             value={form.fecha_visita}
             onChange={(e) => setForm({ ...form, fecha_visita: e.target.value })}
           />
         </div>
         <textarea
-          className="mt-3 w-full border rounded px-3 py-2 text-sm" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-primary)", borderColor: "var(--border-primary)" }}
+          className="mt-3 w-full border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
           placeholder="Pendiente (opcional)"
           rows={3}
           value={form.pendiente ?? ''}
@@ -200,11 +200,11 @@ const PacientesPostAlta: React.FC = () => {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t">
-                  <td className="px-3 py-2 text-gray-700">{r.fecha_visita}</td>
-                  <td className="px-3 py-2 font-medium">{r.dni}</td>
-                  <td className="px-3 py-2">{r.nombre}</td>
-                  <td className="px-3 py-2">{r.diagnostico}</td>
+                <tr key={r.id} className="border-t border-gray-200 dark:border-gray-700">
+                  <td className="px-3 py-2 text-gray-900 dark:text-gray-300">{r.fecha_visita}</td>
+                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-200">{r.dni}</td>
+                  <td className="px-3 py-2 text-gray-900 dark:text-gray-300">{r.nombre}</td>
+                  <td className="px-3 py-2 text-gray-900 dark:text-gray-300">{r.diagnostico}</td>
                   <td className="px-3 py-2 w-[360px]">
                     <InlinePendiente id={r.id!} initial={r.pendiente || ''} onSave={handleUpdatePendiente} />
                   </td>
@@ -228,8 +228,7 @@ const InlinePendiente: React.FC<{ id: string; initial: string; onSave: (id: stri
   return (
     <div className="flex items-center gap-2">
       <input
-        className="border rounded px-2 py-1 w-full"
-        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+        className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 w-full bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
         placeholder="Escribe pendiente"
         value={value}
         onChange={(e) => { setValue(e.target.value); setDirty(true); }}

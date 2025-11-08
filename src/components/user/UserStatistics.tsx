@@ -112,15 +112,15 @@ const UserStatistics: React.FC = () => {
         <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-600">Pacientes Atendidos</p>
-              <p className="text-3xl font-bold text-green-900">{statistics.patients.total}</p>
+              <p className="text-sm font-medium text-gray-800">Pacientes Atendidos</p>
+              <p className="text-3xl font-bold text-gray-900">{statistics.patients.total}</p>
             </div>
-            <div className="text-green-600">
+            <div className="text-blue-700">
               <BarChart3 className="h-8 w-8" />
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-green-700">
+            <p className="text-sm text-gray-700">
               Activos: {statistics.patients.active}
             </p>
           </div>
@@ -129,15 +129,15 @@ const UserStatistics: React.FC = () => {
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-600">Horas de Educación</p>
-              <p className="text-3xl font-bold text-purple-900">{statistics.education.totalHours}</p>
+              <p className="text-sm font-medium text-gray-800">Horas de Educación</p>
+              <p className="text-3xl font-bold text-gray-900">{statistics.education.totalHours}</p>
             </div>
-            <div className="text-purple-600">
+            <div className="text-blue-700">
               <BarChart3 className="h-8 w-8" />
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-purple-700">
+            <p className="text-sm text-gray-700">
               {statistics.education.averageScore ?
                 `Promedio: ${(statistics.education.averageScore ?? 0).toFixed(1)}` :
                 'Sin evaluaciones'
@@ -149,15 +149,15 @@ const UserStatistics: React.FC = () => {
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-orange-600">Objetivos Cumplidos</p>
-              <p className="text-3xl font-bold text-orange-900">{statistics.goals.completed}</p>
+              <p className="text-sm font-medium text-gray-800">Objetivos Cumplidos</p>
+              <p className="text-3xl font-bold text-gray-900">{statistics.goals.completed}</p>
             </div>
-            <div className="text-orange-600">
+            <div className="text-blue-700">
               <BarChart3 className="h-8 w-8" />
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm text-orange-700">
+            <p className="text-sm text-gray-700">
               {(statistics.goals.completionRate ?? 0).toFixed(1)}% completado
             </p>
           </div>
@@ -188,7 +188,7 @@ const UserStatistics: React.FC = () => {
                   <span className="text-xs text-gray-600 w-8">{month.procedures}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs text-green-600 w-16">Pacient.</span>
+                  <span className="text-xs text-gray-700 w-16">Pacient.</span>
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-green-500 h-2 rounded-full"
@@ -198,7 +198,7 @@ const UserStatistics: React.FC = () => {
                   <span className="text-xs text-gray-600 w-8">{month.patients}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs text-purple-600 w-16">Educ.</span>
+                  <span className="text-xs text-gray-700 w-16">Educ.</span>
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-purple-500 h-2 rounded-full"

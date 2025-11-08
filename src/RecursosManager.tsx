@@ -82,7 +82,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
 
   const difficultyConfig = {
     basico: { color: 'text-green-600 bg-green-100', label: 'Básico' },
-    intermedio: { color: 'text-yellow-600 bg-yellow-100', label: 'Intermedio' },
+    intermedio: { color: 'text-gray-800 bg-yellow-100', label: 'Intermedio' },
     avanzado: { color: 'text-red-600 bg-red-100', label: 'Avanzado' }
   };
 
@@ -378,7 +378,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center space-x-2">
-              <Star className="h-5 w-5 text-yellow-500" />
+              <Star className="h-5 w-5 text-blue-700" />
               <h3 className="text-lg font-semibold text-gray-900">Recursos Destacados</h3>
             </div>
           </div>
@@ -439,7 +439,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -593,7 +593,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                       type="checkbox"
                       checked={newResource.is_featured}
                       onChange={(e) => setNewResource({...newResource, is_featured: e.target.checked})}
-                      className="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      className="mr-2 h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700">Recurso destacado</span>
                   </label>
@@ -749,7 +749,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <button
             onClick={handleOpenResource}
-            className="flex items-center space-x-1 text-xs text-indigo-600 hover:text-indigo-700"
+            className="flex items-center space-x-1 text-xs text-blue-700 hover:text-blue-800"
           >
             <ExternalLink className="h-3 w-3" />
             <span>Abrir</span>

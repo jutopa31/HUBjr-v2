@@ -21,6 +21,7 @@ import Sidebar from './components/layout/Sidebar';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
+import UpdrsModal from './components/UpdrsModal';
 
 const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -5258,9 +5259,9 @@ const NeurologyResidencyHub = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Actividades Completadas</p>
-                    <p className="text-2xl font-bold text-green-600">24</p>
+                    <p className="text-2xl font-bold text-gray-900">24</p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-500" />
+                  <CheckCircle className="h-8 w-8 text-blue-700" />
                 </div>
               </div>
               <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
@@ -5276,18 +5277,18 @@ const NeurologyResidencyHub = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Casos Presentados</p>
-                    <p className="text-2xl font-bold text-purple-600">8</p>
+                    <p className="text-2xl font-bold text-gray-900">8</p>
                   </div>
-                  <FileText className="h-8 w-8 text-purple-500" />
+                  <FileText className="h-8 w-8 text-blue-700" />
                 </div>
               </div>
               <div className="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Evaluaciones</p>
-                    <p className="text-2xl font-bold text-orange-600">90%</p>
+                    <p className="text-2xl font-bold text-gray-900">90%</p>
                   </div>
-                  <Award className="h-8 w-8 text-orange-500" />
+                  <Award className="h-8 w-8 text-blue-700" />
                 </div>
               </div>
             </div>
@@ -5318,7 +5319,7 @@ const NeurologyResidencyHub = () => {
 
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-semibold mb-4 flex items-center">
-                  <Bell className="h-5 w-5 mr-2 text-orange-600" />
+                  <Bell className="h-5 w-5 mr-2 text-blue-700" />
                   Anuncios
                 </h2>
                 <div className="space-y-3">
@@ -5421,7 +5422,7 @@ const NeurologyResidencyHub = () => {
 
                 <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">
+                    <span className="bg-red-100 text-gray-800 text-xs font-medium px-2 py-1 rounded">
                       Ateneo Clínico
                     </span>
                     <span className="text-sm text-gray-500">Miércoles 15:00</span>
@@ -5440,7 +5441,7 @@ const NeurologyResidencyHub = () => {
 
                 <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                    <span className="bg-green-100 text-gray-800 text-xs font-medium px-2 py-1 rounded">
                       Taller Práctico
                     </span>
                     <span className="text-sm text-gray-500">Viernes 16:00</span>
@@ -5462,7 +5463,7 @@ const NeurologyResidencyHub = () => {
                 <h3 className="font-medium mb-3">Mi Registro de Asistencia</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">92%</p>
+                    <p className="text-2xl font-bold text-gray-900">92%</p>
                     <p className="text-gray-600">Clases Teóricas</p>
                   </div>
                   <div className="text-center">
@@ -5470,7 +5471,7 @@ const NeurologyResidencyHub = () => {
                     <p className="text-gray-600">Ateneos Clínicos</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-purple-600">95%</p>
+                    <p className="text-2xl font-bold text-gray-900">95%</p>
                     <p className="text-gray-600">Talleres</p>
                   </div>
                 </div>
@@ -5538,19 +5539,19 @@ const NeurologyResidencyHub = () => {
                   <p className="text-xs text-blue-600">Esta semana</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-green-600 font-medium">Sala</p>
-                  <p className="text-2xl font-bold text-green-800">8h</p>
-                  <p className="text-xs text-green-600">Esta semana</p>
+                  <p className="text-sm text-gray-800 font-medium">Sala</p>
+                  <p className="text-2xl font-bold text-gray-900">8h</p>
+                  <p className="text-xs text-gray-700">Esta semana</p>
                 </div>
                 <div className="bg-orange-50 p-4 rounded-lg">
-                  <p className="text-sm text-orange-600 font-medium">Interconsultas</p>
-                  <p className="text-2xl font-bold text-orange-800">15</p>
-                  <p className="text-xs text-orange-600">Esta semana</p>
+                  <p className="text-sm text-gray-800 font-medium">Interconsultas</p>
+                  <p className="text-2xl font-bold text-gray-900">15</p>
+                  <p className="text-xs text-gray-700">Esta semana</p>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
-                  <p className="text-sm text-purple-600 font-medium">Procedimientos</p>
-                  <p className="text-2xl font-bold text-purple-800">3</p>
-                  <p className="text-xs text-purple-600">Esta semana</p>
+                  <p className="text-sm text-gray-800 font-medium">Procedimientos</p>
+                  <p className="text-2xl font-bold text-gray-900">3</p>
+                  <p className="text-xs text-gray-700">Esta semana</p>
                 </div>
               </div>
 
@@ -5594,13 +5595,21 @@ const NeurologyResidencyHub = () => {
   const modalRoot = typeof window !== 'undefined' ? document.getElementById('modal-root') : null;
   
   
-  // Create modal content
+  // Create modal content (usar modal especializado para UPDRS)
   const modalContent = selectedScale ? (
-    <ScaleModal
-      scale={selectedScale}
-      onClose={handleModalClose}
-      onSubmit={handleModalSubmit}
-    />
+    selectedScale.id.startsWith('updrs') ? (
+      <UpdrsModal
+        scale={selectedScale}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+      />
+    ) : (
+      <ScaleModal
+        scale={selectedScale}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+      />
+    )
   ) : null;
   
   // Try portal first, fallback to regular rendering
@@ -5613,13 +5622,13 @@ const NeurologyResidencyHub = () => {
     
 
   return (
-    <div className="h-screen bg-gray-100 flex overflow-hidden">
+    <div className="h-screen bg-gray-100 dark:bg-gray-900 flex overflow-hidden">
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg border"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg border dark:border-gray-700"
       >
-        <Menu className="h-6 w-6 text-gray-600" />
+        <Menu className="h-6 w-6 text-gray-600 dark:text-gray-300" />
       </button>
 
       {/* Sidebar overlay for mobile */}
@@ -5644,7 +5653,7 @@ const NeurologyResidencyHub = () => {
       />
 
       {/* Main content */}
-      <div className={`flex-1 flex flex-col overflow-hidden lg:ml-0 bg-[#1a1a1a] ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-4'} ${activeTab !== 'diagnostic' && activeTab !== 'inicio' ? 'pt-20 lg:pt-4' : 'pt-16 lg:pt-0'}`}>
+      <div className={`flex-1 flex flex-col overflow-hidden lg:ml-0 bg-white dark:bg-[#1a1a1a] ${activeTab === 'diagnostic' || activeTab === 'inicio' ? '' : 'p-4'} ${activeTab !== 'diagnostic' && activeTab !== 'inicio' ? 'pt-20 lg:pt-4' : 'pt-16 lg:pt-0'}`}>
         {/* Selector Global de Contexto Hospitalario */}
         {isAdminMode && (
           <div className="px-4 pt-4 pb-0">

@@ -24,7 +24,7 @@ function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 overflow-y-auto">
       <div className="relative w-full max-w-md max-h-[90vh] my-8">
         {/* Close button */}
         <button

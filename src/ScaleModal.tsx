@@ -46,9 +46,9 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   if (!scale) {
     console.error('❌ ScaleModal: No scale provided');
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <h3 className="text-lg font-semibold text-red-600">Error</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Error</h3>
           <p className="text-gray-600 mt-2">No se pudo cargar la escala seleccionada.</p>
           <button
             onClick={onClose}
@@ -64,9 +64,9 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   if (!scale.items || scale.items.length === 0) {
     console.error('❌ ScaleModal: Scale has no items:', scale.name);
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <h3 className="text-lg font-semibold text-yellow-600">Advertencia</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Advertencia</h3>
           <p className="text-gray-600 mt-2">La escala "{scale.name}" no tiene elementos configurados.</p>
           <button
             onClick={onClose}
@@ -80,7 +80,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-white">
           <div>
@@ -123,10 +123,10 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                         <span className="text-sm text-gray-800">{option}</span>
                       </label>
                     );
-                  }) : <div className="text-red-600">No options available for this item</div>}
+                  }) : <div className="text-gray-800">No options available for this item</div>}
                 </div>
               </div>
-            )) : <div className="text-red-600">No items available for this scale</div>}
+            )) : <div className="text-gray-800">No items available for this scale</div>}
           </div>
           {currentTotal !== null && (
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -139,7 +139,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
           
           {scale.id === 'ashworth' && (
             <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-sm text-green-800">
+              <div className="text-sm text-gray-800">
                 <p className="font-medium mb-2">Interpretación de la Escala de Ashworth:</p>
                 <ul className="space-y-1 text-xs">
                   <li><strong>0:</strong> Sin aumento del tono muscular</li>
@@ -180,7 +180,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
 
           {scale.id === 'aspects' && (
             <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="text-sm text-orange-800">
+              <div className="text-sm text-gray-800">
                 <p className="font-medium mb-2">Referencia Anatómica ASPECTS:</p>
                 <div className="bg-white rounded-lg p-3 mb-3">
                   <div className="text-xs text-gray-700 mb-2">
@@ -220,7 +220,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     </ul>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-orange-700 bg-orange-100 p-2 rounded">
+                <div className="mt-2 text-xs text-gray-800 bg-orange-100 p-2 rounded">
                   <strong>Nota:</strong> Cada región alterada resta 1 punto del total inicial de 10 puntos.
                 </div>
               </div>
@@ -229,7 +229,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
 
           {scale.id === 'mich' && (
             <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="text-sm text-red-800">
+              <div className="text-sm text-gray-800">
                 <p className="font-medium mb-3">Interpretación de la Escala MICH:</p>
 
                 {/* Leyenda de características de alto riesgo */}
@@ -273,7 +273,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     </div>
                   </div>
                 </div>
-                <div className="bg-yellow-100 p-2 rounded text-xs text-yellow-800">
+                <div className="bg-yellow-100 p-2 rounded text-xs text-gray-800">
                   <strong>Advertencia:</strong> La escala MICH estima mortalidad a 30 días. No debe usarse como único criterio para retirar soporte vital. Validar con guías locales.
                 </div>
               </div>

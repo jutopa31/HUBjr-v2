@@ -13,13 +13,13 @@ export const HOSPITAL_CONTEXT_OPTIONS: HospitalContextOption[] = [
   {
     value: 'Posadas',
     label: 'Hospital Posadas',
-    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    color: 'bg-blue-100 text-gray-800 border-blue-200',
     description: 'Pacientes del Hospital Nacional Posadas'
   },
   {
     value: 'Julian',
     label: 'Consultorios Julian',
-    color: 'bg-green-100 text-green-800 border-green-200',
+    color: 'bg-green-100 text-gray-800 border-green-200',
     description: 'Pacientes de consultorios particulares'
   }
 ];

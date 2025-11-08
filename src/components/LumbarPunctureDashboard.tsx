@@ -98,7 +98,7 @@ export default function LumbarPunctureDashboard({ className = '' }: LumbarPunctu
         <div className="flex items-center justify-between banner rounded-lg p-4">
           <div>
             <h1 className="text-2xl font-bold flex items-center">
-              <Stethoscope className="h-6 w-6 text-accent mr-2" />
+              <Stethoscope className="h-6 w-6 text-blue-700 mr-2" />
               Gestión de Punciones Lumbares
             </h1>
             <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>

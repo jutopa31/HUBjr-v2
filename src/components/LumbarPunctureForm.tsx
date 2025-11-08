@@ -332,10 +332,10 @@ export default function LumbarPunctureForm({
           <div className="space-y-6">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-blue-700 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-800">Lista de Verificación de Seguridad Pre-procedimiento</h4>
-                  <p className="text-sm text-yellow-700 mt-1">
+                  <h4 className="text-sm font-medium text-gray-800">Lista de Verificación de Seguridad Pre-procedimiento</h4>
+                  <p className="text-sm text-gray-700 mt-1">
                     Asegurar que todas las medidas de seguridad estén completas antes de proceder.
                   </p>
                 </div>
@@ -553,10 +553,10 @@ export default function LumbarPunctureForm({
                   type="checkbox"
                   checked={formData.successful}
                   onChange={(e) => handleInputChange('successful', e.target.checked)}
-                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm font-medium text-gray-700 flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                  <CheckCircle className="h-4 w-4 text-blue-700 mr-2" />
                   Procedure successful
                 </span>
               </label>
@@ -566,10 +566,10 @@ export default function LumbarPunctureForm({
                   type="checkbox"
                   checked={formData.bloody_tap}
                   onChange={(e) => handleInputChange('bloody_tap', e.target.checked)}
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm font-medium text-gray-700 flex items-center">
-                  <XCircle className="h-4 w-4 text-red-600 mr-2" />
+                  <XCircle className="h-4 w-4 text-blue-700 mr-2" />
                   Bloody tap
                 </span>
               </label>
@@ -579,10 +579,10 @@ export default function LumbarPunctureForm({
                   type="checkbox"
                   checked={formData.traumatic_tap}
                   onChange={(e) => handleInputChange('traumatic_tap', e.target.checked)}
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm font-medium text-gray-700 flex items-center">
-                  <XCircle className="h-4 w-4 text-red-600 mr-2" />
+                  <XCircle className="h-4 w-4 text-blue-700 mr-2" />
                   Traumatic tap
                 </span>
               </label>
@@ -592,10 +592,10 @@ export default function LumbarPunctureForm({
                   type="checkbox"
                   checked={formData.dry_tap}
                   onChange={(e) => handleInputChange('dry_tap', e.target.checked)}
-                  className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm font-medium text-gray-700 flex items-center">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
+                  <AlertTriangle className="h-4 w-4 text-blue-700 mr-2" />
                   Dry tap
                 </span>
               </label>
@@ -864,7 +864,7 @@ export default function LumbarPunctureForm({
           <div className="space-y-6">
             <div className="space-y-4">
               <h4 className="text-lg font-medium text-gray-900 flex items-center">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+                <AlertTriangle className="h-5 w-5 text-blue-700 mr-2" />
                 Complications
               </h4>
 
@@ -874,7 +874,7 @@ export default function LumbarPunctureForm({
                     type="checkbox"
                     checked={formData.headache_post_lp}
                     onChange={(e) => handleInputChange('headache_post_lp', e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">Post-LP headache</span>
                 </label>
@@ -884,7 +884,7 @@ export default function LumbarPunctureForm({
                     type="checkbox"
                     checked={formData.nausea_vomiting}
                     onChange={(e) => handleInputChange('nausea_vomiting', e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">Nausea/vomiting</span>
                 </label>
@@ -894,7 +894,7 @@ export default function LumbarPunctureForm({
                     type="checkbox"
                     checked={formData.back_pain}
                     onChange={(e) => handleInputChange('back_pain', e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">Back pain</span>
                 </label>
@@ -904,7 +904,7 @@ export default function LumbarPunctureForm({
                     type="checkbox"
                     checked={formData.bleeding}
                     onChange={(e) => handleInputChange('bleeding', e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">Bleeding</span>
                 </label>
@@ -914,7 +914,7 @@ export default function LumbarPunctureForm({
                     type="checkbox"
                     checked={formData.infection}
                     onChange={(e) => handleInputChange('infection', e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-gray-700 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">Infection</span>
                 </label>
@@ -958,7 +958,7 @@ export default function LumbarPunctureForm({
                   type="checkbox"
                   checked={formData.patient_discharge_same_day}
                   onChange={(e) => handleInputChange('patient_discharge_same_day', e.target.checked)}
-                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm font-medium text-gray-700">Patient discharged same day</span>
               </label>
@@ -1130,7 +1130,7 @@ export default function LumbarPunctureForm({
                 key={index}
                 className={`${
                   index === currentStep ? 'text-blue-600 font-medium' : ''
-                } ${index < currentStep ? 'text-green-600' : ''}`}
+                } ${index < currentStep ? 'text-blue-700' : ''}`}
               >
                 {step}
               </span>
@@ -1152,10 +1152,10 @@ export default function LumbarPunctureForm({
         {submitError && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-start space-x-3">
-              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-blue-700 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-red-800">Error</h4>
-                <p className="text-sm text-red-700 mt-1">{submitError}</p>
+                <h4 className="text-sm font-medium text-gray-800">Error</h4>
+                <p className="text-sm text-gray-700 mt-1">{submitError}</p>
               </div>
             </div>
           </div>

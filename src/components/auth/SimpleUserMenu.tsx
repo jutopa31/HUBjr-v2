@@ -44,7 +44,7 @@ function SimpleUserMenu() {
           {isDevelopment && (
             <button
               onClick={clearCacheAndReload}
-              className="w-full flex items-center justify-center px-2 py-1 text-xs text-orange-400 border border-orange-700 rounded-md hover:bg-orange-950/30"
+              className="w-full flex items-center justify-center px-2 py-1 text-xs text-blue-400 border border-orange-700 rounded-md hover:bg-orange-950/30"
               title="Limpiar cache de autenticación (solo desarrollo)"
             >
               <Trash2 className="h-3 w-3 mr-1" />
@@ -81,7 +81,7 @@ function SimpleUserMenu() {
         {/* Sign Out Button */}
         <button
           onClick={signOut}
-          className="w-full px-2 py-1.5 text-xs text-red-400 border border-red-800 rounded-md hover:bg-red-950/30"
+          className="w-full px-2 py-1.5 text-xs text-blue-400 border border-red-800 rounded-md hover:bg-red-950/30"
         >
           Cerrar
         </button>
@@ -90,7 +90,7 @@ function SimpleUserMenu() {
         {isDevelopment && (
           <button
             onClick={clearCacheAndReload}
-            className="w-full px-2 py-1 text-xs text-orange-400 border border-orange-700 rounded-md hover:bg-orange-950/30"
+            className="w-full px-2 py-1 text-xs text-blue-400 border border-orange-700 rounded-md hover:bg-orange-950/30"
             title="Limpiar cache de autenticación (solo desarrollo)"
           >
             <Trash2 className="h-3 w-3 mr-1 inline" />

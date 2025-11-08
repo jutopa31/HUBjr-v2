@@ -274,11 +274,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   return (
     <div className="flex h-full flex-col lg:flex-row">
       {/* Mobile Controls */}
-      <div className="border-b bg-white px-4 py-3 shadow-sm lg:hidden">
+      <div className="border-b bg-white dark:bg-[#1a1a1a] px-4 py-3 shadow-sm lg:hidden">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Evolucionador</p>
-            <h2 className="text-base font-semibold text-gray-200">Notas y escalas neurológicas</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-200">Notas y escalas neurológicas</h2>
           </div>
           <button
             type="button"
@@ -305,8 +305,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         <aside
           className={
             isMobileView
-              ? 'fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col overflow-y-auto bg-white shadow-xl'
-              : 'hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white'
+              ? 'fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col overflow-y-auto bg-white dark:bg-[#1a1a1a] shadow-xl'
+              : 'hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-gray-200 dark:lg:border-gray-800 lg:bg-white dark:lg:bg-[#1a1a1a]'
           }
         >
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
@@ -369,10 +369,22 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               <span>Examen Físico Neurológico</span>
               <Stethoscope className="h-4 w-4" />
             </button>
-            <p className="mt-2 text-center text-xs text-emerald-700">Evaluación sistemática por esferas neurológicas</p>
+            <p className="mt-2 text-center text-xs text-blue-700">Evaluación sistemática por esferas neurológicas</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
+            {/* Accesos rápidos a escalas frecuentes */}
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-gray-600">Accesos rápidos:</span>
+              <button
+                type="button"
+                onClick={() => openScaleModal('updrs3')}
+                className="inline-flex items-center rounded-full bg-gray-900 text-white px-3 py-1 text-xs hover:bg-gray-800"
+                title="Abrir UPDRS III (Examen Motor)"
+              >
+                UPDRS III
+              </button>
+            </div>
             <div className="mb-4 border-b border-gray-200 pb-4">
               <h3 className="flex items-center text-sm font-semibold text-gray-700">
                 <Calculator className="mr-2 h-4 w-4" />
@@ -421,9 +433,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                         }`}>
                           <Stethoscope className={`h-4 w-4 ${
                             isAISuggestions
-                              ? 'text-purple-700'
+                              ? 'text-blue-700'
                               : isSearchResults
-                                ? 'text-green-700'
+                                ? 'text-gray-800'
                                 : isParkinson
                                   ? 'text-orange-600'
                                   : 'text-blue-600'
@@ -436,9 +448,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                         </span>
                         <span className={`rounded-full px-2 py-1 text-xs ${
                           isAISuggestions
-                            ? 'bg-purple-200 text-purple-700'
+                            ? 'bg-blue-200 text-gray-800'
                             : isSearchResults
-                              ? 'bg-green-200 text-green-700'
+                              ? 'bg-green-200 text-gray-800'
                               : 'bg-gray-200 text-gray-500'
                         }`}>
                           {scales.length}
@@ -446,13 +458,13 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                         {isAISuggestions && (
                           <div className="flex items-center space-x-1">
                             <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
-                            <span className="text-xs font-medium text-purple-700">Activo</span>
+                            <span className="text-xs font-medium text-blue-700">Activo</span>
                           </div>
                         )}
                         {isSearchResults && (
                           <div className="flex items-center space-x-1">
                             <div className="h-2 w-2 rounded-full bg-green-500" />
-                            <span className="text-xs font-medium text-green-700">Búsqueda</span>
+                            <span className="text-xs font-medium text-gray-800">Búsqueda</span>
                           </div>
                         )}
                       </div>
@@ -515,15 +527,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       )}
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col bg-slate-50 p-4 lg:p-6">
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white shadow">
-          <div className="border-b p-4 lg:p-6">
+      <div className="flex flex-1 flex-col bg-gray-100 dark:bg-[#0a0a0a] p-4 lg:p-6">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white dark:bg-[#171717] shadow-2xl border border-gray-200 dark:border-gray-800">
+          <div className="border-b border-gray-200 dark:border-gray-800 p-4 lg:p-6">
             <div className="mb-4 flex flex-col items-center justify-between gap-3 text-center lg:flex-row lg:text-left">
-              <h2 className="text-lg font-semibold text-gray-900">Notas del Paciente</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notas del Paciente</h2>
               <button
                 type="button"
                 onClick={handleToggleScales}
-                className="hidden items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 lg:inline-flex"
+                className="hidden items-center gap-2 rounded-lg bg-gray-200 dark:bg-[#2a2a2a] px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-200 transition hover:bg-gray-300 dark:hover:bg-[#3a3a3a] border border-gray-300 dark:border-gray-700 lg:inline-flex"
               >
                 <LayoutList className="h-4 w-4" />
                 {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
@@ -532,7 +544,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={handleSavePatient}
-                className="flex items-center space-x-2 rounded-lg bg-blue-900 px-3 py-2 text-sm text-white hover:bg-blue-800 border border-blue-800"
+                className="flex items-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
                 title="Guardar paciente en base de datos"
               >
                 <Database className="h-4 w-4" />
@@ -540,7 +552,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               </button>
               <button
                 onClick={copyNotes}
-                className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
+                className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
               >
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
@@ -558,7 +570,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {clearNotes && (
                 <button
                   onClick={clearNotes}
-                  className="flex items-center space-x-2 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-300 hover:bg-red-950/60 border border-red-800"
+                  className="flex items-center space-x-2 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-blue-300 hover:bg-red-950/60 border border-red-800"
                 >
                   <span>🗑️</span>
                   <span>Limpiar</span>
@@ -572,7 +584,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 `;
                   setNotes(notes + normalExamText);
                 }}
-                className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
+                className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
               >
                 <Plus className="h-4 w-4" />
                 <span>EF normal</span>
@@ -582,7 +594,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                   const testText = `Paciente con temblor en reposo y rigidez muscular. Presenta hemiparesia derecha y disartria severa.`;
                   setNotes(notes + (notes ? '\n\n' : '') + testText);
                 }}
-                className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
+                className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
               >
                 <Plus className="h-4 w-4" />
                 <span>Test IA</span>
@@ -590,7 +602,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               <div className="relative">
                 <button
                   onClick={() => setShowPathologyDropdown(!showPathologyDropdown)}
-                  className="flex items-center space-x-2 rounded-lg bg-[#3a3a3a] px-3 py-2 text-sm text-gray-200 hover:bg-[#444444] border border-gray-700"
+                  className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
                   title="Insertar antecedentes patológicos frecuentes"
                 >
                   <Plus className="h-4 w-4" />
@@ -602,36 +614,36 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                       className="fixed inset-0 z-40"
                       onClick={() => setShowPathologyDropdown(false)}
                     />
-                    <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
-                      <div className="sticky top-0 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-cyan-50 px-4 py-3">
+                    <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] shadow-2xl">
+                      <div className="sticky top-0 border-b border-gray-300 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/50 dark:to-cyan-950/50 px-4 py-3">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-gray-900">Antecedentes Frecuentes</h3>
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Antecedentes Frecuentes</h3>
                           <button
                             onClick={() => setShowPathologyDropdown(false)}
-                            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                            className="rounded p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
                           >
                             <X className="h-4 w-4" />
                           </button>
                         </div>
-                        <p className="mt-1 text-xs text-gray-600">Click para insertar en el cursor</p>
+                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Click para insertar en el cursor</p>
                       </div>
-                      <div className="divide-y divide-gray-100">
+                      <div className="divide-y divide-gray-200 dark:divide-gray-800">
                         {commonPathologies.map((pathology, index) => (
                           <button
                             key={index}
                             onClick={() => {
                               insertAtCursor(pathology.abbreviation);
                             }}
-                            className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-teal-50"
+                            className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-teal-50 dark:hover:bg-teal-950/30"
                           >
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900">{pathology.label}</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{pathology.label}</p>
                             </div>
                             <div className="ml-3 flex items-center space-x-2">
-                              <span className="rounded-full bg-teal-100 px-2 py-1 text-xs font-semibold text-teal-700">
+                              <span className="rounded-full bg-blue-900/50 px-2 py-1 text-xs font-semibold text-blue-300 border border-blue-800">
                                 {pathology.abbreviation}
                               </span>
-                              <ChevronRight className="h-4 w-4 text-gray-400" />
+                              <ChevronRight className="h-4 w-4 text-gray-500" />
                             </div>
                           </button>
                         ))}
@@ -647,8 +659,8 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             {saveStatus && (
               <div className={`mb-4 flex items-center space-x-2 rounded-lg border p-3 ${
                 saveStatus.success
-                  ? 'border-green-200 bg-green-50 text-green-800'
-                  : 'border-red-200 bg-red-50 text-red-800'
+                  ? 'border-green-800 bg-green-950/30 text-blue-300'
+                  : 'border-red-800 bg-red-950/30 text-blue-300'
               }`}
               >
                 <div className={`h-2 w-2 rounded-full ${
@@ -662,7 +674,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               ref={textareaRef}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="h-full min-h-[18rem] w-full resize-none rounded-lg border border-gray-300 p-4 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              className="h-full min-h-[18rem] w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               placeholder="Escriba aquí las notas del paciente..."
             />
           </div>

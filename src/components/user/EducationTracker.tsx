@@ -112,8 +112,8 @@ const EducationTracker: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <GraduationCap className="h-6 w-6 text-purple-600" />
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <GraduationCap className="h-6 w-6 text-blue-700" />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Educación y Formación</h2>
@@ -124,7 +124,7 @@ const EducationTracker: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center space-x-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
         >
           <Plus className="h-4 w-4" />
           <span>Nueva Actividad</span>
@@ -135,8 +135,8 @@ const EducationTracker: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Clock className="h-6 w-6 text-purple-600" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Clock className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Horas Totales</p>
@@ -159,8 +159,8 @@ const EducationTracker: React.FC = () => {
 
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Award className="h-6 w-6 text-green-600" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Award className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Promedio</p>
@@ -174,7 +174,7 @@ const EducationTracker: React.FC = () => {
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
 
@@ -357,17 +357,17 @@ const EducationTracker: React.FC = () => {
               <div key={classItem.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Icon className="h-5 w-5 text-purple-600" />
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Icon className="h-5 w-5 text-blue-700" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <h3 className="text-lg font-medium text-gray-900">{classItem.title}</h3>
-                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-blue-100 text-gray-800 text-xs rounded-full">
                           {typeInfo.label}
                         </span>
                         {classItem.assessment_score && (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          <span className="px-2 py-1 bg-green-100 text-gray-800 text-xs rounded-full">
                             {classItem.assessment_score}/100
                           </span>
                         )}
@@ -403,8 +403,8 @@ const EducationTracker: React.FC = () => {
                       )}
 
                       {classItem.notes && (
-                        <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">
-                          <p className="text-sm text-purple-700">
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                          <p className="text-sm text-gray-800">
                             <strong>Aprendizajes:</strong> {classItem.notes}
                           </p>
                         </div>
@@ -415,14 +415,14 @@ const EducationTracker: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleEdit(classItem)}
-                      className="p-2 text-gray-400 hover:text-purple-600 rounded-lg"
+                      className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                       title="Editar actividad"
                     >
                       <BookOpen className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(classItem.id!)}
-                      className="p-2 text-gray-400 hover:text-red-600 rounded-lg"
+                      className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
                       title="Eliminar actividad"
                     >
                       <Calendar className="h-4 w-4" />
@@ -439,3 +439,4 @@ const EducationTracker: React.FC = () => {
 };
 
 export default EducationTracker;
+

@@ -218,16 +218,16 @@ const EventManagerSupabase: React.FC = () => {
   // Get event type color
   const getEventTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
-      // Clases (Academic) - Verde para tema oscuro
-      academic: 'bg-emerald-950/40 text-emerald-300 border-emerald-700',
-      // Tareas Clínicas - Azul para tema oscuro
-      clinical: 'bg-blue-950/40 text-blue-300 border-blue-700',
-      // Administrativo - Púrpura para tema oscuro
-      administrative: 'bg-purple-950/40 text-purple-300 border-purple-700',
-      // Emergencia - Rojo para tema oscuro
-      emergency: 'bg-red-950/40 text-red-300 border-red-700',
-      // Social - Naranja para tema oscuro
-      social: 'bg-orange-950/40 text-orange-300 border-orange-700',
+      // Clases (Academic) - Verde claro para modo light, oscuro para dark
+      academic: 'bg-emerald-100 text-gray-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-gray-200 dark:border-emerald-700',
+      // Tareas Clínicas - Azul claro para modo light, oscuro para dark
+      clinical: 'bg-blue-100 text-gray-800 border-blue-300 dark:bg-blue-950/40 dark:text-gray-200 dark:border-blue-700',
+      // Administrativo - Púrpura claro para modo light, oscuro para dark
+      administrative: 'bg-purple-100 text-gray-800 border-purple-300 dark:bg-purple-950/40 dark:text-gray-200 dark:border-purple-700',
+      // Emergencia - Rojo claro para modo light, oscuro para dark
+      emergency: 'bg-red-100 text-gray-800 border-red-300 dark:bg-red-950/40 dark:text-gray-200 dark:border-red-700',
+      // Social - Naranja claro para modo light, oscuro para dark
+      social: 'bg-orange-100 text-gray-800 border-orange-300 dark:bg-orange-950/40 dark:text-gray-200 dark:border-orange-700',
     };
     return colors[type] || colors.clinical;
   };
@@ -491,7 +491,7 @@ const EventManagerSupabase: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-4 rounded-lg border border-gray-700">
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Calendar className="h-5 w-5" />
@@ -501,13 +501,13 @@ const EventManagerSupabase: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2">
             {/* View Toggle */}
-            <div className="bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-700">
+            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
               <button
                 onClick={() => setViewMode('week')}
                 className={`px-3 py-1 rounded text-xs font-medium transition-all ${
                   viewMode === 'week'
-                    ? 'bg-[#3a3a3a] text-white'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
                 5 Días
@@ -516,8 +516,8 @@ const EventManagerSupabase: React.FC = () => {
                 onClick={() => setViewMode('month')}
                 className={`px-3 py-1 rounded text-xs font-medium transition-all ${
                   viewMode === 'month'
-                    ? 'bg-[#3a3a3a] text-white'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
                 Mes
@@ -525,7 +525,7 @@ const EventManagerSupabase: React.FC = () => {
             </div>
 
             {/* Event Filters */}
-            <div className="bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-700">
+            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
               <button
                 onClick={() => setShowClases(!showClases)}
                 className={`px-3 py-1 rounded text-xs font-medium transition-all ${
@@ -583,7 +583,7 @@ const EventManagerSupabase: React.FC = () => {
                   deleteEventsByTitle(pattern);
                 }
               }}
-              className="flex items-center space-x-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800 px-3 py-1.5 rounded-md transition-all text-red-400"
+              className="flex items-center space-x-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800 px-3 py-1.5 rounded-md transition-all text-blue-300"
               disabled={loading}
               title="Eliminar eventos por título"
             >
@@ -594,31 +594,31 @@ const EventManagerSupabase: React.FC = () => {
       </div>
 
       {/* Calendar Navigation */}
-      <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-3">
+      <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-3">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigateDate('prev')}
-            className="flex items-center space-x-2 px-3 py-1.5 text-gray-400 hover:bg-[#333333] hover:text-gray-200 rounded-md transition-colors text-sm"
+            className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
           >
             <span>←</span>
             <span>{viewMode === 'week' ? 'Semana Anterior' : 'Mes Anterior'}</span>
           </button>
 
           <div className="text-center">
-            <h2 className="text-base font-semibold text-gray-200">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-200">
               {viewMode === 'week'
                 ? `Semana del ${currentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`
                 : currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
               }
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-600 dark:text-gray-500">
               {viewMode === 'week' ? 'Vista semanal' : 'Vista mensual'}
             </p>
           </div>
 
           <button
             onClick={() => navigateDate('next')}
-            className="flex items-center space-x-2 px-3 py-1.5 text-gray-400 hover:bg-[#333333] hover:text-gray-200 rounded-md transition-colors text-sm"
+            className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
           >
             <span>{viewMode === 'week' ? 'Semana Siguiente' : 'Mes Siguiente'}</span>
             <span>→</span>
@@ -628,12 +628,12 @@ const EventManagerSupabase: React.FC = () => {
 
       {/* Quick Event Form */}
       {showForm && (
-        <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-4">
-          <h3 className="text-base font-semibold mb-2 flex items-center text-gray-200">
+        <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+          <h3 className="text-base font-semibold mb-2 flex items-center text-gray-900 dark:text-gray-200">
             <Plus className="h-4 w-4 mr-2 text-blue-500" />
             Crear Nuevo Evento Médico
             {newEvent.type === 'academic' && (
-              <span className="ml-2 text-xs bg-green-900/30 text-green-400 px-2 py-1 rounded-md border border-green-800">
+              <span className="ml-2 text-xs bg-green-900/30 text-blue-300 px-2 py-1 rounded-md border border-green-800">
                 📚 Modo Clase
               </span>
             )}
@@ -800,10 +800,10 @@ const EventManagerSupabase: React.FC = () => {
       )}
 
       {/* Calendar View */}
-      <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-4">
+      <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
         {viewMode === 'week' ? (
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-gray-200 mb-3">Vista Semanal</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3">Vista Semanal</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {getWeekDays(currentDate).map((day, index) => {
                 const dayEvents = getEventsForDate(day);
@@ -814,15 +814,15 @@ const EventManagerSupabase: React.FC = () => {
                   <div key={index} className="min-h-[200px]">
                     <div className={`p-2 rounded-lg border h-full ${
                       isToday
-                        ? 'border-blue-600 bg-blue-950/30'
-                        : 'border-gray-700 bg-[#333333]'
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/30'
+                        : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#333333]'
                     }`}>
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-center flex-1">
-                          <div className={`text-xs font-medium ${isToday ? 'text-blue-400' : 'text-gray-400'}`}>
+                          <div className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
                             {dayName}
                           </div>
-                          <div className={`text-base font-bold ${isToday ? 'text-blue-300' : 'text-gray-300'}`}>
+                          <div className={`text-base font-bold ${isToday ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-gray-300'}`}>
                             {day.getDate()}
                           </div>
                         </div>
@@ -855,15 +855,15 @@ const EventManagerSupabase: React.FC = () => {
                               }}
                             >
                               <div className="flex items-center space-x-1.5 mb-0.5">
-                                <Icon className={`h-3 w-3 ${event.type === 'academic' ? 'text-emerald-400' : 'text-gray-400'}`} />
-                                <span className="text-xs font-medium text-gray-400">{startTime}</span>
+                                <Icon className={`h-3 w-3 ${event.type === 'academic' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`} />
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-400">{startTime}</span>
                               </div>
-                              <div className="text-xs font-medium line-clamp-2 flex items-center space-x-1 text-gray-200">
+                              <div className="text-xs font-medium line-clamp-2 flex items-center space-x-1 text-gray-900 dark:text-gray-200">
                                 {event.type === 'academic' && <span className="text-[10px]">📚</span>}
                                 <span>{event.title}</span>
                               </div>
                               {event.location && (
-                                <div className="text-xs text-gray-500 mt-0.5 flex items-center">
+                                <div className="text-xs text-gray-600 dark:text-gray-500 mt-0.5 flex items-center">
                                   <MapPin className="h-2 w-2 mr-1" />
                                   {event.location}
                                 </div>
@@ -885,12 +885,12 @@ const EventManagerSupabase: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            <h3 className="text-base font-semibold text-gray-200 mb-3">Vista Mensual</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3">Vista Mensual</h3>
             <div className="overflow-x-auto">
               <div className="grid min-w-[520px] grid-cols-5 gap-1 sm:min-w-0 sm:gap-2 md:gap-3">
               {/* Week headers */}
               {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day) => (
-                <div key={day} className="p-2 text-center text-xs font-medium text-gray-400 bg-[#333333]">
+                <div key={day} className="p-2 text-center text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333]">
                   {day}
                 </div>
               ))}
@@ -898,7 +898,7 @@ const EventManagerSupabase: React.FC = () => {
               {/* Month days */}
               {getMonthDays(currentDate).map((day, index) => {
                 if (!day) {
-                  return <div key={index} className="aspect-square bg-[#333333]"></div>;
+                  return <div key={index} className="aspect-square bg-gray-100 dark:bg-[#333333]"></div>;
                 }
 
                 const dayEvents = getEventsForDate(day);
@@ -909,15 +909,15 @@ const EventManagerSupabase: React.FC = () => {
                   <div
                     key={index}
                     className={`aspect-square border p-1 relative ${
-                      isCurrentMonth ? 'bg-[#2a2a2a] border-gray-700' : 'bg-[#333333] border-gray-800'
-                    } ${isToday ? 'bg-blue-950/30 border-blue-600' : ''}`}
+                      isCurrentMonth ? 'bg-white dark:bg-[#2a2a2a] border-gray-300 dark:border-gray-700' : 'bg-gray-100 dark:bg-[#333333] border-gray-400 dark:border-gray-800'
+                    } ${isToday ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-600' : ''}`}
                   >
                     <div className={`text-xs font-medium ${
                       isToday
-                        ? 'text-blue-400'
+                        ? 'text-blue-600 dark:text-blue-400'
                         : isCurrentMonth
-                          ? 'text-gray-300'
-                          : 'text-gray-600'
+                          ? 'text-gray-900 dark:text-gray-300'
+                          : 'text-gray-500 dark:text-gray-600'
                     }`}>
                       {day.getDate()}
                     </div>
@@ -951,9 +951,9 @@ const EventManagerSupabase: React.FC = () => {
       </div>
 
       {/* Events List */}
-      <div className="bg-[#2a2a2a] rounded-lg border border-gray-800 p-4">
+      <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold flex items-center text-gray-200">
+          <h2 className="text-base font-semibold flex items-center text-gray-900 dark:text-gray-200">
             <CalendarDays className="h-5 w-5 mr-2 text-blue-500" />
             Lista de Eventos ({events.length})
           </h2>
@@ -968,8 +968,8 @@ const EventManagerSupabase: React.FC = () => {
             <span>Cargando eventos desde Supabase...</span>
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-12 text-gray-400 bg-[#333333] rounded-lg border border-gray-700">
-            <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-600" />
+          <div className="text-center py-12 text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333] rounded-lg border border-gray-300 dark:border-gray-700">
+            <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-500 dark:text-gray-600" />
             <p className="text-base mb-2">No hay eventos programados</p>
             <p className="text-sm">¡Crea el primer evento médico para tu servicio!</p>
           </div>
@@ -981,7 +981,7 @@ const EventManagerSupabase: React.FC = () => {
               const isEditing = editingEvent === event.id;
 
               return (
-                <div key={event.id} className="border border-gray-700 rounded-lg p-3 hover:border-gray-600 transition-all bg-[#333333]">
+                <div key={event.id} className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 hover:border-gray-400 dark:hover:border-gray-600 transition-all bg-white dark:bg-[#333333]">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div
@@ -989,7 +989,7 @@ const EventManagerSupabase: React.FC = () => {
                         onClick={() => setExpandedEvent(isExpanded ? null : event.id!)}
                       >
                         <div className="flex items-center gap-2 mb-1.5">
-                          <Icon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
                           {isEditing ? (
                             <input
                               type="text"
@@ -1000,10 +1000,10 @@ const EventManagerSupabase: React.FC = () => {
                                 );
                                 setEvents(updatedEvents);
                               }}
-                              className="font-semibold text-sm text-gray-200 bg-yellow-950/30 border border-yellow-700 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                              className="font-semibold text-sm text-gray-900 dark:text-gray-200 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-300 dark:border-yellow-700 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                             />
                           ) : (
-                            <h4 className="font-semibold text-sm text-gray-200">{event.title}</h4>
+                            <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-200">{event.title}</h4>
                           )}
                           <span className={`px-2 py-0.5 text-xs rounded-full border flex items-center space-x-1 ${getEventTypeColor(event.type || 'clinical')}`}>
                             {React.createElement(getEventTypeIcon(event.type || 'clinical'), { className: "w-3 h-3" })}
@@ -1117,7 +1117,7 @@ const EventManagerSupabase: React.FC = () => {
                               if (event.description) await updateEvent(event.id!, 'description', event.description);
                               setEditingEvent(null);
                             }}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                            className="p-2 text-blue-700 hover:bg-green-50 rounded-full transition-colors"
                             title="Guardar cambios"
                           >
                             <Save className="w-4 h-4" />
@@ -1144,7 +1144,7 @@ const EventManagerSupabase: React.FC = () => {
                           </button>
                           <button
                             onClick={() => deleteEvent(event.id!)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                            className="p-2 text-blue-700 hover:bg-red-50 rounded-full transition-colors"
                             title="Eliminar evento"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1162,7 +1162,7 @@ const EventManagerSupabase: React.FC = () => {
 
       {/* Event Details Modal */}
       {showEventDetails && selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Detalles del Evento</h3>

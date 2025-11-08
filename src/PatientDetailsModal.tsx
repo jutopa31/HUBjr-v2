@@ -74,7 +74,7 @@ Hospital Nacional Posadas - Servicio de Neurología`;
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white w-full h-full overflow-hidden">
         {/* Header */}
         <div className="p-8 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 sticky top-0 z-10">
@@ -140,7 +140,7 @@ Hospital Nacional Posadas - Servicio de Neurología`;
             {patient.scale_results && patient.scale_results.length > 0 && (
               <div className="mb-10">
                 <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                  <Brain className="h-6 w-6 mr-3 text-purple-600" />
+                  <Brain className="h-6 w-6 mr-3 text-blue-700" />
                   Escalas Aplicadas ({patient.scale_results.length})
                 </h3>
                 <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -157,7 +157,7 @@ Hospital Nacional Posadas - Servicio de Neurología`;
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <div className="text-3xl font-bold text-purple-600">{scale.score}</div>
+                          <div className="text-3xl font-bold text-gray-900">{scale.score}</div>
                           <div className="text-sm text-gray-500 font-medium">puntos</div>
                         </div>
                       </div>
@@ -198,7 +198,7 @@ Hospital Nacional Posadas - Servicio de Neurología`;
                   <span className="text-gray-500">Estado:</span>
                   <div className="font-medium">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                      patient.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      patient.status === 'active' ? 'bg-green-100 text-gray-800' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {patient.status === 'active' ? 'Activo' : patient.status}
                     </span>

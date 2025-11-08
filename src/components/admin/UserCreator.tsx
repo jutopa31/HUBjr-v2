@@ -188,8 +188,8 @@ const UserCreator: React.FC<UserCreatorProps> = ({ onUserCreated }) => {
       {message && (
         <div className={`mt-4 p-3 rounded-lg ${
           message.type === 'success'
-            ? 'bg-green-50 text-green-800 border border-green-200'
-            : 'bg-red-50 text-red-800 border border-red-200'
+            ? 'bg-green-50 text-gray-800 border border-green-200'
+            : 'bg-red-50 text-gray-800 border border-red-200'
         }`}>
           {message.text}
         </div>

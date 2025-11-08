@@ -96,8 +96,8 @@ function LoginForm({ onSuccess, onToggleMode, showSignUp = false }: LoginFormPro
       {displayError && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-            <span className="text-sm text-red-700">{displayError}</span>
+            <AlertCircle className="h-5 w-5 text-blue-700 mr-2" />
+            <span className="text-sm text-gray-800">{displayError}</span>
           </div>
         </div>
       )}
@@ -235,7 +235,7 @@ function LoginForm({ onSuccess, onToggleMode, showSignUp = false }: LoginFormPro
 
       {showSignUp && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-xs text-yellow-800">
+          <p className="text-xs text-gray-800">
             <strong>Nota:</strong> Las cuentas nuevas requieren aprobación del administrador.
             Recibirás un email de confirmación una vez que tu cuenta sea activada.
           </p>

@@ -167,7 +167,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Procedimientos</p>
               <p className="text-2xl font-semibold text-gray-900">{statistics.procedures.total}</p>
-              <p className="text-xs text-green-600">
+              <p className="text-xs text-gray-700">
                 {(statistics.procedures.successRate ?? 0).toFixed(1)}% éxito
               </p>
             </div>
@@ -181,14 +181,14 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
         >
           <div className="flex items-center">
             <div className="p-2 bg-indigo-100 rounded-lg">
-              <Syringe className="h-6 w-6 text-indigo-600" />
+              <Syringe className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4 flex-1">
               <p className="text-sm font-medium text-gray-600">Punciones Lumbares</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {statistics.procedures.lumbarPuncturesCount || 0}
               </p>
-              <p className="text-xs text-green-600">
+              <p className="text-xs text-gray-700">
                 {statistics.procedures.lumbarPuncturesSuccessRate ?
                   `${(statistics.procedures.lumbarPuncturesSuccessRate ?? 0).toFixed(1)}% éxito` :
                   'Sin datos'
@@ -202,7 +202,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
         <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <Users className="h-6 w-6 text-green-600" />
+              <Users className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Pacientes</p>
@@ -217,7 +217,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
         <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
-              <BookOpen className="h-6 w-6 text-purple-600" />
+              <BookOpen className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Educación</p>
@@ -232,7 +232,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
         <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center">
             <div className="p-2 bg-orange-100 rounded-lg">
-              <Target className="h-6 w-6 text-orange-600" />
+              <Target className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Objetivos</p>
@@ -264,7 +264,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
                     </p>
                   </div>
                   <div className={`px-2 py-1 rounded-full text-xs ${
-                    procedure.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    procedure.success ? 'bg-green-100 text-gray-800' : 'bg-red-100 text-gray-800'
                   }`}>
                     {procedure.success ? 'Exitoso' : 'Con complicaciones'}
                   </div>
@@ -294,7 +294,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
                   </div>
                   <div className={`px-2 py-1 rounded-full text-xs ${
                     patient.status === 'active' ? 'bg-blue-100 text-blue-800' :
-                    patient.status === 'discharged' ? 'bg-green-100 text-green-800' :
+                    patient.status === 'discharged' ? 'bg-green-100 text-gray-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {patient.status === 'active' ? 'Activo' :
@@ -324,19 +324,19 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               <div className="text-sm text-gray-600">General</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-gray-900">
                 {statistics.performance.latestReview.clinical_skills_rating || '-'}
               </div>
               <div className="text-sm text-gray-600">Habilidades</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-gray-900">
                 {statistics.performance.latestReview.knowledge_rating || '-'}
               </div>
               <div className="text-sm text-gray-600">Conocimiento</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
+              <div className="text-2xl font-bold text-gray-900">
                 {statistics.performance.latestReview.professionalism_rating || '-'}
               </div>
               <div className="text-sm text-gray-600">Profesionalismo</div>

@@ -280,7 +280,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
             const statusColor = isCurrent
               ? 'text-blue-100'
               : isCompleted
-              ? 'text-green-600'
+              ? 'text-blue-700'
               : 'text-gray-500';
 
             const buttonClasses = [
@@ -288,7 +288,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
               isCurrent
                 ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
                 : isCompleted
-                ? 'bg-green-50 text-green-900 border-green-200 hover:border-green-300'
+                ? 'bg-green-50 text-gray-900 border-green-200 hover:border-green-300'
                 : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300'
             ].join(' ');
 
@@ -307,7 +307,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                     </div>
                   </div>
                   {isCompleted && (
-                    <CheckCircle className={`h-4 w-4 ${isCurrent ? 'text-white' : 'text-green-600'}`} />
+                    <CheckCircle className={`h-4 w-4 ${isCurrent ? 'text-white' : 'text-blue-700'}`} />
                   )}
                 </div>
               </button>
@@ -325,13 +325,13 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
       <div className="border-l-4 border-orange-400 bg-orange-50 p-4 mb-6">
         <div className="flex">
           <div className="flex-shrink-0">
-            <AlertTriangle className="h-5 w-5 text-orange-400" />
+            <AlertTriangle className="h-5 w-5 text-blue-700" />
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-orange-800">
+            <h3 className="text-sm font-medium text-gray-800">
               Validación del Examen
             </h3>
-            <div className="mt-2 text-sm text-orange-700">
+            <div className="mt-2 text-sm text-gray-800">
               {validationResult.warnings.length > 0 && (
                 <div className="mb-2">
                   <strong>Advertencias:</strong>
@@ -593,7 +593,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
             
             {/* I - Olfatorio */}
             <div className="mb-4 bg-white border rounded-lg p-4">
-              <h4 className="font-semibold text-lg mb-3 text-green-900">I - Nervio Olfatorio</h4>
+              <h4 className="font-semibold text-lg mb-3 text-gray-900">I - Nervio Olfatorio</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="flex items-center">
@@ -610,7 +610,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                           }
                         }
                       })}
-                      className="mr-2 text-green-600"
+                      className="mr-2 text-blue-700"
                     />
                     <span className="text-sm">Evaluado</span>
                   </label>
@@ -632,7 +632,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                             }
                           }
                         })}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="normal">Normal</option>
                         <option value="decreased">Disminuido</option>
@@ -655,7 +655,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                             }
                           }
                         })}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="normal">Normal</option>
                         <option value="decreased">Disminuido</option>
@@ -670,7 +670,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
 
             {/* II - Óptico */}
             <div className="mb-4 bg-white border rounded-lg p-4">
-              <h4 className="font-semibold text-lg mb-3 text-green-900">II - Nervio Óptico</h4>
+              <h4 className="font-semibold text-lg mb-3 text-gray-900">II - Nervio Óptico</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Agudeza Visual - Izquierdo</label>
@@ -690,7 +690,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                         }
                       }
                     })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                     placeholder="ej. 20/20"
                   />
                 </div>
@@ -713,7 +713,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                         }
                       }
                     })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                     placeholder="ej. 20/20"
                   />
                 </div>
@@ -737,7 +737,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                         }
                       }
                     })}
-                    className="mr-2 text-green-600"
+                    className="mr-2 text-blue-700"
                   />
                   <span className="text-sm">Visión corregida (con lentes)</span>
                 </label>
@@ -746,7 +746,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
 
             {/* III, IV, VI - Oculomotores */}
             <div className="mb-4 bg-white border rounded-lg p-4">
-              <h4 className="font-semibold text-lg mb-3 text-green-900">III, IV, VI - Nervios Oculomotores</h4>
+              <h4 className="font-semibold text-lg mb-3 text-gray-900">III, IV, VI - Nervios Oculomotores</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Movimientos Extraoculares</label>
@@ -765,7 +765,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                         }
                       }
                     })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar...</option>
                     <option value="normal">Normales en todas las direcciones</option>
@@ -792,7 +792,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                         }
                       }
                     })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar...</option>
                     <option value="normal">Normal bilateral</option>
@@ -806,7 +806,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
 
             {/* Resumen rápido para otros nervios craneales */}
             <div className="mb-6 bg-gray-50 border rounded-lg p-4">
-              <h4 className="font-semibold text-lg mb-3 text-green-900">Evaluación Rápida - Otros Nervios</h4>
+              <h4 className="font-semibold text-lg mb-3 text-gray-900">Evaluación Rápida - Otros Nervios</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                 {[
                   { nerve: 'V', name: 'Trigémino', test: 'Sensibilidad facial' },
@@ -818,10 +818,10 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                   { nerve: 'XII', name: 'Hipogloso', test: 'Lengua' }
                 ].map(({ nerve, name, test }) => (
                   <div key={nerve} className="bg-white p-2 rounded border">
-                    <div className="font-medium text-green-800">{nerve} - {name}</div>
+                    <div className="font-medium text-gray-800">{nerve} - {name}</div>
                     <div className="text-gray-600 text-xs">{test}</div>
                     <select 
-                      className="w-full mt-1 px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-green-500"
+                      className="w-full mt-1 px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
                       defaultValue="normal"
                     >
                       <option value="normal">Normal</option>
@@ -934,7 +934,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black bg-opacity-50 py-8 px-4 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 py-8 px-4 sm:px-6">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
@@ -984,4 +984,5 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
 };
 
 export default NeurologicalExamModal;
+
 

@@ -96,7 +96,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -128,10 +128,10 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
         }`}>
           <div className="flex items-center justify-center space-x-2">
             <Building2 className={`h-4 w-4 ${
-              hospitalContext === 'Julian' ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
+              hospitalContext === 'Julian' ? 'text-blue-700 dark:text-blue-300' : 'text-blue-700 dark:text-blue-300'
             }`} />
             <span className={`text-sm font-semibold ${
-              hospitalContext === 'Julian' ? 'text-purple-800 dark:text-purple-300' : 'text-blue-800 dark:text-blue-300'
+              hospitalContext === 'Julian' ? 'text-blue-800 dark:text-blue-300' : 'text-blue-800 dark:text-blue-300'
             }`}>
               Guardando en: {hospitalContext === 'Julian' ? '🏥 Consultorios Julian' : '🏥 Hospital Posadas'}
             </span>
@@ -180,7 +180,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
                 disabled={isSaving}
               />
               {!patientName.trim() && (
-                <p className="text-xs text-red-500 dark:text-red-400 mt-1">Este campo es requerido</p>
+                <p className="text-xs text-gray-800 dark:text-gray-300 mt-1">Este campo es requerido</p>
               )}
             </div>
 
@@ -230,13 +230,13 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
           {saveResult && (
             <div className={`mt-4 p-4 rounded-lg flex items-center space-x-3 ${
               saveResult.success 
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+            ? 'bg-green-50 text-gray-800 border border-green-200'
+            : 'bg-red-50 text-gray-800 border border-red-200'
             }`}>
               {saveResult.success ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-blue-700" />
               ) : (
-                <AlertCircle className="h-5 w-5 text-red-500" />
+                <AlertCircle className="h-5 w-5 text-blue-700" />
               )}
               <span className="text-sm">{saveResult.message}</span>
             </div>

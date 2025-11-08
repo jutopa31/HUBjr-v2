@@ -256,7 +256,7 @@ const WardRoundsComplete: React.FC = () => {
 
       {/* Formulario para agregar paciente */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b flex items-center justify-between">
               <h2 className="text-xl font-semibold">Agregar Nuevo Paciente</h2>
@@ -450,10 +450,10 @@ const WardRoundsComplete: React.FC = () => {
                   <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.estudios}>{patient.estudios}</td>
                   <td className="px-3 py-4 text-sm text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      patient.severidad === 'I' ? 'bg-green-100 text-green-800' :
-                      patient.severidad === 'II' ? 'bg-yellow-100 text-yellow-800' :
-                      patient.severidad === 'III' ? 'bg-orange-100 text-orange-800' :
-                      patient.severidad === 'IV' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                      patient.severidad === 'I' ? 'bg-green-100 text-gray-800' :
+                      patient.severidad === 'II' ? 'bg-yellow-100 text-gray-800' :
+                      patient.severidad === 'III' ? 'bg-orange-100 text-gray-800' :
+                      patient.severidad === 'IV' ? 'bg-red-100 text-gray-800' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {patient.severidad}
                     </span>

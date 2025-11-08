@@ -124,7 +124,7 @@ export function LoadingWithRecovery({
         {showRecovery && (
           <>
             <div className="mb-4">
-              <RefreshCw className="h-12 w-12 text-yellow-500 mx-auto mb-2" />
+              <RefreshCw className="h-12 w-12 text-blue-700 mx-auto mb-2" />
               <p className="text-gray-700 text-lg font-medium mb-2">
                 La carga está tardando más de lo esperado
               </p>

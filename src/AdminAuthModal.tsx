@@ -80,12 +80,12 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   if (isAuthenticated) {
     return (
       <>
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-96 p-6 border border-gray-800">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-green-950/40 rounded-lg border border-green-800">
-                  <Settings className="h-6 w-6 text-green-400" />
+                  <Settings className="h-6 w-6 text-blue-300" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-200">
@@ -111,7 +111,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 className="w-full flex items-center space-x-3 p-4 bg-purple-950/40 border border-purple-800 rounded-lg hover:bg-purple-950/60 transition-colors"
               >
                 <div className="p-2 bg-purple-900/50 rounded-lg">
-                  <Brain className="h-6 w-6 text-purple-400" />
+                  <Brain className="h-6 w-6 text-blue-300" />
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="font-medium text-gray-200">Configuración de IA</h3>
@@ -186,19 +186,19 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-96 p-6 border border-gray-800">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg border ${
-              user && (hasPrivilege('full_admin') || hasHospitalContextAccess)
-                ? 'bg-green-950/40 border-green-800'
-                : 'bg-orange-950/40 border-orange-800'
-            }`}>
+                <div className={`p-2 rounded-lg border ${
+                  user && (hasPrivilege('full_admin') || hasHospitalContextAccess)
+                    ? 'bg-green-950/40 border-green-800'
+                    : 'bg-orange-950/40 border-orange-800'
+                }`}>
               {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) ? (
-                <UserCheck className="h-6 w-6 text-green-400" />
+                <UserCheck className="h-6 w-6 text-blue-300" />
               ) : (
-                <Lock className="h-6 w-6 text-orange-400" />
+                <Lock className="h-6 w-6 text-blue-300" />
               )}
             </div>
             <div>
@@ -207,7 +207,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
               </h2>
               <p className="text-sm text-gray-400">
                 {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) ? (
-                  <>Usuario autorizado: <span className="font-medium text-green-400">{user.email}</span></>
+                  <>Usuario autorizado: <span className="font-medium text-blue-300">{user.email}</span></>
                 ) : (
                   'Ingrese la contraseña para editar contenidos'
                 )}
@@ -226,8 +226,8 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           {/* Show privilege info if user is authenticated */}
           {user && (hasPrivilege('full_admin') || hasHospitalContextAccess) && (
             <div className="mb-4 p-4 bg-green-950/40 border border-green-800 rounded-lg">
-              <h3 className="text-sm font-medium text-green-300 mb-2">Privilegios de Usuario</h3>
-              <ul className="text-xs text-green-400 space-y-1">
+              <h3 className="text-sm font-medium text-blue-300 mb-2">Privilegios de Usuario</h3>
+              <ul className="text-xs text-blue-400 space-y-1">
                 {hasPrivilege('full_admin') && <li>✅ Administrador completo</li>}
                 {hasHospitalContextAccess && <li>✅ Acceso a contextos hospitalarios</li>}
                 <li>✅ Acceso automático sin contraseña</li>
@@ -265,15 +265,15 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   </button>
                 </div>
                 {error && (
-                  <p className="mt-2 text-sm text-red-400">{error}</p>
+                  <p className="mt-2 text-sm text-blue-400">{error}</p>
                 )}
               </div>
 
               <div className="bg-yellow-950/40 border border-yellow-800 rounded-lg p-3">
-                <p className="text-xs text-yellow-300">
+                <p className="text-xs text-blue-300">
                   <strong>Nota:</strong> El modo de edición le permite modificar:
                 </p>
-                <ul className="text-xs text-yellow-400 mt-1 ml-4 list-disc">
+                <ul className="text-xs text-blue-400 mt-1 ml-4 list-disc">
                   <li>Asignaciones semanales de residentes e internos</li>
                   <li>Eventos del calendario académico</li>
                   <li>Información de actividades</li>

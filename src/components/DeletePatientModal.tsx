@@ -32,7 +32,7 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
@@ -80,11 +80,11 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
                 value="delete"
                 checked={selectedAction === 'delete'}
                 onChange={(e) => setSelectedAction(e.target.value as 'delete')}
-                className="text-red-600 focus:ring-red-500"
+                className="text-blue-700 focus:ring-blue-500"
                 disabled={isProcessing}
               />
-              <Trash2 className="h-5 w-5 text-red-600" />
-              <span className="font-medium text-red-900">Eliminar completamente</span>
+              <Trash2 className="h-5 w-5 text-blue-700" />
+              <span className="font-medium text-gray-900">Eliminar completamente</span>
             </label>
           </div>
         </div>

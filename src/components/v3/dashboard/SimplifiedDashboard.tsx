@@ -96,18 +96,18 @@ const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ onNavigate, h
     <section className="flex flex-col gap-8">
       <header className="flex flex-col gap-3 rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <span className="text-sm uppercase tracking-wide text-slate-500">Tablero simplificado</span>
+          <span className="text-sm uppercase tracking-wide text-gray-500">Tablero simplificado</span>
           <h1 className="text-3xl font-semibold text-white">
             {greeting}, Dr. {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Equipo HubJR'}
           </h1>
         </div>
-        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+        <div className="flex flex-wrap gap-4 text-sm text-gray-400">
           <span className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-1.5">
-            <Hospital className="h-4 w-4 text-sky-400" />
+            <Hospital className="h-4 w-4 text-blue-400" />
             {context} activo
           </span>
           <span className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-1.5">
-            <CalendarDays className="h-4 w-4 text-sky-400" />
+            <CalendarDays className="h-4 w-4 text-blue-400" />
             {new Date().toLocaleDateString('es-AR', {
               weekday: 'long',
               day: 'numeric',
@@ -129,11 +129,11 @@ const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ onNavigate, h
             >
               <span className="flex items-center justify-between">
                 <span className="text-base font-medium text-white">{action.label}</span>
-                <ChevronRight className="h-4 w-4 text-slate-500 transition group-hover:translate-x-1 group-hover:text-sky-400" />
+                <ChevronRight className="h-4 w-4 text-gray-500 transition group-hover:translate-x-1 group-hover:text-blue-400" />
               </span>
-              <div className="flex items-center gap-3 text-sm text-slate-400">
+              <div className="flex items-center gap-3 text-sm text-gray-400">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-950">
-                  <Icon className="h-4 w-4 text-sky-400" />
+                  <Icon className="h-4 w-4 text-blue-400" />
                 </span>
                 <p>{action.description}</p>
               </div>
@@ -147,7 +147,7 @@ const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ onNavigate, h
           <header className="flex items-center justify-between">
             <div className="flex flex-col">
               <h2 className="text-lg font-semibold text-white">Indicadores clave</h2>
-              <p className="text-sm text-slate-400">Seguimiento diario de pacientes y tareas.</p>
+              <p className="text-sm text-gray-400">Seguimiento diario de pacientes y tareas.</p>
             </div>
           </header>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -155,30 +155,30 @@ const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ onNavigate, h
               icon={Users}
               label="Pacientes hoy"
               value={stats?.todayPatients ?? 0}
-              accent="bg-sky-500/20 text-sky-400"
+              accent="bg-blue-500/20 text-blue-400"
             />
             <StatCard
               icon={CheckSquare}
               label="Tareas pendientes"
               value={stats?.pendingTasks ?? 0}
-              accent="bg-amber-500/20 text-amber-400"
+              accent="bg-blue-500/20 text-blue-400"
             />
             <StatCard
               icon={Activity}
               label="Procedimientos"
               value={stats?.completedProcedures ?? 0}
-              accent="bg-emerald-500/20 text-emerald-400"
+              accent="bg-blue-500/20 text-blue-400"
             />
           </div>
 
           <section className="flex flex-col gap-3">
-            <h3 className="text-sm font-medium text-slate-300">Actividad reciente</h3>
+            <h3 className="text-sm font-medium text-gray-300">Actividad reciente</h3>
             <div className="flex flex-col gap-3">
               {(stats?.recentActivity ?? []).map((item) => (
                 <RecentActivity key={item.id} activity={item} />
               ))}
               {!loading && (!stats || stats.recentActivity.length === 0) && (
-                <p className="text-sm text-slate-500">Sin movimientos registrados en las ultimas horas.</p>
+                <p className="text-sm text-gray-500">Sin movimientos registrados en las ultimas horas.</p>
               )}
               {loading && <SkeletonLines count={3} />}
             </div>
@@ -189,12 +189,12 @@ const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ onNavigate, h
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-white">Agenda proxima</h2>
-              <p className="text-sm text-slate-400">Guardias, academia y eventos en cola.</p>
+              <p className="text-sm text-gray-400">Guardias, academia y eventos en cola.</p>
             </div>
             <button
               type="button"
               onClick={() => onNavigate('admin')}
-              className="text-sm font-medium text-sky-400 transition hover:text-sky-300"
+              className="text-sm font-medium text-blue-400 transition hover:text-blue-300"
             >
               Ver calendario
             </button>
@@ -207,14 +207,14 @@ const SimplifiedDashboard: React.FC<SimplifiedDashboardProps> = ({ onNavigate, h
               >
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900/80">
-                    <CalendarDays className="h-5 w-5 text-sky-400" />
+                    <CalendarDays className="h-5 w-5 text-blue-400" />
                   </span>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-white">Residencia</span>
-                    <span className="text-xs text-slate-400">Unidad 3B - Equipo A</span>
+                    <span className="text-xs text-gray-400">Unidad 3B - Equipo A</span>
                   </div>
                 </div>
-                <span className="text-xs font-medium text-slate-500">En {slot} h</span>
+                <span className="text-xs font-medium text-gray-500">En {slot} h</span>
               </div>
             ))}
           </div>
@@ -235,7 +235,7 @@ const StatCard: React.FC<{
       <Icon className="h-5 w-5" />
     </span>
     <div className="flex flex-col gap-1">
-      <span className="text-sm text-slate-400">{label}</span>
+      <span className="text-sm text-gray-400">{label}</span>
       <span className="text-2xl font-semibold text-white">{value}</span>
     </div>
   </div>
@@ -251,13 +251,13 @@ const RecentActivity: React.FC<{ activity: DashboardStats['recentActivity'][numb
   const priorityTone = () => {
     switch (activity.priority) {
       case 'high':
-        return 'border-rose-500/40 bg-rose-500/10 text-rose-300';
+        return 'border-blue-500/40 bg-blue-500/10 text-blue-300';
       case 'medium':
-        return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+        return 'border-blue-500/40 bg-blue-500/10 text-blue-300';
       case 'low':
-        return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
+        return 'border-blue-500/40 bg-blue-500/10 text-blue-300';
       default:
-        return 'border-slate-700 bg-slate-900/60 text-slate-300';
+        return 'border-slate-700 bg-slate-900/60 text-gray-300';
     }
   };
 
@@ -271,10 +271,10 @@ const RecentActivity: React.FC<{ activity: DashboardStats['recentActivity'][numb
         </span>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-white">{activity.description}</span>
-          <span className="text-xs text-slate-400">Registrado a las {activity.time}</span>
+          <span className="text-xs text-gray-400">Registrado a las {activity.time}</span>
         </div>
       </div>
-      <span className="text-xs font-medium text-slate-500">{activity.priority?.toUpperCase() ?? 'NORMAL'}</span>
+      <span className="text-xs font-medium text-gray-500">{activity.priority?.toUpperCase() ?? 'NORMAL'}</span>
     </div>
   );
 };
