@@ -183,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <nav className="flex-1 p-2 overflow-y-auto scrollbar-hide" onClick={(e) => e.stopPropagation()}>
           <ul className="space-y-1">
             {filteredMenuItems.length > 0 ? (
               filteredMenuItems.map((item) => {

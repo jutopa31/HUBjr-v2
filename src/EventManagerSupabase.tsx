@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, BookOpen, Users, FileText, Heart, AlertTriangle } from 'lucide-react';
+import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, BookOpen, Users, FileText, Heart, AlertTriangle, GraduationCap } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
 import { useAuthContext } from './components/auth/AuthProvider';
 import SectionHeader from './components/layout/SectionHeader';
@@ -492,26 +492,26 @@ const EventManagerSupabase: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
+      <div className="max-w-6xl mx-auto mb-6">
       <SectionHeader
-        title={"Cronograma NeurologA-a"}
-        icon={<Calendar className="h-6 w-6 text-accent" />}
+        title={"Cronograma Neurología"}
         actions={
           <div className="flex items-center space-x-2">
             {/* View Toggle */}
             <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
               <button
                 onClick={() => setViewMode('week')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   viewMode === 'week'
                     ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
-                5 DA-as
+                5 Días
               </button>
               <button
                 onClick={() => setViewMode('month')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   viewMode === 'month'
                     ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -525,20 +525,20 @@ const EventManagerSupabase: React.FC = () => {
             <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
               <button
                 onClick={() => setShowClases(!showClases)}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   showClases
-                    ? 'bg-green-700 text-white'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-green-600 dark:bg-green-700 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
                 Clases
               </button>
               <button
                 onClick={() => setShowTareas(!showTareas)}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                   showTareas
-                    ? 'bg-blue-700 text-white'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
                 Tareas
@@ -548,7 +548,7 @@ const EventManagerSupabase: React.FC = () => {
             <div className="flex space-x-2">
               <button
                 onClick={() => setShowForm(!showForm)}
-                className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-sm"
+                className="flex items-center space-x-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
                 disabled={loading}
               >
                 <Plus className="h-4 w-4" />
@@ -564,31 +564,32 @@ const EventManagerSupabase: React.FC = () => {
                   });
                   setShowForm(true);
                 }}
-                className="flex items-center space-x-2 bg-green-700 hover:bg-green-600 px-3 py-1.5 rounded-md transition-all text-white text-sm"
+                className="flex items-center space-x-1.5 bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
                 disabled={loading}
-                title="Crear una clase acadAcmica"
+                title="Crear una clase académica"
               >
-                <span>dY"s</span>
+                <GraduationCap className="h-4 w-4" />
                 <span>Nueva Clase</span>
               </button>
             </div>
 
             <button
               onClick={() => {
-                const pattern = window.prompt('Ingresa parte del tA-tulo de los eventos a eliminar:');
+                const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
                 if (pattern) {
                   deleteEventsByTitle(pattern);
                 }
               }}
-              className="flex items-center space-x-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800 px-3 py-1.5 rounded-md transition-all text-blue-300"
+              className="flex items-center justify-center bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 px-3 py-1.5 rounded-md transition-all text-white"
               disabled={loading}
-              title="Eliminar eventos por tA-tulo"
+              title="Eliminar eventos por título"
             >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         }
       />
+      </div>
       {false && (
       <div className="banner rounded-lg p-4">
         <div className="flex items-center justify-between">

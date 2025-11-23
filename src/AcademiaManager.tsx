@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Calendar, FolderOpen, GraduationCap, FileText } from 'lucide-react';
+import { Calendar, FolderOpen, FileText } from 'lucide-react';
 import ClasesScheduler from './ClasesScheduler';
 import RecursosManager from './RecursosManager';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface AcademiaManagerProps {
   isAdminMode?: boolean;
@@ -28,28 +29,18 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="banner rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <GraduationCap className="h-6 w-6 text-blue-700" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Academia</h1>
-                <p className="text-sm text-gray-500">Gestión académica y recursos educativos</p>
-              </div>
-            </div>
-
-            {isAdminMode && (
-              <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-gray-800">
-                  Modo Admin
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="max-w-6xl mx-auto mt-4 mb-6">
+        <SectionHeader
+          title={"Academia"}
+          subtitle={"Gestión académica y recursos educativos"}
+          actions={
+            isAdminMode ? (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium btn-soft">
+                Modo Admin
+              </span>
+            ) : null
+          }
+        />
       </div>
 
       {/* Navigation Tabs */}

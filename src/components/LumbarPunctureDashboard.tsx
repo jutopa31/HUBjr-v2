@@ -3,6 +3,7 @@ import { Plus, Stethoscope, Eye } from 'lucide-react';
 import LumbarPunctureForm from './LumbarPunctureForm';
 import LumbarPunctureResults from './LumbarPunctureResults';
 import { LumbarPuncture, LumbarPunctureFormData } from '../types/lumbarPuncture';
+import SectionHeader from '../components/layout/SectionHeader';
 
 type ViewMode = 'list' | 'create' | 'edit' | 'view' | 'analytics';
 
@@ -93,26 +94,24 @@ export default function LumbarPunctureDashboard({ className = '' }: LumbarPunctu
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Navigation Header */}
+      {/* Header */}
       {viewMode === 'list' && (
-        <div className="flex items-center justify-between banner rounded-lg p-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center">
-              <Stethoscope className="h-6 w-6 text-blue-700 mr-2" />
-              Gestión de Punciones Lumbares
-            </h1>
-            <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
-              Seguimiento y análisis integral de procedimientos de punción lumbar
-            </p>
-          </div>
-
-          <button
-            onClick={handleCreateNew}
-            className="px-4 py-2 btn-accent rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nuevo Procedimiento</span>
-          </button>
+        <div className="max-w-6xl mx-auto mb-6">
+          <SectionHeader
+            title={
+              <span className="flex items-center">
+                <Stethoscope className="h-6 w-6 text-accent mr-2" />
+                Gestión de Punciones Lumbares
+              </span>
+            }
+            subtitle={"Seguimiento y análisis integral de procedimientos de punción lumbar"}
+            actions={
+              <button onClick={handleCreateNew} className="px-3 py-2 text-sm btn-accent rounded inline-flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                <span>Nuevo Procedimiento</span>
+              </button>
+            }
+          />
         </div>
       )}
 

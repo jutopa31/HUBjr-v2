@@ -3,6 +3,7 @@ import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle, Trash2, Edit3, Save
 import { supabase } from './utils/supabase.js';
 import { syncAllPendientes, completeTaskAndClearPatientPendientes } from './utils/pendientesSync';
 import { useAuthContext } from './components/auth/AuthProvider';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface Task {
   id?: string;
@@ -346,35 +347,30 @@ const PendientesManager: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="banner rounded-lg shadow-lg p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center space-x-3">
-            <CheckSquare className="h-8 w-8 text-blue-700" />
-            <div>
-              <h1 className="text-3xl font-bold">Pendientes</h1>
-              <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>Lista de tareas y recordatorios</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
+      <SectionHeader
+        title="Pendientes"
+        icon={<CheckSquare className="h-6 w-6 text-accent" />}
+        actions={
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex w-full items-center justify-center space-x-2 rounded-lg px-4 py-2 transition-all btn-soft sm:w-auto"
+              className="flex items-center space-x-1.5 bg-gray-600 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
               disabled={loading}
             >
-              <Plus className="h-5 w-5" />
-              <span>{showForm ? 'Cerrar formulario' : 'Nueva Tarea'}</span>
+              <Plus className="h-4 w-4" />
+              <span>{showForm ? 'Cerrar' : 'Nueva Tarea'}</span>
             </button>
             <button
               onClick={handleSyncWithWardRounds}
-              className="flex w-full items-center justify-center space-x-2 rounded-lg px-4 py-2 transition-all btn-accent sm:w-auto"
+              className="flex items-center space-x-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
               disabled={syncing || loading}
             >
-              <Users className="h-5 w-5" />
-              <span>{syncing ? 'Sincronizando...' : 'Sincronizar Pase'}</span>
+              <Users className="h-4 w-4" />
+              <span>{syncing ? 'Sincronizando...' : 'Sincronizar'}</span>
             </button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filters */}
       <div className="medical-card">

@@ -109,8 +109,9 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
   return (
     <div className="h-full overflow-y-auto bg-white dark:bg-[#1a1a1a]">
       {/* Header Principal */}
+      <div className="max-w-6xl mx-auto mb-6">
       <SectionHeader
-        title={"A�Bienvenidos!"}
+        title={"¡Bienvenidos!"}
         icon={<Home className="h-6 w-6 text-accent" />}
         actions={
           <div className="text-right">
@@ -119,6 +120,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
           </div>
         }
       />
+      </div>
       {false && (
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -142,9 +144,9 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
         {/* Fila Principal: Accesos Rápidos + Actividades de Hoy */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Accesos Rápidos */}
-          <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-2 text-blue-700 dark:text-blue-400" />
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-secondary)] p-4">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3 flex items-center">
+              <TrendingUp className="h-4 w-4 mr-2" style={{ color: 'var(--state-info)' }} />
               Accesos Rápidos
             </h3>
             <div className="grid grid-cols-2 gap-2.5">

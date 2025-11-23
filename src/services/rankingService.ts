@@ -40,40 +40,8 @@ export type ActiveTopics = {
   monthly?: Topic;
 };
 
-const mockTopics: ActiveTopics = {
-  weekly: {
-    id: 't_week_1',
-    title: 'ACV isquémico: manejo agudo',
-    period: 'weekly',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 6 * 24 * 3600 * 1000).toISOString(),
-    objectives: 'Revisar NIHSS, indicaciones de trombólisis y cuidados iniciales.',
-    materials: [
-      { label: 'Guía AHA/ASA 2019', url: '#' },
-      { label: 'NIHSS rápido', url: '#' }
-    ]
-  },
-  monthly: {
-    id: 't_month_1',
-    title: 'Epilepsias: clasificación y tratamiento',
-    period: 'monthly',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 27 * 24 * 3600 * 1000).toISOString(),
-    objectives: 'Actualizar clasificación ILAE y esquemas de primera línea.',
-    materials: [
-      { label: 'ILAE 2022 resumen', url: '#' }
-    ]
-  }
-};
-
-const mockLeaderboard: RankingEntry[] = [
-  { userId: 'u1', displayName: 'Residente A', level: 'R2', points: 120 },
-  { userId: 'u2', displayName: 'Residente B', level: 'R3', points: 110 },
-  { userId: 'u3', displayName: 'Residente C', level: 'R1', points: 105 }
-];
-
 export async function getActiveTopics(): Promise<ActiveTopics> {
-  if (!isSupabaseConfigured()) return mockTopics;
+  if (!isSupabaseConfigured()) return {};
   try {
     const { data, error } = await supabase
       .from('ranking_topics')
@@ -100,8 +68,8 @@ export async function getActiveTopics(): Promise<ActiveTopics> {
     });
     return result;
   } catch (e) {
-    console.warn('getActiveTopics fallback (error or missing table):', e);
-    return mockTopics;
+    console.warn('getActiveTopics error (topics missing or query failed):', e);
+    return {};
   }
 }
 
@@ -145,12 +113,7 @@ export async function getLeaderboard(
   period: RankingPeriod,
   filters?: { level?: string; hospitalContext?: string }
 ): Promise<RankingEntry[]> {
-  if (!isSupabaseConfigured()) {
-    let data = mockLeaderboard;
-    if (filters?.level) data = data.filter(d => d.level === filters.level);
-    if (filters?.hospitalContext) data = data.filter(d => d.hospitalContext === filters.hospitalContext);
-    return data;
-  }
+  if (!isSupabaseConfigured()) return [];
   try {
     let query = supabase
       .from(period === 'weekly' ? 'ranking_leaderboard_weekly' : 'ranking_leaderboard_monthly')
@@ -163,23 +126,18 @@ export async function getLeaderboard(
     if (error) throw error;
     return (data || []).map((row: any) => ({
       userId: row.user_id,
-      displayName: row.display_name || 'Anónimo',
+      displayName: row.display_name || 'Anonimo',
       level: row.level || undefined,
       points: row.points || 0,
       hospitalContext: row.hospital_context || undefined,
     }));
   } catch (e) {
-    console.warn('getLeaderboard fallback (error or missing view):', e);
-    return mockLeaderboard;
+    console.warn('getLeaderboard error (view missing or query failed):', e);
+    return [];
   }
-}
-
-export async function getMyEntry(period: RankingPeriod, userId: string): Promise<RankingEntry | null> {
+}export async function getMyEntry(period: RankingPeriod, userId: string): Promise<RankingEntry | null> {
   if (!userId) return null;
-  if (!isSupabaseConfigured()) {
-    const found = mockLeaderboard.find(e => e.userId === userId);
-    return found || null;
-  }
+  if (!isSupabaseConfigured()) return null;
   try {
     const { data, error } = await supabase
       .from(period === 'weekly' ? 'ranking_leaderboard_weekly' : 'ranking_leaderboard_monthly')
@@ -190,7 +148,7 @@ export async function getMyEntry(period: RankingPeriod, userId: string): Promise
     if (!data) return null;
     return {
       userId: data.user_id,
-      displayName: data.display_name || 'Anónimo',
+      displayName: data.display_name || 'Anonimo',
       level: data.level || undefined,
       points: data.points || 0,
       hospitalContext: data.hospital_context || undefined,
@@ -272,7 +230,7 @@ export async function listSubmittedParticipations(): Promise<ParticipationRow[]>
   try {
     const { data, error } = await supabase
       .from('ranking_participations')
-      .select('id, topic_id, user_id, type, link, comment, status, created_at, resident_profiles!inner(display_name)')
+      .select('id, topic_id, user_id, type, link, comment, status, created_at, resident_profiles!inner(first_name,last_name)')
       .eq('status', 'submitted')
       .order('created_at', { ascending: true });
     if (error) throw error;
@@ -285,7 +243,7 @@ export async function listSubmittedParticipations(): Promise<ParticipationRow[]>
       comment: row.comment || undefined,
       status: row.status,
       createdAt: row.created_at,
-      displayName: row.resident_profiles?.display_name
+      displayName: row.resident_profiles ? `${row.resident_profiles.first_name || ''} ${row.resident_profiles.last_name || ''}`.trim() : undefined
     }));
   } catch (e) {
     console.warn('listSubmittedParticipations error:', e);
@@ -349,4 +307,15 @@ export async function rejectParticipation(participationId: string, reason?: stri
     return { success: false };
   }
 }
+
+
+
+
+
+
+
+
+
+
+
 

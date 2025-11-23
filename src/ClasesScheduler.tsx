@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, Users, GraduationCap, BookOpen, FileText, AlertCircle } from 'lucide-react';
 import { supabase } from './utils/supabase';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface AcademicClass {
   id?: string;
@@ -238,22 +239,20 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header (unificado) */}
-      <div className="banner rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Cronograma de Clases</h2>
-          <p className="text-gray-600">Gestión del calendario académico</p>
-        </div>
-
-        {isAdminMode && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nueva Clase</span>
-          </button>
-        )}
+      {/* Header unificado */}
+      <div className="max-w-6xl mx-auto mb-6">
+      <SectionHeader
+        title={"Cronograma de Clases"}
+        subtitle={"Gestión del calendario académico"}
+        actions={
+          isAdminMode ? (
+            <button onClick={() => setShowForm(true)} className="flex items-center space-x-2 btn-accent px-3 py-2 text-sm rounded">
+              <Plus className="h-4 w-4" />
+              <span>Nueva Clase</span>
+            </button>
+          ) : null
+        }
+      />
       </div>
 
       {/* Type Filters */}

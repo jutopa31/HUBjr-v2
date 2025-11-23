@@ -16,7 +16,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`banner rounded-lg p-4 md:p-6 ${className}`}>
+    <div className={`banner rounded-lg p-4 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           {icon ? <div className="shrink-0 mt-0.5">{icon}</div> : null}
@@ -36,4 +36,3 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
 };
 
 export default SectionHeader;
-

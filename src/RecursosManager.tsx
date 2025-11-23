@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Search, Filter, Plus, Eye, Heart, Edit3, Trash2, X, Save, ExternalLink, Clock, User, Star } from 'lucide-react';
 import { supabase } from './utils/supabase';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface AcademicResource {
   id?: string;
@@ -286,22 +287,20 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header (unificado) */}
-      <div className="banner rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Recursos Educativos</h2>
-          <p className="text-gray-600">Biblioteca digital de materiales académicos</p>
-        </div>
-
-        {isAdminMode && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nuevo Recurso</span>
-          </button>
-        )}
+      {/* Header unificado */}
+      <div className="max-w-6xl mx-auto mb-6">
+      <SectionHeader
+        title={"Recursos Educativos"}
+        subtitle={"Biblioteca digital de materiales académicos"}
+        actions={
+          isAdminMode ? (
+            <button onClick={() => setShowForm(true)} className="flex items-center space-x-2 btn-accent px-3 py-2 text-sm rounded">
+              <Plus className="h-4 w-4" />
+              <span>Nuevo Recurso</span>
+            </button>
+          ) : null
+        }
+      />
       </div>
 
       {/* Search and Filters */}

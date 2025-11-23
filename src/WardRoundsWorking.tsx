@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Download } from 'lucide-react';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface Patient {
   id: string;
@@ -95,34 +96,23 @@ const WardRoundsWorking: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pase de Sala - Neurología</h1>
-          <p className="text-gray-600">
-            {new Date().toLocaleDateString('es-AR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Agregar Paciente</span>
-          </button>
-          <button
-            onClick={exportToPDF}
-            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-          >
-            <Download className="h-4 w-4" />
-            <span>Exportar PDF</span>
-          </button>
-        </div>
+      <div className="max-w-6xl mx-auto w-full mb-6">
+      <SectionHeader
+        title={"Pase de Sala - Neurología"}
+        subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        actions={
+          <div className="flex space-x-3">
+            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 btn-success px-3 py-2 text-sm rounded">
+              <Plus className="h-4 w-4" />
+              <span>Agregar Paciente</span>
+            </button>
+            <button onClick={exportToPDF} className="flex items-center space-x-2 btn-soft px-3 py-2 text-sm rounded">
+              <Download className="h-4 w-4" />
+              <span>Exportar PDF</span>
+            </button>
+          </div>
+        }
+      />
       </div>
 
       {/* Mensaje si no hay conexión con Supabase */}

@@ -46,8 +46,8 @@ create table if not exists public.ranking_ledger (
 create or replace view public.ranking_leaderboard_weekly as
 select
   l.user_id,
-  coalesce(p.display_name, 'Anonimo') as display_name,
-  p.level as level,
+  coalesce(nullif(trim(concat_ws(' ', p.first_name, p.last_name)), ''), 'Anonimo') as display_name,
+  p.training_level as level,
   sum(l.points) as points,
   t.hospital_context as hospital_context
 from public.ranking_ledger l
@@ -55,22 +55,22 @@ left join public.resident_profiles p on p.user_id = l.user_id
 left join public.ranking_topics t on t.id = l.topic_id
 where date_part('year', l.created_at) = date_part('year', current_date)
   and date_part('week', l.created_at) = date_part('week', current_date)
-group by l.user_id, p.display_name, p.level, t.hospital_context
+group by l.user_id, p.first_name, p.last_name, p.training_level, t.hospital_context
 order by points desc;
 
 -- Simple monthly leaderboard view (current month)
 create or replace view public.ranking_leaderboard_monthly as
 select
   l.user_id,
-  coalesce(p.display_name, 'Anonimo') as display_name,
-  p.level as level,
+  coalesce(nullif(trim(concat_ws(' ', p.first_name, p.last_name)), ''), 'Anonimo') as display_name,
+  p.training_level as level,
   sum(l.points) as points,
   t.hospital_context as hospital_context
 from public.ranking_ledger l
 left join public.resident_profiles p on p.user_id = l.user_id
 left join public.ranking_topics t on t.id = l.topic_id
 where date_trunc('month', l.created_at) = date_trunc('month', current_date)
-group by l.user_id, p.display_name, p.level, t.hospital_context
+group by l.user_id, p.first_name, p.last_name, p.training_level, t.hospital_context
 order by points desc;
 
 -- Note: RLS policies and RPCs should be added in a follow-up migration

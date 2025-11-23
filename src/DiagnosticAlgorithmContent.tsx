@@ -1,10 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Brain, Upload, LayoutList } from 'lucide-react';
+import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Upload, LayoutList } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
 import SavePatientModal from './SavePatientModal';
-import NeurologicalExamModal from './components/NeurologicalExamModal';
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
@@ -45,8 +44,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Estado para el buscador de escalas
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Estado para el modal de examen físico neurológico
-  const [showNeurologicalExam, setShowNeurologicalExam] = useState(false);
   const [showOcrModal, setShowOcrModal] = useState(false);
   const [isMobileView, setIsMobileView] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -309,13 +306,13 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               : 'hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-gray-200 dark:lg:border-gray-800 lg:bg-white dark:lg:bg-[#1a1a1a]'
           }
         >
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
-            <h2 className="flex items-center text-lg font-semibold">
-              <Calculator className="mr-2 h-5 w-5" />
+          <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] p-4">
+            <h2 className="flex items-center text-base font-semibold text-[var(--text-primary)]">
+              <Calculator className="mr-2 h-5 w-5 text-accent" />
               Escalas y Algoritmos
             </h2>
             <div className="mt-1 mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-blue-100">Herramientas de evaluación neurológica</p>
+              <p className="text-sm text-[var(--text-secondary)]">Herramientas de evaluación neurológica</p>
               {/* Indicador de IA */}
               <div className="flex items-center space-x-2">
                 {aiAnalysis.suggestions.length > 0 && (
@@ -357,21 +354,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 <p className="mt-2 text-xs text-blue-100">Buscando: "{searchQuery}"</p>
               )}
             </div>
-          </div>
-
-          {/* Sección de Examen Físico Neurológico */}
-          <div className="border-b border-[var(--border-secondary)] p-4" style={{
-            background: 'linear-gradient(to right, color-mix(in srgb, var(--state-success) 10%, var(--bg-primary) 90%), color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%))'
-          }}>
-            <button
-              onClick={() => setShowNeurologicalExam(true)}
-              className="flex w-full items-center justify-center space-x-2 rounded-lg btn-success px-4 py-3 font-medium shadow-md transition hover:shadow-lg"
-            >
-              <Brain className="h-5 w-5" />
-              <span>Examen Físico Neurológico</span>
-              <Stethoscope className="h-4 w-4" />
-            </button>
-            <p className="mt-2 text-center text-xs text-[var(--state-info)]">Evaluación sistemática por esferas neurológicas</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -759,19 +741,6 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           currentHospitalContext={currentHospitalContext}
         />
       )}
-
-      {/* Modal de Examen Físico Neurológico */}
-      <NeurologicalExamModal
-        isOpen={showNeurologicalExam}
-        onClose={() => setShowNeurologicalExam(false)}
-        onExamCompleted={(examData) => {
-          // Agregar resultados del examen a las notas
-          const examSummary = `\n\n=== EXAMEN FÍSICO NEUROLÓGICO ===\nFecha: ${new Date().toLocaleDateString()}\nExaminador: ${examData.examiner || 'Dr. Usuario'}\n\nHallazgos principales:\n- Estado mental: ${examData.mental_state?.consciousness?.level || 'No evaluado'}\n- Consciencia: ${examData.mental_state?.consciousness?.orientation ? 'Orientado' : 'Desorientado'}\n- Examen realizado completo\n\n`;
-          setNotes(notes + examSummary);
-          setShowNeurologicalExam(false);
-        }}
-        examiner="Dr. Usuario"
-      />
 
       {!isScalesVisible && (
         <button

@@ -153,13 +153,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
     ].filter(Boolean).length;
   };
 
-  if (loading && procedures.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const isInitialLoading = loading && procedures.length === 0;
 
   return (
     <div className="space-y-6">
@@ -571,7 +565,13 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
         <div className="mt-2 text-sm">{awardMsg}</div>
       )}
       <div className="medical-card overflow-hidden">
-        {procedures.length === 0 ? (
+        {isInitialLoading ? (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-6 bg-gray-100 rounded animate-pulse" />
+            ))}
+          </div>
+        ) : procedures.length === 0 ? (
           <div className="text-center py-12">
             <Stethoscope className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium  mb-2">No procedures found</h3>
@@ -739,5 +739,4 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
     </div>
   );
 }
-
 

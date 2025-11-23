@@ -7,6 +7,7 @@ import DeletePatientModal from './components/DeletePatientModal';
 import { useAuthContext } from './components/auth/AuthProvider';
 import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface Patient {
   id?: string;
@@ -948,34 +949,23 @@ const WardRounds: React.FC = () => {
     >
       <div className="h-full flex flex-col p-6 overflow-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between banner rounded-lg p-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pase de Sala - Neurología</h1>
-          <p className="text-gray-600">
-            {new Date().toLocaleDateString('es-AR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center space-x-2 btn-success px-4 py-2 rounded-lg"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Agregar Paciente</span>
-          </button>
-          <button
-            onClick={exportToPDF}
-            className="flex items-center space-x-2 btn-soft px-4 py-2 rounded-lg"
-          >
-            <Download className="h-4 w-4" />
-            <span>Exportar PDF</span>
-          </button>
-        </div>
+      <div className="max-w-6xl mx-auto w-full mb-6">
+      <SectionHeader
+        title={"Pase de Sala - Neurología"}
+        subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        actions={
+          <div className="flex space-x-3">
+            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 btn-success px-3 py-2 text-sm rounded">
+              <Plus className="h-4 w-4" />
+              <span>Agregar Paciente</span>
+            </button>
+            <button onClick={exportToPDF} className="flex items-center space-x-2 btn-soft px-3 py-2 text-sm rounded">
+              <Download className="h-4 w-4" />
+              <span>Exportar PDF</span>
+            </button>
+          </div>
+        }
+      />
       </div>
 
       {/* Formulario para agregar paciente */}
