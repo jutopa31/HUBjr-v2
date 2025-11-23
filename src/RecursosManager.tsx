@@ -286,8 +286,8 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      {/* Header (unificado) */}
+      <div className="banner rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Recursos Educativos</h2>
           <p className="text-gray-600">Biblioteca digital de materiales académicos</p>
@@ -611,7 +611,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                 >
                   <Save className="h-4 w-4" />
                   <span>{loading ? 'Guardando...' : (editingResource ? 'Actualizar' : 'Crear')}</span>

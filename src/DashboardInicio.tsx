@@ -3,13 +3,15 @@ import {
   Home,
   Calendar,
   Users,
-  Brain,
   FileText,
   TrendingUp,
-  CheckCircle
+  CheckCircle,
+  FolderOpen,
+  MessageSquare
 } from 'lucide-react';
 import { getTodayEvents } from './utils/dashboardQueries';
 import PendientesResumidos from './components/PendientesResumidos';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface DashboardInicioProps {
   setActiveTab: (tab: string) => void;
@@ -61,36 +63,36 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
 
   const quickAccessButtons = [
     {
-      id: 'diagnostic',
-      title: 'Nueva Evaluación',
-      subtitle: 'Algoritmos Diagnósticos',
-      icon: Brain,
-      color: 'bg-gray-100 dark:bg-[#3a3a3a] hover:bg-gray-200 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700',
-      action: () => setActiveTab('diagnostic')
-    },
-    {
       id: 'ward-rounds',
-      title: 'Agregar al Pase',
-      subtitle: 'Pase de Sala',
+      title: 'Pase',
       icon: Users,
-      color: 'bg-gray-100 dark:bg-[#3a3a3a] hover:bg-gray-200 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700',
+      color: 'bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-700',
+      iconColor: 'text-blue-600 dark:text-blue-300',
       action: () => setActiveTab('ward-rounds')
     },
     {
-      id: 'saved-patients',
-      title: 'Ver Pacientes',
-      subtitle: 'Pacientes ambulatorio',
+      id: 'diagnostic',
+      title: 'Evolución',
       icon: FileText,
-      color: 'bg-gray-100 dark:bg-[#3a3a3a] hover:bg-gray-200 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700',
+      color: 'bg-green-50 dark:bg-green-950/50 hover:bg-green-100 dark:hover:bg-green-900/60 border border-green-200 dark:border-green-700',
+      iconColor: 'text-green-600 dark:text-green-300',
+      action: () => setActiveTab('diagnostic')
+    },
+    {
+      id: 'saved-patients',
+      title: 'Base de datos',
+      icon: FolderOpen,
+      color: 'bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-700',
+      iconColor: 'text-purple-700 dark:text-purple-300',
       action: () => setActiveTab('saved-patients')
     },
     {
-      id: 'schedule',
-      title: 'Cronograma',
-      subtitle: 'Eventos Programados',
-      icon: Calendar,
-      color: 'bg-gray-100 dark:bg-[#3a3a3a] hover:bg-gray-200 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700',
-      action: () => setActiveTab('schedule')
+      id: 'interconsultas',
+      title: 'Interconsultas',
+      icon: MessageSquare,
+      color: 'bg-orange-50 dark:bg-orange-950/50 hover:bg-orange-100 dark:hover:bg-orange-900/60 border border-orange-200 dark:border-orange-700',
+      iconColor: 'text-orange-600 dark:text-orange-300',
+      action: () => setActiveTab('interconsultas')
     }
   ];
 
@@ -107,6 +109,17 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
   return (
     <div className="h-full overflow-y-auto bg-white dark:bg-[#1a1a1a]">
       {/* Header Principal */}
+      <SectionHeader
+        title={"A�Bienvenidos!"}
+        icon={<Home className="h-6 w-6 text-accent" />}
+        actions={
+          <div className="text-right">
+            <div className="text-lg font-semibold">{formatTime(currentTime)}</div>
+            <div className="text-xs capitalize" style={{ color: 'var(--text-secondary)' }}>{formatDate(currentTime)}</div>
+          </div>
+        }
+      />
+      {false && (
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -122,7 +135,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
             <div className="text-gray-500 dark:text-gray-400 text-xs capitalize">{formatDate(currentTime)}</div>
           </div>
         </div>
-      </div>
+      </div>) }
 
       {/* Contenido Principal */}
       <div className="p-4 space-y-4">
@@ -131,25 +144,22 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
           {/* Accesos Rápidos */}
           <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-2 text-blue-700" />
+              <TrendingUp className="h-4 w-4 mr-2 text-blue-700 dark:text-blue-400" />
               Accesos Rápidos
             </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               {quickAccessButtons.map((button) => {
                 const IconComponent = button.icon;
                 return (
                   <button
                     key={button.id}
                     onClick={button.action}
-                    className={`p-3 ${button.color} text-gray-900 dark:text-white rounded-md transition-colors text-left`}
+                    className={`p-3 ${button.color} rounded-lg transition-all hover:shadow-md flex flex-col items-center justify-center gap-2 group`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-medium text-sm mb-0.5">{button.title}</div>
-                        <div className="text-xs opacity-80">{button.subtitle}</div>
-                      </div>
-                      <IconComponent className="h-5 w-5" />
-                    </div>
+                    <IconComponent className={`h-6 w-6 ${button.iconColor} group-hover:scale-110 transition-transform`} />
+                    <span className={`font-medium text-sm ${button.iconColor}`}>
+                      {button.title}
+                    </span>
                   </button>
                 );
               })}
@@ -186,8 +196,10 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
                       <div className="text-xs text-gray-500 dark:text-gray-600 mt-0.5">{event.description}</div>
                     )}
                   </div>
-                  <div className="p-1 bg-green-100 dark:bg-green-950/30 rounded-full">
-                    <CheckCircle className="h-3 w-3 text-blue-700" />
+                  <div className="p-1 rounded-full" style={{
+                    backgroundColor: 'color-mix(in srgb, var(--state-success) 20%, var(--bg-primary) 80%)'
+                  }}>
+                    <CheckCircle className="h-3 w-3" style={{ color: 'var(--state-success)' }} />
                   </div>
                 </div>
               )) : (

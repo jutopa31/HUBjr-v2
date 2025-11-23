@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useLumbarPuncture, useLPStatistics, useLPFilters, useDepartmentLPStats } from '../hooks/useLumbarPuncture';
 import { useAuthContext } from '../components/auth/AuthProvider';
+import { awardPointsForLumbarPuncture } from '../services/rankingService';
 import { LumbarPuncture, LPFilters, LPSearchParams } from '../types/lumbarPuncture';
 
 interface LumbarPunctureResultsProps {
@@ -26,7 +27,7 @@ interface LumbarPunctureResultsProps {
 }
 
 export default function LumbarPunctureResults({ onEdit, onView }: LumbarPunctureResultsProps) {
-  const { user } = useAuthContext();
+  const { user, hasPrivilege } = useAuthContext();
   const { procedures, loading, error, fetchProcedures, deleteProcedure } = useLumbarPuncture();
   const { stats, analytics, loading: statsLoading } = useLPStatistics();
   const { departmentStats, residentComparison, loading: deptStatsLoading } = useDepartmentLPStats();
@@ -69,6 +70,22 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
       sort_by,
       sort_order
     }));
+  };
+
+  // Award points state for LP
+  const [awardPointsMap, setAwardPointsMap] = useState<Record<string, number>>({});
+  const [awardMsg, setAwardMsg] = useState<string | null>(null);
+  const canAward = hasPrivilege('full_admin') || hasPrivilege('lumbar_puncture_admin');
+
+  const handleAward = async (procedure: any) => {
+    setAwardMsg(null);
+    const pts = awardPointsMap[procedure.id] ?? 0;
+    if (!procedure.resident_id) {
+      setAwardMsg('No se encontró el usuario del residente en el registro.');
+      return;
+    }
+    const res = await awardPointsForLumbarPuncture({ residentUserId: procedure.resident_id, points: Math.max(0, Number(pts) || 0), period: 'weekly' });
+    setAwardMsg(res.success ? 'Puntos agregados' : res.error || 'No se pudieron agregar puntos');
   };
 
   const handleDelete = async (id: string) => {
@@ -116,7 +133,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
   };
 
   const getSuccessColor = (successful: boolean) => {
-  return successful ? 'text-blue-700' : 'text-gray-800';
+  return successful ? 'text-[var(--state-success)]' : 'text-[var(--text-primary)]';
   };
 
   const getDifficultyColor = (difficulty?: number) => {
@@ -306,8 +323,8 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                           <td className="text-center py-2">{resident.total_procedures}</td>
                           <td className="text-center py-2">
                             <span className={`font-medium ${
-                              resident.success_rate >= 80 ? 'text-blue-700' :
-                              resident.success_rate >= 60 ? 'text-gray-800' : 'text-gray-800'
+                              resident.success_rate >= 80 ? 'text-[var(--state-success)]' :
+                              resident.success_rate >= 60 ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'
                             }`}>
                               {(resident.success_rate ?? 0).toFixed(1)}%
                             </span>
@@ -338,7 +355,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <span className="text-sm text-gray-700 truncate">{item.indication}</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium ">{item.count}</span>
-                        <span className="text-xs text-blue-700">({(item.success_rate ?? 0).toFixed(0)}% éxito)</span>
+                        <span className="text-xs" style={{ color: 'var(--state-success)' }}>({(item.success_rate ?? 0).toFixed(0)}% éxito)</span>
                       </div>
                     </div>
                   ))}
@@ -372,7 +389,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       <span className="text-sm text-gray-700 truncate">{item.supervisor}</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium ">{item.procedures}</span>
-                        <span className="text-xs text-blue-700">({(item.avg_success_rate ?? 0).toFixed(0)}% avg)</span>
+                        <span className="text-xs" style={{ color: 'var(--state-success)' }}>({(item.avg_success_rate ?? 0).toFixed(0)}% avg)</span>
                       </div>
                     </div>
                   ))}
@@ -550,6 +567,9 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
       )}
 
       {/* Results Table */}
+      {awardMsg && (
+        <div className="mt-2 text-sm">{awardMsg}</div>
+      )}
       <div className="medical-card overflow-hidden">
         {procedures.length === 0 ? (
           <div className="text-center py-12">
@@ -670,7 +690,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-2 items-center">
                         <button
                           onClick={() => onView?.(procedure)}
                           className="text-blue-700 hover:"
@@ -692,6 +712,14 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
+                        {canAward && (
+                          <div className="flex items-center gap-2 ml-2">
+                            <input type="number" min="0" value={awardPointsMap[procedure.id] ?? 0}
+                              onChange={e=>setAwardPointsMap(prev=>({ ...prev, [procedure.id]: Number(e.target.value) }))}
+                              className="w-20 rounded border border-gray-300 dark:border-gray-600 p-1" />
+                            <button onClick={() => handleAward(procedure)} className="px-2 py-1 rounded bg-blue-600 text-white text-xs">Sumar pts</button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>

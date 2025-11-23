@@ -16,15 +16,26 @@ npm run build:vite       # Alternative Vite build (tsc + vite build)
 
 # Quality Assurance
 npm run lint             # ESLint checking
-npx tsc --noEmit        # TypeScript type checking without emitting files
-npm run audit:responsive # Responsive design audit script
+npx tsc --noEmit        # TypeScript type checking without emitting files (CRITICAL before commits)
+npm run audit:responsive # Responsive design audit script (checks mobile/tablet layouts)
+
+# Utility Scripts
+node scripts/color-audit.mjs      # Audit text color contrast for accessibility
+node scripts/contrast-audit.mjs   # Enhanced contrast checking across components
+node scripts/responsive-audit.mjs # Verify responsive breakpoints
 ```
 
 ## Architecture Overview
 
 ### Main Application Entry Points
-- **Primary Hub**: `src/neurology_residency_hub.tsx` - Main application with sidebar navigation and tab-based routing
-- **V3 Hub**: `src/neurology_residency_hub_v3.tsx` - Newer version with simplified architecture
+- **Primary Hub**: `src/neurology_residency_hub.tsx` - Main production application (204KB, feature-complete)
+  - Sidebar navigation with 10+ medical feature modules
+  - Tab-based routing system with state management
+  - Hospital context integration throughout
+  - Currently active in production deployment
+- **V3 Hub**: `src/neurology_residency_hub_v3.tsx` - Experimental simplified architecture (3KB)
+  - Cleaner component structure, not yet feature-complete
+  - Use v2 (neurology_residency_hub.tsx) for all production work
 - **Pages Router**: `pages/index.js` loads the main neurology hub component
 - **Technology Stack**: Next.js 14 + React 18 + TypeScript + Supabase + Tailwind CSS
 - **Dual Build System**: Next.js (production) + Vite (fast development alternative)
@@ -241,3 +252,116 @@ Complete implementation of 15+ neurological assessment tools:
 7. **Production Testing**: Authentication flows behave differently in production - test logout and session management thoroughly
 8. **TypeScript Strict**: The codebase uses TypeScript - avoid `any` types, prefer explicit interfaces
 9. **Dual Entry Points**: Be aware of both `neurology_residency_hub.tsx` (v2) and `neurology_residency_hub_v3.tsx` - v2 is currently active
+10. **User Guidance**: See AGENTS.md for contributor workflow guidelines and best practices
+
+## Common Development Patterns
+
+### Service Layer Pattern
+All Supabase interactions should go through service files in `src/services/`:
+
+```typescript
+// Example: src/services/exampleService.ts
+import { supabase } from '../utils/supabase'
+
+export async function fetchItems() {
+  try {
+    const { data, error } = await Promise.race([
+      supabase.from('table_name').select('*'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 12000)
+      )
+    ])
+
+    if (error) throw error
+    return { data, error: null }
+  } catch (error) {
+    console.error('🔴 Error fetching items:', error)
+    return { data: null, error }
+  }
+}
+```
+
+### RLS Policy Template
+When creating new tables with user-scoped data:
+
+```sql
+-- Enable RLS
+ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
+
+-- For VARCHAR user_id columns
+CREATE POLICY "Users can view their own records"
+  ON table_name FOR SELECT
+  USING (auth.uid()::text = user_id);
+
+-- For UUID user_id columns
+CREATE POLICY "Users can view their own records"
+  ON table_name FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- For hospital context filtering
+CREATE POLICY "Users can view accessible contexts"
+  ON table_name FOR SELECT
+  USING (
+    hospital_context = 'Posadas' OR
+    (hospital_context = 'Julian' AND
+     EXISTS (
+       SELECT 1 FROM admin_privileges
+       WHERE user_id = auth.uid()::text
+       AND privilege_type = 'hospital_context_access'
+     ))
+  );
+```
+
+### Component Pattern
+Medical feature components follow this structure:
+
+```typescript
+// Feature component in src/[FeatureName].tsx
+import React, { useState, useEffect } from 'react'
+import { useAuth } from './hooks/useAuth'
+import { featureService } from './services/featureService'
+
+export default function FeatureName() {
+  const { user } = useAuth()
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    const { data, error } = await featureService.fetch()
+    if (!error) setData(data)
+    setLoading(false)
+  }
+
+  if (loading) return <div className="text-center">Cargando...</div>
+
+  return (
+    <div className="p-4 dark:bg-gray-800">
+      {/* Feature content with dark mode support */}
+    </div>
+  )
+}
+```
+
+### Privilege Checking Pattern
+Always check privileges before showing admin-only features:
+
+```typescript
+import { checkUserPrivilege } from './utils/diagnosticAssessmentDB'
+
+const [hasPrivilege, setHasPrivilege] = useState(false)
+
+useEffect(() => {
+  async function checkPrivileges() {
+    const canAccess = await checkUserPrivilege(user.email, 'privilege_type')
+    setHasPrivilege(canAccess)
+  }
+  if (user?.email) checkPrivileges()
+}, [user])
+
+// Conditionally render UI
+{hasPrivilege && <AdminFeature />}
+```

@@ -170,6 +170,14 @@ DROP POLICY IF EXISTS "Service role access all profiles" ON resident_profiles;
 CREATE POLICY "Service role access all profiles" ON resident_profiles
   FOR ALL USING (auth.role() = 'service_role');
 
+-- Admins can read all resident profiles
+DROP POLICY IF EXISTS "Admins read all profiles" ON resident_profiles;
+CREATE POLICY "Admins read all profiles" ON resident_profiles
+  FOR SELECT USING (
+    has_admin_privilege((SELECT auth.email()), 'full_admin')
+    OR has_admin_privilege((SELECT auth.email()), 'user_management')
+  );
+
 -- Policies for training_milestones
 DROP POLICY IF EXISTS "Users access own milestones" ON training_milestones;
 CREATE POLICY "Users access own milestones" ON training_milestones

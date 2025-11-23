@@ -311,7 +311,7 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
               <button
                 type="submit"
                 disabled={proceduresLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
                 <span>{editingProcedure ? 'Actualizar' : 'Guardar'}</span>

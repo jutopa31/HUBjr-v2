@@ -1167,7 +1167,7 @@ export default function LumbarPunctureForm({
         <button
           onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
           disabled={currentStep === 0}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed"
         >
           Anterior
         </button>
@@ -1177,7 +1177,7 @@ export default function LumbarPunctureForm({
             <button
               onClick={() => setCurrentStep(currentStep + 1)}
               disabled={!canProceedToNext()}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:cursor-not-allowed"
             >
               Siguiente
             </button>
@@ -1185,7 +1185,7 @@ export default function LumbarPunctureForm({
             <button
               onClick={handleSubmit}
               disabled={loading || !canProceedToNext()}
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:cursor-not-allowed flex items-center"
             >
               <Save className="h-4 w-4 mr-2" />
               {loading ? 'Guardando...' : mode === 'create' ? 'Crear Procedimiento' : 'Actualizar Procedimiento'}

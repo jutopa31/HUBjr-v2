@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, BookOpen, Users, FileText, Heart, AlertTriangle } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
 import { useAuthContext } from './components/auth/AuthProvider';
+import SectionHeader from './components/layout/SectionHeader';
 
 interface MedicalEvent {
   id?: string;
@@ -491,7 +492,105 @@ const EventManagerSupabase: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <SectionHeader
+        title={"Cronograma NeurologA-a"}
+        icon={<Calendar className="h-6 w-6 text-accent" />}
+        actions={
+          <div className="flex items-center space-x-2">
+            {/* View Toggle */}
+            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
+              <button
+                onClick={() => setViewMode('week')}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                  viewMode === 'week'
+                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                5 DA-as
+              </button>
+              <button
+                onClick={() => setViewMode('month')}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                  viewMode === 'month'
+                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                Mes
+              </button>
+            </div>
+
+            {/* Event Filters */}
+            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
+              <button
+                onClick={() => setShowClases(!showClases)}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                  showClases
+                    ? 'bg-green-700 text-white'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Clases
+              </button>
+              <button
+                onClick={() => setShowTareas(!showTareas)}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                  showTareas
+                    ? 'bg-blue-700 text-white'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Tareas
+              </button>
+            </div>
+
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-sm"
+                disabled={loading}
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nuevo Evento</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setNewEvent({
+                    ...newEvent,
+                    type: 'academic',
+                    title: ''
+                  });
+                  setShowForm(true);
+                }}
+                className="flex items-center space-x-2 bg-green-700 hover:bg-green-600 px-3 py-1.5 rounded-md transition-all text-white text-sm"
+                disabled={loading}
+                title="Crear una clase acadAcmica"
+              >
+                <span>dY"s</span>
+                <span>Nueva Clase</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                const pattern = window.prompt('Ingresa parte del tA-tulo de los eventos a eliminar:');
+                if (pattern) {
+                  deleteEventsByTitle(pattern);
+                }
+              }}
+              className="flex items-center space-x-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800 px-3 py-1.5 rounded-md transition-all text-blue-300"
+              disabled={loading}
+              title="Eliminar eventos por tA-tulo"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        }
+      />
+      {false && (
+      <div className="banner rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Calendar className="h-5 w-5" />
@@ -591,7 +690,7 @@ const EventManagerSupabase: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div>) }
 
       {/* Calendar Navigation */}
       <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-3">
@@ -781,7 +880,7 @@ const EventManagerSupabase: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-700 text-white px-4 py-1.5 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center space-x-2 text-sm"
+                className="bg-blue-700 text-white px-4 py-1.5 rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2 text-sm"
               >
                 <Save className="h-4 w-4" />
                 <span>{loading ? 'Guardando...' : 'Guardar Evento'}</span>

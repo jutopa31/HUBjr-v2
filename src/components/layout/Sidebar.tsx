@@ -1,4 +1,14 @@
-import React, { useState } from 'react';
+/**
+ * Sidebar UX design notes
+ * - Initial state: expanded by default. Persisted in localStorage as 'sidebarExpanded'.
+ * - Collapsed mode: shows a narrow column with icons; on hover/focus it reveals a
+ *   minimal tooltip/flyout with the section name (no pointer capture to avoid flicker).
+ * - Auto-collapse after first navigation: once the user clicks a section, we collapse
+ *   the sidebar (with a short delay for smoothness) and set 'sidebarAutoCollapsedOnce'.
+ *   Subsequent navigations respect the user's last preference.
+ * - Accessibility: clear focus ring, high-contrast text/backgrounds, keyboard-friendly hover via focus-within.
+ */
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Brain,
   Settings,
@@ -42,9 +52,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   setShowAuthModal,
   menuItems
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      const stored = localStorage.getItem('sidebarExpanded');
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, toggleTheme } = useTheme();
+  const autoCollapseDoneRef = useRef<boolean>(false);
+
+  // Persist preference and clear search when collapsed
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem('sidebarExpanded', String(isExpanded));
+    } catch {}
+    if (!isExpanded) setSearchQuery('');
+  }, [isExpanded]);
+
+  // Track whether we've already auto-collapsed after first navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const flag = localStorage.getItem('sidebarAutoCollapsedOnce');
+      autoCollapseDoneRef.current = flag === 'true';
+    } catch {}
+  }, []);
 
   // Filtrar items del menú basado en la búsqueda
   const filteredMenuItems = menuItems.filter(item =>
@@ -56,6 +92,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     setIsExpanded(!isExpanded);
     if (isExpanded) {
       setSearchQuery(''); // Limpiar búsqueda al colapsar
+    }
+  };
+
+  // Handle navigation with optional first-time auto-collapse
+  const onNavigate = (tabId: string) => {
+    // Trigger parent change first for responsiveness
+    handleTabChange(tabId);
+    // Auto-collapse only once, only if currently expanded
+    if (isExpanded && !autoCollapseDoneRef.current) {
+      // Small delay to avoid a jarring transition while content swaps
+      window.setTimeout(() => {
+        setIsExpanded(false);
+        try {
+          localStorage.setItem('sidebarAutoCollapsedOnce', 'true');
+          localStorage.setItem('sidebarExpanded', 'false');
+        } catch {}
+        autoCollapseDoneRef.current = true;
+      }, 180);
     }
   };
 
@@ -73,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         className={`${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#171717] shadow-2xl flex flex-col transition-all duration-200 ease-in-out ${
+        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#0b0b0b] shadow-2xl flex flex-col transition-all duration-200 ease-in-out ${
           isExpanded ? 'w-56' : 'w-14'
         }`}
       >
@@ -90,6 +144,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           onClick={toggleSidebar}
           className="hidden lg:flex absolute -right-3 top-5 bg-gray-100 dark:bg-[#2a2a2a] border border-gray-300 dark:border-gray-700 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition-colors z-10 shadow-lg"
           title={isExpanded ? 'Colapsar sidebar' : 'Expandir sidebar'}
+          aria-label={isExpanded ? 'Colapsar sidebar' : 'Expandir sidebar'}
+          aria-expanded={isExpanded}
         >
           {isExpanded ? (
             <ChevronLeft className="h-3 w-3 text-gray-600 dark:text-gray-300" />
@@ -137,12 +193,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                 return (
                   <li key={item.id} className="relative group">
                     <button
-                      onClick={() => handleTabChange(item.id)}
+                      onClick={() => onNavigate(item.id)}
                       title={!isExpanded ? item.label : undefined}
-                      className={`w-full flex items-center px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      className={`w-full flex items-center px-2 py-1.5 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
                         isActive
                           ? 'bg-gray-200 dark:bg-[#2a2a2a] text-gray-900 dark:text-white'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#212121] hover:text-gray-900 dark:hover:text-gray-200'
+                          : 'text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#212121] hover:text-gray-900 dark:hover:text-gray-200'
                       } ${!isExpanded ? 'justify-center' : 'space-x-2'}`}
                     >
                       <Icon className="h-3.5 w-3.5 flex-shrink-0" />
@@ -159,6 +215,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </>
                       )}
                     </button>
+                    {!isExpanded && (
+                      <div
+                        role="tooltip"
+                        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-100"
+                      >
+                        <div className="bg-gray-900 text-white dark:bg-black/90 text-xs px-2 py-1 rounded-md shadow-lg whitespace-nowrap border border-gray-800/60">
+                          {item.label}
+                        </div>
+                      </div>
+                    )}
                   </li>
                 );
               })

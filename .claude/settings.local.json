@@ -37,7 +37,9 @@
       "WebSearch",
       "WebFetch(domain:link.springer.com)",
       "WebFetch(domain:www.researchgate.net)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(timeout 2 2:*)",
+      "Bash(nul)"
     ],
     "deny": []
   }

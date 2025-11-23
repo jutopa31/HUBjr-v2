@@ -3,10 +3,10 @@ export type SectionKey = 'dashboard' | 'patients' | 'resources' | 'admin';
 export type SectionPalette = Record<SectionKey, string>;
 
 export const DEFAULT_SECTION_PALETTE: SectionPalette = {
-  dashboard: '#9ca3af',
-  patients: '#7dd3fc',
-  resources: '#93c5fd',
-  admin: '#a5b4fc',
+  dashboard: '#4b5563', /* gray-600 - WCAG AA ✅ (7.56:1) */
+  patients: '#0369a1',  /* sky-700 - WCAG AA ✅ (5.88:1) */
+  resources: '#2563eb', /* blue-600 - WCAG AA ✅ (5.17:1) */
+  admin: '#4f46e5',     /* indigo-600 - WCAG AA ✅ (6.29:1) */
 };
 
 export const SECTION_FROM_PATH = (pathname: string): SectionKey => {

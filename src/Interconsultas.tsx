@@ -268,7 +268,7 @@ const Interconsultas: React.FC = () => {
           <button
             onClick={handleCreate}
             disabled={!isValid || loading || creating || !user}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded ${(isValid && !creating) ? 'btn-accent' : 'btn-soft'} disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded ${(isValid && !creating) ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
           >
             <Plus className="h-4 w-4"/>{creating ? 'Guardando...' : 'Agregar'}
           </button>
@@ -303,14 +303,14 @@ const Interconsultas: React.FC = () => {
                     <button
                       onClick={() => handleGuardarPase(r)}
                       disabled={savingPaseId === r.id || !user}
-                      className={`px-2 py-1 rounded text-xs ${savingPaseId === r.id ? 'btn-accent' : 'btn-soft'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`px-2 py-1 rounded text-xs ${savingPaseId === r.id ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
                     >
                       {savingPaseId === r.id ? 'Guardando...' : 'Guardar al pase'}
                     </button>
                     <button
                       onClick={() => handleGuardarPacientes(r)}
                       disabled={savingPacientesId === r.id || !user}
-                      className={`px-2 py-1 rounded text-xs ${savingPacientesId === r.id ? 'btn-accent' : 'btn-soft'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`px-2 py-1 rounded text-xs ${savingPacientesId === r.id ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
                     >
                       {savingPacientesId === r.id ? 'Guardando...' : 'Guardar en pacientes'}
                     </button>

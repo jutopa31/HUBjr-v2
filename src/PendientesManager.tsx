@@ -514,7 +514,7 @@ const PendientesManager: React.FC = () => {
               <button
                 onClick={addTask}
                 disabled={loading || !newTask.title.trim()}
-                className="flex items-center space-x-2 btn-accent disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 btn-accent px-4 py-2 rounded-lg transition-colors"
               >
                 <Save className="h-4 w-4" />
                 <span>{loading ? 'Guardando...' : 'Guardar Tarea'}</span>

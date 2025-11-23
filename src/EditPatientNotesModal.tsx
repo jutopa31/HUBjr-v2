@@ -132,7 +132,7 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
             <button
               onClick={handleClose}
               disabled={isSaving}
-              className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              className="text-gray-400 hover:text-gray-600"
             >
               <X className="h-6 w-6" />
             </button>
@@ -263,14 +263,14 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
             <button
               onClick={handleClose}
               disabled={isSaving}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white"
             >
               {hasChanges ? 'Cancelar' : 'Cerrar'}
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving || !clinicalNotes.trim() || !patientName.trim() || !hasChanges}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
             >
               <Save className="h-4 w-4" />
               <span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}</span>

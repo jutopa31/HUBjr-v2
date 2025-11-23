@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, forceLogout } from '../utils/supabase';
-import { hasAdminPrivilege, hasHospitalContextAccess, AdminPrivilegeType } from '../utils/diagnosticAssessmentDB';
+import { hasAdminPrivilege, AdminPrivilegeType } from '../utils/diagnosticAssessmentDB';
 
 export interface AuthState {
   user: User | null;

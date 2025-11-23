@@ -227,7 +227,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
   // Para evitar refs desincronizados, limpiar antes de mapear
   inputsRef.current = [];
 
-  const renderLateralInputs = (item: ScaleItem, indexBase: number) => {
+  const renderLateralInputs = (item: ScaleItem, _indexBase: number) => {
     const keyL = `${item.id}_L`;
     const keyR = `${item.id}_R`;
     return (
@@ -327,7 +327,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
     );
   };
 
-  const renderRigidityCompact = (axialItem: ScaleItem, index: number) => {
+  const renderRigidityCompact = (_axialItem: ScaleItem, index: number) => {
     const title = updrsSectionPrefix ? `${updrsSectionPrefix}.${index + 1} Rigidez` : 'Rigidez';
     const helpText = UPDRS3_INSTRUCTIONS['limb_rigidity'] || 'Rigidez: evaluar resistencia al movimiento pasivo en cuello y extremidades.';
 

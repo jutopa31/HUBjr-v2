@@ -113,7 +113,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
             <button
               onClick={handleClose}
               disabled={isSaving}
-              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-50"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               <X className="h-6 w-6" />
             </button>
@@ -248,14 +248,14 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving || !patientName.trim()}
-            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center space-x-2"
           >
             <Save className="h-4 w-4" />
             <span>{isSaving ? 'Guardando...' : 'Guardar Paciente'}</span>

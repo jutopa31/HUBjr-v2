@@ -238,7 +238,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="banner rounded-lg p-4 mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
             <FileText className="h-8 w-8 mr-3 text-blue-600" />

@@ -74,13 +74,13 @@ const PendientesResumidos: React.FC<PendientesResumidosProps> = ({ setActiveTab 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'text-red-400 bg-red-950/30 border-red-800';
+        return 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800';
       case 'medium':
-        return 'text-yellow-400 bg-yellow-950/30 border-yellow-800';
+        return 'text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800';
       case 'low':
-        return 'text-green-400 bg-green-950/30 border-green-800';
+        return 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800';
       default:
-        return 'text-gray-400 bg-gray-800 border-gray-700';
+        return 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
     }
   };
 

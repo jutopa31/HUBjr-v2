@@ -339,7 +339,7 @@ const GoalsManager: React.FC = () => {
               <button
                 type="submit"
                 disabled={goalsLoading}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
                 {editingGoal ? 'Actualizar' : 'Crear Objetivo'}
               </button>

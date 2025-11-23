@@ -277,13 +277,13 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       <div className="border-b bg-white dark:bg-[#1a1a1a] px-4 py-3 shadow-sm lg:hidden">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Evolucionador</p>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-200">Notas y escalas neurológicas</h2>
+            <p className="text-xs uppercase tracking-wide text-[var(--text-tertiary)]">Evolucionador</p>
+            <h2 className="text-base font-semibold text-[var(--text-primary)]">Notas y escalas neurológicas</h2>
           </div>
           <button
             type="button"
             onClick={handleToggleScales}
-            className="inline-flex items-center rounded-full bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
+            className="inline-flex items-center rounded-full btn-accent px-3 py-1.5 text-xs font-semibold"
           >
             <LayoutList className="mr-1.5 h-3.5 w-3.5" />
             {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
@@ -360,37 +360,43 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
           </div>
 
           {/* Sección de Examen Físico Neurológico */}
-          <div className="border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-cyan-50 p-4">
+          <div className="border-b border-[var(--border-secondary)] p-4" style={{
+            background: 'linear-gradient(to right, color-mix(in srgb, var(--state-success) 10%, var(--bg-primary) 90%), color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%))'
+          }}>
             <button
               onClick={() => setShowNeurologicalExam(true)}
-              className="flex w-full items-center justify-center space-x-2 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-3 font-medium text-white shadow-md transition hover:from-emerald-700 hover:to-cyan-700 hover:shadow-lg"
+              className="flex w-full items-center justify-center space-x-2 rounded-lg btn-success px-4 py-3 font-medium shadow-md transition hover:shadow-lg"
             >
               <Brain className="h-5 w-5" />
               <span>Examen Físico Neurológico</span>
               <Stethoscope className="h-4 w-4" />
             </button>
-            <p className="mt-2 text-center text-xs text-blue-700">Evaluación sistemática por esferas neurológicas</p>
+            <p className="mt-2 text-center text-xs text-[var(--state-info)]">Evaluación sistemática por esferas neurológicas</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
             {/* Accesos rápidos a escalas frecuentes */}
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-gray-600">Accesos rápidos:</span>
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Accesos rápidos:</span>
               <button
                 type="button"
                 onClick={() => openScaleModal('updrs3')}
-                className="inline-flex items-center rounded-full bg-gray-900 text-white px-3 py-1 text-xs hover:bg-gray-800"
+                className="inline-flex items-center rounded-full px-3 py-1 text-xs"
+                style={{
+                  backgroundColor: 'var(--text-primary)',
+                  color: 'var(--bg-primary)'
+                }}
                 title="Abrir UPDRS III (Examen Motor)"
               >
                 UPDRS III
               </button>
             </div>
-            <div className="mb-4 border-b border-gray-200 pb-4">
-              <h3 className="flex items-center text-sm font-semibold text-gray-700">
+            <div className="mb-4 border-b border-[var(--border-secondary)] pb-4">
+              <h3 className="flex items-center text-sm font-semibold text-[var(--text-primary)]">
                 <Calculator className="mr-2 h-4 w-4" />
                 Escalas Diagnósticas
               </h3>
-              <p className="mt-1 text-xs text-gray-500">Herramientas de puntuación y evaluación clínica</p>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Herramientas de puntuación y evaluación clínica</p>
             </div>
 
             <div className="space-y-4">
@@ -402,82 +408,119 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 return (
                   <div
                     key={category}
-                    className={`overflow-hidden rounded-lg border ${
-                      isAISuggestions
-                        ? 'border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 shadow-lg'
+                    className="overflow-hidden rounded-lg border shadow-lg"
+                    style={{
+                      borderColor: isAISuggestions
+                        ? 'color-mix(in srgb, var(--state-info) 40%, transparent)'
                         : isSearchResults
-                          ? 'border-green-300 bg-gradient-to-r from-green-50 to-teal-50 shadow-lg'
-                          : 'border-gray-200'
-                    }`}
+                          ? 'color-mix(in srgb, var(--state-success) 40%, transparent)'
+                          : 'var(--border-secondary)',
+                      background: isAISuggestions
+                        ? 'linear-gradient(to right, color-mix(in srgb, var(--state-info) 8%, var(--bg-primary) 92%), color-mix(in srgb, var(--state-info) 12%, var(--bg-primary) 88%))'
+                        : isSearchResults
+                          ? 'linear-gradient(to right, color-mix(in srgb, var(--state-success) 8%, var(--bg-primary) 92%), color-mix(in srgb, var(--state-info) 8%, var(--bg-primary) 92%))'
+                          : 'var(--bg-primary)'
+                    }}
                   >
                     {/* Category Header */}
                     <button
                       onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
-                      className={`flex w-full items-center justify-between p-3 transition-colors ${
-                        isAISuggestions
-                          ? 'cursor-default bg-gradient-to-r from-purple-100 to-blue-100'
+                      className="flex w-full items-center justify-between p-3 transition-colors"
+                      style={{
+                        cursor: (isAISuggestions || isSearchResults) ? 'default' : 'pointer',
+                        background: isAISuggestions
+                          ? 'linear-gradient(to right, color-mix(in srgb, var(--state-info) 15%, var(--bg-primary) 85%), color-mix(in srgb, var(--state-info) 20%, var(--bg-primary) 80%))'
                           : isSearchResults
-                            ? 'cursor-default bg-gradient-to-r from-green-100 to-teal-100'
-                            : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
+                            ? 'linear-gradient(to right, color-mix(in srgb, var(--state-success) 15%, var(--bg-primary) 85%), color-mix(in srgb, var(--state-info) 15%, var(--bg-primary) 85%))'
+                            : 'var(--bg-secondary)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isAISuggestions && !isSearchResults) {
+                          e.currentTarget.style.background = 'var(--bg-tertiary)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isAISuggestions && !isSearchResults) {
+                          e.currentTarget.style.background = 'var(--bg-secondary)';
+                        }
+                      }}
                     >
                       <div className="flex items-center space-x-2">
-                        <div className={`rounded p-1.5 ${
-                          isAISuggestions
-                            ? 'bg-purple-200'
-                            : isSearchResults
-                              ? 'bg-green-200'
-                              : isParkinson
-                                ? 'bg-orange-100'
-                                : 'bg-blue-100'
-                        }`}>
-                          <Stethoscope className={`h-4 w-4 ${
-                            isAISuggestions
-                              ? 'text-blue-700'
+                        <div
+                          className="rounded p-1.5"
+                          style={{
+                            backgroundColor: isAISuggestions
+                              ? 'color-mix(in srgb, var(--state-info) 30%, var(--bg-primary) 70%)'
                               : isSearchResults
-                                ? 'text-gray-800'
+                                ? 'color-mix(in srgb, var(--state-success) 30%, var(--bg-primary) 70%)'
                                 : isParkinson
-                                  ? 'text-orange-600'
-                                  : 'text-blue-600'
-                          }`} />
+                                  ? 'color-mix(in srgb, var(--state-warning) 20%, var(--bg-primary) 80%)'
+                                  : 'color-mix(in srgb, var(--state-info) 20%, var(--bg-primary) 80%)'
+                          }}
+                        >
+                          <Stethoscope
+                            className="h-4 w-4"
+                            style={{
+                              color: isAISuggestions || isSearchResults
+                                ? 'var(--state-info)'
+                                : isParkinson
+                                  ? 'var(--state-warning)'
+                                  : 'var(--state-info)'
+                            }}
+                          />
                         </div>
-                        <span className={`font-medium ${
-                          isAISuggestions || isSearchResults ? 'text-purple-900' : 'text-gray-900'
-                        }`}>
+                        <span
+                          className="font-medium"
+                          style={{
+                            color: (isAISuggestions || isSearchResults)
+                              ? 'var(--text-primary)'
+                              : 'var(--text-primary)'
+                          }}
+                        >
                           {category}
                         </span>
-                        <span className={`rounded-full px-2 py-1 text-xs ${
-                          isAISuggestions
-                            ? 'bg-blue-200 text-gray-800'
-                            : isSearchResults
-                              ? 'bg-green-200 text-gray-800'
-                              : 'bg-gray-200 text-gray-500'
-                        }`}>
+                        <span
+                          className="rounded-full px-2 py-1 text-xs"
+                          style={{
+                            backgroundColor: isAISuggestions
+                              ? 'color-mix(in srgb, var(--state-info) 25%, var(--bg-primary) 75%)'
+                              : isSearchResults
+                                ? 'color-mix(in srgb, var(--state-success) 25%, var(--bg-primary) 75%)'
+                                : 'var(--bg-tertiary)',
+                            color: 'var(--text-secondary)'
+                          }}
+                        >
                           {scales.length}
                         </span>
                         {isAISuggestions && (
                           <div className="flex items-center space-x-1">
-                            <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
-                            <span className="text-xs font-medium text-blue-700">Activo</span>
+                            <div
+                              className="h-2 w-2 animate-pulse rounded-full"
+                              style={{ backgroundColor: 'var(--state-info)' }}
+                            />
+                            <span className="text-xs font-medium" style={{ color: 'var(--state-info)' }}>Activo</span>
                           </div>
                         )}
                         {isSearchResults && (
                           <div className="flex items-center space-x-1">
-                            <div className="h-2 w-2 rounded-full bg-green-500" />
-                            <span className="text-xs font-medium text-gray-800">Búsqueda</span>
+                            <div
+                              className="h-2 w-2 rounded-full"
+                              style={{ backgroundColor: 'var(--state-success)' }}
+                            />
+                            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Búsqueda</span>
                           </div>
                         )}
                       </div>
                       {!isAISuggestions && !isSearchResults && (
                         expandedCategories[category]
-                          ? <ChevronUp className="h-5 w-5 text-gray-400" />
-                          : <ChevronDown className="h-5 w-5 text-gray-400" />
+                          ? <ChevronUp className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} />
+                          : <ChevronDown className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} />
                       )}
                     </button>
 
                     {/* Category Content */}
                     {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
-                      <div className="divide-y divide-gray-100">
+                      <div className="divide-y divide-[var(--border-secondary)]">
                         {scales.map((scale) => (
                           <div key={scale.id} className="relative">
                             <button
@@ -485,18 +528,30 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                                 console.log('🔍 Scale button clicked:', scale.id, scale.name);
                                 openScaleModal(scale.id);
                               }}
-                              className={`w-full p-3 text-left transition-colors ${
-                                clickedScale === scale.id
-                                  ? 'border-l-4 border-green-500 bg-green-100'
-                                  : 'hover:bg-blue-50'
-                              }`}
+                              className="w-full p-3 text-left transition-colors"
+                              style={{
+                                borderLeft: clickedScale === scale.id ? '4px solid var(--state-success)' : 'none',
+                                backgroundColor: clickedScale === scale.id
+                                  ? 'color-mix(in srgb, var(--state-success) 15%, var(--bg-primary) 85%)'
+                                  : 'transparent'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (clickedScale !== scale.id) {
+                                  e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (clickedScale !== scale.id) {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                }
+                              }}
                             >
                               <div className="flex items-start space-x-3">
                                 <div className="flex-1">
-                                  <h3 className="text-sm font-medium text-gray-900">{scale.name}</h3>
-                                  <p className="mt-1 text-xs text-gray-600 line-clamp-2">{scale.description}</p>
+                                  <h3 className="text-sm font-medium text-[var(--text-primary)]">{scale.name}</h3>
+                                  <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">{scale.description}</p>
                                 </div>
-                                <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                                <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--text-tertiary)]" />
                               </div>
                             </button>
                             <AIBadgeSystem
@@ -513,9 +568,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               })}
             </div>
 
-            <div className="mt-6 rounded-lg bg-gray-50 p-4">
-              <h3 className="mb-2 font-medium text-gray-800">Instrucciones</h3>
-              <ul className="space-y-1 text-sm text-gray-600">
+            <div className="mt-6 rounded-lg bg-[var(--bg-secondary)] p-4">
+              <h3 className="mb-2 font-medium text-[var(--text-primary)]">Instrucciones</h3>
+              <ul className="space-y-1 text-sm text-[var(--text-secondary)]">
                 <li>• Seleccione una escala del listado</li>
                 <li>• Complete la evaluación en el modal</li>
                 <li>• Los resultados se insertarán automáticamente</li>
@@ -535,7 +590,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               <button
                 type="button"
                 onClick={handleToggleScales}
-                className="hidden items-center gap-2 rounded-lg bg-gray-200 dark:bg-[#2a2a2a] px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-200 transition hover:bg-gray-300 dark:hover:bg-[#3a3a3a] border border-gray-300 dark:border-gray-700 lg:inline-flex"
+                className="hidden items-center gap-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)] lg:inline-flex"
               >
                 <LayoutList className="h-4 w-4" />
                 {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
@@ -544,7 +599,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={handleSavePatient}
-                className="flex items-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                className="flex items-center space-x-2 rounded-lg btn-accent px-3 py-2 text-sm"
                 title="Guardar paciente en base de datos"
               >
                 <Database className="h-4 w-4" />
@@ -552,7 +607,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               </button>
               <button
                 onClick={copyNotes}
-                className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
+                className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
               >
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
@@ -560,7 +615,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {isAdminMode && (
                 <button
                   onClick={() => setShowOcrModal(true)}
-                  className="flex items-center space-x-2 rounded-lg bg-indigo-700 px-3 py-2 text-sm text-white hover:bg-indigo-600"
+                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm"
+                  style={{
+                    backgroundColor: 'color-mix(in srgb, var(--state-info) 85%, #000)',
+                    color: 'var(--on-accent)'
+                  }}
                   title="Procesar PDF/Imagen con OCR"
                 >
                   <Upload className="h-4 w-4" />
@@ -570,7 +629,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {clearNotes && (
                 <button
                   onClick={clearNotes}
-                  className="flex items-center space-x-2 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-blue-300 hover:bg-red-950/60 border border-red-800"
+                  className="flex items-center space-x-2 rounded-lg btn-error px-3 py-2 text-sm"
                 >
                   <span>🗑️</span>
                   <span>Limpiar</span>
@@ -584,7 +643,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 `;
                   setNotes(notes + normalExamText);
                 }}
-                className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
+                className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
               >
                 <Plus className="h-4 w-4" />
                 <span>EF normal</span>
@@ -594,7 +653,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                   const testText = `Paciente con temblor en reposo y rigidez muscular. Presenta hemiparesia derecha y disartria severa.`;
                   setNotes(notes + (notes ? '\n\n' : '') + testText);
                 }}
-                className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
+                className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
               >
                 <Plus className="h-4 w-4" />
                 <span>Test IA</span>
@@ -602,7 +661,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               <div className="relative">
                 <button
                   onClick={() => setShowPathologyDropdown(!showPathologyDropdown)}
-                  className="flex items-center space-x-2 rounded-lg bg-gray-200 dark:bg-[#3a3a3a] px-3 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#444444] border border-gray-300 dark:border-gray-700"
+                  className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
                   title="Insertar antecedentes patológicos frecuentes"
                 >
                   <Plus className="h-4 w-4" />

@@ -284,7 +284,7 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
             <button
               onClick={handleSignIn}
               disabled={isLoading}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               {isLoading ? (
                 <Loader className="animate-spin h-4 w-4 mr-2" />
@@ -300,7 +300,7 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
               <button
                 onClick={syncAllEvents}
                 disabled={syncStatus === 'syncing'}
-                className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 {syncStatus === 'syncing' ? (
                   <Loader className="animate-spin h-4 w-4 mr-2" />
@@ -316,7 +316,7 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
               <button
                 onClick={importFromGoogle}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 {isLoading ? (
                   <Loader className="animate-spin h-4 w-4 mr-2" />
@@ -329,7 +329,7 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
               <button
                 onClick={handleSignOut}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                className="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
                 <Unlink className="h-4 w-4 mr-2" />
                 Disconnect

@@ -291,7 +291,7 @@ const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-orange-700 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                  className="flex-1 px-4 py-2 bg-orange-700 text-white rounded-lg hover:bg-orange-600 transition-colors"
                 >
                   {isLoading ? 'Verificando...' : 'Acceder'}
                 </button>

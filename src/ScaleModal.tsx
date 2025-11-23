@@ -46,13 +46,13 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   if (!scale) {
     console.error('❌ ScaleModal: No scale provided');
     return (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <h3 className="text-lg font-semibold text-gray-800">Error</h3>
-          <p className="text-gray-600 mt-2">No se pudo cargar la escala seleccionada.</p>
+      <div className="modal-overlay">
+        <div className="bg-[var(--bg-primary)] rounded-lg p-6 max-w-sm w-full">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Error</h3>
+          <p className="text-[var(--text-secondary)] mt-2">No se pudo cargar la escala seleccionada.</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="mt-4 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
           >
             Cerrar
           </button>
@@ -60,17 +60,17 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
       </div>
     );
   }
-  
+
   if (!scale.items || scale.items.length === 0) {
     console.error('❌ ScaleModal: Scale has no items:', scale.name);
     return (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-          <h3 className="text-lg font-semibold text-gray-800">Advertencia</h3>
-          <p className="text-gray-600 mt-2">La escala "{scale.name}" no tiene elementos configurados.</p>
+      <div className="modal-overlay">
+        <div className="bg-[var(--bg-primary)] rounded-lg p-6 max-w-sm w-full">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Advertencia</h3>
+          <p className="text-[var(--text-secondary)] mt-2">La escala "{scale.name}" no tiene elementos configurados.</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="mt-4 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
           >
             Cerrar
           </button>
@@ -80,22 +80,22 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-white">
+    <div className="modal-overlay">
+      <div className="modal-content max-w-2xl w-full">
+        <div className="p-6 border-b border-[var(--border-secondary)] flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{scale.name}</h3>
-            <p className="text-sm text-gray-600 mt-1">{scale.description}</p>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">{scale.name}</h3>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{scale.description}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
             <X className="h-6 w-6" />
           </button>
         </div>
-        <div className="p-6 bg-white">
+        <div className="p-6">
           <div className="space-y-4">
             {scale.items && scale.items.length > 0 ? scale.items.map((item: ScaleItem) => (
-              <div key={item.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <h4 className="font-medium mb-3 text-gray-900">{item.label}</h4>
+              <div key={item.id} className="border border-[var(--border-secondary)] rounded-lg p-4 bg-[var(--bg-secondary)]">
+                <h4 className="font-medium mb-3 text-[var(--text-primary)]">{item.label}</h4>
                 <div className="space-y-2">
                   {item.options && item.options.length > 0 ? item.options.map((option: string, index: number) => {
                     const optionPrefix = option.split(' - ')[0];
@@ -111,35 +111,40 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     
                     const isSelected = scores[item.id] === optionValue || (scores[item.id] === undefined && optionValue === (item.score || 0));
                     return (
-                      <label key={index} className="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-white">
+                      <label key={index} className="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-[var(--bg-primary)]">
                         <input
                           type="radio"
                           name={item.id}
                           value={optionValue}
                           checked={isSelected}
                           onChange={(e) => handleScoreChange(item.id, e.target.value)}
-                          className="text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-800">{option}</span>
+                        <span className="text-sm text-[var(--text-primary)]">{option}</span>
                       </label>
                     );
-                  }) : <div className="text-gray-800">No options available for this item</div>}
+                  }) : <div className="text-[var(--text-primary)]">No options available for this item</div>}
                 </div>
               </div>
-            )) : <div className="text-gray-800">No items available for this scale</div>}
+            )) : <div className="text-[var(--text-primary)]">No items available for this scale</div>}
           </div>
           {currentTotal !== null && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-6 p-4 rounded-lg border" style={{
+              backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)',
+              borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+            }}>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-blue-900">Puntuación Total:</span>
-                <span className="text-xl font-bold text-blue-900">{currentTotal}</span>
+                <span className="font-medium text-[var(--state-info)]">Puntuación Total:</span>
+                <span className="text-xl font-bold text-[var(--state-info)]">{currentTotal}</span>
               </div>
             </div>
           )}
-          
+
           {scale.id === 'ashworth' && (
-            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-sm text-gray-800">
+            <div className="mt-6 p-4 rounded-lg border" style={{
+              backgroundColor: 'color-mix(in srgb, var(--state-success) 10%, var(--bg-primary) 90%)',
+              borderColor: 'color-mix(in srgb, var(--state-success) 30%, transparent)'
+            }}>
+              <div className="text-sm text-[var(--text-primary)]">
                 <p className="font-medium mb-2">Interpretación de la Escala de Ashworth:</p>
                 <ul className="space-y-1 text-xs">
                   <li><strong>0:</strong> Sin aumento del tono muscular</li>
@@ -154,8 +159,11 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
           )}
           
           {scale.id === 'mcdonald_2024' && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-sm text-blue-800">
+            <div className="mt-6 p-4 rounded-lg border" style={{
+              backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)',
+              borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+            }}>
+              <div className="text-sm text-[var(--text-primary)]">
                 <p className="font-medium mb-2">Criterios de McDonald 2024:</p>
                 <div className="space-y-2 text-xs">
                   <div>
@@ -164,7 +172,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                   <div>
                     <strong>DIT (Diseminación en Tiempo):</strong> Evidencia de lesiones en diferentes momentos
                   </div>
-                  <div className="mt-2 p-2 bg-white rounded">
+                  <div className="mt-2 p-2 bg-[var(--bg-primary)] rounded">
                     <strong>Escenarios diagnósticos:</strong>
                     <ul className="mt-1 space-y-1 ml-2">
                       <li>• ≥2 ataques + ≥2 lesiones → Diagnóstico directo</li>
@@ -179,17 +187,20 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
           )}
 
           {scale.id === 'aspects' && (
-            <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="text-sm text-gray-800">
+            <div className="mt-6 p-4 rounded-lg border" style={{
+              backgroundColor: 'color-mix(in srgb, var(--state-warning) 10%, var(--bg-primary) 90%)',
+              borderColor: 'color-mix(in srgb, var(--state-warning) 30%, transparent)'
+            }}>
+              <div className="text-sm text-[var(--text-primary)]">
                 <p className="font-medium mb-2">Referencia Anatómica ASPECTS:</p>
-                <div className="bg-white rounded-lg p-3 mb-3">
-                  <div className="text-xs text-gray-700 mb-2">
+                <div className="bg-[var(--bg-primary)] rounded-lg p-3 mb-3 border border-[var(--border-secondary)]">
+                  <div className="text-xs text-[var(--text-primary)] mb-2">
                     <strong>Mapa de regiones cerebrales (territorio de ACM):</strong>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <strong>Estructuras profundas:</strong>
-                      <ul className="ml-2 space-y-1 text-gray-600">
+                      <ul className="ml-2 space-y-1 text-[var(--text-secondary)]">
                         <li>• C - Núcleo caudado</li>
                         <li>• L - Núcleo lenticular</li>
                         <li>• IC - Cápsula interna</li>
@@ -198,7 +209,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     </div>
                     <div>
                       <strong>Corteza cerebral:</strong>
-                      <ul className="ml-2 space-y-1 text-gray-600">
+                      <ul className="ml-2 space-y-1 text-[var(--text-secondary)]">
                         <li>• M1 - ACM anterior</li>
                         <li>• M2 - ACM lateral</li>
                         <li>• M3 - ACM posterior</li>
@@ -209,10 +220,10 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-lg p-3">
+                <div className="bg-[var(--bg-primary)] rounded-lg p-3">
                   <div className="text-xs">
                     <strong>Interpretación:</strong>
-                    <ul className="mt-1 space-y-1 ml-2 text-gray-700">
+                    <ul className="mt-1 space-y-1 ml-2 text-[var(--text-secondary)]">
                       <li>• <strong>8-10 puntos:</strong> Cambios mínimos, candidato ideal para reperfusión</li>
                       <li>• <strong>6-7 puntos:</strong> Cambios moderados, evaluar individualmente</li>
                       <li>• <strong>4-5 puntos:</strong> Cambios extensos, riesgo aumentado</li>
@@ -220,7 +231,10 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     </ul>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-gray-800 bg-orange-100 p-2 rounded">
+                <div className="mt-2 text-xs p-2 rounded" style={{
+                  backgroundColor: 'color-mix(in srgb, var(--state-warning) 15%, var(--bg-primary) 85%)',
+                  color: 'var(--text-primary)'
+                }}>
                   <strong>Nota:</strong> Cada región alterada resta 1 punto del total inicial de 10 puntos.
                 </div>
               </div>
@@ -228,13 +242,19 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
           )}
 
           {scale.id === 'mich' && (
-            <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="text-sm text-gray-800">
+            <div className="mt-6 p-4 rounded-lg border" style={{
+              backgroundColor: 'color-mix(in srgb, var(--state-error) 8%, var(--bg-primary) 92%)',
+              borderColor: 'color-mix(in srgb, var(--state-error) 25%, transparent)'
+            }}>
+              <div className="text-sm text-[var(--text-primary)]">
                 <p className="font-medium mb-3">Interpretación de la Escala MICH:</p>
 
                 {/* Leyenda de características de alto riesgo */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                  <div className="text-xs text-blue-800">
+                <div className="rounded-lg p-3 mb-3 border" style={{
+                  backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)',
+                  borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+                }}>
+                  <div className="text-xs text-[var(--text-primary)]">
                     <p className="font-medium mb-2">📋 Características de Alto Riesgo en TCSC:</p>
                     <p className="mb-1">
                       <strong>"El estudio de TCSC muestra (1) vasos ingurgitados o calcificaciones
@@ -242,7 +262,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                       hiperdensidad dentro de un seno venoso dural o vena cortical en el
                       contexto de drenaje venoso del sitio del hematoma o (3) ambos"</strong>
                     </p>
-                    <ul className="list-disc list-inside mt-2 space-y-1 text-blue-700">
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-[var(--text-secondary)]">
                       <li>Vasos ingurgitados en márgenes del hematoma</li>
                       <li>Calcificaciones en márgenes del hematoma</li>
                       <li>Hiperdensidad en seno venoso dural</li>
@@ -251,13 +271,13 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-3 mb-3">
-                  <div className="text-xs text-gray-700 mb-2">
+                <div className="bg-[var(--bg-primary)] rounded-lg p-3 mb-3">
+                  <div className="text-xs text-[var(--text-primary)] mb-2">
                     <strong>Mortalidad estimada a 30 días:</strong>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <ul className="space-y-1 text-gray-600">
+                      <ul className="space-y-1 text-[var(--text-secondary)]">
                         <li>• <strong>0 puntos:</strong> 2% mortalidad</li>
                         <li>• <strong>1 punto:</strong> 6% mortalidad</li>
                         <li>• <strong>2 puntos:</strong> 13% mortalidad</li>
@@ -265,7 +285,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                       </ul>
                     </div>
                     <div>
-                      <ul className="space-y-1 text-gray-600">
+                      <ul className="space-y-1 text-[var(--text-secondary)]">
                         <li>• <strong>4 puntos:</strong> 50% mortalidad</li>
                         <li>• <strong>5 puntos:</strong> 75% mortalidad</li>
                         <li>• <strong>6 puntos:</strong> 90% mortalidad</li>
@@ -273,7 +293,10 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
                     </div>
                   </div>
                 </div>
-                <div className="bg-yellow-100 p-2 rounded text-xs text-gray-800">
+                <div className="p-2 rounded text-xs" style={{
+                  backgroundColor: 'color-mix(in srgb, var(--state-warning) 15%, var(--bg-primary) 85%)',
+                  color: 'var(--text-primary)'
+                }}>
                   <strong>Advertencia:</strong> La escala MICH estima mortalidad a 30 días. No debe usarse como único criterio para retirar soporte vital. Validar con guías locales.
                 </div>
               </div>
@@ -283,14 +306,14 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
           <div className="mt-6 flex space-x-3">
             <button
               onClick={handleSubmit}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2 font-medium"
+              className="flex-1 btn-accent py-2 px-4 rounded-lg flex items-center justify-center space-x-2 font-medium"
             >
               <Copy className="h-4 w-4" />
               <span>Insertar en Notas</span>
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+              className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-secondary)] font-medium"
             >
               Cancelar
             </button>

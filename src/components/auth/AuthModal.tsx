@@ -24,14 +24,14 @@ function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 overflow-y-auto">
+    <div className="modal-overlay z-[60]">
       <div className="relative w-full max-w-md max-h-[90vh] my-8">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 z-[70] p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
+          className="absolute -top-2 -right-2 z-[70] p-2 bg-[var(--bg-primary)] rounded-full shadow-lg hover:bg-[var(--bg-secondary)]"
         >
-          <X className="h-5 w-5 text-gray-500" />
+          <X className="h-5 w-5 text-[var(--text-secondary)]" />
         </button>
 
         {/* Content */}

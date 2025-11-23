@@ -30,7 +30,7 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="banner rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
                 <GraduationCap className="h-6 w-6 text-blue-700" />

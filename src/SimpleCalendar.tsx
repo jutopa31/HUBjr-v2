@@ -143,7 +143,7 @@ const SimpleCalendar: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="flex items-center justify-between mb-6">
+      <div className="banner rounded-lg p-4 mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="w-6 h-6 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-800">Calendario Médico Simple</h2>
@@ -249,7 +249,7 @@ const SimpleCalendar: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
               >
                 {loading ? 'Guardando...' : 'Guardar Evento'}
               </button>

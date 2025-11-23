@@ -23,8 +23,8 @@ function SimpleUserMenu() {
 
   if (loading) {
     return (
-      <div className="w-full p-2 bg-[#2a2a2a] rounded-md">
-        <p className="text-xs text-gray-400">Loading...</p>
+      <div className="w-full p-2 bg-gray-100 dark:bg-[#2a2a2a] rounded-md">
+        <p className="text-xs text-gray-600 dark:text-gray-400">Loading...</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ function SimpleUserMenu() {
           {isDevelopment && (
             <button
               onClick={clearCacheAndReload}
-              className="w-full flex items-center justify-center px-2 py-1 text-xs text-blue-400 border border-orange-700 rounded-md hover:bg-orange-950/30"
+              className="w-full flex items-center justify-center px-2 py-1 text-xs text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-700 rounded-md hover:bg-orange-100 dark:hover:bg-orange-950/50"
               title="Limpiar cache de autenticación (solo desarrollo)"
             >
               <Trash2 className="h-3 w-3 mr-1" />
@@ -69,10 +69,10 @@ function SimpleUserMenu() {
     <>
       <div className="w-full space-y-1.5">
         {/* User Info */}
-        <div className="p-2 bg-[#2a2a2a] border border-gray-700 rounded-md">
+        <div className="p-2 bg-gray-100 dark:bg-[#2a2a2a] border border-gray-300 dark:border-gray-700 rounded-md">
           <div className="flex items-center">
-            <User className="h-3 w-3 text-gray-400 mr-1.5 flex-shrink-0" />
-            <span className="text-xs font-medium text-gray-200 truncate">
+            <User className="h-3 w-3 text-gray-600 dark:text-gray-400 mr-1.5 flex-shrink-0" />
+            <span className="text-xs font-medium text-gray-900 dark:text-gray-200 truncate">
               {user.email}
             </span>
           </div>
@@ -81,7 +81,7 @@ function SimpleUserMenu() {
         {/* Sign Out Button */}
         <button
           onClick={signOut}
-          className="w-full px-2 py-1.5 text-xs text-blue-400 border border-red-800 rounded-md hover:bg-red-950/30"
+          className="w-full px-2 py-1.5 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 rounded-md hover:bg-red-100 dark:hover:bg-red-950/50"
         >
           Cerrar
         </button>
@@ -90,7 +90,7 @@ function SimpleUserMenu() {
         {isDevelopment && (
           <button
             onClick={clearCacheAndReload}
-            className="w-full px-2 py-1 text-xs text-blue-400 border border-orange-700 rounded-md hover:bg-orange-950/30"
+            className="w-full px-2 py-1 text-xs text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-700 rounded-md hover:bg-orange-100 dark:hover:bg-orange-950/50"
             title="Limpiar cache de autenticación (solo desarrollo)"
           >
             <Trash2 className="h-3 w-3 mr-1 inline" />

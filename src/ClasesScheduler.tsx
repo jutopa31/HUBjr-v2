@@ -238,8 +238,8 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header with Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      {/* Header (unificado) */}
+      <div className="banner rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Cronograma de Clases</h2>
           <p className="text-gray-600">Gestión del calendario académico</p>
@@ -560,7 +560,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                 >
                   <Save className="h-4 w-4" />
                   <span>{loading ? 'Guardando...' : (editingClass ? 'Actualizar' : 'Crear')}</span>

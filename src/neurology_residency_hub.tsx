@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Menu, Settings, CheckSquare, Users, FolderOpen, BookOpen, User, Syringe, MessageSquare } from 'lucide-react';
+import { Home, Calculator, Calendar, Menu, Settings, CheckSquare, Users, FolderOpen, BookOpen, User, Syringe, MessageSquare, Award } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -22,6 +22,7 @@ import Sidebar from './components/layout/Sidebar';
 // Import types from separate file
 import ScaleModal from './ScaleModal';
 import UpdrsModal from './components/UpdrsModal';
+import RankingView from './components/ranking/RankingView';
 
 const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -102,6 +103,7 @@ const NeurologyResidencyHub = () => {
     { id: 'pacientes-post-alta', icon: Users, label: 'Post alta + Ambulatorio' },
     { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
     { id: 'academia', icon: BookOpen, label: 'Academia' },
+    { id: 'ranking', icon: Award, label: 'Ranking' },
     { id: 'resident-management', icon: Settings, label: 'Gestión de Residentes' },
     // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
     // { id: 'clinical', icon: Activity, label: 'Registro Asistencial' },
@@ -5241,6 +5243,8 @@ const NeurologyResidencyHub = () => {
         );
       case 'academia':
         return <AcademiaManager isAdminMode={isAdminMode} />;
+      case 'ranking':
+        return <RankingView isAdminMode={isAdminMode} />;
       /* case 'dashboard':
         return (
           <div className="space-y-6">
@@ -5633,7 +5637,7 @@ const NeurologyResidencyHub = () => {
 
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
           onClick={() => setSidebarOpen(false)}
         />
@@ -5669,7 +5673,7 @@ const NeurologyResidencyHub = () => {
           {renderContent()}
         </div>
         {modalPortal}
-        
+
         {/* Modal de autenticación administrativa */}
         <AdminAuthModal
           isOpen={showAuthModal}

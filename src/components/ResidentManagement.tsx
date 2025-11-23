@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Users, Save, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Users, Save, X, Link2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface ResidentProfile {
@@ -24,6 +24,9 @@ const ResidentManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingResident, setEditingResident] = useState<ResidentProfile | null>(null);
   const [formData, setFormData] = useState<Partial<ResidentProfile>>({});
+  const [userSearch, setUserSearch] = useState('');
+  const [userResults, setUserResults] = useState<Array<{ id: string; email: string; full_name?: string; training_level?: string; linked?: boolean }>>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
 
   const trainingLevels = ['R1', 'R2', 'R3', 'R4', 'R5', 'fellow', 'attending', 'intern'];
   const statusOptions = ['active', 'on_leave', 'graduated', 'transferred', 'suspended'];
@@ -74,7 +77,7 @@ const ResidentManagement = () => {
       training_level: 'R1',
       current_rotation: 'Neurología General',
       status: 'active',
-      user_id: '' // Will be generated
+      user_id: ''
     });
     setShowForm(true);
   };
@@ -98,6 +101,10 @@ const ResidentManagement = () => {
         alert('Por favor complete todos los campos requeridos');
         return;
       }
+      if (!formData.user_id) {
+        alert('Seleccione y vincule un usuario existente de Supabase');
+        return;
+      }
 
       if (editingResident) {
         // Update existing resident
@@ -116,11 +123,22 @@ const ResidentManagement = () => {
         if (error) throw error;
         alert('Residente actualizado correctamente');
       } else {
-        // Create new resident
+        // Create new resident linked to existing Supabase user
+        // Extra validation: prevent linking a user with existing profile
+        const { data: existing, error: existsErr } = await supabase
+          .from('resident_profiles')
+          .select('id')
+          .eq('user_id', formData.user_id)
+          .maybeSingle();
+        if (existsErr) throw existsErr;
+        if (existing) {
+          alert('El usuario seleccionado ya tiene un perfil de residente.');
+          return;
+        }
         const { error } = await supabase
           .from('resident_profiles')
           .insert({
-            user_id: crypto.randomUUID(), // Generate random UUID for user_id
+            user_id: formData.user_id,
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
@@ -139,6 +157,33 @@ const ResidentManagement = () => {
       console.error('Error saving resident:', error);
       alert(`Error: ${error.message}`);
     }
+  };
+
+  const searchUsers = async () => {
+    try {
+      setSearchingUsers(true);
+      const { data, error } = await supabase.rpc('list_auth_users', { q: userSearch, lim: 20 });
+      if (error) throw error;
+      setUserResults((data as any[]) || []);
+    } catch (e: any) {
+      console.error('Error buscando usuarios:', e);
+      alert(`Error buscando usuarios: ${e.message || e}`);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  const linkSelectedUser = (u: { id: string; email: string; full_name?: string; training_level?: string; linked?: boolean }) => {
+    if (u.linked) {
+      alert('Este usuario ya está vinculado a un perfil de residente.');
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      user_id: u.id,
+      email: u.email,
+      training_level: (u.training_level as any) || prev.training_level
+    }));
   };
 
   const deleteResident = async (resident: ResidentProfile) => {
@@ -394,6 +439,38 @@ const ResidentManagement = () => {
             </div>
 
             <div className="space-y-4">
+              {/* Vincular con usuario de Supabase */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Vincular usuario de Supabase</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Buscar por email o nombre..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
+                  />
+                  <button onClick={searchUsers} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm" disabled={searchingUsers}>
+                    {searchingUsers ? 'Buscando…' : 'Buscar'}
+                  </button>
+                </div>
+                {userResults.length > 0 && (
+                  <div className="mt-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded">
+                    {userResults.map((u) => (
+                      <button key={u.id} onClick={() => linkSelectedUser(u)} disabled={u.linked} className="w-full text-left px-3 py-2 hover:bg-gray-50 disabled:opacity-60 dark:hover:bg-[#444] flex items-center justify-between">
+                        <span className="text-sm text-gray-800 dark:text-gray-200">{u.full_name || u.email}</span>
+                        <span className="text-xs text-gray-500 flex items-center gap-2">{u.email} {u.linked && <span className="px-2 py-0.5 rounded bg-gray-200 text-gray-700">Vinculado</span>}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {formData.user_id && (
+                  <div className="mt-2 text-xs text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                    <Link2 className="h-4 w-4" /> Vinculado a usuario: {formData.user_id}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-400">Nombre</label>

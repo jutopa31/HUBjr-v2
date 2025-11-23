@@ -11,37 +11,83 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Monochrome base: black background, white text */
-  --bg-primary: #0b0b0b;
-  --bg-secondary: #151515;
-  --bg-tertiary: #1e1e1e;
-  --bg-hover: #262626;
-  --border-primary: #3a3a3a;
-  --border-secondary: #4c4c4c;
-  --text-primary: #ffffff;
-  --text-secondary: #c7c7c7;
-  --text-tertiary: #9b9b9b;
+  /* ========================================
+     LIGHT THEME - Variables semánticas
+     ======================================== */
 
-  /* Section accent defaults (sober, adjustable by StyleAgent) */
+  /* Fondos */
+  --bg-primary: #ffffff;      /* Fondo principal (body, cards, modales) */
+  --bg-secondary: #f9fafb;    /* Fondo secundario (gray-50, hover suave) */
+  --bg-tertiary: #f3f4f6;     /* Fondo terciario (gray-100, headers, áreas destacadas) */
+  --bg-hover: #e5e7eb;        /* Estado hover (gray-200) */
+
+  /* Bordes */
+  --border-primary: #d1d5db;   /* Bordes principales (gray-300) */
+  --border-secondary: #e5e7eb; /* Bordes secundarios (gray-200) */
+
+  /* Texto */
+  --text-primary: #111827;     /* Texto principal (gray-900) */
+  --text-secondary: #4b5563;   /* Texto secundario (gray-600) */
+  --text-tertiary: #9ca3af;    /* Texto terciario, placeholders (gray-400) */
+
+  /* Estados */
+  --state-success: #059669;    /* Verde para éxito (green-600 - mejor contraste) */
+  --state-error: #dc2626;      /* Rojo para error (red-600 - mejor contraste) */
+  --state-warning: #f59e0b;    /* Amarillo para advertencia (amber-500) */
+  --state-info: #3b82f6;       /* Azul para información (blue-500) */
+
+  /* Acentos por sección - Tonos oscuros para WCAG AA en light theme */
+  --accent-dashboard: #4b5563; /* gray-600 (7.56:1) ✅ */
+  --accent-patients: #0369a1;  /* sky-700 (5.88:1) ✅ */
+  --accent-resources: #2563eb; /* blue-600 (5.17:1) ✅ */
+  --accent-admin: #4f46e5;     /* indigo-600 (6.29:1) ✅ */
+
+  /* Accent actual (cambia según sección) */
+  --accent: var(--accent-dashboard);
+  --on-accent: #ffffff; /* Texto sobre accent en light theme */
+}
+
+.dark {
+  /* ========================================
+     DARK THEME - Variables semánticas
+     ======================================== */
+
+  /* Fondos */
+  --bg-primary: #0b0b0b;      /* Negro casi puro */
+  --bg-secondary: #151515;    /* Negro muy oscuro */
+  --bg-tertiary: #1e1e1e;     /* Gris muy oscuro */
+  --bg-hover: #262626;        /* Gris oscuro para hover */
+
+  /* Bordes */
+  --border-primary: #3a3a3a;   /* Gris medio para bordes */
+  --border-secondary: #4c4c4c; /* Gris medio-claro para bordes */
+
+  /* Texto */
+  --text-primary: #ffffff;     /* Blanco puro */
+  --text-secondary: #c7c7c7;   /* Gris claro */
+  --text-tertiary: #9b9b9b;    /* Gris medio */
+
+  /* Estados - Tonos más claros en dark mode para mejor visibilidad */
+  --state-success: #34d399;    /* green-400 (ajustado para mejor contraste) */
+  --state-error: #fca5a5;      /* red-300 (ajustado para mejor contraste) */
+  --state-warning: #fbbf24;    /* yellow-400 */
+  --state-info: #60a5fa;       /* blue-400 */
+
+  /* Acentos por sección - Tonos más claros para dark mode */
   --accent-dashboard: #9ca3af; /* gray-400 */
   --accent-patients: #7dd3fc;  /* sky-300 (muted) */
   --accent-resources: #93c5fd; /* blue-300 (muted) */
   --accent-admin: #a5b4fc;     /* indigo-300 (muted) */
 
-  /* Current scoped accent, set by [data-section] or StyleAgent */
+  /* Accent actual (cambia según sección) */
   --accent: var(--accent-dashboard);
-  --on-accent: #111111; /* computed by StyleAgent at runtime for contrast */
+  --on-accent: #111111; /* Texto sobre accent en dark theme (computed by StyleAgent) */
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #ffffff;
-  color: #111827;
-}
-
-.dark body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -49,19 +95,12 @@ body {
 #root {
   width: 100%;
   min-height: 100vh;
-  background-color: #ffffff;
-}
-
-.dark #root {
   background-color: var(--bg-primary);
 }
 
 /* Ensure full height layout for medical application */
 html, body, #root {
   height: 100%;
-}
-
-.dark html, .dark body, .dark #root {
   background-color: var(--bg-primary);
 }
 
@@ -73,12 +112,8 @@ body[data-section='admin']     { --accent: var(--accent-admin); }
 
 /* Headings and banners: high-contrast, sober accents */
 h1, h2 {
-  color: #111827;
-  letter-spacing: 0.2px;
-}
-
-.dark h1, .dark h2 {
   color: var(--text-primary);
+  letter-spacing: 0.2px;
 }
 
 /* Subtle accent underline for headings */
@@ -87,14 +122,7 @@ h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent)
 
 /* Generic banner style; rely on accent for a left border/tab */
 .banner {
-  background: #f3f4f6;
-  color: #111827;
-  border: 1px solid #d1d5db;
-  border-left: 4px solid var(--accent);
-}
-
-.dark .banner {
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
   border: 1px solid var(--border-primary);
   border-left: 4px solid var(--accent);
@@ -109,43 +137,67 @@ h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent)
 /* Buttons using accent and monochrome base */
 .btn-accent {
   background-color: var(--accent);
-  color: #111111;
+  color: var(--on-accent);
   border: 1px solid color-mix(in srgb, var(--accent) 65%, #000 35%);
 }
 .btn-accent:hover {
   filter: brightness(0.95);
 }
-.dark .btn-accent {
-  color: var(--on-accent);
-}
 
 .btn-soft {
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #d1d5db;
-}
-.btn-soft:hover {
-  background-color: #e5e7eb;
-  color: #111827;
-}
-.dark .btn-soft {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
   color: var(--text-secondary);
   border: 1px solid var(--border-primary);
 }
-.dark .btn-soft:hover {
+.btn-soft:hover {
   background-color: var(--bg-hover);
   color: var(--text-primary);
 }
 
 /* Success action button (sober green) */
 .btn-success {
-  background-color: #4ade80; /* green-400 muted */
-  color: #111111;
-  border: 1px solid color-mix(in srgb, #4ade80 65%, #000 35%);
+  background-color: var(--state-success);
+  color: var(--on-accent);
+  border: 1px solid color-mix(in srgb, var(--state-success) 65%, #000 35%);
 }
 .btn-success:hover {
   filter: brightness(0.95);
+}
+
+/* Error/destructive action button */
+.btn-error {
+  background-color: color-mix(in srgb, var(--state-error) 10%, var(--bg-primary) 90%);
+  color: var(--state-error);
+  border: 1px solid color-mix(in srgb, var(--state-error) 30%, transparent);
+}
+.btn-error:hover {
+  background-color: color-mix(in srgb, var(--state-error) 15%, var(--bg-primary) 85%);
+}
+
+/* Estados disabled - SIN opacity para mantener contraste WCAG */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 1 !important;
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-tertiary) !important;
+  border-color: var(--border-secondary) !important;
+  cursor: not-allowed !important;
+}
+
+.btn-accent:disabled,
+.btn-success:disabled {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-tertiary) !important;
+  border-color: var(--border-primary) !important;
+  filter: grayscale(0.5);
+}
+
+.btn-soft:disabled {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-tertiary) !important;
+  filter: none;
 }
 
 /* Global dark theme defaults */
@@ -184,23 +236,7 @@ input:not([type]),
 input[type="search"],
 textarea,
 select {
-  background-color: #ffffff !important;
-  color: #111827 !important;
-  border-color: #d1d5db !important;
-}
-
-.dark input[type="text"],
-.dark input[type="email"],
-.dark input[type="password"],
-.dark input[type="number"],
-.dark input[type="date"],
-.dark input[type="time"],
-.dark input[type="datetime-local"],
-.dark input:not([type]),
-.dark input[type="search"],
-.dark textarea,
-.dark select {
-  background-color: var(--bg-secondary) !important;
+  background-color: var(--bg-primary) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-primary) !important;
 }
@@ -214,32 +250,19 @@ input[type="time"]:focus,
 input[type="datetime-local"]:focus,
 textarea:focus,
 select:focus {
-  border-color: #3b82f6 !important;
-  ring-color: #3b82f6 !important;
-  background-color: #f9fafb !important;
+  outline: 2px solid var(--state-info) !important;
+  outline-offset: 2px !important;
+  border-color: var(--state-info) !important;
+  background-color: var(--bg-secondary) !important;
 }
 
-.dark input[type="text"]:focus,
-.dark input[type="email"]:focus,
-.dark input[type="password"]:focus,
-.dark input[type="number"]:focus,
-.dark input[type="date"]:focus,
-.dark input[type="time"]:focus,
-.dark input[type="datetime-local"]:focus,
-.dark textarea:focus,
-.dark select:focus {
-  border-color: #3b82f6 !important;
-  ring-color: #3b82f6 !important;
-  background-color: var(--bg-tertiary) !important;
+button:focus-visible {
+  outline: 2px solid var(--state-info) !important;
+  outline-offset: 2px !important;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af !important;
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
   color: var(--text-tertiary) !important;
 }
 
@@ -250,39 +273,21 @@ button {
 
 /* Table styling */
 table {
-  color: #111827;
-}
-
-.dark table {
   color: var(--text-primary);
 }
 
 th {
-  background-color: #f3f4f6;
-  color: #111827;
-  border-color: #d1d5db;
-}
-
-.dark th {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
   color: var(--text-primary);
   border-color: var(--border-primary);
 }
 
 td {
-  border-color: #e5e7eb;
-}
-
-.dark td {
-  border-color: var(--border-primary);
+  border-color: var(--border-secondary);
 }
 
 tr:hover {
-  background-color: #f9fafb;
-}
-
-.dark tr:hover {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
 }
 
 
@@ -352,26 +357,19 @@ tr:hover {
 
 /* Enhanced medical cards */
 .medical-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
-.dark .medical-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-}
-
 .medical-card:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: var(--border-primary);
+  background: var(--bg-secondary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .dark .medical-card:hover {
-  border-color: var(--border-secondary);
-  background: var(--bg-tertiary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -398,32 +396,41 @@ tr:hover {
 
 .ward-col-ubicacion {
   padding: 0 0.25rem;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid var(--border-secondary);
 }
 
 .ward-col-diagnostico {
   padding: 0 0.5rem;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid var(--border-secondary);
 }
 
 .ward-col-severidad {
   padding-left: 0.5rem;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid var(--border-secondary);
   text-align: center;
 }
 
 .ward-col-pendientes {
   padding-left: 0.5rem;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid var(--border-secondary);
 }
 
 .ward-col-actions {
   padding-left: 0.5rem;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid var(--border-secondary);
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Dark mode override para bordes de columnas si necesario */
+.dark .ward-col-ubicacion,
+.dark .ward-col-diagnostico,
+.dark .ward-col-severidad,
+.dark .ward-col-pendientes,
+.dark .ward-col-actions {
+  border-left-color: var(--border-primary);
 }
 
 /* Responsive adjustments */
@@ -592,9 +599,9 @@ tr:hover {
 }
 
 .modal-content {
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
   border-radius: 0.5rem;
   max-width: 90vw;
   max-height: 90vh;
@@ -603,9 +610,6 @@ tr:hover {
 }
 
 .dark .modal-content {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-primary);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 

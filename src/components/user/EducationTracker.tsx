@@ -325,7 +325,7 @@ const EducationTracker: React.FC = () => {
               <button
                 type="submit"
                 disabled={classesLoading}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 {editingClass ? 'Actualizar' : 'Guardar'}
               </button>
