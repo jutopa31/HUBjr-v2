@@ -90,6 +90,8 @@ body {
   min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  /* Prevent accidental horizontal scrollbars from off-canvas elements */
+  overflow-x: hidden;
 }
 
 #root {

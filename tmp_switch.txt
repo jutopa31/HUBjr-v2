@@ -1,0 +1,81 @@
+    switch (activeTab) {
+      case 'diagnostic':
+        return (
+          <DiagnosticAlgorithmContent
+            notes={notes}
+            setNotes={setNotes}
+            copyNotes={copyNotes}
+            clearNotes={clearNotes}
+            openScaleModal={openScaleModal}
+            medicalScales={medicalScales}
+            isAdminMode={isAdminMode}
+            currentHospitalContext={currentHospitalContext}
+          />
+        );
+      case 'inicio':
+        return <DashboardInicio setActiveTab={handleTabChange} openScaleModal={openScaleModal} />;
+      case 'user-dashboard':
+        return <UserDashboard />;
+      case 'lumbar-punctures':
+        return (
+          <ProtectedRoute>
+            <LumbarPunctureDashboard />
+          </ProtectedRoute>
+        );
+      case 'academia':
+        return <AcademiaManager isAdminMode={isAdminMode} />;
+      /* case 'dashboard':
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Brain className="h-8 w-8" />
+                <div>
+                  <h1 className="text-2xl font-bold">¡Bienvenidos!</h1>
+                  <p className="text-blue-100">Residencia de Neurología | Hospital Nacional Posadas</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Actividades Completadas</p>
+                    <p className="text-2xl font-bold text-gray-900">24</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-blue-700" />
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Horas Clínicas</p>
+                    <p className="text-2xl font-bold text-blue-600">156</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-blue-500" />
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Casos Presentados</p>
+                    <p className="text-2xl font-bold text-gray-900">8</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-blue-700" />
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Evaluaciones</p>
+                    <p className="text-2xl font-bold text-gray-900">90%</p>
+                  </div>
+                  <Award className="h-8 w-8 text-blue-700" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold mb-4 flex items-center">

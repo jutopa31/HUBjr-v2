@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Toggle button - Visible en desktop */}
         <button
           onClick={toggleSidebar}
-          className="hidden lg:flex absolute -right-3 top-5 bg-gray-100 dark:bg-[#2a2a2a] border border-gray-300 dark:border-gray-700 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition-colors z-10 shadow-lg"
+          className="hidden lg:flex absolute right-1 top-5 bg-gray-100 dark:bg-[#2a2a2a] border border-gray-300 dark:border-gray-700 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition-colors z-10 shadow-lg"
           title={isExpanded ? 'Colapsar sidebar' : 'Expandir sidebar'}
           aria-label={isExpanded ? 'Colapsar sidebar' : 'Expandir sidebar'}
           aria-expanded={isExpanded}
