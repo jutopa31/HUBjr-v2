@@ -77,7 +77,7 @@ function LoginForm({ onSuccess, onToggleMode, showSignUp = false }: LoginFormPro
   const displayError = formError || authError;
 
   return (
-    <div className="bg-[var(--bg-primary)] rounded-lg shadow-lg p-6 sm:p-8 w-full max-w-md max-h-[85vh] overflow-y-auto">
+    <div className="p-6 sm:p-8 w-full max-h-[85vh] overflow-y-auto">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4" style={{
           backgroundColor: 'color-mix(in srgb, var(--state-info) 20%, var(--bg-primary) 80%)'

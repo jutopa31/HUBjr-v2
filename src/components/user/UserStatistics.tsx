@@ -96,7 +96,7 @@ const UserStatistics: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-blue-600">Total Procedimientos</p>
-              <p className="text-3xl font-bold text-blue-900">{statistics.procedures.total}</p>
+              <p className="text-3xl font-semibold text-blue-900">{statistics.procedures.total}</p>
             </div>
             <div className="text-blue-600">
               <BarChart3 className="h-8 w-8" />
@@ -113,7 +113,7 @@ const UserStatistics: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-800">Pacientes Atendidos</p>
-              <p className="text-3xl font-bold text-gray-900">{statistics.patients.total}</p>
+              <p className="text-3xl font-semibold text-gray-900">{statistics.patients.total}</p>
             </div>
             <div className="text-blue-700">
               <BarChart3 className="h-8 w-8" />
@@ -130,7 +130,7 @@ const UserStatistics: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-800">Horas de Educación</p>
-              <p className="text-3xl font-bold text-gray-900">{statistics.education.totalHours}</p>
+              <p className="text-3xl font-semibold text-gray-900">{statistics.education.totalHours}</p>
             </div>
             <div className="text-blue-700">
               <BarChart3 className="h-8 w-8" />
@@ -150,7 +150,7 @@ const UserStatistics: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-800">Objetivos Cumplidos</p>
-              <p className="text-3xl font-bold text-gray-900">{statistics.goals.completed}</p>
+              <p className="text-3xl font-semibold text-gray-900">{statistics.goals.completed}</p>
             </div>
             <div className="text-blue-700">
               <BarChart3 className="h-8 w-8" />

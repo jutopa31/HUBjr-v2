@@ -116,8 +116,8 @@ const WardRoundsWorking: React.FC = () => {
       </div>
 
       {/* Mensaje si no hay conexión con Supabase */}
-      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <p className="text-yellow-800">
+      <div className="mb-4 p-4 medical-card card-warning rounded-lg">
+        <p className="text-[var(--text-primary)]">
           📋 <strong>Versión de prueba:</strong> Los datos no se guardan permanentemente aún. 
           Para guardar en Supabase, necesitamos verificar la conexión.
         </p>
@@ -170,7 +170,7 @@ const WardRoundsWorking: React.FC = () => {
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div id="ward-round-table">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-[var(--bg-tertiary)]">
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cama</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">DNI</th>
@@ -187,12 +187,7 @@ const WardRoundsWorking: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {patients.map((patient) => (
-                <tr key={patient.id} className={`hover:bg-gray-50 ${
-                  patient.severidad === 'I' ? 'bg-green-50' :
-                  patient.severidad === 'II' ? 'bg-yellow-50' :
-                  patient.severidad === 'III' ? 'bg-orange-50' :
-                  patient.severidad === 'IV' ? 'bg-red-50' : ''
-                }`}>
+                <tr key={patient.id} className={`hover:bg-gray-50`}>
                   <td className="px-3 py-4 text-sm text-gray-900">{patient.cama}</td>
                   <td className="px-3 py-4 text-sm text-gray-900">{patient.dni}</td>
                   <td className="px-3 py-4 text-sm text-gray-900 font-medium">{patient.nombre}</td>
@@ -202,13 +197,15 @@ const WardRoundsWorking: React.FC = () => {
                   <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.examen_fisico}>{patient.examen_fisico}</td>
                   <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.estudios}>{patient.estudios}</td>
                   <td className="px-3 py-4 text-sm text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      patient.severidad === 'I' ? 'bg-green-100 text-gray-800' :
-                      patient.severidad === 'II' ? 'bg-yellow-100 text-gray-800' :
-                      patient.severidad === 'III' ? 'bg-orange-100 text-gray-800' :
-                      patient.severidad === 'IV' ? 'bg-red-100 text-gray-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {patient.severidad}
+                    <span
+                      className={`badge ${
+                        patient.severidad === 'I' ? 'badge-severity-1' :
+                        patient.severidad === 'II' ? 'badge-severity-2' :
+                        patient.severidad === 'III' ? 'badge-severity-3' :
+                        patient.severidad === 'IV' ? 'badge-severity-4' : ''
+                      }`}
+                    >
+                      {patient.severidad || '-'}
                     </span>
                   </td>
                   <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate" title={patient.diagnostico}>{patient.diagnostico}</td>
@@ -224,3 +221,4 @@ const WardRoundsWorking: React.FC = () => {
 };
 
 export default WardRoundsWorking;
+

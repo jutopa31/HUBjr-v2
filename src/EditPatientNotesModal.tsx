@@ -112,18 +112,22 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
                     patientDni !== (patient.patient_dni || '');
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+    <div className="modal-overlay z-50">
+      <div className="modal-content max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="p-6 border-b border-[var(--border-secondary)]" style={{
+          background: 'linear-gradient(to right, color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%), color-mix(in srgb, var(--accent) 10%, var(--bg-primary) 90%))'
+        }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="h-6 w-6 text-blue-600" />
+              <div className="p-2 rounded-lg" style={{
+                backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)'
+              }}>
+                <FileText className="h-6 w-6" style={{ color: 'var(--state-info)' }} />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">Editar Información del Paciente</h2>
-                <p className="text-sm text-gray-600 flex items-center mt-1">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">Editar Información del Paciente</h2>
+                <p className="text-sm text-[var(--text-secondary)] flex items-center mt-1">
                   <Calendar className="h-4 w-4 mr-1" />
                   Creado: {formatDate(patient.created_at || '')}
                 </p>
@@ -132,7 +136,7 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
             <button
               onClick={handleClose}
               disabled={isSaving}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
             >
               <X className="h-6 w-6" />
             </button>
@@ -142,47 +146,47 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {/* Patient Information */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+          <div className="mb-6 p-4 bg-[var(--bg-secondary)] rounded-lg">
+            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3 flex items-center">
               <User className="h-4 w-4 mr-2" />
               Información del Paciente
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   Nombre del Paciente *
                 </label>
                 <input
                   type="text"
                   value={patientName}
                   onChange={(e) => setPatientName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-[var(--border-primary)] rounded-lg px-3 py-2 text-sm"
                   placeholder="Nombre completo"
                   disabled={isSaving}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   Edad
                 </label>
                 <input
                   type="text"
                   value={patientAge}
                   onChange={(e) => setPatientAge(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-[var(--border-primary)] rounded-lg px-3 py-2 text-sm"
                   placeholder="Ej: 45"
                   disabled={isSaving}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                   DNI
                 </label>
                 <input
                   type="text"
                   value={patientDni}
                   onChange={(e) => setPatientDni(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-[var(--border-primary)] rounded-lg px-3 py-2 text-sm"
                   placeholder="Ej: 12345678"
                   disabled={isSaving}
                 />
@@ -192,42 +196,42 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
 
           {/* Clinical Notes Editor */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
               <FileText className="h-4 w-4 inline mr-1" />
               Notas Clínicas *
             </label>
             <textarea
               value={clinicalNotes}
               onChange={(e) => setClinicalNotes(e.target.value)}
-              className="w-full h-64 border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
+              className="w-full h-64 border border-[var(--border-primary)] rounded-lg px-3 py-3 resize-none font-mono text-sm"
               placeholder="Escriba las notas clínicas del paciente..."
               disabled={isSaving}
             />
-            <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+            <div className="flex justify-between items-center mt-2 text-xs text-[var(--text-tertiary)]">
               <span>Caracteres: {clinicalNotes.length}</span>
               {hasChanges && (
-                <span className="text-orange-600 font-medium">● Cambios sin guardar</span>
+                <span className="font-medium" style={{ color: 'var(--state-warning)' }}>● Cambios sin guardar</span>
               )}
             </div>
           </div>
 
           {/* Scale Results (Read-only) */}
           {patient.scale_results && patient.scale_results.length > 0 && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
+            <div className="mb-6 p-4 bg-[var(--bg-secondary)] rounded-lg">
+              <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
                 Escalas Aplicadas (Solo lectura)
               </h3>
               <div className="space-y-2">
                 {patient.scale_results.map((scale, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-white rounded border text-sm">
-                    <span className="font-medium">{scale.scale_name}</span>
-                    <span className="text-blue-600 font-semibold">
+                  <div key={index} className="flex items-center justify-between p-2 bg-[var(--bg-primary)] rounded border border-[var(--border-secondary)] text-sm">
+                    <span className="font-medium text-[var(--text-primary)]">{scale.scale_name}</span>
+                    <span className="font-semibold" style={{ color: 'var(--state-info)' }}>
                       Puntuación: {scale.score}
                     </span>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-[var(--text-tertiary)] mt-2">
                 * Las escalas no pueden editarse. Para modificar resultados, debe crear una nueva evaluación.
               </p>
             </div>
@@ -235,26 +239,29 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
 
           {/* Save Result */}
           {saveResult && (
-            <div className={`p-4 rounded-lg flex items-center space-x-3 ${
-              saveResult.success 
-                ? 'bg-green-50 text-gray-800 border border-green-200'
-                : 'bg-red-50 text-gray-800 border border-red-200'
-            }`}>
+            <div className="p-4 rounded-lg flex items-center space-x-3" style={{
+              backgroundColor: saveResult.success 
+                ? 'color-mix(in srgb, var(--state-success) 10%, var(--bg-primary) 90%)'
+                : 'color-mix(in srgb, var(--state-error) 10%, var(--bg-primary) 90%)',
+              borderColor: saveResult.success
+                ? 'color-mix(in srgb, var(--state-success) 30%, transparent)'
+                : 'color-mix(in srgb, var(--state-error) 30%, transparent)'
+            }}>
               {saveResult.success ? (
-                <CheckCircle className="h-5 w-5 text-blue-700" />
+                <CheckCircle className="h-5 w-5" style={{ color: 'var(--state-success)' }} />
               ) : (
-                <AlertCircle className="h-5 w-5 text-blue-700" />
+                <AlertCircle className="h-5 w-5" style={{ color: 'var(--state-error)' }} />
               )}
-              <span className="text-sm">{saveResult.message}</span>
+              <span className="text-sm text-[var(--text-primary)]">{saveResult.message}</span>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-          <div className="text-sm text-gray-600">
+        <div className="p-6 border-t border-[var(--border-secondary)] bg-[var(--bg-secondary)] flex justify-between items-center">
+          <div className="text-sm text-[var(--text-secondary)]">
             {hasChanges ? (
-              <span className="text-orange-600">● Hay cambios sin guardar</span>
+              <span style={{ color: 'var(--state-warning)' }}>● Hay cambios sin guardar</span>
             ) : (
               <span>Sin cambios pendientes</span>
             )}
@@ -263,14 +270,14 @@ const EditPatientNotesModal: React.FC<EditPatientNotesModalProps> = ({
             <button
               onClick={handleClose}
               disabled={isSaving}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white"
+              className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-primary)]"
             >
               {hasChanges ? 'Cancelar' : 'Cerrar'}
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving || !clinicalNotes.trim() || !patientName.trim() || !hasChanges}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+              className="btn-accent px-4 py-2 rounded-lg flex items-center space-x-2"
             >
               <Save className="h-4 w-4" />
               <span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}</span>

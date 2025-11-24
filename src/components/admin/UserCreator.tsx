@@ -88,7 +88,7 @@ const UserCreator: React.FC<UserCreatorProps> = ({ onUserCreated }) => {
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center mb-6">
         <UserPlus className="h-6 w-6 text-blue-600 mr-2" />
-        <h2 className="text-xl font-semibold text-gray-900">Create New User</h2>
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">Create New User</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -186,11 +186,11 @@ const UserCreator: React.FC<UserCreatorProps> = ({ onUserCreated }) => {
       </form>
 
       {message && (
-        <div className={`mt-4 p-3 rounded-lg ${
-          message.type === 'success'
-            ? 'bg-green-50 text-gray-800 border border-green-200'
-            : 'bg-red-50 text-gray-800 border border-red-200'
-        }`}>
+        <div
+          className={`mt-4 p-3 rounded-lg medical-card ${
+            message.type === 'success' ? 'card-success' : 'card-error'
+          }`}
+        >
           {message.text}
         </div>
       )}

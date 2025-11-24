@@ -145,7 +145,7 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="medical-card card-error rounded-lg p-4">
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 text-blue-700 mr-2" />
             <span className="text-sm text-gray-800">{error}</span>
@@ -156,7 +156,7 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
       {/* Add/Edit Form */}
       {showAddForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <h3 className="heading-md mb-4">
             {editingProcedure ? 'Editar Procedimiento' : 'Nuevo Procedimiento'}
           </h3>
 
@@ -393,7 +393,7 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
                       )}
 
                       {!procedure.success && procedure.complications && (
-                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                        <div className="mt-2 p-2 medical-card card-error rounded">
                           <p className="text-sm text-gray-800">
                             <strong>Complicaciones:</strong> {procedure.complications}
                           </p>

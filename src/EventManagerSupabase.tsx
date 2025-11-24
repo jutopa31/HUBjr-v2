@@ -738,8 +738,13 @@ const EventManagerSupabase: React.FC = () => {
               </span>
             )}
           </h3>
-          <div className="mb-3 p-2 bg-blue-950/30 border border-blue-800 rounded-md">
-            <p className="text-xs text-blue-400">
+          <div className="mb-3 p-2 rounded-md" style={{
+            backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)',
+            borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)',
+            borderWidth: '1px',
+            borderStyle: 'solid'
+          }}>
+            <p className="text-xs" style={{ color: 'var(--state-info)' }}>
               <strong>💡 Tip:</strong> Los eventos de tipo "Académico" aparecerán en el filtro "Clases".
               Los demás tipos aparecerán en "Tareas".
             </p>
@@ -1100,7 +1105,7 @@ const EventManagerSupabase: React.FC = () => {
                                 );
                                 setEvents(updatedEvents);
                               }}
-                              className="font-semibold text-sm text-gray-900 dark:text-gray-200 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-300 dark:border-yellow-700 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                              className="font-semibold text-sm text-gray-900 dark:text-gray-200 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                             />
                           ) : (
                             <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-200">{event.title}</h4>
@@ -1130,7 +1135,7 @@ const EventManagerSupabase: React.FC = () => {
                                     );
                                     setEvents(updatedEvents);
                                   }}
-                                  className="text-xs bg-yellow-950/30 border border-yellow-700 rounded px-2 py-1"
+                                  className="text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                                 />
                                 <span>-</span>
                                 <input
@@ -1142,7 +1147,7 @@ const EventManagerSupabase: React.FC = () => {
                                     );
                                     setEvents(updatedEvents);
                                   }}
-                                  className="text-xs bg-yellow-950/30 border border-yellow-700 rounded px-2 py-1"
+                                  className="text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                                 />
                               </div>
                             ) : (
@@ -1168,7 +1173,7 @@ const EventManagerSupabase: React.FC = () => {
                                     );
                                     setEvents(updatedEvents);
                                   }}
-                                  className="text-sm bg-yellow-50 border border-yellow-200 rounded px-2 py-1"
+                                  className="text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                                 />
                               ) : (
                                 <span>{event.location}</span>
@@ -1192,7 +1197,7 @@ const EventManagerSupabase: React.FC = () => {
                                   );
                                   setEvents(updatedEvents);
                                 }}
-                                className="w-full text-sm bg-yellow-50 border border-yellow-200 rounded px-2 py-1 resize-none"
+                                className="w-full text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 resize-none focus:ring-2 focus:ring-blue-500"
                                 rows={2}
                               />
                             ) : (
@@ -1262,31 +1267,32 @@ const EventManagerSupabase: React.FC = () => {
 
       {/* Event Details Modal */}
       {showEventDetails && selectedEvent && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+        <div className="modal-overlay">
+          <div className="modal-content w-full max-w-md max-h-[80vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Detalles del Evento</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Detalles del Evento</h3>
               <button
                 onClick={() => setShowEventDetails(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors"
+                aria-label="Cerrar"
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-4">
               {/* Event Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-900">{selectedEvent.title}</span>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Título</label>
+                <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg">
+                  <span className="text-[var(--text-primary)]">{selectedEvent.title}</span>
                 </div>
               </div>
 
               {/* Event Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Tipo</label>
+                <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg">
                   <span className={`px-3 py-1 text-sm rounded-full border flex items-center space-x-2 ${getEventTypeColor(selectedEvent.type || 'clinical')}`}>
                     {React.createElement(getEventTypeIcon(selectedEvent.type || 'clinical'), { className: "w-4 h-4" })}
                     <span className="font-medium">
@@ -1302,8 +1308,8 @@ const EventManagerSupabase: React.FC = () => {
               {/* Date and Time */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Inicio</label>
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Inicio</label>
+                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg text-sm">
                     {new Date(selectedEvent.start_date).toLocaleString('es-ES', {
                       weekday: 'long',
                       day: 'numeric',
@@ -1314,8 +1320,8 @@ const EventManagerSupabase: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fin</label>
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Fin</label>
+                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg text-sm">
                     {new Date(selectedEvent.end_date).toLocaleString('es-ES', {
                       weekday: 'long',
                       day: 'numeric',
@@ -1330,10 +1336,10 @@ const EventManagerSupabase: React.FC = () => {
               {/* Location */}
               {selectedEvent.location && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
-                  <div className="p-3 bg-gray-50 rounded-lg flex items-center">
-                    <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-                    <span className="text-gray-900">{selectedEvent.location}</span>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Ubicación</label>
+                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg flex items-center">
+                    <MapPin className="h-4 w-4 text-[var(--text-tertiary)] mr-2" />
+                    <span className="text-[var(--text-primary)]">{selectedEvent.location}</span>
                   </div>
                 </div>
               )}
@@ -1341,16 +1347,16 @@ const EventManagerSupabase: React.FC = () => {
               {/* Description */}
               {selectedEvent.description && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-900">{selectedEvent.description}</span>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Descripción</label>
+                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg">
+                    <span className="text-[var(--text-primary)]">{selectedEvent.description}</span>
                   </div>
                 </div>
               )}
 
               {/* Created by and date */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex items-center text-xs text-gray-500">
+              <div className="pt-4 border-t border-[var(--border-secondary)]">
+                <div className="flex items-center text-xs text-[var(--text-tertiary)]">
                   <User className="h-3 w-3 mr-1" />
                   <span>Creado por: {selectedEvent.created_by || 'Usuario'}</span>
                   {selectedEvent.created_at && (
@@ -1365,7 +1371,7 @@ const EventManagerSupabase: React.FC = () => {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowEventDetails(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 rounded-lg btn-soft"
               >
                 Cerrar
               </button>
@@ -1374,7 +1380,7 @@ const EventManagerSupabase: React.FC = () => {
                   setShowEventDetails(false);
                   setEditingEvent(selectedEvent.id!);
                 }}
-                className="px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors flex items-center space-x-2"
+                className="px-4 py-2 rounded-lg btn-accent flex items-center space-x-2"
               >
                 <Edit3 className="h-4 w-4" />
                 <span>Editar</span>

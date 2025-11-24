@@ -38,7 +38,7 @@ function ProtectedRoute({
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6">
               <Lock className="h-8 w-8 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">
               Acceso Requerido
             </h2>
             <p className="text-gray-600 mb-6">

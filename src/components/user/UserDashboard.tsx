@@ -75,16 +75,16 @@ const UserDashboard: React.FC = () => {
             {statistics && (
               <>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{statistics.procedures.total}</div>
-                  <div style={{ color: "var(--text-secondary)" }}>Procedimientos</div>
+                  <div className="stat-value">{statistics.procedures.total}</div>
+                  <div className="stat-label">Procedimientos</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{statistics.patients.active}</div>
-                  <div style={{ color: "var(--text-secondary)" }}>Pacientes Activos</div>
+                  <div className="stat-value">{statistics.patients.active}</div>
+                  <div className="stat-label">Pacientes Activos</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{statistics.education.totalHours}h</div>
-                  <div style={{ color: "var(--text-secondary)" }}>Horas de Estudio</div>
+                  <div className="stat-value">{statistics.education.totalHours}h</div>
+                  <div className="stat-label">Horas de Estudio</div>
                 </div>
               </>
             )}
@@ -165,8 +165,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               <Stethoscope className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Procedimientos</p>
-              <p className="text-2xl font-semibold text-gray-900">{statistics.procedures.total}</p>
+              <p className="stat-label">Procedimientos</p>
+              <p className="stat-value">{statistics.procedures.total}</p>
               <p className="text-xs text-gray-700">
                 {(statistics.procedures.successRate ?? 0).toFixed(1)}% éxito
               </p>
@@ -184,8 +184,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               <Syringe className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4 flex-1">
-              <p className="text-sm font-medium text-gray-600">Punciones Lumbares</p>
-              <p className="text-2xl font-semibold text-gray-900">
+              <p className="stat-label">Punciones Lumbares</p>
+              <p className="stat-value">
                 {statistics.procedures.lumbarPuncturesCount || 0}
               </p>
               <p className="text-xs text-gray-700">
@@ -205,8 +205,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
               <Users className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pacientes</p>
-              <p className="text-2xl font-semibold text-gray-900">{statistics.patients.active}</p>
+              <p className="stat-label">Pacientes</p>
+              <p className="stat-value">{statistics.patients.active}</p>
               <p className="text-xs text-gray-500">
                 {statistics.patients.total} total
               </p>
@@ -231,12 +231,12 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, userName, onNavig
 
         <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
+            <div className="p-2 badge badge-warning" style={{ borderRadius: '0.5rem' }}>
               <Target className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Objetivos</p>
-              <p className="text-2xl font-semibold text-gray-900">{statistics.goals.completed}</p>
+              <p className="stat-label">Objetivos</p>
+              <p className="stat-value">{statistics.goals.completed}</p>
               <p className="text-xs text-gray-500">
                 de {statistics.goals.total} objetivos
               </p>

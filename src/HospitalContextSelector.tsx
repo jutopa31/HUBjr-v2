@@ -35,7 +35,7 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
         <div className="flex items-center space-x-3">
           <Building2 className="h-5 w-5 text-gray-500" />
           <div>
-            <h3 className="text-sm font-medium text-gray-900">Contexto de Hospital</h3>
+            <h3 className="text-sm font-medium text-[var(--text-primary)]">Contexto de Hospital</h3>
             <p className="text-xs text-gray-500">
               {hasPrivilege('full_admin')
                 ? 'Acceso de administrador completo'

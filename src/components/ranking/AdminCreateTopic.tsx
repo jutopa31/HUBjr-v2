@@ -3,14 +3,19 @@ import { createTopic, RankingPeriod } from '../../services/rankingService';
 
 const hospitalOptions = ['Posadas', 'Julian'];
 
-const AdminCreateTopic: React.FC = () => {
+type AdminCreateTopicProps = {
+  onCreated?: () => void;
+};
+
+const AdminCreateTopic: React.FC<AdminCreateTopicProps> = ({ onCreated }) => {
   const [title, setTitle] = useState('');
   const [period, setPeriod] = useState<RankingPeriod>('weekly');
   const [hospital, setHospital] = useState('Posadas');
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 16));
   const [endDate, setEndDate] = useState<string>(new Date(Date.now() + 6 * 24 * 3600 * 1000).toISOString().slice(0, 16));
   const [objectives, setObjectives] = useState('');
-  const [status, setStatus] = useState<'draft' | 'published'>('draft');
+  // Publicamos por defecto para que el tema aparezca de inmediato
+  const [status, setStatus] = useState<'draft' | 'published'>('published');
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +38,8 @@ const AdminCreateTopic: React.FC = () => {
         setMsg('Tema creado');
         setTitle('');
         setObjectives('');
+        // Notificar al padre para recargar los temas activos
+        onCreated?.();
       } else {
         setMsg('Error creando el tema');
       }
@@ -93,4 +100,3 @@ const AdminCreateTopic: React.FC = () => {
 };
 
 export default AdminCreateTopic;
-

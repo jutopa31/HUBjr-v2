@@ -330,12 +330,12 @@ export default function LumbarPunctureForm({
       case 1: // Pre-procedure Checklist
         return (
           <div className="space-y-6">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="medical-card card-warning rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <AlertTriangle className="h-5 w-5 text-blue-700 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 mt-0.5" style={{ color: 'var(--state-warning)' }} />
                 <div>
-                  <h4 className="text-sm font-medium text-gray-800">Lista de Verificación de Seguridad Pre-procedimiento</h4>
-                  <p className="text-sm text-gray-700 mt-1">
+                  <h4 className="text-sm font-medium text-[var(--text-primary)]">Lista de Verificación de Seguridad Pre-procedimiento</h4>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
                     Asegurar que todas las medidas de seguridad estén completas antes de proceder.
                   </p>
                 </div>
@@ -546,7 +546,7 @@ export default function LumbarPunctureForm({
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900">Procedure Outcome</h4>
+              <h4 className="text-base md:text-lg font-medium text-[var(--text-primary)]">Procedure Outcome</h4>
 
               <label className="flex items-center space-x-3">
                 <input
@@ -602,7 +602,7 @@ export default function LumbarPunctureForm({
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900">Opening Pressure</h4>
+              <h4 className="text-base md:text-lg font-medium text-[var(--text-primary)]">Opening Pressure</h4>
 
               <label className="flex items-center space-x-3">
                 <input
@@ -671,7 +671,7 @@ export default function LumbarPunctureForm({
           <div className="space-y-6">
             <div className="flex items-center space-x-2 mb-4">
               <Microscope className="h-5 w-5 text-blue-600" />
-              <h4 className="text-lg font-medium text-gray-900">Laboratory Results</h4>
+              <h4 className="text-base md:text-lg font-medium text-[var(--text-primary)]">Laboratory Results</h4>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -863,7 +863,7 @@ export default function LumbarPunctureForm({
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900 flex items-center">
+              <h4 className="text-base md:text-lg font-medium text-[var(--text-primary)] flex items-center">
                 <AlertTriangle className="h-5 w-5 text-blue-700 mr-2" />
                 Complications
               </h4>
@@ -951,7 +951,7 @@ export default function LumbarPunctureForm({
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-900">Follow-up</h4>
+              <h4 className="text-base md:text-lg font-medium text-[var(--text-primary)]">Follow-up</h4>
 
               <label className="flex items-center space-x-3">
                 <input
@@ -1106,11 +1106,11 @@ export default function LumbarPunctureForm({
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+            <h2 className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] flex items-center">
               <Stethoscope className="h-6 w-6 text-blue-600 mr-2" />
               {mode === 'create' ? 'Nueva Punción Lumbar' : 'Editar Punción Lumbar'}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
               Paso {currentStep + 1} de {steps.length}: {steps[currentStep]}
             </p>
           </div>
@@ -1150,7 +1150,7 @@ export default function LumbarPunctureForm({
         {renderStep()}
 
         {submitError && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mt-4 p-4 medical-card card-error rounded-lg">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-blue-700 mt-0.5" />
               <div>

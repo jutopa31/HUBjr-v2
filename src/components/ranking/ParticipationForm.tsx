@@ -17,6 +17,15 @@ const ParticipationForm: React.FC<Props> = ({ topics, onSubmit, currentUserId = 
 
   const hasAnyTopic = !!topics.weekly || !!topics.monthly;
 
+  // Si cambian los temas activos (por ejemplo, se crea uno nuevo),
+  // autoseleccionar alguno disponible para evitar quedar sin selección.
+  React.useEffect(() => {
+    if (!topicId) {
+      const next = topics.weekly?.id || topics.monthly?.id || '';
+      if (next) setTopicId(next);
+    }
+  }, [topics, topicId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topicId) return setMessage('Selecciona un tema');
@@ -88,4 +97,3 @@ const ParticipationForm: React.FC<Props> = ({ topics, onSubmit, currentUserId = 
 };
 
 export default ParticipationForm;
-

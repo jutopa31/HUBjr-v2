@@ -257,7 +257,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
 
       {/* Type Filters */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">Filtrar por tipo de actividad</h3>
+        <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">Filtrar por tipo de actividad</h3>
         <div className="flex flex-wrap gap-2">
           {Object.entries(classTypeConfig).map(([type, config]) => {
             const Icon = config.icon;
@@ -304,7 +304,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
       {/* Upcoming Classes */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Próximas Clases</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Próximas Clases</h3>
         </div>
         <div className="p-4">
           {upcomingClasses.length === 0 ? (
@@ -328,7 +328,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <h4 className="text-lg font-semibold text-gray-900">{classItem.title}</h4>
+                              <h4 className="text-lg font-semibold text-[var(--text-primary)]">{classItem.title}</h4>
                               {classItem._source === 'calendar' && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                   📅 Calendario
@@ -409,7 +409,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">
                   {editingClass ? 'Editar Clase' : 'Nueva Clase'}
                 </h3>
                 <button onClick={resetForm} className="text-gray-400 hover:text-gray-600">
@@ -530,7 +530,7 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
                     type="url"
                     value={newClass.materials_url}
                     onChange={(e) => setNewClass({...newClass, materials_url: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                     placeholder="https://drive.google.com/..."
                   />
                 </div>
@@ -574,3 +574,4 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
 };
 
 export default ClasesScheduler;
+

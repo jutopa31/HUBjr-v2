@@ -139,8 +139,8 @@ const EducationTracker: React.FC = () => {
               <Clock className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Horas Totales</p>
-              <p className="text-2xl font-semibold text-gray-900">{getTotalHours()}</p>
+              <p className="stat-label">Horas Totales</p>
+              <p className="stat-value">{getTotalHours()}</p>
             </div>
           </div>
         </div>
@@ -151,8 +151,8 @@ const EducationTracker: React.FC = () => {
               <BookOpen className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Actividades</p>
-              <p className="text-2xl font-semibold text-gray-900">{classes.length}</p>
+              <p className="stat-label">Actividades</p>
+              <p className="stat-value">{classes.length}</p>
             </div>
           </div>
         </div>
@@ -163,8 +163,8 @@ const EducationTracker: React.FC = () => {
               <Award className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Promedio</p>
-              <p className="text-2xl font-semibold text-gray-900">
+              <p className="stat-label">Promedio</p>
+              <p className="stat-value">
                 {getAverageScore() ? (getAverageScore() ?? 0).toFixed(1) : '-'}
               </p>
             </div>
@@ -173,7 +173,7 @@ const EducationTracker: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="medical-card card-error rounded-lg p-4">
           <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
@@ -181,7 +181,7 @@ const EducationTracker: React.FC = () => {
       {/* Add/Edit Form */}
       {showAddForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <h3 className="heading-md mb-4">
             {editingClass ? 'Editar Actividad' : 'Nueva Actividad Educativa'}
           </h3>
 
@@ -439,4 +439,3 @@ const EducationTracker: React.FC = () => {
 };
 
 export default EducationTracker;
-

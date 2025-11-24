@@ -142,7 +142,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
       <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-200 p-5">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Procesar PDF o Imagen</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Procesar PDF o Imagen</h2>
             <p className="text-sm text-gray-600">Disponible solo para administradores. Extrae texto para integrarlo en las notas.</p>
           </div>
           <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
@@ -174,7 +174,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
               <div className="flex items-center space-x-3">
                 <FileText className="h-5 w-5 text-blue-500" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{selectedFile.name}</p>
                   <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
                 {isProcessing && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
@@ -184,7 +184,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
           )}
 
           {error && (
-            <div className="flex items-start space-x-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-gray-800">
+            <div className="flex items-start space-x-2 rounded-lg medical-card card-error p-3 text-sm">
               <AlertTriangle className="mt-0.5 h-4 w-4" />
               <div>
                 <p className="font-medium">No se pudo procesar el archivo</p>
@@ -231,7 +231,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
                 className="h-52 w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm text-gray-800"
               />
               {result.warnings && (
-                <ul className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs text-gray-800">
+                <ul className="rounded-lg medical-card card-warning p-3 text-xs">
                   {result.warnings.map((warning, index) => (
                     <li key={index}>- {warning}</li>
                   ))}

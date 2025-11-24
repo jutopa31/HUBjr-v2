@@ -132,15 +132,12 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
     window.URL.revokeObjectURL(url);
   };
 
-  const getSuccessColor = (successful: boolean) => {
-  return successful ? 'text-[var(--state-success)]' : 'text-[var(--text-primary)]';
-  };
 
   const getDifficultyColor = (difficulty?: number) => {
-    if (!difficulty) return 'text-gray-500';
-  if (difficulty <= 2) return 'text-blue-700';
-  if (difficulty <= 3) return 'text-gray-800';
-  return 'text-gray-800';
+    if (!difficulty) return 'text-[var(--text-secondary)]';
+    if (difficulty <= 2) return 'text-[var(--state-info)] font-medium';
+    if (difficulty === 3) return 'text-[var(--state-warning)] font-medium';
+    return 'text-[var(--state-error)] font-medium';
   };
 
   const getComplicationCount = (procedure: LumbarPuncture) => {
@@ -161,8 +158,8 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
       <div className="medical-card p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold flex items-center">
-              <Stethoscope className="h-6 w-6 text-blue-700 mr-2" />
+            <h2 className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] flex items-center">
+              <Stethoscope className="h-6 w-6 mr-2" style={{ color: 'var(--state-info)' }} />
               Registros de Punciones Lumbares
             </h2>
             <p className="text-gray-600">Seguimiento y análisis de sus procedimientos de punción lumbar</p>
@@ -224,17 +221,17 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
           <div className="space-y-4 mb-6">
             {!searchParams.filters?.resident_id && (
               <div className="text-center">
-                <h3 className="text-lg font-medium  mb-2">Estadísticas del Departamento</h3>
+            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-2">Estadísticas del Departamento</h3>
                 <p className="text-sm text-gray-600">Vista general de todos los procedimientos del servicio</p>
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="medical-card rounded-lg p-4">
                 <div className="flex items-center">
-                  <Target className="h-8 w-8 text-blue-700" />
+                  <Target className="h-8 w-8" style={{ color: 'var(--state-info)' }} />
                   <div className="ml-3">
-                    <p className="text-sm font-medium ">Total de Procedimientos</p>
-                    <p className="text-2xl font-bold ">
+                    <p className="stat-label">Total de Procedimientos</p>
+                    <p className="stat-value">
                       {searchParams.filters?.resident_id
                         ? stats?.total_procedures || 0
                         : departmentStats?.total_procedures || 0
@@ -248,8 +245,8 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 <div className="flex items-center">
                 <CheckCircle className="h-8 w-8 text-blue-700" />
                   <div className="ml-3">
-                    <p className="text-sm font-medium ">Tasa de Éxito</p>
-                    <p className="text-2xl font-bold ">
+                    <p className="stat-label">Tasa de Éxito</p>
+                    <p className="stat-value">
                       {searchParams.filters?.resident_id
                         ? (stats?.success_rate ?? 0).toFixed(1)
                         : (departmentStats?.success_rate ?? 0).toFixed(1)
@@ -259,14 +256,14 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 </div>
               </div>
 
-              <div className="bg-yellow-50 rounded-lg p-4">
+              <div className="medical-card card-warning rounded-lg p-4">
                 <div className="flex items-center">
-                <Activity className="h-8 w-8 text-blue-700" />
+                <Activity className="h-8 w-8" style={{ color: 'var(--state-warning)' }} />
                   <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="stat-label text-[var(--text-primary)]">
                       {searchParams.filters?.resident_id ? 'Intentos Promedio' : 'Residentes Activos'}
                     </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="stat-value text-[var(--text-primary)]">
                       {searchParams.filters?.resident_id
                         ? (stats?.average_attempts ?? 0).toFixed(1)
                         : departmentStats?.total_residents || 0
@@ -276,14 +273,14 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 </div>
               </div>
 
-              <div className="bg-red-50 rounded-lg p-4">
+              <div className="medical-card card-error rounded-lg p-4">
                 <div className="flex items-center">
-                <AlertTriangle className="h-8 w-8 text-blue-700" />
+                <AlertTriangle className="h-8 w-8" style={{ color: 'var(--state-error)' }} />
                   <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="stat-label text-[var(--text-primary)]">
                       {searchParams.filters?.resident_id ? 'Complicaciones' : 'Promedio de Intentos'}
                     </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="stat-value text-[var(--text-primary)]">
                       {searchParams.filters?.resident_id
                         ? stats?.complications_count || 0
                         : (departmentStats?.average_attempts ?? 0).toFixed(1)
@@ -297,7 +294,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
             {/* Department-wide resident comparison */}
             {!searchParams.filters?.resident_id && residentComparison.length > 0 && (
               <div className="bg-white rounded-lg p-6 border border-gray-200">
-                <h4 className="text-md font-medium  mb-4">Comparación entre Residentes</h4>
+                <h4 className="heading-md mb-4">Comparación entre Residentes</h4>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
@@ -337,7 +334,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
         {/* Detailed Analytics */}
         {showStats && analytics && (
           <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium  mb-4">Análisis Detallado</h3>
+            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Análisis Detallado</h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Indication Breakdown */}
@@ -421,7 +418,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 placeholder="Buscar procedimientos..."
                 value={searchParams.search}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
               />
             </div>
           </div>
@@ -441,7 +438,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 const [sort_by, sort_order] = e.target.value.split('-');
                 handleSort(sort_by as 'procedure_date' | 'created_at' | 'success_rate' | 'technical_difficulty', sort_order as 'asc' | 'desc');
               }}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
             >
               <option value="procedure_date-desc">Fecha (Más reciente)</option>
               <option value="procedure_date-asc">Fecha (Más antigua)</option>
@@ -462,7 +459,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 <select
                   value={searchParams.filters?.resident_id || ''}
                   onChange={(e) => handleFilter({ resident_id: e.target.value || undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
                   disabled={filtersLoading}
                 >
                   <option value="">All Residents</option>
@@ -479,7 +476,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 <select
                   value={searchParams.filters?.supervisor || ''}
                   onChange={(e) => handleFilter({ supervisor: e.target.value || undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
                   disabled={filtersLoading}
                 >
                   <option value="">All Supervisors</option>
@@ -498,7 +495,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                   onChange={(e) => handleFilter({
                     successful: e.target.value ? e.target.value === 'true' : undefined
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
                 >
                   <option value="">All</option>
                   <option value="true">Successful</option>
@@ -514,7 +511,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                   type="date"
                   value={searchParams.filters?.date_from || ''}
                   onChange={(e) => handleFilter({ date_from: e.target.value || undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
                 />
               </div>
 
@@ -524,7 +521,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                   type="date"
                   value={searchParams.filters?.date_to || ''}
                   onChange={(e) => handleFilter({ date_to: e.target.value || undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
                 />
               </div>
 
@@ -533,7 +530,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                 <select
                   value={searchParams.filters?.trainee_role || ''}
                   onChange={(e) => handleFilter({ trainee_role: e.target.value || undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
                 >
                   <option value="">All Roles</option>
                   <option value="observer">Observer</option>
@@ -549,12 +546,12 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="medical-card card-error rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-5 w-5 text-blue-700 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 mt-0.5" style={{ color: 'var(--state-error)' }} />
             <div>
-              <h4 className="text-sm font-medium text-gray-800">Error</h4>
-              <p className="text-sm text-gray-700 mt-1">{error}</p>
+              <h4 className="text-sm font-medium text-[var(--text-primary)]">Error</h4>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">{error}</p>
             </div>
           </div>
         </div>
@@ -574,45 +571,45 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
         ) : procedures.length === 0 ? (
           <div className="text-center py-12">
             <Stethoscope className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium  mb-2">No procedures found</h3>
+            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-2">No procedures found</h3>
             <p className="text-gray-600">Start by recording your first lumbar puncture procedure.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-[var(--bg-tertiary)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Paciente
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Indicación
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Supervisor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Residente
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Rol
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Éxito
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                    Resultado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Intentos
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Complicaciones
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Dificultad
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs md:text-sm font-medium text-[var(--text-secondary)]">
                     Acciones
                   </th>
                 </tr>
@@ -620,34 +617,34 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
               <tbody className="bg-white divide-y divide-gray-200">
                 {procedures.map((procedure) => (
                   <tr key={procedure.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                         {new Date(procedure.procedure_date).toLocaleDateString()}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
                       <div>
                         <div className="font-medium">{procedure.patient_initials}</div>
                         {procedure.patient_age && (
-                          <div className="text-gray-500">{procedure.patient_age}y {procedure.patient_gender}</div>
+                          <div className="text-[var(--text-secondary)]">{procedure.patient_age}y {procedure.patient_gender}</div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
                       <div className="max-w-xs truncate">{procedure.indication}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-gray-400 mr-2" />
                         {procedure.supervisor}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-blue-400 mr-2" />
                         <div>
-                          <div className="font-medium text-blue-700">
+                          <div className="font-medium text-[var(--text-primary)]">
                             {procedure.resident_name || 'Desconocido'}
                           </div>
                           {procedure.resident_level && (
@@ -659,35 +656,51 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                     <td className="px-6 py-4 whitespace-nowrap text-sm ">
                       <span className="capitalize">{procedure.trainee_role?.replace('_', ' ')}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                      <span
+                        className={`badge ${procedure.successful ? 'badge-success' : 'badge-error'}`}
+                        aria-label={procedure.successful ? 'Procedimiento exitoso' : 'Procedimiento fallido'}
+                      >
                         {procedure.successful ? (
-                          <CheckCircle className="h-4 w-4 text-blue-700 mr-2" />
+                          <CheckCircle className="h-3.5 w-3.5 mr-1" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-blue-700 mr-2" />
+                          <XCircle className="h-3.5 w-3.5 mr-1" />
                         )}
-                        <span className={getSuccessColor(procedure.successful)}>
-                          {procedure.successful ? 'Exitoso' : 'Fallido'}
-                        </span>
-                      </div>
+                        {procedure.successful ? 'Exitoso' : 'Fallido'}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
                       {procedure.attempts_count}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm ">
-                      <div className="flex items-center">
-                        {getComplicationCount(procedure) > 0 ? (
-                          <AlertTriangle className="h-4 w-4 text-blue-700 mr-2" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4 text-blue-700 mr-2" />
-                        )}
-                        {getComplicationCount(procedure)}
-                      </div>
+                      {(() => {
+                        const count = getComplicationCount(procedure);
+                        const cls = count > 0 ? 'badge badge-error' : 'badge badge-success';
+                        return (
+                          <span className={cls} aria-label={`Complicaciones ${count}`}>
+                            {count > 0 ? (
+                              <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                            ) : (
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            )}
+                            {count}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={getDifficultyColor(procedure.technical_difficulty)}>
-                        {procedure.technical_difficulty ? `${procedure.technical_difficulty}/5` : 'N/A'}
-                      </span>
+                      {(() => {
+                        const lvl = procedure.technical_difficulty;
+                        const label = lvl == null ? 'N/A' : (lvl <= 2 ? 'Baja' : (lvl === 3 ? 'Media' : 'Alta'));
+                        const cls = lvl == null
+                          ? 'badge'
+                          : (lvl <= 2 ? 'badge badge-info' : (lvl === 3 ? 'badge badge-warning' : 'badge badge-error'));
+                        return (
+                          <span className={cls} aria-label={`Dificultad ${label}`}>
+                            {label}{lvl ? ` · ${lvl}/5` : ''}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2 items-center">
@@ -739,4 +752,6 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
     </div>
   );
 }
+
+
 

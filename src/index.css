@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  --bg-elevated: #f8fafc;
+  --bg-hover-subtle: #eef2f7;
+  --bg-input: #ffffff;
+  --bg-button-hover: #e5e7eb;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -48,6 +52,10 @@
 }
 
 .dark {
+  --bg-elevated: #1a1a1a;
+  --bg-hover-subtle: #222222;
+  --bg-input: #0f0f0f;
+  --bg-button-hover: #2a2a2a;
   /* ========================================
      DARK THEME - Variables semánticas
      ======================================== */
@@ -117,6 +125,66 @@ h1, h2 {
   color: var(--text-primary);
   letter-spacing: 0.2px;
 }
+/* Ensure consistent heading color across smaller levels */
+h3, h4 {
+  color: var(--text-primary);
+  letter-spacing: 0.1px;
+}
+
+/* Typography utilities for semantic tokens */
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-tertiary { color: var(--text-tertiary) !important; }
+
+/* Heading utilities to bridge size gaps between titles and body */
+.heading-lg {
+  color: var(--text-primary);
+  font-weight: 600; /* semibold */
+  font-size: 1.25rem; /* ~text-xl (20px) */
+  line-height: 1.75rem;
+}
+@media (min-width: 768px) {
+  .heading-lg { font-size: 1.5rem; line-height: 2rem; } /* ~text-2xl (24px) */
+}
+
+.heading-md {
+  color: var(--text-primary);
+  font-weight: 600; /* semibold */
+  font-size: 1rem;   /* ~text-base (16px) */
+  line-height: 1.5rem;
+}
+@media (min-width: 768px) {
+  .heading-md { font-size: 1.125rem; line-height: 1.75rem; } /* ~text-lg (18px) */
+}
+
+.heading-sm {
+  color: var(--text-primary);
+  font-weight: 600; /* semibold */
+  font-size: 0.875rem; /* ~text-sm (14px) */
+  line-height: 1.25rem;
+}
+@media (min-width: 768px) {
+  .heading-sm { font-size: 1rem; line-height: 1.5rem; } /* ~text-base (16px) */
+}
+
+/* Stat blocks: avoid abrupt size jumps between label and value */
+.stat-label {
+  font-size: 0.875rem; /* ~text-sm */
+  color: var(--text-secondary);
+  line-height: 1.25rem;
+}
+.stat-value {
+  font-weight: 700; /* bold */
+  font-size: 1.25rem; /* ~text-xl */
+  line-height: 1.75rem;
+  color: var(--text-primary);
+}
+@media (min-width: 768px) {
+  .stat-value {
+    font-size: 1.5rem; /* ~text-2xl en md+ */
+    line-height: 2rem;
+  }
+}
 
 /* Subtle accent underline for headings */
 h1 { border-bottom: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); padding-bottom: 0.35rem; }
@@ -159,7 +227,7 @@ h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent)
 /* Success action button (sober green) */
 .btn-success {
   background-color: var(--state-success);
-  color: var(--on-accent);
+  color: #111111;
   border: 1px solid color-mix(in srgb, var(--state-success) 65%, #000 35%);
 }
 .btn-success:hover {
@@ -174,6 +242,87 @@ h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent)
 }
 .btn-error:hover {
   background-color: color-mix(in srgb, var(--state-error) 15%, var(--bg-primary) 85%);
+}
+
+/* Cards de estado (tinte suave con alto contraste de borde) */
+.card-info {
+  background-color: color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%);
+  border: 1px solid color-mix(in srgb, var(--state-info) 30%, transparent);
+}
+.card-success {
+  background-color: color-mix(in srgb, var(--state-success) 10%, var(--bg-primary) 90%);
+  border: 1px solid color-mix(in srgb, var(--state-success) 30%, transparent);
+}
+.card-warning {
+  background-color: color-mix(in srgb, var(--state-warning) 10%, var(--bg-primary) 90%);
+  border: 1px solid color-mix(in srgb, var(--state-warning) 30%, transparent);
+}
+.card-error {
+  background-color: color-mix(in srgb, var(--state-error) 10%, var(--bg-primary) 90%);
+  border: 1px solid color-mix(in srgb, var(--state-error) 30%, transparent);
+}
+
+/* Badges - alto contraste y compatibilidad dark mode */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem; /* py-0.5 px-2 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 500; /* font-medium */
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+/* Severidad I (leve) -> éxito */
+.badge-severity-1 {
+  background-color: color-mix(in srgb, var(--state-success) 15%, var(--bg-primary) 85%);
+  color: var(--state-success);
+  border-color: color-mix(in srgb, var(--state-success) 30%, transparent);
+}
+
+/* Severidad II (moderada) -> advertencia */
+.badge-severity-2 {
+  background-color: color-mix(in srgb, var(--state-warning) 15%, var(--bg-primary) 85%);
+  color: var(--state-warning);
+  border-color: color-mix(in srgb, var(--state-warning) 30%, transparent);
+}
+
+/* Severidad III (alta) -> naranja dedicado */
+.badge-severity-3 {
+  background-color: color-mix(in srgb, #f97316 15%, var(--bg-primary) 85%);
+  color: #f97316; /* orange-500 */
+  border-color: color-mix(in srgb, #f97316 30%, transparent);
+}
+
+/* Severidad IV (crítica) -> error */
+.badge-severity-4 {
+  background-color: color-mix(in srgb, var(--state-error) 15%, var(--bg-primary) 85%);
+  color: var(--state-error);
+  border-color: color-mix(in srgb, var(--state-error) 30%, transparent);
+}
+
+/* Variantes genéricas de badge por estado */
+.badge-info {
+  background-color: color-mix(in srgb, var(--state-info) 15%, var(--bg-primary) 85%);
+  color: var(--state-info);
+  border-color: color-mix(in srgb, var(--state-info) 30%, transparent);
+}
+.badge-success {
+  background-color: color-mix(in srgb, var(--state-success) 15%, var(--bg-primary) 85%);
+  color: var(--state-success);
+  border-color: color-mix(in srgb, var(--state-success) 30%, transparent);
+}
+.badge-warning {
+  background-color: color-mix(in srgb, var(--state-warning) 15%, var(--bg-primary) 85%);
+  color: var(--state-warning);
+  border-color: color-mix(in srgb, var(--state-warning) 30%, transparent);
+}
+.badge-error {
+  background-color: color-mix(in srgb, var(--state-error) 15%, var(--bg-primary) 85%);
+  color: var(--state-error);
+  border-color: color-mix(in srgb, var(--state-error) 30%, transparent);
 }
 
 /* Estados disabled - SIN opacity para mantener contraste WCAG */
@@ -657,3 +806,10 @@ tr:hover {
     border-left: none;
   }
 }
+
+
+
+/* Dark override for orange badges */
+.dark body .bg-orange-100 { background-color: var(--bg-secondary) !important; color: var(--text-secondary) !important; border: 1px solid var(--border-primary) !important; }
+
+

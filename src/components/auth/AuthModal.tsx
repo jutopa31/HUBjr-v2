@@ -25,7 +25,7 @@ function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   return (
     <div className="modal-overlay z-[60]">
-      <div className="relative w-full max-w-md max-h-[90vh] my-8">
+      <div className="modal-content relative w-full max-w-md max-h-[90vh] my-8 p-0">
         {/* Close button */}
         <button
           onClick={onClose}

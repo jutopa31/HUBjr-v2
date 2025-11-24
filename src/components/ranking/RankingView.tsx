@@ -45,6 +45,23 @@ const RankingView: React.FC<RankingViewProps> = ({ isAdminMode = false }) => {
     return () => { mounted = false; };
   }, [period, user?.id, selectedLevel, selectedHospital]);
 
+  // Refresca banners y tabla al crear un tema nuevo desde el panel admin
+  const handleTopicCreated = async () => {
+    setLoading(true);
+    try {
+      const [t, lb, mine] = await Promise.all([
+        getActiveTopics(),
+        getLeaderboard(period, { level: selectedLevel, hospitalContext: selectedHospital }),
+        user?.id ? getMyEntry(period, user.id) : Promise.resolve(null)
+      ]);
+      setTopics(t);
+      setLeaderboard(lb);
+      setMyEntry(mine);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (p: Parameters<typeof submitParticipation>[0]) => {
     await submitParticipation(p);
   };
@@ -105,7 +122,7 @@ const RankingView: React.FC<RankingViewProps> = ({ isAdminMode = false }) => {
       {isAdminMode && (
         <>
           <AdminPanel onCreateTopic={() => {}} onValidateQueue={() => {}} />
-          <AdminCreateTopic />
+          <AdminCreateTopic onCreated={handleTopicCreated} />
           <AdminQueue />
         </>
       )}

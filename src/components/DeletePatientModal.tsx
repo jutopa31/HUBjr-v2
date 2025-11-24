@@ -32,22 +32,22 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full shadow-xl">
+    <div className="modal-overlay z-50 p-4">
+      <div className="modal-content max-w-md w-full">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-6 border-b border-[var(--border-secondary)] flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
               Eliminar Paciente
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[var(--text-secondary)]">
               {patient.nombre}
             </p>
           </div>
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
           >
             <X className="h-6 w-6" />
           </button>
@@ -58,43 +58,57 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
           {/* Action Options */}
           <div className="space-y-3">
             {/* Archive Option */}
-            <label className="flex items-center space-x-3 p-3 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+            <label className="flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-colors" style={{
+              borderColor: selectedAction === 'archive' 
+                ? 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+                : 'var(--border-secondary)',
+              backgroundColor: selectedAction === 'archive'
+                ? 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)'
+                : 'transparent'
+            }}>
               <input
                 type="radio"
                 name="deleteAction"
                 value="archive"
                 checked={selectedAction === 'archive'}
                 onChange={(e) => setSelectedAction(e.target.value as 'archive')}
-                className="text-blue-600 focus:ring-blue-500"
+                style={{ accentColor: 'var(--state-info)' }}
                 disabled={isProcessing}
               />
-              <Archive className="h-5 w-5 text-blue-600" />
-              <span className="font-medium text-blue-900">Guardar en "Pacientes ambulatorio"</span>
+              <Archive className="h-5 w-5" style={{ color: 'var(--state-info)' }} />
+              <span className="font-medium text-[var(--text-primary)]">Guardar en "Pacientes ambulatorio"</span>
             </label>
 
             {/* Delete Option */}
-            <label className="flex items-center space-x-3 p-3 border-2 border-red-200 rounded-lg cursor-pointer hover:bg-red-50 transition-colors">
+            <label className="flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-colors" style={{
+              borderColor: selectedAction === 'delete'
+                ? 'color-mix(in srgb, var(--state-error) 30%, transparent)'
+                : 'var(--border-secondary)',
+              backgroundColor: selectedAction === 'delete'
+                ? 'color-mix(in srgb, var(--state-error) 10%, var(--bg-primary) 90%)'
+                : 'transparent'
+            }}>
               <input
                 type="radio"
                 name="deleteAction"
                 value="delete"
                 checked={selectedAction === 'delete'}
                 onChange={(e) => setSelectedAction(e.target.value as 'delete')}
-                className="text-blue-700 focus:ring-blue-500"
+                style={{ accentColor: 'var(--state-error)' }}
                 disabled={isProcessing}
               />
-              <Trash2 className="h-5 w-5 text-blue-700" />
-              <span className="font-medium text-gray-900">Eliminar completamente</span>
+              <Trash2 className="h-5 w-5" style={{ color: 'var(--state-error)' }} />
+              <span className="font-medium text-[var(--text-primary)]">Eliminar completamente</span>
             </label>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+        <div className="p-6 border-t border-[var(--border-secondary)] flex justify-end space-x-3">
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-[var(--text-primary)] bg-[var(--bg-secondary)] rounded-lg hover:bg-[var(--bg-hover)] transition-colors"
           >
             Cancelar
           </button>
@@ -103,8 +117,8 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
             disabled={isProcessing}
             className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
               selectedAction === 'archive'
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-red-600 text-white hover:bg-red-700'
+                ? 'btn-accent'
+                : 'btn-error'
             }`}
           >
             {isProcessing ? (

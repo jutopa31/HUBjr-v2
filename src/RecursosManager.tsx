@@ -313,7 +313,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
               placeholder="Buscar recursos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
             />
           </div>
           <button
@@ -332,7 +332,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
               >
                 <option value="all">Todas las categorías</option>
                 {Object.entries(categoryConfig).map(([key, config]) => (
@@ -346,7 +346,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
               >
                 <option value="all">Todos los tipos</option>
                 {Object.entries(typeConfig).map(([key, config]) => (
@@ -360,7 +360,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
               <select
                 value={selectedDifficulty}
                 onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
               >
                 <option value="all">Todas las dificultades</option>
                 {Object.entries(difficultyConfig).map(([key, config]) => (
@@ -461,7 +461,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     type="text"
                     value={newResource.title}
                     onChange={(e) => setNewResource({...newResource, title: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                     required
                   />
                 </div>
@@ -473,7 +473,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                   <select
                     value={newResource.category}
                     onChange={(e) => setNewResource({...newResource, category: e.target.value as any})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   >
                     {Object.entries(categoryConfig).map(([key, config]) => (
                       <option key={key} value={key}>{config.label}</option>
@@ -488,7 +488,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                   <select
                     value={newResource.resource_type}
                     onChange={(e) => setNewResource({...newResource, resource_type: e.target.value as any})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   >
                     {Object.entries(typeConfig).map(([key, config]) => (
                       <option key={key} value={key}>{config.label}</option>
@@ -504,7 +504,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     type="url"
                     value={newResource.google_drive_url}
                     onChange={(e) => setNewResource({...newResource, google_drive_url: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                     placeholder="https://drive.google.com/..."
                     required
                   />
@@ -518,7 +518,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     value={newResource.description}
                     onChange={(e) => setNewResource({...newResource, description: e.target.value})}
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   />
                 </div>
 
@@ -530,7 +530,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     type="text"
                     value={tagInput}
                     onChange={(e) => handleTagInput(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                     placeholder="ejemplo: cefalea, migraña, neurología"
                   />
                 </div>
@@ -542,7 +542,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                   <select
                     value={newResource.difficulty_level}
                     onChange={(e) => setNewResource({...newResource, difficulty_level: e.target.value as any})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   >
                     {Object.entries(difficultyConfig).map(([key, config]) => (
                       <option key={key} value={key}>{config.label}</option>
@@ -558,7 +558,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     type="number"
                     value={newResource.estimated_time}
                     onChange={(e) => setNewResource({...newResource, estimated_time: parseInt(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   />
                 </div>
 
@@ -570,7 +570,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     type="text"
                     value={newResource.author}
                     onChange={(e) => setNewResource({...newResource, author: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   />
                 </div>
 
@@ -582,7 +582,7 @@ const RecursosManager: React.FC<RecursosManagerProps> = ({ isAdminMode = false, 
                     type="number"
                     value={newResource.publication_year}
                     onChange={(e) => setNewResource({...newResource, publication_year: parseInt(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)]"
                   />
                 </div>
 
@@ -781,3 +781,4 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
 };
 
 export default RecursosManager;
+

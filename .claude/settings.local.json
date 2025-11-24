@@ -39,7 +39,8 @@
       "WebFetch(domain:www.researchgate.net)",
       "Bash(find:*)",
       "Bash(timeout 2 2:*)",
-      "Bash(nul)"
+      "Bash(nul)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

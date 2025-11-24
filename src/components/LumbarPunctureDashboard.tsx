@@ -162,7 +162,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
       <div className="px-6 py-6 space-y-8">
         {/* Patient & Procedure Info */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Patient & Procedure Information</h3>
+          <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Patient & Procedure Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-500">Patient Initials</label>
@@ -199,7 +199,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
 
         {/* Clinical Information */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Clinical Information</h3>
+          <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Clinical Information</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-500">Indication</label>
@@ -222,7 +222,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
 
         {/* Procedure Technique & Outcomes */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Procedure Details</h3>
+          <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Procedure Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-500">Patient Position</label>
@@ -266,7 +266,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
         {/* Opening Pressure */}
         {procedure.opening_pressure_measured && (
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Opening Pressure</h3>
+            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Opening Pressure</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-500">Pressure Value</label>
@@ -286,7 +286,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
 
         {/* CSF Analysis */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">CSF Analysis</h3>
+          <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">CSF Analysis</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {procedure.csf_appearance && (
               <div>
@@ -329,7 +329,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
 
         {/* Complications */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Complications</h3>
+          <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Complications</h3>
           <div className="space-y-2">
             {[
               { condition: procedure.headache_post_lp, label: 'Post-LP headache' },
@@ -358,7 +358,7 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
         {/* Educational Reflection */}
         {(procedure.learning_objectives_met || procedure.supervisor_feedback || procedure.resident_reflection) && (
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Educational Notes</h3>
+            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Educational Notes</h3>
             <div className="space-y-4">
               {procedure.learning_objectives_met && (
                 <div>

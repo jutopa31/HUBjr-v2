@@ -76,10 +76,10 @@ const MyPatients: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-blue-100 text-blue-800';
-      case 'discharged': return 'bg-green-100 text-gray-800';
-      case 'transferred': return 'bg-yellow-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'badge badge-info';
+      case 'discharged': return 'badge badge-success';
+      case 'transferred': return 'badge badge-warning';
+      default: return 'badge';
     }
   };
 
@@ -137,7 +137,7 @@ const MyPatients: React.FC = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="medical-card card-error rounded-lg p-4">
           <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
@@ -172,7 +172,7 @@ const MyPatients: React.FC = () => {
       {/* Add/Edit Form */}
       {showAddForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <h3 className="heading-md mb-4">
             {editingPatient ? 'Editar Paciente' : 'Agregar Nuevo Paciente'}
           </h3>
 

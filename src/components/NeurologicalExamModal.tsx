@@ -199,7 +199,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
         <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
           <Brain className="h-8 w-8 text-blue-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Nuevo Examen Neurológico</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-2">Nuevo Examen Neurológico</h2>
         <p className="text-gray-600">Seleccione el tipo de examen que desea realizar</p>
       </div>
 
@@ -907,8 +907,8 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
         return (
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-4">Sección en Desarrollo</h3>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800">
+            <div className="medical-card card-warning rounded-lg p-4">
+              <p className="text-[var(--text-primary)]">
                 Esta sección ({currentSection}) está en desarrollo.
               </p>
               <button
@@ -920,7 +920,7 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
                     setCurrentSection('review');
                   }
                 }}
-                className="mt-4 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                className="mt-4 px-4 py-2 rounded btn-accent"
               >
                 Continuar a Siguiente Sección
               </button>
@@ -984,5 +984,3 @@ const NeurologicalExamModal: React.FC<NeurologicalExamModalProps> = ({
 };
 
 export default NeurologicalExamModal;
-
-

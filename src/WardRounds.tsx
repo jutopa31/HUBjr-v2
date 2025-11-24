@@ -1414,13 +1414,15 @@ const WardRounds: React.FC = () => {
                           </div>
                         </div>
                         <div className="col-span-1">
-                          <span className={`severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            patient.severidad === 'I' ? 'bg-green-100 text-gray-800' :
-                            patient.severidad === 'II' ? 'bg-yellow-100 text-gray-800' :
-                            patient.severidad === 'III' ? 'bg-orange-100 text-gray-800' :
-                            patient.severidad === 'IV' ? 'bg-red-100 text-gray-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {patient.severidad}
+                          <span
+                            className={`severity-indicator badge ${
+                              patient.severidad === 'I' ? 'badge-severity-1' :
+                              patient.severidad === 'II' ? 'badge-severity-2' :
+                              patient.severidad === 'III' ? 'badge-severity-3' :
+                              patient.severidad === 'IV' ? 'badge-severity-4' : ''
+                            }`}
+                          >
+                            {patient.severidad || '-'}
                           </span>
                         </div>
                         <div className="col-span-2">

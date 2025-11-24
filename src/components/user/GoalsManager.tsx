@@ -85,11 +85,11 @@ const GoalsManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'not_started': return 'bg-gray-100 text-gray-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-gray-800';
-      case 'deferred': return 'bg-yellow-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'not_started': return 'badge';
+      case 'in_progress': return 'badge badge-info';
+      case 'completed': return 'badge badge-success';
+      case 'deferred': return 'badge badge-warning';
+      default: return 'badge';
     }
   };
 
@@ -105,10 +105,10 @@ const GoalsManager: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-gray-800';
-      case 'medium': return 'bg-orange-100 text-gray-800';
-      case 'low': return 'bg-green-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'badge badge-error';
+      case 'medium': return 'badge badge-warning';
+      case 'low': return 'badge badge-success';
+      default: return 'badge';
     }
   };
 
@@ -181,8 +181,8 @@ const GoalsManager: React.FC = () => {
               <Target className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
+              <p className="stat-label">Total</p>
+              <p className="stat-value">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -193,8 +193,8 @@ const GoalsManager: React.FC = () => {
               <CheckCircle className="h-6 w-6 text-blue-700" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Completados</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.completed}</p>
+              <p className="stat-label">Completados</p>
+              <p className="stat-value">{stats.completed}</p>
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@ const GoalsManager: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="medical-card card-error rounded-lg p-4">
           <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
@@ -248,7 +248,7 @@ const GoalsManager: React.FC = () => {
       {/* Add/Edit Form */}
       {showAddForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <h3 className="heading-md mb-4">
             {editingGoal ? 'Editar Objetivo' : 'Nuevo Objetivo'}
           </h3>
 

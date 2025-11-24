@@ -267,7 +267,7 @@ const GoogleCalendarIntegration: React.FC<GoogleCalendarIntegrationProps> = ({
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-4 p-3 medical-card card-error rounded-lg">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-4 w-4 text-blue-700" />
             <span className="text-sm text-gray-800">{error}</span>

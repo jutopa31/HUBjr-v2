@@ -233,7 +233,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
     return (
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <div className="text-xs text-gray-600 mb-1">Izquierda</div>
+          <div className="text-xs text-[var(--text-secondary)] mb-1">Izquierda</div>
           <div className="flex items-center gap-3">
             <input
               inputMode="numeric"
@@ -259,7 +259,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                 }
               }}
               placeholder="0–4"
-              className="w-16 h-10 border border-gray-300 rounded px-2 text-center text-gray-900 bg-white"
+              className="w-16 h-10 border border-[var(--border-primary)] rounded px-2 text-center text-[var(--text-primary)] bg-[var(--bg-primary)]"
               ref={(el) => { if (el) inputsRef.current.push(el); }}
             />
             <div className="flex gap-2">
@@ -268,7 +268,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                   key={v}
                   type="button"
                   onClick={() => handleQuickSet(keyL, v)}
-                  className={`h-10 w-10 rounded border ${scores[keyL] === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-900 border-gray-300 hover:bg-blue-50'}`}
+                  className={`h-10 w-10 rounded border ${scores[keyL] === v ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
                   tabIndex={-1}
                 >
                   {v}
@@ -279,7 +279,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
         </div>
 
         <div>
-          <div className="text-xs text-gray-600 mb-1 text-right sm:text-left">Derecha</div>
+          <div className="text-xs text-[var(--text-secondary)] mb-1 text-right sm:text-left">Derecha</div>
           <div className="flex items-center gap-3 justify-start sm:justify-start">
             <input
               inputMode="numeric"
@@ -305,7 +305,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                 }
               }}
               placeholder="0–4"
-              className="w-16 h-10 border border-gray-300 rounded px-2 text-center text-gray-900 bg-white"
+              className="w-16 h-10 border border-[var(--border-primary)] rounded px-2 text-center text-[var(--text-primary)] bg-[var(--bg-primary)]"
               ref={(el) => { if (el) inputsRef.current.push(el); }}
             />
             <div className="flex gap-2">
@@ -314,7 +314,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                   key={v}
                   type="button"
                   onClick={() => handleQuickSet(keyR, v)}
-                  className={`h-10 w-10 rounded border ${scores[keyR] === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-900 border-gray-300 hover:bg-blue-50'}`}
+                  className={`h-10 w-10 rounded border ${scores[keyR] === v ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
                   tabIndex={-1}
                 >
                   {v}
@@ -332,22 +332,23 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
     const helpText = UPDRS3_INSTRUCTIONS['limb_rigidity'] || 'Rigidez: evaluar resistencia al movimiento pasivo en cuello y extremidades.';
 
     return (
-      <div key="rigidity_compact" className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+      <div key="rigidity_compact" className="border border-[var(--border-secondary)] rounded-lg p-4 bg-[var(--bg-secondary)]">
         <div className="flex items-start justify-between">
           <div>
-            <h4 className="font-medium text-gray-900" title={RIGIDITY_TOOLTIP}>{title}</h4>
+            <h4 className="font-medium text-[var(--text-primary)]" title={RIGIDITY_TOOLTIP}>{title}</h4>
             {mode === 'full' && (
-              <p className="text-sm text-gray-600 mt-1">Rigidez de cuello y extremidades (MSD, MSI, MID, MII)</p>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">Rigidez de cuello y extremidades (MSD, MSI, MID, MII)</p>
             )}
             {/* Ayuda corta visible y minimalista */}
-            <p className="text-xs text-gray-500 mt-1">0–4: 0 Ausente · 1 Leve/activación · 2 Leve–moderada · 3 Marcada · 4 Severa</p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-1">0–4: 0 Ausente · 1 Leve/activación · 2 Leve–moderada · 3 Marcada · 4 Severa</p>
           </div>
           <button
             type="button"
             aria-label="Ayuda de rigidez"
             title={RIGIDITY_TOOLTIP}
             onClick={() => toggleItemHelp('rigidity_compact')}
-            className="flex items-center text-blue-600 hover:text-blue-800"
+            className="flex items-center"
+            style={{ color: 'var(--state-info)' }}
             tabIndex={-1}
           >
             <HelpCircle className="h-5 w-5" />
@@ -355,15 +356,17 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
         </div>
 
         {(showItemHelp['rigidity_compact'] || mode === 'full') && (
-          <div className="mt-3 p-3 bg-white rounded border border-blue-200">
-            <p className="text-sm text-gray-700 whitespace-pre-line">{helpText}</p>
+          <div className="mt-3 p-3 bg-[var(--bg-primary)] rounded border" style={{
+            borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+          }}>
+            <p className="text-sm text-[var(--text-primary)] whitespace-pre-line">{helpText}</p>
           </div>
         )}
 
         <div className="mt-3 flex flex-wrap items-center gap-4">
           {RIGIDITY_KEYS.map(({ key, label }) => (
             <div key={key} className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 w-10">{label}</span>
+              <span className="text-xs text-[var(--text-secondary)] w-10">{label}</span>
               <input
                 inputMode="numeric"
                 pattern="[0-4]"
@@ -388,7 +391,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                   }
                 }}
                 placeholder="0–4"
-                className="w-12 h-9 border border-gray-300 rounded px-2 text-center text-gray-900 bg-white"
+                className="w-12 h-9 border border-[var(--border-primary)] rounded px-2 text-center text-[var(--text-primary)] bg-[var(--bg-primary)]"
                 ref={(el) => { if (el) inputsRef.current.push(el); }}
               />
             </div>
@@ -420,12 +423,12 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
     const isLateral = scale.id === 'updrs3' && LATERAL_ITEMS.has(item.id);
 
     return (
-      <div key={item.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+      <div key={item.id} className="border border-[var(--border-secondary)] rounded-lg p-4 bg-[var(--bg-secondary)]">
         <div className="flex items-start justify-between">
           <div>
-            <h4 className="font-medium text-gray-900">{displayTitle}</h4>
+            <h4 className="font-medium text-[var(--text-primary)]">{displayTitle}</h4>
             {mode === 'full' && (
-              <p className="text-sm text-gray-600 mt-1">{stripLeadingNumber(item.label)}</p>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">{stripLeadingNumber(item.label)}</p>
             )}
           </div>
           <button
@@ -433,7 +436,8 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
             aria-label="Mostrar instrucciones"
             title="Mostrar instrucciones"
             onClick={() => toggleItemHelp(item.id)}
-            className="flex items-center text-blue-600 hover:text-blue-800"
+            className="flex items-center"
+            style={{ color: 'var(--state-info)' }}
             tabIndex={-1}
           >
             <HelpCircle className="h-5 w-5" />
@@ -441,8 +445,10 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
         </div>
 
         {(showItemHelp[item.id] || mode === 'full') && (
-          <div className="mt-3 p-3 bg-white rounded border border-blue-200">
-            <p className="text-sm text-gray-700 whitespace-pre-line">{helpText}</p>
+          <div className="mt-3 p-3 bg-[var(--bg-primary)] rounded border" style={{
+            borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+          }}>
+            <p className="text-sm text-[var(--text-primary)] whitespace-pre-line">{helpText}</p>
           </div>
         )}
 
@@ -474,7 +480,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                 }
               }}
               placeholder="0–4"
-              className="w-16 h-10 border border-gray-300 rounded px-2 text-center text-gray-900 bg-white"
+              className="w-16 h-10 border border-[var(--border-primary)] rounded px-2 text-center text-[var(--text-primary)] bg-[var(--bg-primary)]"
               ref={(el) => { if (el) inputsRef.current.push(el); }}
             />
             <div className="flex gap-2">
@@ -483,7 +489,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
                   key={v}
                   type="button"
                   onClick={() => handleQuickSet(item.id, v)}
-                  className={`h-10 w-10 rounded border ${scores[item.id] === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-900 border-gray-300 hover:bg-blue-50'}`}
+                  className={`h-10 w-10 rounded border ${scores[item.id] === v ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
                   tabIndex={-1}
                 >
                   {v}
@@ -496,7 +502,7 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
               aria-label="Ver criterios 0–4"
               title="Ver criterios 0–4"
               onClick={() => toggleScoringHelp(item.id)}
-              className="ml-auto text-gray-600 hover:text-gray-900"
+              className="ml-auto text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               tabIndex={-1}
             >
               <HelpCircle className="h-5 w-5" />
@@ -505,8 +511,8 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
         )}
 
         {showScoringHelp[item.id] && (
-          <div className="mt-3 p-3 bg-white rounded border border-gray-200">
-            <div className="text-xs text-gray-700">
+          <div className="mt-3 p-3 bg-[var(--bg-primary)] rounded border border-[var(--border-secondary)]">
+            <div className="text-xs text-[var(--text-primary)]">
               {item.options && item.options.length > 0 ? (
                 <ul className="space-y-1">
                   {item.options.map((opt) => (
@@ -526,70 +532,70 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-white">
+    <div className="modal-overlay z-50 p-4">
+      <div className="modal-content max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-[var(--border-secondary)] flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{scale.name}</h3>
-            <p className="text-sm text-gray-600 mt-1">{scale.description}</p>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">{scale.name}</h3>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{scale.description}</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-gray-100 rounded p-1">
+            <div className="flex items-center bg-[var(--bg-tertiary)] rounded p-1">
               <button
                 type="button"
                 onClick={() => setMode('mini')}
-                className={`px-3 py-1 rounded text-sm ${mode === 'mini' ? 'bg-white text-gray-900' : 'text-gray-600'}`}
+                className={`px-3 py-1 rounded text-sm ${mode === 'mini' ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
               >
                 Mini
               </button>
               <button
                 type="button"
                 onClick={() => setMode('full')}
-                className={`px-3 py-1 rounded text-sm ${mode === 'full' ? 'bg-white text-gray-900' : 'text-gray-600'}`}
+                className={`px-3 py-1 rounded text-sm ${mode === 'full' ? 'bg-[var(--bg-primary)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
               >
                 Full
               </button>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+            <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]" aria-label="Cerrar">
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 bg-white space-y-4">
+        <div className="p-6 space-y-4">
           {scale.id === 'updrs3' && (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded">
+            <div className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded">
               <div className="flex flex-wrap items-center gap-3">
-                <label className="text-sm text-gray-700">Estado de medicación</label>
-                <div className="flex -space-x-px rounded overflow-hidden border border-gray-300">
+                <label className="text-sm text-[var(--text-primary)]">Estado de medicación</label>
+                <div className="flex -space-x-px rounded overflow-hidden border border-[var(--border-primary)]">
                   <button
                     type="button"
                     onClick={() => setMedOnOff('ON')}
-                    className={`px-3 py-1 text-sm ${medOnOff === 'ON' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900'}`}
+                    className={`px-3 py-1 text-sm ${medOnOff === 'ON' ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)]'}`}
                   >
                     ON
                   </button>
                   <button
                     type="button"
                     onClick={() => setMedOnOff('OFF')}
-                    className={`px-3 py-1 text-sm ${medOnOff === 'OFF' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900'}`}
+                    className={`px-3 py-1 text-sm ${medOnOff === 'OFF' ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)]'}`}
                   >
                     OFF
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-700">Horas desde la última toma de L‑dopa</label>
+                  <label className="text-sm text-[var(--text-primary)]">Horas desde la última toma de L‑dopa</label>
                   <input
                     type="number"
                     step="0.5"
                     min="0"
                     value={hoursSinceLdopa}
                     onChange={(e) => setHoursSinceLdopa(e.target.value)}
-                    className="h-9 w-28 px-2 border border-gray-300 rounded bg-white text-gray-900"
+                    className="h-9 w-28 px-2 border border-[var(--border-primary)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)]"
                   />
                   {parsedHoursSince !== null && (
-                    <span className="text-sm text-gray-600">- {parsedHoursSince} horas</span>
+                    <span className="text-sm text-[var(--text-secondary)]">- {parsedHoursSince} horas</span>
                   )}
                 </div>
               </div>
@@ -599,18 +605,24 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
           {scale.items?.map((item, index) => renderItem(item, index))}
 
           {currentTotal !== null && (
-            <div className="mt-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mt-2 p-4 rounded-lg border" style={{
+              backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)',
+              borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
+            }}>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-blue-900">Puntuación Total</span>
-                <span className="text-xl font-bold text-blue-900">{currentTotal}</span>
+                <span className="font-medium" style={{ color: 'var(--state-info)' }}>Puntuación Total</span>
+                <span className="text-xl font-bold" style={{ color: 'var(--state-info)' }}>{currentTotal}</span>
               </div>
             </div>
           )}
 
           {scale.id === 'updrs3' && (
-            <div className="mt-2 p-4 bg-indigo-600 rounded-lg border border-indigo-700">
-              <div className="text-sm font-medium text-white mb-2">Subtotales por dominios</div>
-              <ul className="text-sm text-white space-y-1">
+            <div className="mt-2 p-4 rounded-lg border" style={{
+              backgroundColor: 'var(--accent)',
+              borderColor: 'color-mix(in srgb, var(--accent) 65%, #000 35%)'
+            }}>
+              <div className="text-sm font-medium mb-2" style={{ color: 'var(--on-accent)' }}>Subtotales por dominios</div>
+              <ul className="text-sm space-y-1" style={{ color: 'var(--on-accent)' }}>
                 {Object.entries(domainSubtotals).map(([k, v]) => (
                   <li key={k} className="flex items-center justify-between">
                     <span>{k}</span>
@@ -625,14 +637,14 @@ const UpdrsModal: React.FC<UpdrsModalProps> = ({ scale, onClose, onSubmit }) => 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded bg-white text-gray-900 hover:bg-gray-50"
+              className="px-4 py-2 border border-[var(--border-primary)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={handleSubmit}
-              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+              className="btn-accent px-4 py-2 rounded"
             >
               Guardar resultados
             </button>

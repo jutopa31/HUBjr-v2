@@ -172,7 +172,7 @@ const SimpleCalendar: React.FC = () => {
                   type="text"
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 "
                   placeholder="Ej: Rounds Matutinos"
                 />
               </div>
@@ -335,3 +335,4 @@ const SimpleCalendar: React.FC = () => {
 };
 
 export default SimpleCalendar;
+

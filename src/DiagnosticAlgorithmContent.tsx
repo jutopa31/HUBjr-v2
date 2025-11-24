@@ -4,6 +4,7 @@ import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
 import SavePatientModal from './SavePatientModal';
+import HintsScaleModal, { HintsSavePayload } from './components/HintsScaleModal';
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
@@ -45,6 +46,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [showOcrModal, setShowOcrModal] = useState(false);
+  const [showHintsModal, setShowHintsModal] = useState(false);
   const [isMobileView, setIsMobileView] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 1024;
@@ -336,7 +338,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                     setSearchQuery(e.target.value);
                   }}
                   placeholder="Buscar escalas..."
-                  className="w-full rounded-lg border border-white/30 bg-white/20 py-2 pl-9 pr-10 text-sm text-white placeholder-blue-100 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white/70"
+                  className="w-full rounded-lg border border-white/30 bg-white/20 py-2 pl-9 pr-10 text-sm text-white placeholder-blue-100  focus:outline-none focus:ring-2 focus:ring-white/70"
                 />
                 {searchQuery && (
                   <button
@@ -508,6 +510,12 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                             <button
                               onClick={() => {
                                 console.log('🔍 Scale button clicked:', scale.id, scale.name);
+                                const idLower = (scale.id || '').toLowerCase();
+                                const nameLower = (scale.name || '').toLowerCase();
+                                if (idLower.includes('hints') || nameLower.includes('hints')) {
+                                  setShowHintsModal(true);
+                                  return;
+                                }
                                 openScaleModal(scale.id);
                               }}
                               className="w-full p-3 text-left transition-colors"
@@ -568,7 +576,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white dark:bg-[#171717] shadow-2xl border border-gray-200 dark:border-gray-800">
           <div className="border-b border-gray-200 dark:border-gray-800 p-4 lg:p-6">
             <div className="mb-4 flex flex-col items-center justify-between gap-3 text-center lg:flex-row lg:text-left">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notas del Paciente</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Notas del Paciente</h2>
               <button
                 type="button"
                 onClick={handleToggleScales}
@@ -594,6 +602,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 <Copy className="h-4 w-4" />
                 <span>Copiar</span>
               </button>
+              {/* HINTS/HINTS+ ahora se abre desde la lista de escalas cuando exista una escala HINTS */}
               {isAdminMode && (
                 <button
                   onClick={() => setShowOcrModal(true)}
@@ -658,7 +667,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                     <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] shadow-2xl">
                       <div className="sticky top-0 border-b border-gray-300 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/50 dark:to-cyan-950/50 px-4 py-3">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Antecedentes Frecuentes</h3>
+                          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Antecedentes Frecuentes</h3>
                           <button
                             onClick={() => setShowPathologyDropdown(false)}
                             className="rounded p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
@@ -742,6 +751,46 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
         />
       )}
 
+      {showHintsModal && (
+        <HintsScaleModal
+          isOpen={showHintsModal}
+          onClose={() => setShowHintsModal(false)}
+          onSave={(payload: HintsSavePayload) => {
+            const lines: string[] = [];
+            lines.push('Escala HINTS / HINTS+:');
+            lines.push(`- HIT horizontal: ${
+              payload.hit === 'abnormal' ? 'Anormal (sacada correctiva)' :
+              payload.hit === 'normal' ? 'Normal' :
+              'No realizado / no interpretable'
+            }`);
+            lines.push(`- Nistagmo: ${
+              payload.nystagmus === 'none_unidirectional' ? 'Ausente o unidireccional horizontal' :
+              payload.nystagmus === 'bidirectional_gaze' ? 'Bidireccional según mirada' :
+              payload.nystagmus === 'vertical_torsional' ? 'Vertical puro o torsional puro' :
+              'No evaluable / no interpretable'
+            }`);
+            lines.push(`- Test of Skew: ${
+              payload.skew === 'negative' ? 'Negativo' :
+              payload.skew === 'positive' ? 'Positivo' :
+              'No evaluable / no realizado'
+            }`);
+            lines.push(`- Audición (HINTS+): ${
+              payload.hearing === 'no_deficit' ? 'Sin nuevo déficit auditivo' :
+              payload.hearing === 'sudden_ssnhl_unilateral' ? 'Hipoacusia neurosensorial súbita unilateral' :
+              'No evaluable / no realizado'
+            }`);
+            if (payload.interpretation) {
+              lines.push(`- Interpretación: ${payload.interpretation.tituloInterpretacion}`);
+              lines.push(`  ${payload.interpretation.textoInterpretacion}`);
+            }
+            const block = lines.join('\n');
+            const prefix = notes.trim().length > 0 ? '\n\n' : '';
+            setNotes(notes + prefix + block);
+            setShowHintsModal(false);
+          }}
+        />
+      )}
+
       {!isScalesVisible && (
         <button
           type="button"
@@ -757,3 +806,4 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
+

@@ -117,6 +117,13 @@ const NeurologyResidencyHub = () => {
   // Medical scales definitions for evaluating neurological conditions
   const medicalScales = [
     {
+      id: 'hints',
+      name: 'HINTS / HINTS+ – síndrome vestibular agudo',
+      category: 'Evaluación Neurológica',
+      description: 'Head Impulse, Nystagmus, Test of Skew (+ audición). Usar solo en SVA; no reemplaza juicio clínico ni neuroimagen.',
+      items: []
+    },
+    {
       id: 'nihss',
       name: 'Escala NIHSS (National Institutes of Health Stroke Scale)',
       category: 'Evaluación Neurológica',

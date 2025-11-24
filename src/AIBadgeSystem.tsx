@@ -23,9 +23,9 @@ const AIBadgeSystem: React.FC<AIBadgeSystemProps> = ({
   }
 
   const getBadgeColor = (confidence: number) => {
-    if (confidence >= 0.7) return 'bg-red-500 text-white';
-    if (confidence >= 0.4) return 'bg-orange-500 text-white';
-    return 'bg-blue-500 text-white';
+    if (confidence >= 0.7) return 'badge badge-error';
+    if (confidence >= 0.4) return 'badge badge-warning';
+    return 'badge badge-info';
   };
 
   const getBadgeIcon = (confidence: number) => {

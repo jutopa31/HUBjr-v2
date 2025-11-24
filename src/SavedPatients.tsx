@@ -305,7 +305,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+        <div className="mb-4 p-4 medical-card card-error rounded-lg flex items-center space-x-2">
           <div className="w-2 h-2 bg-red-500 rounded-full"></div>
           <span className="text-gray-800 text-sm">{error}</span>
           <button
@@ -440,7 +440,7 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
                           <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
                               <div className="flex items-center space-x-2">
-                                <span className="severity-indicator inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-gray-800">
+                                <span className="severity-indicator badge badge-info">
                                   {getScaleSummary(patient)}
                                 </span>
                                 {isAdminMode && getHospitalBadge(patient.hospital_context)}
@@ -576,4 +576,3 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
 };
 
 export default SavedPatients;
-

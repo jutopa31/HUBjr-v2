@@ -107,25 +107,25 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#2a2a2a] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-800">
+    <div className="modal-overlay p-4">
+      <div className="modal-content w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+        <div className="p-6 border-b border-[var(--border-secondary)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white/10 rounded-lg">
+              <div className="p-2 rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-secondary)]">
                 <Brain className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">Configuración de IA</h2>
-                <p className="text-gray-400 text-sm">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]\">Configuración de IA</h2>
+                <p className="text-[var(--text-secondary)] text-sm\">
                   Gestiona la integración de inteligencia artificial
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]\"
             >
               <Settings className="h-5 w-5" />
             </button>
@@ -135,55 +135,55 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
         <div className="p-6 space-y-6">
           {/* Estado Actual */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-950/40 border border-blue-800 rounded-lg p-4">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-blue-400" />
-                <span className="font-medium text-blue-300">Estado IA</span>
+                <Activity className="h-5 w-5 text-[var(--text-secondary)]" />
+                <span className="font-medium text-[var(--text-primary)]">Estado IA</span>
               </div>
-              <p className="text-xl font-bold text-blue-300 mt-1">
+              <p className="text-xl font-semibold text-[var(--text-primary)] mt-1">
                 {config.enabled ? 'Activa' : 'Inactiva'}
               </p>
-              <p className="text-xs text-blue-400">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {enabledFeatures} funciones habilitadas
               </p>
             </div>
 
-            <div className="bg-green-950/40 border border-green-800 rounded-lg p-4">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-blue-300" />
-                <span className="font-medium text-blue-300">Uso Hoy</span>
+                <DollarSign className="h-5 w-5 text-[var(--text-primary)]" />
+                <span className="font-medium text-[var(--text-primary)]">Uso Hoy</span>
               </div>
-              <p className="text-xl font-bold text-blue-300 mt-1">
+              <p className="text-xl font-semibold text-[var(--text-primary)] mt-1">
                 ${config.usage.costToday.toFixed(3)}
               </p>
-              <p className="text-xs text-blue-400">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {config.usage.requestsToday} solicitudes
               </p>
             </div>
 
-            <div className="bg-purple-950/40 border border-purple-800 rounded-lg p-4">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-blue-300" />
-                <span className="font-medium text-blue-300">Proveedor</span>
+                <Brain className="h-5 w-5 text-[var(--text-primary)]" />
+                <span className="font-medium text-[var(--text-primary)]">Proveedor</span>
               </div>
-              <p className="text-base font-bold text-blue-300 mt-1">
+              <p className="text-base font-semibold text-[var(--text-primary)] mt-1">
                 {currentProvider?.name || 'No seleccionado'}
               </p>
-              <p className="text-xs text-blue-400">{config.model}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{config.model}</p>
             </div>
           </div>
 
           {/* Configuración General */}
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-gray-200 flex items-center space-x-2">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center space-x-2">
               <Settings className="h-5 w-5" />
               <span>Configuración General</span>
             </h3>
 
             {/* Enable/Disable IA */}
-            <div className="flex items-center justify-between p-4 bg-[#333333] rounded-lg border border-gray-700">
+            <div className="flex items-center justify-between p-4 bg-[var(--bg-primary)] rounded-lg border [var(--border-primary)]">
               <div>
-                <h4 className="font-medium text-gray-200">Habilitar IA</h4>
+                <h4 className="font-medium text-[var(--text-primary)]">Habilitar IA</h4>
                 <p className="text-sm text-gray-400">
                   Activar/desactivar todas las funciones de IA
                 </p>
@@ -195,7 +195,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                   onChange={(e) => setConfig(prev => ({ ...prev, enabled: e.target.checked }))}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--state-info)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--state-info)]"></div>
               </label>
             </div>
 
@@ -211,7 +211,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${
                       config.provider === provider.id
                         ? 'border-purple-600 ring-2 ring-purple-600 bg-purple-950/40'
-                        : 'border-gray-700 bg-[#333333] hover:bg-[#3a3a3a]'
+                        : '[var(--border-primary)] bg-[var(--bg-primary)] hover:bg-[#3a3a3a]'
                     }`}
                   >
                     <input
@@ -225,16 +225,16 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     <div className="flex w-full items-center justify-between">
                       <div className="flex items-center">
                         <div className="text-sm">
-                          <div className="font-medium text-gray-200">
+                          <div className="font-medium text-[var(--text-primary)]">
                             {provider.name}
                           </div>
-                          <div className="text-gray-400">
+                          <div className="text-[var(--text-secondary)]\">
                             {provider.description}
                           </div>
                         </div>
                       </div>
                       {config.provider === provider.id && (
-                        <Check className="h-5 w-5 text-blue-300" />
+                        <Check className="h-5 w-5 text-[var(--text-primary)]" />
                       )}
                     </div>
                   </label>
@@ -253,7 +253,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                     type={showApiKey ? 'text' : 'password'}
                     value={config.apiKey}
                     onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-20 bg-[#333333] text-gray-200"
+                    className="w-full px-3 py-2 border [var(--border-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-20 bg-[var(--bg-primary)] text-[var(--text-primary)]"
                     placeholder={`Ingrese su ${currentProvider.name} API Key`}
                   />
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
@@ -279,13 +279,13 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 {connectionStatus === 'success' && (
-                  <p className="text-sm text-blue-400 flex items-center space-x-1">
+                  <p className="text-sm text-[var(--text-secondary)] flex items-center space-x-1">
                     <Check className="h-4 w-4" />
                     <span>Conexión exitosa</span>
                   </p>
                 )}
                 {connectionStatus === 'error' && (
-                  <p className="text-sm text-blue-400 flex items-center space-x-1">
+                  <p className="text-sm text-[var(--text-secondary)] flex items-center space-x-1">
                     <AlertCircle className="h-4 w-4" />
                     <span>Error de conexión - Verifique la API Key</span>
                   </p>
@@ -302,7 +302,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                 <select
                   value={config.model}
                   onChange={(e) => setConfig(prev => ({ ...prev, model: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-[#333333] text-gray-200"
+                  className="w-full px-3 py-2 border [var(--border-primary)] rounded-lg focus:ring-2 focus:ring-[var(--state-info)] focus:border-[var(--state-info)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
                 >
                   {availableModels.map((model) => (
                     <option key={model.id} value={model.id}>
@@ -316,17 +316,17 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
 
           {/* Funciones */}
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-gray-200">
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">
               Funciones de IA
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {currentProvider?.supportedFeatures.map((feature) => (
                 <div
                   key={feature.id}
-                  className="flex items-center justify-between p-3 bg-[#333333] rounded-lg border border-gray-700"
+                  className="flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded-lg border [var(--border-primary)]"
                 >
                   <div>
-                    <h4 className="font-medium text-gray-200">{feature.name}</h4>
+                    <h4 className="font-medium text-[var(--text-primary)]">{feature.name}</h4>
                     <p className="text-sm text-gray-400">{feature.description}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -337,7 +337,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
                       disabled={!config.enabled}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                    <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--state-info)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--state-info)]"></div>
                   </label>
                 </div>
               ))}
@@ -345,10 +345,10 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Botones */}
-          <div className="flex justify-between pt-6 border-t border-gray-800">
+          <div className="flex justify-between pt-6 border-t [var(--border-secondary)]">
             <button
               onClick={handleReset}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-300 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border border-gray-700"
+              className="flex items-center space-x-2 px-4 py-2 text-gray-300 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border [var(--border-primary)]"
             >
               <RotateCcw className="h-4 w-4" />
               <span>Restablecer</span>
@@ -356,7 +356,7 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
             <div className="flex space-x-3">
               <button
                 onClick={onClose}
-                className="px-6 py-2 text-gray-200 bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border border-gray-700"
+                className="px-6 py-2 text-[var(--text-primary)] bg-[#3a3a3a] rounded-lg hover:bg-[#444444] transition-colors border [var(--border-primary)]"
               >
                 Cancelar
               </button>
@@ -381,3 +381,8 @@ const AIConfigPanel: React.FC<AIConfigPanelProps> = ({ isOpen, onClose }) => {
 };
 
 export default AIConfigPanel;
+
+
+
+
+

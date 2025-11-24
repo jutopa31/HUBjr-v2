@@ -35,7 +35,7 @@ function SimpleUserMenu() {
         <div className="w-full space-y-1.5">
           <button
             onClick={openLogin}
-            className="w-full flex items-center justify-center px-2 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            className="w-full flex items-center justify-center px-2 py-1.5 text-xs font-medium btn-accent rounded-md"
           >
             <User className="h-3 w-3 mr-1.5" />
             Iniciar
@@ -44,7 +44,12 @@ function SimpleUserMenu() {
           {isDevelopment && (
             <button
               onClick={clearCacheAndReload}
-              className="w-full flex items-center justify-center px-2 py-1 text-xs text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-700 rounded-md hover:bg-orange-100 dark:hover:bg-orange-950/50"
+              className="w-full flex items-center justify-center px-2 py-1 text-xs rounded-md border"
+              style={{
+                color: 'var(--state-warning)',
+                backgroundColor: 'color-mix(in srgb, var(--state-warning) 10%, var(--bg-primary) 90%)',
+                borderColor: 'color-mix(in srgb, var(--state-warning) 30%, transparent)'
+              }}
               title="Limpiar cache de autenticación (solo desarrollo)"
             >
               <Trash2 className="h-3 w-3 mr-1" />
@@ -81,7 +86,12 @@ function SimpleUserMenu() {
         {/* Sign Out Button */}
         <button
           onClick={signOut}
-          className="w-full px-2 py-1.5 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 rounded-md hover:bg-red-100 dark:hover:bg-red-950/50"
+          className="w-full px-2 py-1.5 text-xs rounded-md border"
+          style={{
+            color: 'var(--state-error)',
+            backgroundColor: 'color-mix(in srgb, var(--state-error) 10%, var(--bg-primary) 90%)',
+            borderColor: 'color-mix(in srgb, var(--state-error) 30%, transparent)'
+          }}
         >
           Cerrar
         </button>
@@ -90,7 +100,12 @@ function SimpleUserMenu() {
         {isDevelopment && (
           <button
             onClick={clearCacheAndReload}
-            className="w-full px-2 py-1 text-xs text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-700 rounded-md hover:bg-orange-100 dark:hover:bg-orange-950/50"
+            className="w-full px-2 py-1 text-xs rounded-md border"
+            style={{
+              color: 'var(--state-warning)',
+              backgroundColor: 'color-mix(in srgb, var(--state-warning) 10%, var(--bg-primary) 90%)',
+              borderColor: 'color-mix(in srgb, var(--state-warning) 30%, transparent)'
+            }}
             title="Limpiar cache de autenticación (solo desarrollo)"
           >
             <Trash2 className="h-3 w-3 mr-1 inline" />

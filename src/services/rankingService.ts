@@ -174,7 +174,8 @@ export async function createTopic(input: {
     const payload: any = {
       title: input.title,
       period: input.period,
-      status: input.status || 'draft',
+      // Publicado por defecto para que aparezca en el banner de temas activos
+      status: input.status || 'published',
       start_date: input.startDate,
       end_date: input.endDate,
       objectives: input.objectives || null,

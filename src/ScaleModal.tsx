@@ -47,12 +47,12 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
     console.error('❌ ScaleModal: No scale provided');
     return (
       <div className="modal-overlay">
-        <div className="bg-[var(--bg-primary)] rounded-lg p-6 max-w-sm w-full">
+        <div className="modal-content p-6 max-w-sm w-full">
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Error</h3>
           <p className="text-[var(--text-secondary)] mt-2">No se pudo cargar la escala seleccionada.</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
+            className="mt-4 px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-secondary)]"
           >
             Cerrar
           </button>
@@ -65,12 +65,12 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
     console.error('❌ ScaleModal: Scale has no items:', scale.name);
     return (
       <div className="modal-overlay">
-        <div className="bg-[var(--bg-primary)] rounded-lg p-6 max-w-sm w-full">
+        <div className="modal-content p-6 max-w-sm w-full">
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Advertencia</h3>
           <p className="text-[var(--text-secondary)] mt-2">La escala "{scale.name}" no tiene elementos configurados.</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
+            className="mt-4 px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-secondary)]"
           >
             Cerrar
           </button>
