@@ -341,7 +341,7 @@ export const COMMON_LP_INDICATIONS = [
   'Sospecha de meningitis',
   'Sospecha de encefalitis',
   'Sospecha de hemorragia subaracnoidea',
-  'Evaluación de esclerosis múltiple',
+  'Evaluación de enfermedad desmielinizante',
   'Pseudotumor cerebri',
   'Hidrocefalia normotensiva',
   'Meningitis carcinomatosa',
@@ -375,7 +375,7 @@ export const PCR_TEST_OPTIONS = [
   'Borrelia burgdorferi',
   'Anticuerpos receptor NMDA',
   'Panel encefalitis autoinmune',
-  'Bandas oligoclonales'
+  'AQP4'
 ] as const;
 
 // Antigen test options
