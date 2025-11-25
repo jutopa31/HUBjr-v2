@@ -61,14 +61,31 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       return;
     }
 
+    // Track previous width to detect only width changes (not height changes from virtual keyboard)
+    let previousWidth = window.innerWidth;
+
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
+      const currentWidth = window.innerWidth;
+
+      // Only handle resize if width actually changed (ignore height-only changes from keyboard)
+      if (currentWidth === previousWidth) {
+        return;
+      }
+
+      previousWidth = currentWidth;
+      const mobile = currentWidth < 1024;
       setIsMobileView(mobile);
-      setIsScalesVisible(() => {
-        if (mobile) {
+
+      // Only auto-collapse when switching to mobile view
+      // Don't collapse if already in mobile and user manually opened it
+      setIsScalesVisible((prev) => {
+        if (mobile && !prev) {
           return false;
         }
-        return userCollapsed ? false : true;
+        if (!mobile) {
+          return userCollapsed ? false : true;
+        }
+        return prev; // Preserve current state in mobile when width doesn't change
       });
     };
 
