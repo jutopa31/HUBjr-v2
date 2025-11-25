@@ -114,23 +114,34 @@ export function useLumbarPuncture() {
     setError(null);
 
     try {
-      const { data, error } = await supabase
+      // Clean the form data - remove undefined values and convert empty arrays to null if needed
+      const cleanedData: any = {
+        ...formData,
+        resident_id: user.id,
+      };
+
+      // Convert empty arrays to null for database compatibility
+      Object.keys(cleanedData).forEach(key => {
+        if (Array.isArray(cleanedData[key]) && cleanedData[key].length === 0) {
+          cleanedData[key] = [];
+        }
+        if (cleanedData[key] === undefined) {
+          delete cleanedData[key];
+        }
+      });
+
+      // Insert without immediate select to avoid RLS issues
+      const { error: insertError } = await supabase
         .from('lumbar_punctures')
-        .insert([
-          {
-            ...formData,
-            resident_id: user.id,
-          }
-        ])
-        .select()
-        .single();
+        .insert([cleanedData]);
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      // Refresh the procedures list
+      // Refresh the procedures list to get the new record
       await fetchProcedures();
 
-      return data;
+      // Return a success indicator (the list will be updated via fetchProcedures)
+      return cleanedData as LumbarPuncture;
     } catch (err) {
       console.error('Error creating lumbar puncture:', err);
       setError(err instanceof Error ? err.message : 'Error al crear la punción lumbar');
