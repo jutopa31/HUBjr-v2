@@ -40,32 +40,78 @@ export type ActiveTopics = {
   monthly?: Topic;
 };
 
+export type TopicStatistics = {
+  activeTopics: number;
+  pendingParticipations: number;
+  weeklyPointsAwarded: number;
+  monthlyPointsAwarded: number;
+  activeResidents: number;
+};
+
+export type ResidentOption = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  level?: string;
+  displayName: string;
+};
+
 export async function getActiveTopics(): Promise<ActiveTopics> {
   if (!isSupabaseConfigured()) return {};
   try {
+    // Obtener fecha de hoy (solo fecha, sin hora) en formato ISO
+    const today = new Date();
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().split('T')[0];
+
+    console.log('🔍 getActiveTopics - Buscando temas activos para fecha (solo día):', todayDateOnly);
+
+    // Obtener todos los temas publicados y filtrar por fecha en el cliente
     const { data, error } = await supabase
       .from('ranking_topics')
       .select('*')
       .in('period', ['weekly', 'monthly'])
-      .eq('status', 'published')
-      .lte('start_date', new Date().toISOString())
-      .gte('end_date', new Date().toISOString());
+      .eq('status', 'published');
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error en query getActiveTopics:', error);
+      throw error;
+    }
+
+    console.log('📊 Temas publicados encontrados:', data?.length || 0);
+
     const result: ActiveTopics = {};
+
     (data || []).forEach((row: any) => {
-      const topic: Topic = {
-        id: row.id,
-        title: row.title,
-        period: row.period,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        objectives: row.objectives || undefined,
-        materials: row.materials || undefined
-      };
-      if (row.period === 'weekly') result.weekly = topic;
-      if (row.period === 'monthly') result.monthly = topic;
+      // Extraer solo la fecha (sin hora) de start_date y end_date
+      const startDate = row.start_date.split('T')[0];
+      const endDate = row.end_date.split('T')[0];
+
+      console.log(`  - Evaluando: ${row.title} (${row.period})`);
+      console.log(`    Inicio: ${startDate} | Fin: ${endDate} | Hoy: ${todayDateOnly}`);
+      console.log(`    ¿Inicio <= Hoy? ${startDate <= todayDateOnly} | ¿Fin >= Hoy? ${endDate >= todayDateOnly}`);
+
+      // Comparar solo fechas (formato YYYY-MM-DD)
+      if (startDate <= todayDateOnly && endDate >= todayDateOnly) {
+        const topic: Topic = {
+          id: row.id,
+          title: row.title,
+          period: row.period,
+          startDate: row.start_date,
+          endDate: row.end_date,
+          objectives: row.objectives || undefined,
+          materials: row.materials || undefined
+        };
+
+        console.log(`    ✅ Tema ACTIVO agregado al resultado`);
+
+        if (row.period === 'weekly') result.weekly = topic;
+        if (row.period === 'monthly') result.monthly = topic;
+      } else {
+        console.log(`    ❌ Tema fuera de rango de fechas`);
+      }
     });
+
+    console.log('✅ Resultado final getActiveTopics:', result);
     return result;
   } catch (e) {
     console.warn('getActiveTopics error (topics missing or query failed):', e);
@@ -306,6 +352,203 @@ export async function rejectParticipation(participationId: string, reason?: stri
   } catch (e) {
     console.warn('rejectParticipation error:', e);
     return { success: false };
+  }
+}
+
+export async function getAllTopics(): Promise<{ published: Topic[], draft: Topic[], closed: Topic[] }> {
+  if (!isSupabaseConfigured()) return { published: [], draft: [], closed: [] };
+  try {
+    const { data, error } = await supabase
+      .from('ranking_topics')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    console.log('🗂️ getAllTopics - Total de temas en DB:', data?.length || 0);
+
+    const published: Topic[] = [];
+    const draft: Topic[] = [];
+    const closed: Topic[] = [];
+
+    (data || []).forEach((row: any) => {
+      console.log(`  📄 ${row.title} | status: ${row.status} | period: ${row.period} | inicio: ${row.start_date} | fin: ${row.end_date}`);
+
+      const topic: Topic = {
+        id: row.id,
+        title: row.title,
+        period: row.period,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        objectives: row.objectives || undefined,
+        materials: row.materials || undefined
+      };
+
+      if (row.status === 'published') published.push(topic);
+      else if (row.status === 'draft') draft.push(topic);
+      else if (row.status === 'closed') closed.push(topic);
+    });
+
+    console.log(`📊 Agrupados: published=${published.length}, draft=${draft.length}, closed=${closed.length}`);
+
+    return { published, draft, closed };
+  } catch (e) {
+    console.warn('getAllTopics error:', e);
+    return { published: [], draft: [], closed: [] };
+  }
+}
+
+export async function updateTopic(topicId: string, updates: Partial<{
+  title: string;
+  startDate: string;
+  endDate: string;
+  objectives: string;
+  materials: { label: string; url: string }[];
+  status: 'draft' | 'published' | 'closed';
+}>): Promise<{ success: boolean }> {
+  if (!isSupabaseConfigured()) return { success: true };
+  try {
+    const payload: any = {};
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.startDate !== undefined) payload.start_date = updates.startDate;
+    if (updates.endDate !== undefined) payload.end_date = updates.endDate;
+    if (updates.objectives !== undefined) payload.objectives = updates.objectives || null;
+    if (updates.materials !== undefined) payload.materials = updates.materials || null;
+    if (updates.status !== undefined) payload.status = updates.status;
+
+    const { error } = await supabase
+      .from('ranking_topics')
+      .update(payload)
+      .eq('id', topicId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (e) {
+    console.warn('updateTopic error:', e);
+    return { success: false };
+  }
+}
+
+export async function deleteTopic(topicId: string): Promise<{ success: boolean }> {
+  if (!isSupabaseConfigured()) return { success: true };
+  try {
+    const { error } = await supabase
+      .from('ranking_topics')
+      .delete()
+      .eq('id', topicId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (e) {
+    console.warn('deleteTopic error:', e);
+    return { success: false };
+  }
+}
+
+export async function getTopicStatistics(): Promise<TopicStatistics> {
+  if (!isSupabaseConfigured()) {
+    return {
+      activeTopics: 0,
+      pendingParticipations: 0,
+      weeklyPointsAwarded: 0,
+      monthlyPointsAwarded: 0,
+      activeResidents: 0
+    };
+  }
+
+  try {
+    const now = new Date();
+    const nowISO = now.toISOString();
+
+    // Count active topics (published and current date in range)
+    const activeTopicsPromise = supabase
+      .from('ranking_topics')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published')
+      .lte('start_date', nowISO)
+      .gte('end_date', nowISO);
+
+    // Count pending participations
+    const pendingParticipationsPromise = supabase
+      .from('ranking_participations')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'submitted');
+
+    // Sum weekly points (ISO week)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weeklyPointsPromise = supabase
+      .from('ranking_ledger')
+      .select('points')
+      .gte('created_at', startOfWeek.toISOString());
+
+    // Sum monthly points
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const monthlyPointsPromise = supabase
+      .from('ranking_ledger')
+      .select('points')
+      .gte('created_at', startOfMonth.toISOString());
+
+    // Count unique residents this week
+    const activeResidentsPromise = supabase
+      .from('ranking_ledger')
+      .select('user_id')
+      .gte('created_at', startOfWeek.toISOString());
+
+    const [activeTopicsRes, pendingParticipationsRes, weeklyPointsRes, monthlyPointsRes, activeResidentsRes] = await Promise.all([
+      activeTopicsPromise,
+      pendingParticipationsPromise,
+      weeklyPointsPromise,
+      monthlyPointsPromise,
+      activeResidentsPromise
+    ]);
+
+    const weeklyPoints = (weeklyPointsRes.data || []).reduce((sum: number, row: any) => sum + (row.points || 0), 0);
+    const monthlyPoints = (monthlyPointsRes.data || []).reduce((sum: number, row: any) => sum + (row.points || 0), 0);
+    const uniqueResidents = new Set((activeResidentsRes.data || []).map((row: any) => row.user_id)).size;
+
+    return {
+      activeTopics: activeTopicsRes.count || 0,
+      pendingParticipations: pendingParticipationsRes.count || 0,
+      weeklyPointsAwarded: weeklyPoints,
+      monthlyPointsAwarded: monthlyPoints,
+      activeResidents: uniqueResidents
+    };
+  } catch (e) {
+    console.warn('getTopicStatistics error:', e);
+    return {
+      activeTopics: 0,
+      pendingParticipations: 0,
+      weeklyPointsAwarded: 0,
+      monthlyPointsAwarded: 0,
+      activeResidents: 0
+    };
+  }
+}
+
+export async function getAllResidents(): Promise<ResidentOption[]> {
+  if (!isSupabaseConfigured()) return [];
+  try {
+    const { data, error } = await supabase
+      .from('resident_profiles')
+      .select('user_id, first_name, last_name, training_level')
+      .order('last_name', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      userId: row.user_id,
+      firstName: row.first_name || '',
+      lastName: row.last_name || '',
+      level: row.training_level || undefined,
+      displayName: `${row.first_name || ''} ${row.last_name || ''}`.trim() || 'Sin nombre'
+    }));
+  } catch (e) {
+    console.warn('getAllResidents error:', e);
+    return [];
   }
 }
 

@@ -121,7 +121,7 @@ const RankingView: React.FC<RankingViewProps> = ({ isAdminMode = false }) => {
       {/* Panel del Jefe (solo admin) */}
       {isAdminMode && (
         <>
-          <AdminPanel onCreateTopic={() => {}} onValidateQueue={() => {}} />
+          <AdminPanel onTopicsChanged={handleTopicCreated} />
           <AdminCreateTopic onCreated={handleTopicCreated} />
           <AdminQueue />
         </>

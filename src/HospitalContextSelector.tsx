@@ -30,20 +30,11 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
   const currentOption = getHospitalContextOption(currentContext);
 
   return (
-    <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+    <div className="mb-4 bg-white rounded-lg border border-gray-200 shadow-sm p-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Building2 className="h-5 w-5 text-gray-500" />
-          <div>
-            <h3 className="text-sm font-medium text-[var(--text-primary)]">Contexto de Hospital</h3>
-            <p className="text-xs text-gray-500">
-              {hasPrivilege('full_admin')
-                ? 'Acceso de administrador completo'
-                : hasHospitalContextAccess
-                ? 'Acceso autorizado a contextos hospitalarios'
-                : 'Solo disponible en modo administrador'}
-            </p>
-          </div>
+        <div className="flex items-center space-x-2">
+          <Building2 className="h-4 w-4 text-gray-500" />
+          <h3 className="text-sm font-medium text-[var(--text-primary)]">Contexto de Hospital</h3>
         </div>
 
         <div className="relative">
@@ -63,18 +54,6 @@ const HospitalContextSelector: React.FC<HospitalContextSelectorProps> = ({
             ))}
           </select>
           <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Descripcion del contexto actual */}
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <p className="text-xs text-gray-600">
-          <span className="font-medium">Contexto actual:</span> {currentOption?.description}
-        </p>
-        <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-          <span> Solo visible en modo administrador</span>
-          <span> Los datos se filtran automaticamente</span>
-          <span> Por defecto: Hospital Posadas</span>
         </div>
       </div>
     </div>

@@ -26,7 +26,6 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hospitalContext, setHospitalContext] = useState<HospitalContext>(currentHospitalContext);
   const [showOnlyMyPatients, setShowOnlyMyPatients] = useState(false);
-  const [privilegeInfo, setPrivilegeInfo] = useState<any>(null);
 
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -101,13 +100,11 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
       if (result.success && result.data) {
         setPatients(result.data);
         setFilteredPatients(result.data);
-        setPrivilegeInfo(result.privilegeInfo);
 
         console.log(`📊 Loaded ${result.data.length} patients for context: ${contextToUse}`, {
           userEmail: user.email,
           hasPrivileges: userHasPrivileges,
-          context: contextToUse,
-          privilegeInfo: result.privilegeInfo
+          context: contextToUse
         });
       } else {
         setError(result.error || 'Error al cargar pacientes');
@@ -259,17 +256,6 @@ const SavedPatients: React.FC<SavedPatientsProps> = ({
         </div>
       </div>
 
-      {/* Privilege Information */}
-      {privilegeInfo && user && (hasHospitalContextAccess || hasPrivilege('full_admin')) && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center space-x-2 text-sm text-blue-800">
-            <Building2 className="h-4 w-4" />
-            <span className="font-medium">Acceso Privilegiado:</span>
-            <span>Contextos disponibles: {privilegeInfo.allowedContexts?.join(', ')}</span>
-            <span>• Contexto actual: {privilegeInfo.currentContext}</span>
-          </div>
-        </div>
-      )}
 
       {/* Search Bar and Filters */}
       <div className="mb-6 space-y-4">
