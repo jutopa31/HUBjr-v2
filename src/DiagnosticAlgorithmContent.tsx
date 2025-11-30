@@ -422,7 +422,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                               }
                               openScaleModal(scale.id);
                             }}
-                            className={lex w-full items-start justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#161616] }
+                            className={`flex w-full items-start justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#161616] ${clickedScale === scale.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                           >
                             <div className="flex-1">
                               <p className="text-sm font-medium text-[var(--text-primary)]">{scale.name}</p>
@@ -688,7 +688,6 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
-
 
 
 
