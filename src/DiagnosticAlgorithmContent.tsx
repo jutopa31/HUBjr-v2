@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Calculator, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Upload, LayoutList } from 'lucide-react';
+﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Upload, LayoutList } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -8,6 +8,9 @@ import HintsScaleModal, { HintsSavePayload } from './components/HintsScaleModal'
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
+
+const AI_SUGGESTIONS_GROUP = 'Sugerencias IA';
+const SEARCH_RESULTS_GROUP = 'Resultados de busqueda';
 
 interface DiagnosticAlgorithmContentProps {
   notes: string;
@@ -33,9 +36,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   currentHospitalContext = 'Posadas'
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
-    'Evaluación Neurológica': true,
+    'EvaluaciA3n NeurolA3gica': true,
     'Parkinson': false,
-    '🤖 Sugerencias IA': true // Siempre expandido
+    [AI_SUGGESTIONS_GROUP]: true // Siempre expandido
   });
 
   // Estado para el modal de guardar paciente
@@ -54,7 +57,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [isScalesVisible, setIsScalesVisible] = useState(false);
   const [userCollapsed, setUserCollapsed] = useState(true);
 
-  // Estado y ref para el dropdown de patologías rápidas
+  // Estado y ref para el dropdown de patologÃ­as rÃ¡pidas
   const [showPathologyDropdown, setShowPathologyDropdown] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -82,35 +85,35 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     };
   }, [userCollapsed]);
 
-  // Análisis de IA del texto de notas
+  // AnÃ¡lisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
   
-  // Debug: log del análisis
-  console.log('🔍 DiagnosticAlgorithm - Current notes:', notes);
-  console.log('🤖 DiagnosticAlgorithm - AI Analysis:', aiAnalysis);
-  console.log('🔍 DiagnosticAlgorithm - medicalScales received:', medicalScales?.length || 0);
-  console.log('🔍 DiagnosticAlgorithm - medicalScales data:', medicalScales?.map(s => ({ id: s.id, name: s.name, hasItems: !!s.items?.length })));
+  // Debug: log del anÃ¡lisis
+  console.log('ðŸ” DiagnosticAlgorithm - Current notes:', notes);
+  console.log('ðŸ¤– DiagnosticAlgorithm - AI Analysis:', aiAnalysis);
+  console.log('ðŸ” DiagnosticAlgorithm - medicalScales received:', medicalScales?.length || 0);
+  console.log('ðŸ” DiagnosticAlgorithm - medicalScales data:', medicalScales?.map(s => ({ id: s.id, name: s.name, hasItems: !!s.items?.length })));
 
-  // Array de patologías frecuentes
+  // Array de patologÃ­as frecuentes
   const commonPathologies = [
-    { label: 'Hipertensión arterial', abbreviation: 'HTA' },
+    { label: 'HipertensiÃ³n arterial', abbreviation: 'HTA' },
     { label: 'Diabetes mellitus', abbreviation: 'DBT' },
     { label: 'Tabaquismo', abbreviation: 'TBQ' },
     { label: 'Dislipemia', abbreviation: 'DLP' },
     { label: 'Obesidad', abbreviation: 'Obesidad' },
-    { label: 'Enfermedad pulmonar obstructiva crónica', abbreviation: 'EPOC' },
-    { label: 'Cardiopatía', abbreviation: 'Cardiopatía' },
-    { label: 'Fibrilación auricular', abbreviation: 'FA' },
-    { label: 'Enfermedad renal crónica', abbreviation: 'ERC' },
+    { label: 'Enfermedad pulmonar obstructiva crÃ³nica', abbreviation: 'EPOC' },
+    { label: 'CardiopatÃ­a', abbreviation: 'CardiopatÃ­a' },
+    { label: 'FibrilaciÃ³n auricular', abbreviation: 'FA' },
+    { label: 'Enfermedad renal crÃ³nica', abbreviation: 'ERC' },
     { label: 'Hipotiroidismo', abbreviation: 'Hipotiroidismo' },
     { label: 'ACV previo', abbreviation: 'ACV previo' },
     { label: 'Epilepsia', abbreviation: 'Epilepsia' },
-    { label: 'Migraña', abbreviation: 'Migraña' },
+    { label: 'MigraÃ±a', abbreviation: 'MigraÃ±a' },
     { label: 'Demencia', abbreviation: 'Demencia' },
     { label: 'Enfermedad de Parkinson', abbreviation: 'Enf. Parkinson' }
   ];
 
-  // Función para insertar texto en la posición del cursor
+  // FunciÃ³n para insertar texto en la posiciÃ³n del cursor
   const insertAtCursor = useCallback((text: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -121,7 +124,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
     setNotes(newText);
 
-    // Restaurar foco y posición del cursor después del texto insertado
+    // Restaurar foco y posiciÃ³n del cursor despuÃ©s del texto insertado
     setTimeout(() => {
       textarea.focus();
       const newPosition = start + text.length + 1; // +1 por el espacio
@@ -160,15 +163,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }));
   };
 
-  // Función para manejar el guardado de paciente
+  // FunciÃ³n para manejar el guardado de paciente
   const handleSavePatient = () => {
-    console.log('[DiagnosticAlgorithm] 🏥 Abriendo modal con contexto:', currentHospitalContext);
+    console.log('[DiagnosticAlgorithm] ðŸ¥ Abriendo modal con contexto:', currentHospitalContext);
     const extractedData = extractPatientData(notes);
 
     if (!validatePatientData(extractedData) && notes.trim().length === 0) {
       setSaveStatus({
         success: false,
-        message: 'No hay datos suficientes para guardar. Agregue información del paciente o complete alguna escala.'
+        message: 'No hay datos suficientes para guardar. Agregue informaciÃ³n del paciente o complete alguna escala.'
       });
       return;
     }
@@ -177,11 +180,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     setSaveStatus(null);
   };
 
-  // Función para confirmar el guardado
+  // FunciÃ³n para confirmar el guardado
   const handleConfirmSave = async (patientData: SavePatientData) => {
     try {
       console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
-      console.log('[DiagnosticAlgorithm] 🏥 Guardando con contexto:', patientData.hospital_context);
+      console.log('[DiagnosticAlgorithm] ðŸ¥ Guardando con contexto:', patientData.hospital_context);
       const result = await savePatientAssessment(patientData);
 
       if (result.success) {
@@ -192,7 +195,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         });
         setShowSaveModal(false);
         
-        // Limpiar mensaje después de 5 segundos
+        // Limpiar mensaje despuÃ©s de 5 segundos
         setTimeout(() => setSaveStatus(null), 5000);
       } else {
         throw new Error(result.error || 'Error desconocido');
@@ -207,7 +210,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }
   };
 
-  // Función para filtrar escalas por búsqueda
+  // FunciÃ³n para filtrar escalas por bÃºsqueda
   const filterScalesBySearch = (scales: Scale[]) => {
     if (!searchQuery.trim()) return scales;
     
@@ -219,7 +222,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     );
   };
 
-  // Función para obtener escalas sugeridas por IA
+  // FunciÃ³n para obtener escalas sugeridas por IA
   const getSuggestedScales = () => {
     const suggested = aiAnalysis.suggestions.map(suggestion => 
       medicalScales.find(scale => scale.id === suggestion.scaleId)
@@ -228,35 +231,35 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     return filterScalesBySearch(suggested);
   };
 
-  // Función para obtener escalas no sugeridas
+  // FunciÃ³n para obtener escalas no sugeridas
   const getNonSuggestedScales = () => {
     const suggestedIds = aiAnalysis.suggestions.map(s => s.scaleId);
     const nonSuggested = medicalScales.filter(scale => !suggestedIds.includes(scale.id));
     return filterScalesBySearch(nonSuggested);
   };
 
-  // Crear agrupación dinámica: primero sugerencias, luego por categoría
+  // Crear agrupaciÃ³n dinÃ¡mica: primero sugerencias, luego por categorÃ­a
   const createDynamicGroups = () => {
     const suggestedScales = getSuggestedScales();
     const nonSuggestedScales = getNonSuggestedScales();
     
     const groups: { [key: string]: Scale[] } = {};
     
-    // Si estamos en modo de búsqueda, crear un grupo especial con todos los resultados
+    // Si estamos en modo de bÃºsqueda, crear un grupo especial con todos los resultados
     if (searchQuery.trim()) {
       const allFilteredScales = [...suggestedScales, ...nonSuggestedScales];
       if (allFilteredScales.length > 0) {
-        groups['🔍 Resultados de Búsqueda'] = allFilteredScales;
+        groups[SEARCH_RESULTS_GROUP] = allFilteredScales;
       }
       return groups;
     }
     
     // Si hay sugerencias, crear grupo especial
     if (suggestedScales.length > 0) {
-      groups['🤖 Sugerencias IA'] = suggestedScales;
+      groups[AI_SUGGESTIONS_GROUP] = suggestedScales;
     }
     
-    // Agrupar escalas restantes por categoría
+    // Agrupar escalas restantes por categorÃ­a
     nonSuggestedScales.forEach(scale => {
       const category = scale.category;
       if (!groups[category]) {
@@ -277,7 +280,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--text-tertiary)]">Evolucionador</p>
-            <h2 className="text-base font-semibold text-[var(--text-primary)]">Notas y escalas neurológicas</h2>
+            <h2 className="text-base font-semibold text-[var(--text-primary)]">Notas y escalas neurolÃ³gicas</h2>
           </div>
           <button
             type="button"
@@ -341,7 +344,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                     type="button"
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--text-tertiary)] hover:bg-gray-100 dark:hover:bg-[#1c1c1c]"
-                    aria-label="Limpiar bA�squeda"
+                    aria-label="Limpiar busqueda"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -351,9 +354,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                 <p className="mt-2 text-xs text-[var(--text-secondary)]">IA sugiere {aiAnalysis.suggestions.length} escala(s)</p>
               )}
             </div>
-          </div>          <div className="flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4 dark:bg-[#0a0a0a]">
+          </div>
+          <div className="flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4 dark:bg-[#0a0a0a]">
             <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
-              <span className="font-medium">Accesos rA�pidos:</span>
+              <span className="font-medium">Accesos rapidos:</span>
               <button
                 type="button"
                 onClick={() => openScaleModal('updrs3')}
@@ -365,8 +369,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             </div>
 
             {Object.entries(groupedScales).map(([category, scales]) => {
-              const isAISuggestions = category === 'dY?- Sugerencias IA';
-              const isSearchResults = category === 'dY�? Resultados de BA�squeda';
+              const isAISuggestions = category === AI_SUGGESTIONS_GROUP;
+              const isSearchResults = category === SEARCH_RESULTS_GROUP;
 
               return (
                 <div
@@ -393,7 +397,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                       )}
                       {isSearchResults && (
                         <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
-                          BA�squeda
+                          BA§squeda
                         </span>
                       )}
                     </div>
@@ -443,10 +447,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
             <div className="rounded-lg border border-dashed border-gray-200 bg-white p-3 text-xs text-[var(--text-secondary)] dark:border-gray-800 dark:bg-[#111]">
               <p className="font-semibold text-[var(--text-primary)]">Instrucciones</p>
-              <p className="mt-1">Seleccione una escala, abra el modal y se insertar� el resultado en las notas.</p>
+              <p className="mt-1">Seleccione una escala, abra el modal y se insertara el resultado en las notas.</p>
             </div>
           </div>
-        </aside>        </aside>
+        </aside>
       )}
 
       {/* Main Content Area */}
@@ -500,14 +504,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
                   onClick={clearNotes}
                   className="flex items-center space-x-2 rounded-lg btn-error px-3 py-2 text-sm"
                 >
-                  <span>🗑️</span>
+                  <span>ðŸ—‘ï¸</span>
                   <span>Limpiar</span>
                 </button>
               )}
               <button
                 onClick={() => {
-                  const normalExamText = `Examen neurológico:
-Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
+                  const normalExamText = `Examen neurolÃ³gico:
+Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocÃ³ricas reactivas a la luz. MOE conservados. Sin dÃ©ficit motor ni sensitivo. Taxia y sensibilidad conservadas.
 
 `;
                   setNotes(notes + normalExamText);
@@ -531,7 +535,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                 <button
                   onClick={() => setShowPathologyDropdown(!showPathologyDropdown)}
                   className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
-                  title="Insertar antecedentes patológicos frecuentes"
+                  title="Insertar antecedentes patolÃ³gicos frecuentes"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Antecedentes</span>
@@ -603,7 +607,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="h-full min-h-[18rem] w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              placeholder="Escriba aquí las notas del paciente..."
+              placeholder="Escriba aquÃ­ las notas del paciente..."
             />
           </div>
         </div>
@@ -643,7 +647,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             }`);
             lines.push(`- Nistagmo: ${
               payload.nystagmus === 'none_unidirectional' ? 'Ausente o unidireccional horizontal' :
-              payload.nystagmus === 'bidirectional_gaze' ? 'Bidireccional según mirada' :
+              payload.nystagmus === 'bidirectional_gaze' ? 'Bidireccional segÃºn mirada' :
               payload.nystagmus === 'vertical_torsional' ? 'Vertical puro o torsional puro' :
               'No evaluable / no interpretable'
             }`);
@@ -652,13 +656,13 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               payload.skew === 'positive' ? 'Positivo' :
               'No evaluable / no realizado'
             }`);
-            lines.push(`- Audición (HINTS+): ${
-              payload.hearing === 'no_deficit' ? 'Sin nuevo déficit auditivo' :
-              payload.hearing === 'sudden_ssnhl_unilateral' ? 'Hipoacusia neurosensorial súbita unilateral' :
+            lines.push(`- AudiciÃ³n (HINTS+): ${
+              payload.hearing === 'no_deficit' ? 'Sin nuevo dÃ©ficit auditivo' :
+              payload.hearing === 'sudden_ssnhl_unilateral' ? 'Hipoacusia neurosensorial sÃºbita unilateral' :
               'No evaluable / no realizado'
             }`);
             if (payload.interpretation) {
-              lines.push(`- Interpretación: ${payload.interpretation.tituloInterpretacion}`);
+              lines.push(`- InterpretaciÃ³n: ${payload.interpretation.tituloInterpretacion}`);
               lines.push(`  ${payload.interpretation.textoInterpretacion}`);
             }
             const block = lines.join('\n');
@@ -684,6 +688,12 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
+
+
+
+
+
+
 
 
 
