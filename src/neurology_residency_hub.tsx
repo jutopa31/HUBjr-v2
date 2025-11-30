@@ -1,6 +1,20 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Home, Calculator, Calendar, Menu, Settings, CheckSquare, Users, FolderOpen, BookOpen, User, Syringe, MessageSquare, Award } from 'lucide-react';
+import {
+  Home,
+  Calculator,
+  Calendar,
+  Menu,
+  Settings,
+  CheckSquare,
+  Users,
+  FolderOpen,
+  BookOpen,
+  User,
+  Syringe,
+  MessageSquare,
+  Award
+} from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
@@ -23,6 +37,7 @@ import Sidebar from './components/layout/Sidebar';
 import ScaleModal from './ScaleModal';
 import UpdrsModal from './components/UpdrsModal';
 import RankingView from './components/ranking/RankingView';
+import { CORE_MODULE_IDS, MODULES, ModuleId } from './config/modules';
 
 const NeurologyResidencyHub = () => {
   const [activeTab, setActiveTab] = useState('inicio');
@@ -91,27 +106,30 @@ const NeurologyResidencyHub = () => {
     }
   });
 
-  const menuItems = [
-    { id: 'inicio', icon: Home, label: 'Inicio' },
-    { id: 'schedule', icon: Calendar, label: 'Cronograma' },
-    { id: 'pendientes', icon: CheckSquare, label: 'Pendientes' },
-    { id: 'ward-rounds', icon: Users, label: 'Pase de Sala' },
-    { id: 'user-dashboard', icon: User, label: 'Mi Panel' },
-    { id: 'lumbar-punctures', icon: Syringe, label: 'Punciones Lumbares' },
-    { id: 'diagnostic', icon: Calculator, label: 'Evolucionador' },
-    { id: 'interconsultas', icon: MessageSquare, label: 'Interconsultas' },
-    { id: 'pacientes-post-alta', icon: Users, label: 'Post alta + Ambulatorio' },
-    { id: 'saved-patients', icon: FolderOpen, label: 'Pacientes Guardados' },
-    { id: 'academia', icon: BookOpen, label: 'Academia' },
-    { id: 'ranking', icon: Award, label: 'Ranking' },
-    { id: 'resident-management', icon: Settings, label: 'Gestión de Residentes' },
-    // { id: 'dashboard', icon: CalendarDays, label: 'Panel Principal' },
-    // { id: 'clinical', icon: Activity, label: 'Registro Asistencial' },
-    // { id: 'evaluations', icon: Award, label: 'Evaluaciones' },
-    // { id: 'resources', icon: FileText, label: 'Recursos' },
-    // { id: 'communication', icon: MessageSquare, label: 'Comunicación' },
-    // { id: 'profile', icon: User, label: 'Mi Perfil' }
-  ];
+  const moduleIconMap: Record<ModuleId, React.ComponentType<{ className?: string }>> = {
+    inicio: Home,
+    schedule: Calendar,
+    pendientes: CheckSquare,
+    'ward-rounds': Users,
+    'user-dashboard': User,
+    'lumbar-punctures': Syringe,
+    diagnostic: Calculator,
+    interconsultas: MessageSquare,
+    'pacientes-post-alta': Users,
+    'saved-patients': FolderOpen,
+    academia: BookOpen,
+    ranking: Award,
+    'resident-management': Settings
+  };
+
+  const menuItems = CORE_MODULE_IDS.map((id) => {
+    const module = MODULES[id];
+    return {
+      id: module.id,
+      icon: moduleIconMap[id] ?? Home,
+      label: module.label
+    };
+  });
 
 
   // Medical scales definitions for evaluating neurological conditions

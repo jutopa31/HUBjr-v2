@@ -76,14 +76,14 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   'user-dashboard': {
     id: 'user-dashboard',
     label: 'Mi Panel',
-    audience: 'auxiliary',
+    audience: 'core',
     corePath: '/mi-panel',
     auxiliaryPath: '/aux/mi-panel'
   },
   'lumbar-punctures': {
     id: 'lumbar-punctures',
     label: 'Punciones Lumbares',
-    audience: 'auxiliary',
+    audience: 'core',
     corePath: '/punciones-lumbares',
     auxiliaryPath: '/aux/punciones-lumbares'
   },
@@ -97,14 +97,14 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   academia: {
     id: 'academia',
     label: 'Academia',
-    audience: 'auxiliary',
+    audience: 'core',
     corePath: '/academia',
     auxiliaryPath: '/aux/academia'
   },
   ranking: {
     id: 'ranking',
     label: 'Ranking',
-    audience: 'auxiliary',
+    audience: 'core',
     corePath: '/ranking',
     auxiliaryPath: '/aux/ranking'
   },
@@ -119,20 +119,21 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
 };
 
 export const CORE_MODULE_IDS: ModuleId[] = [
+  'inicio',
   'ward-rounds',
   'pendientes',
   'schedule',
   'interconsultas',
-  'pacientes-post-alta'
+  'pacientes-post-alta',
+  'user-dashboard',
+  'lumbar-punctures',
+  'academia',
+  'ranking'
 ];
 
 export const AUXILIARY_MODULE_IDS: ModuleId[] = [
   'saved-patients',
-  'user-dashboard',
-  'lumbar-punctures',
   'diagnostic',
-  'academia',
-  'ranking',
   'resident-management'
 ];
 
