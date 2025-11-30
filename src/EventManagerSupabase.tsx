@@ -27,24 +27,17 @@ const EventManagerSupabase: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-  const [currentDate, setCurrentDate] = useState(() => {
+  const showClases = false;
+  const showTareas = true;
+  const setShowClases = () => {};
+  const setShowTareas = () => {};
+  const [viewMode] = useState<'month'>('month');
+  const setViewMode = (_mode: 'month') => {};
+  const [currentDate] = useState(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-
-    // If it's Saturday (6) or Sunday (0), show next week
-    // Otherwise show current week
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 2; // Sunday: 1 day, Saturday: 2 days
-      const nextMonday = new Date(today);
-      nextMonday.setDate(today.getDate() + daysUntilNextMonday);
-      return nextMonday;
-    }
-
+    today.setDate(1); // primer día del mes en curso
     return today;
   });
-  const [showClases, setShowClases] = useState(true);
-  const [showTareas, setShowTareas] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<MedicalEvent | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [newEvent, setNewEvent] = useState<MedicalEvent>({
@@ -320,16 +313,6 @@ const EventManagerSupabase: React.FC = () => {
     return getFilteredEvents(dayEvents);
   };
 
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    if (viewMode === 'week') {
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
-    } else {
-      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
-    }
-    setCurrentDate(newDate);
-  };
-
   const handleQuickAddEvent = (day: Date) => {
     const startTime = new Date(day);
     startTime.setHours(9, 0, 0, 0); // Default to 9:00 AM
@@ -406,26 +389,7 @@ const EventManagerSupabase: React.FC = () => {
     return events;
   };
 
-  const isClaseEvent = (type: string) => {
-    return type === 'academic';
-  };
-
-  const isTareaEvent = (type: string) => {
-    return ['clinical', 'administrative', 'emergency', 'social'].includes(type);
-  };
-
-  const getFilteredEvents = (events: MedicalEvent[]) => {
-    return events.filter(event => {
-      const eventType = event.type || 'clinical';
-      const isClase = isClaseEvent(eventType);
-      const isTarea = isTareaEvent(eventType);
-      
-      if (isClase && !showClases) return false;
-      if (isTarea && !showTareas) return false;
-      
-      return true;
-    });
-  };
+  const getFilteredEvents = (events: MedicalEvent[]) => events;
 
   // Delete events in bulk by title pattern
   const deleteEventsByTitle = async (titlePattern: string) => {
@@ -1017,14 +981,27 @@ const EventManagerSupabase: React.FC = () => {
                       isCurrentMonth ? 'bg-white dark:bg-[#2a2a2a] border-gray-300 dark:border-gray-700' : 'bg-gray-100 dark:bg-[#333333] border-gray-400 dark:border-gray-800'
                     } ${isToday ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-600' : ''}`}
                   >
-                    <div className={`text-xs font-medium ${
-                      isToday
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : isCurrentMonth
-                          ? 'text-gray-900 dark:text-gray-300'
-                          : 'text-gray-500 dark:text-gray-600'
-                    }`}>
-                      {day.getDate()}
+                    <div className="flex items-start justify-between">
+                      <div className={`text-xs font-medium ${
+                        isToday
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : isCurrentMonth
+                            ? 'text-gray-900 dark:text-gray-300'
+                            : 'text-gray-500 dark:text-gray-600'
+                      }`}>
+                        {day.getDate()}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuickAddEvent(day);
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
+                        title="Agregar evento rapido"
+                      >
+                        +
+                      </button>
                     </div>
 
                     {dayEvents.length > 0 && (

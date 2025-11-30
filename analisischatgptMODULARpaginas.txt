@@ -1,0 +1,104 @@
+Dos formas típicas de hacerlo
+1. Misma app, rutas distintas (más simple)
+
+Todo está en un mismo proyecto de React:
+
+https://tuapp.com → app de neurología
+
+https://tuapp.com/dashboard → panel que muestra los datos de la base
+
+Con React Router, por ejemplo:
+
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AppNeurologia from "./AppNeurologia";
+import DashboardDatos from "./DashboardDatos";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AppNeurologia />} />
+        <Route path="/dashboard" element={<DashboardDatos />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+
+
+Ambos componentes (AppNeurologia y DashboardDatos) usan el mismo cliente de Supabase / misma API para leer y escribir en la base.
+
+Ventajas:
+
+Más fácil de mantener.
+
+Misma configuración, mismo deploy.
+
+Podés proteger /dashboard con login de admin.
+
+2. Dos proyectos React distintos (dos links bien separados)
+
+Acá sí son dos repos / dos apps, por ejemplo en Vercel:
+
+Proyecto A → https://neuro-app.vercel.app
+
+Proyecto B → https://neuro-datos.vercel.app
+
+En ambos ponés las mismas variables de entorno apuntando a la misma base:
+
+REACT_APP_SUPABASE_URL=...
+REACT_APP_SUPABASE_ANON_KEY=...
+
+
+Y en React en los dos proyectos usás el mismo cliente:
+
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+
+Después:
+
+La app de neurología escribe pacientes, escalas, etc.
+
+La otra app (el link aparte) solo consulta, lista, hace filtros, exporta, etc.
+
+Ventajas:
+
+Podés darle acceso solo a ciertos usuarios (ej. admins, investigadores).
+
+Podés cambiar el diseño / stack de esa web sin tocar la app clínica.
+
+Podés hasta ponerla en otro dominio / subdominio.
+
+Sobre “recibir información de otra página”
+
+Técnicamente no es que “una página le pasa datos directos a la otra”, sino que:
+
+Ambas leen y escriben en el mismo origen de verdad 👉 la base de datos / API.
+
+Si tu app guarda un nuevo paciente, el “link aparte” lo ve simplemente porque lee de la misma base.
+
+Si querés algo puntual tipo: “abrir un caso concreto desde un link de la app hacia el panel”, podés usar query params:
+
+En tu app: botón que abre
+https://datos.mineneuro.com/paciente/123?from=app
+
+En la página de datos, leés el id de la URL (123) y cargás ese paciente desde la base.
+
+Resumen corto
+
+✅ Sí, se puede totalmente.
+
+Lo correcto es: una base de datos / backend compartido y dos frontends (dos URLs).
+
+Podés hacerlo:
+
+como rutas distintas dentro de una sola app React, o
+
+como dos proyectos React separados, ambos apuntando a la misma base (Supabase, Postgres, etc.).
+
+Si me contás qué estás usando (Supabase / Firebase / backend propio, Vercel / Netlify, etc.), te puedo armar un mini esquema concreto tipo “paso a paso” para tu caso exacto.

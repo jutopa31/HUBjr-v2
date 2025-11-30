@@ -62,6 +62,11 @@ const WardRounds: React.FC = () => {
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
   const [loading, setLoading] = useState(true);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [inlineDetailValues, setInlineDetailValues] = useState<Partial<Patient>>({});
+  const [activeInlineField, setActiveInlineField] = useState<keyof Patient | null>(null);
+  const [isDetailSaving, setIsDetailSaving] = useState(false);
+  const [isDetailEditMode, setIsDetailEditMode] = useState(false);
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -442,6 +447,317 @@ const WardRounds: React.FC = () => {
       console.error('[WardRounds] Error assigning resident:', error);
       alert('Error al asignar residente');
     }
+  };
+
+  // Abrir modal + ventana detallada al seleccionar paciente
+  const handlePatientSelection = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setInlineDetailValues(patient);
+    setActiveInlineField(null);
+    setIsDetailEditMode(false);
+  };
+
+  // Ventana emergente con todos los datos del paciente en formato legible
+  const openPatientDetailWindow = (patient: Patient) => {
+    if (typeof window === 'undefined') return;
+
+    const detailWindow = window.open('', '_blank', 'noopener,width=1280,height=900');
+    if (!detailWindow) return;
+
+    const formatText = (value?: string) => (value && value.trim() ? value : 'Sin datos');
+
+    detailWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <title>Detalle de paciente - Pase de Sala</title>
+          <style>
+            :root {
+              color-scheme: light;
+              --bg: #0b132b;
+              --card: #0f1c3c;
+              --muted: #9fb4d0;
+              --accent: #38bdf8;
+              --border: #203b63;
+            }
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              padding: 24px;
+              font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+              background: radial-gradient(circle at 20% 20%, rgba(56,189,248,0.12), transparent 25%),
+                          radial-gradient(circle at 80% 0%, rgba(99,102,241,0.12), transparent 28%),
+                          var(--bg);
+              color: #e5e7eb;
+              letter-spacing: 0.1px;
+            }
+            h1 {
+              margin: 0 0 12px 0;
+              font-size: 20px;
+              font-weight: 700;
+              color: #e2e8f0;
+            }
+            .sub {
+              margin: 0 0 18px 0;
+              color: var(--muted);
+              font-size: 13px;
+            }
+            .grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+              gap: 16px;
+            }
+            .card {
+              background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+              border: 1px solid var(--border);
+              border-radius: 14px;
+              padding: 14px;
+              box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            }
+            .label {
+              font-size: 11px;
+              letter-spacing: 0.4px;
+              text-transform: uppercase;
+              color: var(--muted);
+              margin-bottom: 6px;
+            }
+            .value {
+              font-size: 14px;
+              line-height: 1.5;
+              color: #e5e7eb;
+              white-space: pre-wrap;
+            }
+            .chip {
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 6px 10px;
+              border-radius: 9999px;
+              background: rgba(56,189,248,0.16);
+              border: 1px solid rgba(56,189,248,0.35);
+              color: #e0f2fe;
+              font-weight: 600;
+              font-size: 12px;
+            }
+            .badge {
+              display: inline-block;
+              padding: 6px 10px;
+              border-radius: 10px;
+              font-weight: 700;
+              font-size: 12px;
+              text-transform: uppercase;
+            }
+          </style>
+        </head>
+        <body>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div>
+              <h1>${patient.nombre || 'Paciente sin nombre'}</h1>
+              <div class="sub">Cama ${formatText(patient.cama)} · DNI ${formatText(patient.dni)} · Fecha ${formatText(patient.fecha)}</div>
+              <div class="chip">${formatText(patient.assigned_resident_id ? residents.find(r => r.id === patient.assigned_resident_id)?.full_name : 'Sin residente')}</div>
+            </div>
+            <div class="badge" style="background:#0f172a;border:1px solid var(--border);color:#e5e7eb;">
+              Severidad ${formatText(patient.severidad)}
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <div class="label">Antecedentes</div>
+              <div class="value">${formatText(patient.antecedentes)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Motivo de Consulta</div>
+              <div class="value">${formatText(patient.motivo_consulta)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Examen Fisico / NIHSS / ABCD2</div>
+              <div class="value">${formatText(patient.examen_fisico)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Estudios Complementarios</div>
+              <div class="value">${formatText(patient.estudios)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Diagnostico</div>
+              <div class="value">${formatText(patient.diagnostico)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Plan</div>
+              <div class="value">${formatText(patient.plan)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Pendientes</div>
+              <div class="value">${formatText(patient.pendientes)}</div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+
+    detailWindow.document.close();
+  };
+
+  const startInlineFieldEdit = (field: keyof Patient) => {
+    setActiveInlineField(field);
+  };
+
+  const cancelInlineFieldEdit = () => {
+    setActiveInlineField(null);
+  };
+
+  const saveInlineFieldEdit = async (field: keyof Patient) => {
+    if (!selectedPatient?.id) return;
+
+    const updatedPatient: Patient = { ...selectedPatient, ...(inlineDetailValues as Patient) };
+    setIsDetailSaving(true);
+    try {
+      await updatePatient(selectedPatient.id, updatedPatient);
+      setSelectedPatient(updatedPatient);
+      setInlineDetailValues(updatedPatient);
+      setActiveInlineField(null);
+    } catch (error) {
+      console.error('Error saving inline field:', error);
+    } finally {
+      setIsDetailSaving(false);
+    }
+  };
+
+  const startDetailEditMode = () => {
+    if (!selectedPatient) return;
+    setInlineDetailValues(selectedPatient);
+    setActiveInlineField(null);
+    setIsDetailEditMode(true);
+  };
+
+  const cancelDetailEditMode = () => {
+    setInlineDetailValues(selectedPatient || {});
+    setActiveInlineField(null);
+    setIsDetailEditMode(false);
+  };
+
+  const saveAllDetailEdits = async () => {
+    if (!selectedPatient?.id) return;
+
+    const updatedPatient: Patient = { ...selectedPatient, ...(inlineDetailValues as Patient) };
+    setIsDetailSaving(true);
+    try {
+      await updatePatient(selectedPatient.id, updatedPatient);
+      setSelectedPatient(updatedPatient);
+      setInlineDetailValues(updatedPatient);
+      setIsDetailEditMode(false);
+    } catch (error) {
+      console.error('Error saving all detail edits:', error);
+    } finally {
+      setIsDetailSaving(false);
+    }
+  };
+
+  const renderDetailCard = (
+    label: string,
+    field: keyof Patient,
+    placeholder: string,
+    options: { multiline?: boolean } = {}
+  ) => {
+    const { multiline = false } = options;
+    const isActive = activeInlineField === field;
+    const isEditing = isDetailEditMode || isActive;
+    const value = (inlineDetailValues[field] as string) || '';
+    const displayValue = value && value.trim() ? value : placeholder;
+
+    return (
+      <div
+        className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm transition-all duration-200"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (isDetailEditMode) return;
+          const target = e.target as HTMLElement;
+          if (['INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) return;
+          if (target.closest && target.closest('button')) return;
+
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            isActive ? cancelInlineFieldEdit() : startInlineFieldEdit(field);
+          }
+          if (e.key === 'Escape' && isActive) {
+            e.preventDefault();
+            cancelInlineFieldEdit();
+          }
+        }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+              {label.slice(0, 2).toUpperCase()}
+            </span>
+            <h4 className="text-sm font-semibold text-[var(--text-primary)]">{label}</h4>
+          </div>
+          {!isDetailEditMode && (
+            <button
+              type="button"
+              className="flex items-center space-x-1 text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                isActive ? cancelInlineFieldEdit() : startInlineFieldEdit(field);
+              }}
+              title={isActive ? 'Cancelar edicion' : 'Editar seccion'}
+            >
+              <Edit className="h-4 w-4" />
+              <span>{isActive ? 'Cerrar' : 'Editar'}</span>
+            </button>
+          )}
+        </div>
+        {isEditing ? (
+          <div className="space-y-2">
+            {multiline ? (
+              <textarea
+                value={value}
+                onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, [field]: e.target.value }))}
+                className="w-full min-h-[120px] rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder={placeholder}
+              />
+            ) : (
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, [field]: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder={placeholder}
+              />
+            )}
+            {!isDetailEditMode && (
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  className="btn-soft px-3 py-1.5 text-sm rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    cancelInlineFieldEdit();
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-accent px-3 py-1.5 text-sm rounded"
+                  disabled={isDetailSaving || isUpdatingPatient}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    saveInlineFieldEdit(field);
+                  }}
+                >
+                  {isDetailSaving || isUpdatingPatient ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-5">
+            {displayValue}
+          </p>
+        )}
+      </div>
+    );
   };
 
   // Abrir modal para eliminar/archivar paciente
@@ -955,7 +1271,7 @@ const WardRounds: React.FC = () => {
         subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         actions={
           <div className="flex space-x-3">
-            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 btn-success px-3 py-2 text-sm rounded">
+            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 px-3 py-2 rounded btn-accent text-sm">
               <Plus className="h-4 w-4" />
               <span>Agregar Paciente</span>
             </button>
@@ -985,7 +1301,7 @@ const WardRounds: React.FC = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-secondary)]">
 
               {/* Sección 1: Datos Básicos */}
               <section className="medical-card p-4">
@@ -993,7 +1309,7 @@ const WardRounds: React.FC = () => {
                   <User className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold">Datos del Paciente</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Cama</label>
                     <input
@@ -1090,7 +1406,7 @@ const WardRounds: React.FC = () => {
                   <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Antecedentes</label>
                     <textarea
@@ -1115,7 +1431,7 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 3: Examen Físico */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
@@ -1133,7 +1449,7 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 4: Estudios */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
@@ -1151,12 +1467,12 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 5: Diagnóstico y Plan */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <Target className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
                     <textarea
@@ -1181,13 +1497,13 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 6: Seguimiento */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
                 </div>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
                       <select
@@ -1287,12 +1603,6 @@ const WardRounds: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <div className="col-span-2 hidden lg:block">
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    <Users className="h-3 w-3 inline mr-1" />
-                    <span>Residente</span>
-                  </div>
-                </div>
                 <div className="col-span-2 hidden md:block">
                   <button
                     onClick={() => handleSort('diagnostico')}
@@ -1337,6 +1647,12 @@ const WardRounds: React.FC = () => {
                     <span>Acciones</span>
                   </div>
                 </div>
+                <div className="col-span-2 hidden lg:block">
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <Users className="h-3 w-3 inline mr-1" />
+                    <span>Residente</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1354,16 +1670,26 @@ const WardRounds: React.FC = () => {
                   {/* Fila principal compacta */}
                   <div 
                     className="px-6 py-4 cursor-pointer flex items-center justify-between"
-                    onClick={() => toggleRowExpansion(patient.id || '')}
+                    onClick={() => handlePatientSelection(patient)}
                   >
                     <div className="flex items-center space-x-4 flex-1">
                       {/* Icono de expansión */}
                       <div className="flex-shrink-0">
-                        <ChevronRight 
-                          className={`expand-icon h-4 w-4 text-gray-400 ${
-                            isExpanded ? 'expanded' : ''
-                          }`}
-                        />
+                        <button
+                          type="button"
+                          className="p-1 rounded hover:bg-gray-100 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRowExpansion(patient.id || '');
+                          }}
+                          title={isExpanded ? 'Contraer' : 'Expandir'}
+                        >
+                          <ChevronRight 
+                            className={`expand-icon h-4 w-4 text-gray-500 ${
+                              isExpanded ? 'expanded' : ''
+                            }`}
+                          />
+                        </button>
                       </div>
                       
                       {/* Información principal */}
@@ -1378,35 +1704,6 @@ const WardRounds: React.FC = () => {
                             <span>DNI: {patient.dni}</span>
                             <span className="sm:hidden"> • {patient.edad} años</span>
                           </div>
-                        </div>
-                        <div className="col-span-2 hidden lg:block">
-                          {patient.assigned_resident_id ? (
-                            <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span className="text-xs text-gray-700">
-                                {residents.find(r => r.id === patient.assigned_resident_id)?.full_name || 'Residente'}
-                              </span>
-                            </div>
-                          ) : (
-                            <select
-                              value=""
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                if (e.target.value) {
-                                  assignResidentToPatient(patient.id!, e.target.value);
-                                }
-                              }}
-                              className="text-xs border border-gray-300 rounded px-1 py-0.5 text-gray-500"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <option value="">Asignar...</option>
-                              {residents.map(resident => (
-                                <option key={resident.id} value={resident.id}>
-                                  {resident.full_name}
-                                </option>
-                              ))}
-                            </select>
-                          )}
                         </div>
                         <div className="col-span-2 hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
@@ -1499,6 +1796,35 @@ const WardRounds: React.FC = () => {
                             </button>
                           </div>
                         </div>
+                        <div className="col-span-2 hidden lg:block">
+                          {patient.assigned_resident_id ? (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-xs text-gray-700">
+                                {residents.find(r => r.id === patient.assigned_resident_id)?.full_name || 'Residente'}
+                              </span>
+                            </div>
+                          ) : (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                if (e.target.value) {
+                                  assignResidentToPatient(patient.id!, e.target.value);
+                                }
+                              }}
+                              className="text-xs border border-gray-300 rounded px-1 py-0.5 text-gray-500"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <option value="">Asignar...</option>
+                              {residents.map(resident => (
+                                <option key={resident.id} value={resident.id}>
+                                  {resident.full_name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1508,7 +1834,7 @@ const WardRounds: React.FC = () => {
                     isExpanded ? 'max-h-screen opacity-100 mb-4' : 'max-h-0 opacity-0'
                   }`}>
                     <div className="px-6 pb-6 pt-4 border-t border-gray-200 bg-gray-50 medical-details">
-                      <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         
                         <div className="space-y-3">
                           <div>
@@ -1571,11 +1897,124 @@ const WardRounds: React.FC = () => {
           </div>
         </div>
 
+      {/* Modal de detalle con ediciA3n inline */}
+      {selectedPatient && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-4xl w-full h-[90vh] flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                  <span>{selectedPatient.nombre || 'Paciente sin nombre'}</span>
+                  <span className="text-xs text-gray-500 font-normal">DNI {selectedPatient.dni || 'Sin DNI'}</span>
+                </h2>
+                {isDetailEditMode ? (
+                  <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+                    <input
+                      type="text"
+                      value={(inlineDetailValues.cama as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, cama: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Cama / ubicacion"
+                    />
+                    <input
+                      type="text"
+                      value={(inlineDetailValues.edad as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, edad: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Edad"
+                    />
+                    <input
+                      type="date"
+                      value={(inlineDetailValues.fecha as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, fecha: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Fecha"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    Cama {selectedPatient.cama || 'Sin cama'} | {selectedPatient.edad ? `${selectedPatient.edad} anos` : 'Edad sin registrar'} | {selectedPatient.fecha || 'Sin fecha'}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="badge badge-info text-xs uppercase">
+                  Sev {selectedPatient.severidad || '-'}
+                </span>
+                <button
+                  type="button"
+                  className="btn-soft px-3 py-2 text-sm rounded"
+                  onClick={() => (isDetailEditMode ? cancelDetailEditMode() : startDetailEditMode())}
+                >
+                  {isDetailEditMode ? 'Cerrar edicion' : 'Editar'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-soft px-3 py-2 text-sm rounded"
+                  onClick={() => openPatientDetailWindow(selectedPatient)}
+                >
+                  Abrir en ventana
+                </button>
+                <button
+                  type="button"
+                  className="p-2 rounded hover:bg-gray-100 text-gray-500"
+                  onClick={() => {
+                    setSelectedPatient(null);
+                    setActiveInlineField(null);
+                    setIsDetailEditMode(false);
+                  }}
+                  title="Cerrar"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[var(--bg-secondary)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {renderDetailCard('Antecedentes', 'antecedentes', 'Sin antecedentes', { multiline: true })}
+                {renderDetailCard('Motivo de Consulta', 'motivo_consulta', 'Sin motivo', { multiline: true })}
+                {renderDetailCard('EF/NIHSS/ABCD2', 'examen_fisico', 'Sin examen', { multiline: true })}
+                {renderDetailCard('Estudios Complementarios', 'estudios', 'Sin estudios', { multiline: true })}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {renderDetailCard('Diagnostico', 'diagnostico', 'Sin diagnostico', { multiline: true })}
+                {renderDetailCard('Plan', 'plan', 'Sin plan', { multiline: true })}
+                {renderDetailCard('Pendientes', 'pendientes', 'Sin pendientes', { multiline: true })}
+              </div>
+            </div>
+
+            {isDetailEditMode && (
+              <div className="p-3 border-t bg-white flex items-center justify-between sticky bottom-0">
+                <div className="text-xs text-gray-500">Editando todas las secciones</div>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
+                    onClick={cancelDetailEditMode}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm"
+                    disabled={isDetailSaving || isUpdatingPatient}
+                    onClick={saveAllDetailEdits}
+                  >
+                    {isDetailSaving || isUpdatingPatient ? 'Guardando...' : 'Guardar todo'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Formulario de Edición Modal */}
       {editingId && (
         <div className="modal-overlay">
-          <div className="modal-content max-w-2xl w-full h-[85vh] flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
+          <div className="modal-content max-w-3xl w-full h-[80vh] flex flex-col rounded-2xl shadow-2xl">
+            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10 rounded-t-2xl">
               <h2 className="text-lg font-semibold text-gray-900">Editar Paciente</h2>
               <button
                 onClick={() => {
@@ -1588,15 +2027,15 @@ const WardRounds: React.FC = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-secondary)]">
 
               {/* Sección 1: Datos Básicos */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <User className="h-5 w-5 text-blue-600 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Datos del Paciente</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Cama</label>
                     <input
@@ -1662,12 +2101,12 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 2: Historia Clínica */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Antecedentes</label>
                     <textarea
@@ -1692,7 +2131,7 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 3: Examen Físico */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
@@ -1710,7 +2149,7 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 4: Estudios */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
@@ -1728,12 +2167,12 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 5: Diagnóstico y Plan */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <Target className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
                     <textarea
@@ -1758,13 +2197,13 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 6: Seguimiento */}
-              <section className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
                   <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
                 </div>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
                       <select

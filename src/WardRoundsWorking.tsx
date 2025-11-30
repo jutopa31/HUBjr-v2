@@ -102,7 +102,7 @@ const WardRoundsWorking: React.FC = () => {
         subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         actions={
           <div className="flex space-x-3">
-            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 btn-success px-3 py-2 text-sm rounded">
+            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 px-3 py-2 rounded btn-accent text-sm">
               <Plus className="h-4 w-4" />
               <span>Agregar Paciente</span>
             </button>
