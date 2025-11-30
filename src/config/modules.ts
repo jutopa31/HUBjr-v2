@@ -67,7 +67,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   },
   'saved-patients': {
     id: 'saved-patients',
-    label: 'Pacientes Guardados',
+    label: 'Base de pacientes',
     audience: 'auxiliary',
     corePath: '/pacientes-guardados',
     auxiliaryPath: '/aux/pacientes-guardados',

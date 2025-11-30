@@ -170,7 +170,7 @@ const Interconsultas: React.FC = () => {
       setError(error || 'No se pudo guardar en Pacientes');
     } else {
       setError(null);
-      const message = `✓ Paciente "${row.nombre}" guardado exitosamente en Pacientes Guardados`;
+      const message = `✓ Paciente "${row.nombre}" guardado exitosamente en la Base de pacientes`;
       setSuccessMessage(message);
       // Immediate visual feedback with browser alert
       window.alert(message);
@@ -354,7 +354,6 @@ const InlineRespuesta: React.FC<{ id: string; initial: string; onSave: (id: stri
 };
 
 export default Interconsultas;
-
 
 
 

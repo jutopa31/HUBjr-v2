@@ -80,7 +80,7 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
     },
     {
       id: 'saved-patients',
-      title: 'Base de datos',
+      title: 'Base de pacientes',
       icon: FolderOpen,
       color: 'bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-700',
       iconColor: 'text-purple-700 dark:text-purple-300',
