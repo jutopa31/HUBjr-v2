@@ -304,275 +304,153 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         <aside
           className={
             isMobileView
-              ? 'fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col overflow-y-auto bg-white dark:bg-[#1a1a1a] shadow-xl'
-              : 'hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-gray-200 dark:lg:border-gray-800 lg:bg-white dark:lg:bg-[#1a1a1a]'
+              ? 'fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col overflow-y-auto bg-white dark:bg-[#1a1a1a] shadow-xl order-2'
+              : 'hidden lg:flex lg:w-80 lg:flex-col lg:border-r lg:border-gray-200 dark:lg:border-gray-800 lg:bg-white dark:lg:bg-[#1a1a1a] lg:order-2'
           }
         >
-          <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] p-4">
-            <h2 className="flex items-center text-base font-semibold text-[var(--text-primary)]">
-              <Calculator className="mr-2 h-5 w-5 text-accent" />
-              Escalas y Algoritmos
-            </h2>
-            <div className="mt-1 mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-[var(--text-secondary)]">Herramientas de evaluación neurológica</p>
-              {/* Indicador de IA */}
-              <div className="flex items-center space-x-2">
-                {aiAnalysis.suggestions.length > 0 && (
-                  <div className="flex items-center space-x-1 rounded-full bg-white/20 px-2 py-1">
-                    <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
-                    <span className="text-xs text-blue-100">IA: {aiAnalysis.suggestions.length}</span>
-                  </div>
-                )}
-                <div className="text-xs text-blue-200">
-                  {notes.length > 0 ? `${notes.length} chars` : 'Sin texto'}
-                </div>
+          <div className="border-b border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#0f0f0f]">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[var(--text-tertiary)]">Escalas</p>
+                <h2 className="text-base font-semibold text-[var(--text-primary)]">Algoritmos y scores</h2>
+                <p className="text-xs text-[var(--text-secondary)]">Busque y expanda por categorA-a</p>
               </div>
+              {isMobileView && (
+                <button
+                  type="button"
+                  onClick={handleToggleScales}
+                  className="rounded-full p-2 text-[var(--text-secondary)] hover:bg-gray-100 dark:hover:bg-[#1c1c1c]"
+                  aria-label="Cerrar panel de escalas"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            <div className="rounded-lg bg-white/15 p-3">
+            <div className="mt-3">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-100" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                  }}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Buscar escalas..."
-                  className="w-full rounded-lg border border-white/30 bg-white/20 py-2 pl-9 pr-10 text-sm text-white placeholder-blue-100  focus:outline-none focus:ring-2 focus:ring-white/70"
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-10 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-800 dark:bg-[#141414] dark:text-gray-100"
                 />
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-100 transition-colors hover:text-white"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--text-tertiary)] hover:bg-gray-100 dark:hover:bg-[#1c1c1c]"
+                    aria-label="Limpiar bA�squeda"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
-              {searchQuery && (
-                <p className="mt-2 text-xs text-blue-100">Buscando: "{searchQuery}"</p>
+              {aiAnalysis.suggestions.length > 0 && (
+                <p className="mt-2 text-xs text-[var(--text-secondary)]">IA sugiere {aiAnalysis.suggestions.length} escala(s)</p>
               )}
             </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
-            {/* Accesos rápidos a escalas frecuentes */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-[var(--text-secondary)]">Accesos rápidos:</span>
+          </div>          <div className="flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4 dark:bg-[#0a0a0a]">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
+              <span className="font-medium">Accesos rA�pidos:</span>
               <button
                 type="button"
                 onClick={() => openScaleModal('updrs3')}
-                className="inline-flex items-center rounded-full px-3 py-1 text-xs"
-                style={{
-                  backgroundColor: 'var(--text-primary)',
-                  color: 'var(--bg-primary)'
-                }}
+                className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-[var(--text-primary)] hover:border-blue-500 hover:text-blue-700 dark:border-gray-700 dark:text-gray-100 dark:hover:border-blue-500"
                 title="Abrir UPDRS III (Examen Motor)"
               >
                 UPDRS III
               </button>
             </div>
-            <div className="mb-4 border-b border-[var(--border-secondary)] pb-4">
-              <h3 className="flex items-center text-sm font-semibold text-[var(--text-primary)]">
-                <Calculator className="mr-2 h-4 w-4" />
-                Escalas Diagnósticas
-              </h3>
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">Herramientas de puntuación y evaluación clínica</p>
-            </div>
 
-            <div className="space-y-4">
-              {Object.entries(groupedScales).map(([category, scales]) => {
-                const isAISuggestions = category === '🤖 Sugerencias IA';
-                const isSearchResults = category === '🔍 Resultados de Búsqueda';
-                const isParkinson = category === 'Parkinson';
+            {Object.entries(groupedScales).map(([category, scales]) => {
+              const isAISuggestions = category === 'dY?- Sugerencias IA';
+              const isSearchResults = category === 'dY�? Resultados de BA�squeda';
 
-                return (
-                  <div
-                    key={category}
-                    className="overflow-hidden rounded-lg border shadow-lg"
-                    style={{
-                      borderColor: isAISuggestions
-                        ? 'color-mix(in srgb, var(--state-info) 40%, transparent)'
-                        : isSearchResults
-                          ? 'color-mix(in srgb, var(--state-success) 40%, transparent)'
-                          : 'var(--border-secondary)',
-                      background: isAISuggestions
-                        ? 'linear-gradient(to right, color-mix(in srgb, var(--state-info) 8%, var(--bg-primary) 92%), color-mix(in srgb, var(--state-info) 12%, var(--bg-primary) 88%))'
-                        : isSearchResults
-                          ? 'linear-gradient(to right, color-mix(in srgb, var(--state-success) 8%, var(--bg-primary) 92%), color-mix(in srgb, var(--state-info) 8%, var(--bg-primary) 92%))'
-                          : 'var(--bg-primary)'
-                    }}
+              return (
+                <div
+                  key={category}
+                  className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-[#111]"
+                >
+                  <button
+                    onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
+                    className="flex w-full items-center justify-between px-3 py-2"
+                    style={{ cursor: (isAISuggestions || isSearchResults) ? 'default' : 'pointer' }}
                   >
-                    {/* Category Header */}
-                    <button
-                      onClick={() => !isAISuggestions && !isSearchResults && toggleCategory(category)}
-                      className="flex w-full items-center justify-between p-3 transition-colors"
-                      style={{
-                        cursor: (isAISuggestions || isSearchResults) ? 'default' : 'pointer',
-                        background: isAISuggestions
-                          ? 'linear-gradient(to right, color-mix(in srgb, var(--state-info) 15%, var(--bg-primary) 85%), color-mix(in srgb, var(--state-info) 20%, var(--bg-primary) 80%))'
-                          : isSearchResults
-                            ? 'linear-gradient(to right, color-mix(in srgb, var(--state-success) 15%, var(--bg-primary) 85%), color-mix(in srgb, var(--state-info) 15%, var(--bg-primary) 85%))'
-                            : 'var(--bg-secondary)'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isAISuggestions && !isSearchResults) {
-                          e.currentTarget.style.background = 'var(--bg-tertiary)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isAISuggestions && !isSearchResults) {
-                          e.currentTarget.style.background = 'var(--bg-secondary)';
-                        }
-                      }}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className="rounded p-1.5"
-                          style={{
-                            backgroundColor: isAISuggestions
-                              ? 'color-mix(in srgb, var(--state-info) 30%, var(--bg-primary) 70%)'
-                              : isSearchResults
-                                ? 'color-mix(in srgb, var(--state-success) 30%, var(--bg-primary) 70%)'
-                                : isParkinson
-                                  ? 'color-mix(in srgb, var(--state-warning) 20%, var(--bg-primary) 80%)'
-                                  : 'color-mix(in srgb, var(--state-info) 20%, var(--bg-primary) 80%)'
-                          }}
-                        >
-                          <Stethoscope
-                            className="h-4 w-4"
-                            style={{
-                              color: isAISuggestions || isSearchResults
-                                ? 'var(--state-info)'
-                                : isParkinson
-                                  ? 'var(--state-warning)'
-                                  : 'var(--state-info)'
-                            }}
-                          />
-                        </div>
-                        <span
-                          className="font-medium"
-                          style={{
-                            color: (isAISuggestions || isSearchResults)
-                              ? 'var(--text-primary)'
-                              : 'var(--text-primary)'
-                          }}
-                        >
-                          {category}
-                        </span>
-                        <span
-                          className="rounded-full px-2 py-1 text-xs"
-                          style={{
-                            backgroundColor: isAISuggestions
-                              ? 'color-mix(in srgb, var(--state-info) 25%, var(--bg-primary) 75%)'
-                              : isSearchResults
-                                ? 'color-mix(in srgb, var(--state-success) 25%, var(--bg-primary) 75%)'
-                                : 'var(--bg-tertiary)',
-                            color: 'var(--text-secondary)'
-                          }}
-                        >
-                          {scales.length}
-                        </span>
-                        {isAISuggestions && (
-                          <div className="flex items-center space-x-1">
-                            <div
-                              className="h-2 w-2 animate-pulse rounded-full"
-                              style={{ backgroundColor: 'var(--state-info)' }}
-                            />
-                            <span className="text-xs font-medium" style={{ color: 'var(--state-info)' }}>Activo</span>
-                          </div>
-                        )}
-                        {isSearchResults && (
-                          <div className="flex items-center space-x-1">
-                            <div
-                              className="h-2 w-2 rounded-full"
-                              style={{ backgroundColor: 'var(--state-success)' }}
-                            />
-                            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Búsqueda</span>
-                          </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-md border border-gray-200 p-1.5 text-[var(--text-secondary)] dark:border-gray-800">
+                        <Stethoscope className="h-4 w-4" />
                       </div>
-                      {!isAISuggestions && !isSearchResults && (
-                        expandedCategories[category]
-                          ? <ChevronUp className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} />
-                          : <ChevronDown className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} />
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{category}</span>
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-[var(--text-tertiary)] dark:bg-[#1c1c1c]">
+                        {scales.length}
+                      </span>
+                      {isAISuggestions && (
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                          IA
+                        </span>
                       )}
-                    </button>
+                      {isSearchResults && (
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+                          BA�squeda
+                        </span>
+                      )}
+                    </div>
+                    {!isAISuggestions && !isSearchResults && (
+                      expandedCategories[category]
+                        ? <ChevronUp className="h-4 w-4 text-[var(--text-tertiary)]" />
+                        : <ChevronDown className="h-4 w-4 text-[var(--text-tertiary)]" />
+                    )}
+                  </button>
 
-                    {/* Category Content */}
-                    {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
-                      <div className="divide-y divide-[var(--border-secondary)]">
-                        {scales.map((scale) => (
-                          <div key={scale.id} className="relative">
-                            <button
-                              onClick={() => {
-                                console.log('🔍 Scale button clicked:', scale.id, scale.name);
-                                const idLower = (scale.id || '').toLowerCase();
-                                const nameLower = (scale.name || '').toLowerCase();
-                                if (idLower.includes('hints') || nameLower.includes('hints')) {
-                                  setShowHintsModal(true);
-                                  return;
-                                }
-                                openScaleModal(scale.id);
-                              }}
-                              className="w-full p-3 text-left transition-colors"
-                              style={{
-                                borderLeft: clickedScale === scale.id ? '4px solid var(--state-success)' : 'none',
-                                backgroundColor: clickedScale === scale.id
-                                  ? 'color-mix(in srgb, var(--state-success) 15%, var(--bg-primary) 85%)'
-                                  : 'transparent'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (clickedScale !== scale.id) {
-                                  e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (clickedScale !== scale.id) {
-                                  e.currentTarget.style.backgroundColor = 'transparent';
-                                }
-                              }}
-                            >
-                              <div className="flex items-start space-x-3">
-                                <div className="flex-1">
-                                  <h3 className="text-sm font-medium text-[var(--text-primary)]">{scale.name}</h3>
-                                  <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">{scale.description}</p>
-                                </div>
-                                <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--text-tertiary)]" />
-                              </div>
-                            </button>
+                  {(expandedCategories[category] || isAISuggestions || isSearchResults) && (
+                    <ul className="divide-y divide-gray-200 dark:divide-gray-800">
+                      {scales.map((scale) => (
+                        <li key={scale.id} className="relative">
+                          <button
+                            onClick={() => {
+                              const idLower = (scale.id || '').toLowerCase();
+                              const nameLower = (scale.name || '').toLowerCase();
+                              if (idLower.includes('hints') || nameLower.includes('hints')) {
+                                setShowHintsModal(true);
+                                return;
+                              }
+                              openScaleModal(scale.id);
+                            }}
+                            className={lex w-full items-start justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#161616] }
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-[var(--text-primary)]">{scale.name}</p>
+                              <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">{scale.description}</p>
+                            </div>
+                            <ChevronRight className="mt-0.5 h-4 w-4 text-[var(--text-tertiary)]" />
+                          </button>
+                          <div className="absolute right-3 top-3">
                             <AIBadgeSystem
                               scaleId={scale.id}
                               suggestions={aiAnalysis.suggestions}
                               onScaleClick={openScaleModal}
                             />
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
 
-            <div className="mt-6 rounded-lg bg-[var(--bg-secondary)] p-4">
-              <h3 className="mb-2 font-medium text-[var(--text-primary)]">Instrucciones</h3>
-              <ul className="space-y-1 text-sm text-[var(--text-secondary)]">
-                <li>• Seleccione una escala del listado</li>
-                <li>• Complete la evaluación en el modal</li>
-                <li>• Los resultados se insertarán automáticamente</li>
-                <li>• Puede modificar las notas manualmente</li>
-              </ul>
+            <div className="rounded-lg border border-dashed border-gray-200 bg-white p-3 text-xs text-[var(--text-secondary)] dark:border-gray-800 dark:bg-[#111]">
+              <p className="font-semibold text-[var(--text-primary)]">Instrucciones</p>
+              <p className="mt-1">Seleccione una escala, abra el modal y se insertar� el resultado en las notas.</p>
             </div>
           </div>
-        </aside>
+        </aside>        </aside>
       )}
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col bg-gray-100 dark:bg-[#0a0a0a] p-4 lg:p-6">
+      <div className="order-1 flex flex-1 flex-col bg-gray-100 dark:bg-[#0a0a0a] p-4 lg:order-1 lg:p-6">
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white dark:bg-[#171717] shadow-2xl border border-gray-200 dark:border-gray-800">
           <div className="border-b border-gray-200 dark:border-gray-800 p-4 lg:p-6">
             <div className="mb-4 flex flex-col items-center justify-between gap-3 text-center lg:flex-row lg:text-left">
@@ -806,4 +684,6 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
+
+
 

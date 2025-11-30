@@ -90,7 +90,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   diagnostic: {
     id: 'diagnostic',
     label: 'Evolucionador',
-    audience: 'auxiliary',
+    audience: 'core',
     corePath: '/evolucionador',
     auxiliaryPath: '/aux/evolucionador'
   },
@@ -124,6 +124,7 @@ export const CORE_MODULE_IDS: ModuleId[] = [
   'pendientes',
   'schedule',
   'interconsultas',
+  'diagnostic',
   'pacientes-post-alta',
   'user-dashboard',
   'lumbar-punctures',
@@ -133,7 +134,6 @@ export const CORE_MODULE_IDS: ModuleId[] = [
 
 export const AUXILIARY_MODULE_IDS: ModuleId[] = [
   'saved-patients',
-  'diagnostic',
   'resident-management'
 ];
 

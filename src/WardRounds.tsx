@@ -606,7 +606,7 @@ const WardRounds: React.FC = () => {
     setActiveInlineField(null);
   };
 
-  const saveInlineFieldEdit = async (field: keyof Patient) => {
+  const saveInlineFieldEdit = async (_field: keyof Patient) => {
     if (!selectedPatient?.id) return;
 
     const updatedPatient: Patient = { ...selectedPatient, ...(inlineDetailValues as Patient) };

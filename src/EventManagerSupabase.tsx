@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, BookOpen, Users, FileText, Heart, AlertTriangle, GraduationCap } from 'lucide-react';
+import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, Users } from 'lucide-react';
 import { supabase } from './utils/supabase.js';
 import { useAuthContext } from './components/auth/AuthProvider';
 import SectionHeader from './components/layout/SectionHeader';
@@ -27,19 +27,11 @@ const EventManagerSupabase: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-  const showClases = false;
-  const showTareas = true;
-  const setShowClases = () => {};
-  const setShowTareas = () => {};
-  const [viewMode] = useState<'month'>('month');
-  const setViewMode = (_mode: 'month') => {};
-  const [currentDate] = useState(() => {
+  const [currentDate, setCurrentDate] = useState(() => {
     const today = new Date();
     today.setDate(1); // primer día del mes en curso
     return today;
   });
-  const [selectedEvent, setSelectedEvent] = useState<MedicalEvent | null>(null);
-  const [showEventDetails, setShowEventDetails] = useState(false);
   const [newEvent, setNewEvent] = useState<MedicalEvent>({
     title: '',
     start_date: '',
@@ -210,33 +202,10 @@ const EventManagerSupabase: React.FC = () => {
   };
 
   // Get event type color
-  const getEventTypeColor = (type: string) => {
-    const colors: { [key: string]: string } = {
-      // Clases (Academic) - Verde claro para modo light, oscuro para dark
-      academic: 'bg-emerald-100 text-gray-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-gray-200 dark:border-emerald-700',
-      // Tareas Clínicas - Azul claro para modo light, oscuro para dark
-      clinical: 'bg-blue-100 text-gray-800 border-blue-300 dark:bg-blue-950/40 dark:text-gray-200 dark:border-blue-700',
-      // Administrativo - Púrpura claro para modo light, oscuro para dark
-      administrative: 'bg-purple-100 text-gray-800 border-purple-300 dark:bg-purple-950/40 dark:text-gray-200 dark:border-purple-700',
-      // Emergencia - Rojo claro para modo light, oscuro para dark
-      emergency: 'bg-red-100 text-gray-800 border-red-300 dark:bg-red-950/40 dark:text-gray-200 dark:border-red-700',
-      // Social - Naranja claro para modo light, oscuro para dark
-      social: 'bg-orange-100 text-gray-800 border-orange-300 dark:bg-orange-950/40 dark:text-gray-200 dark:border-orange-700',
-    };
-    return colors[type] || colors.clinical;
-  };
+  const getEventTypeColor = () => 'bg-blue-100 text-gray-800 border-blue-300 dark:bg-blue-950/40 dark:text-gray-200 dark:border-blue-700';
 
   // Get event type icon
-  const getEventTypeIcon = (type: string) => {
-    const icons: { [key: string]: React.FC<any> } = {
-      clinical: Users, // Tareas clínicas
-      academic: BookOpen, // Clases académicas - icono de libro
-      administrative: FileText, // Administrativo
-      social: Heart, // Social
-      emergency: AlertTriangle, // Emergencia
-    };
-    return icons[type] || Users;
-  };
+  const getEventTypeIcon = () => Users;
 
   // Wait for auth to be ready before loading data
   useEffect(() => {
@@ -267,23 +236,6 @@ const EventManagerSupabase: React.FC = () => {
   }, [authReady]);
 
   // Helper functions for calendar views
-  const getWeekDays = (date: Date) => {
-    const start = new Date(date);
-    // Find Monday of the week
-    const dayOfWeek = start.getDay();
-    const distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so distance is 6
-    start.setDate(start.getDate() - distanceToMonday);
-    
-    const days = [];
-    // Only generate Monday to Friday (5 days)
-    for (let i = 0; i < 5; i++) {
-      const day = new Date(start);
-      day.setDate(start.getDate() + i);
-      days.push(day);
-    }
-    return days;
-  };
-
   const getMonthDays = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -338,12 +290,31 @@ const EventManagerSupabase: React.FC = () => {
     const startTime = new Date(newStartDate);
     const endTime = new Date(startTime);
     endTime.setMinutes(startTime.getMinutes() + 5); // Automatically add 5 minutes
-    
+
     setNewEvent({
       ...newEvent,
       start_date: newStartDate,
       end_date: endTime.toISOString().slice(0, 16)
     });
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(prevDate => {
+      const newDate = new Date(prevDate);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      newDate.setDate(1); // Ensure we're on the first day of the month
+      return newDate;
+    });
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    today.setDate(1);
+    setCurrentDate(today);
   };
 
   const generateRecurringEvents = (baseEvent: MedicalEvent) => {
@@ -448,68 +419,14 @@ const EventManagerSupabase: React.FC = () => {
     }
   };
 
-  const openEventDetails = (event: MedicalEvent) => {
-    setSelectedEvent(event);
-    setShowEventDetails(true);
-  };
-
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="max-w-6xl mx-auto mb-6">
-      <SectionHeader
-        title={"Cronograma Neurología"}
-        actions={
-          <div className="flex items-center space-x-2">
-            {/* View Toggle */}
-            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-                  viewMode === 'week'
-                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                5 Días
-              </button>
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-                  viewMode === 'month'
-                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                Mes
-              </button>
-            </div>
-
-            {/* Event Filters */}
-            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
-              <button
-                onClick={() => setShowClases(!showClases)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-                  showClases
-                    ? 'bg-green-600 dark:bg-green-700 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                Clases
-              </button>
-              <button
-                onClick={() => setShowTareas(!showTareas)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-                  showTareas
-                    ? 'bg-blue-600 dark:bg-blue-700 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                Tareas
-              </button>
-            </div>
-
-            <div className="flex space-x-2">
+        <SectionHeader
+          title={"Cronograma Neurología"}
+          subtitle={"Vista mensual simplificada"}
+          actions={
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowForm(!showForm)}
                 className="flex items-center space-x-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
@@ -518,518 +435,221 @@ const EventManagerSupabase: React.FC = () => {
                 <Plus className="h-4 w-4" />
                 <span>Nuevo Evento</span>
               </button>
-
               <button
                 onClick={() => {
-                  setNewEvent({
-                    ...newEvent,
-                    type: 'academic',
-                    title: ''
-                  });
-                  setShowForm(true);
+                  const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
+                  if (pattern) deleteEventsByTitle(pattern);
                 }}
-                className="flex items-center space-x-1.5 bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
+                className="flex items-center justify-center bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 px-3 py-1.5 rounded-md transition-all text-white"
                 disabled={loading}
-                title="Crear una clase académica"
+                title="Eliminar eventos por título"
               >
-                <GraduationCap className="h-4 w-4" />
-                <span>Nueva Clase</span>
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
-
-            <button
-              onClick={() => {
-                const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
-                if (pattern) {
-                  deleteEventsByTitle(pattern);
-                }
-              }}
-              className="flex items-center justify-center bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 px-3 py-1.5 rounded-md transition-all text-white"
-              disabled={loading}
-              title="Eliminar eventos por título"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        }
-      />
+          }
+        />
       </div>
-      {false && (
-      <div className="banner rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Calendar className="h-5 w-5" />
-            <div>
-              <h1 className="text-lg font-semibold">Cronograma Neurología</h1>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {/* View Toggle */}
-            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                  viewMode === 'week'
-                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                5 Días
-              </button>
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                  viewMode === 'month'
-                    ? 'bg-gray-200 dark:bg-[#3a3a3a] text-gray-900 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                Mes
-              </button>
-            </div>
 
-            {/* Event Filters */}
-            <div className="bg-gray-100 dark:bg-[#2a2a2a] rounded-md p-0.5 flex border border-gray-300 dark:border-gray-700">
-              <button
-                onClick={() => setShowClases(!showClases)}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                  showClases
-                    ? 'bg-green-700 text-white'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Clases
-              </button>
-              <button
-                onClick={() => setShowTareas(!showTareas)}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                  showTareas
-                    ? 'bg-blue-700 text-white'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Tareas
-              </button>
-            </div>
-
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-sm"
-                disabled={loading}
-              >
-                <Plus className="h-4 w-4" />
-                <span>Nuevo Evento</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setNewEvent({
-                    ...newEvent,
-                    type: 'academic',
-                    title: ''
-                  });
-                  setShowForm(true);
-                }}
-                className="flex items-center space-x-2 bg-green-700 hover:bg-green-600 px-3 py-1.5 rounded-md transition-all text-white text-sm"
-                disabled={loading}
-                title="Crear una clase académica"
-              >
-                <span>📚</span>
-                <span>Nueva Clase</span>
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
-                if (pattern) {
-                  deleteEventsByTitle(pattern);
-                }
-              }}
-              className="flex items-center space-x-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800 px-3 py-1.5 rounded-md transition-all text-blue-300"
-              disabled={loading}
-              title="Eliminar eventos por título"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>) }
-
-      {/* Calendar Navigation */}
       <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-3">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigateDate('prev')}
-            className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
+            onClick={() => navigateMonth('prev')}
+            className="flex items-center space-x-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
+            title="Mes anterior"
           >
             <span>←</span>
-            <span>{viewMode === 'week' ? 'Semana Anterior' : 'Mes Anterior'}</span>
+            <span className="hidden sm:inline">Anterior</span>
           </button>
 
-          <div className="text-center">
+          <div className="text-center flex-1">
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-200">
-              {viewMode === 'week'
-                ? `Semana del ${currentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`
-                : currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-              }
+              {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
             </h2>
-            <p className="text-xs text-gray-600 dark:text-gray-500">
-              {viewMode === 'week' ? 'Vista semanal' : 'Vista mensual'}
-            </p>
+            <button
+              onClick={goToToday}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-0.5"
+            >
+              Hoy
+            </button>
           </div>
 
           <button
-            onClick={() => navigateDate('next')}
-            className="flex items-center space-x-2 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
+            onClick={() => navigateMonth('next')}
+            className="flex items-center space-x-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
+            title="Mes siguiente"
           >
-            <span>{viewMode === 'week' ? 'Semana Siguiente' : 'Mes Siguiente'}</span>
+            <span className="hidden sm:inline">Siguiente</span>
             <span>→</span>
           </button>
         </div>
       </div>
 
-      {/* Quick Event Form */}
       {showForm && (
-        <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-          <h3 className="text-base font-semibold mb-2 flex items-center text-gray-900 dark:text-gray-200">
-            <Plus className="h-4 w-4 mr-2 text-blue-500" />
-            Crear Nuevo Evento Médico
-            {newEvent.type === 'academic' && (
-              <span className="ml-2 text-xs bg-green-900/30 text-blue-300 px-2 py-1 rounded-md border border-green-800">
-                📚 Modo Clase
-              </span>
-            )}
-          </h3>
-          <div className="mb-3 p-2 rounded-md" style={{
-            backgroundColor: 'color-mix(in srgb, var(--state-info) 10%, var(--bg-primary) 90%)',
-            borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)',
-            borderWidth: '1px',
-            borderStyle: 'solid'
-          }}>
-            <p className="text-xs" style={{ color: 'var(--state-info)' }}>
-              <strong>💡 Tip:</strong> Los eventos de tipo "Académico" aparecerán en el filtro "Clases".
-              Los demás tipos aparecerán en "Tareas".
-            </p>
-          </div>
-          <form onSubmit={createEvent} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-[#1f1f1f] rounded-xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 p-4 relative">
+            <button
+              onClick={() => setShowForm(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h3 className="text-sm font-semibold mb-3 flex items-center text-gray-900 dark:text-gray-200">
+              <Plus className="h-4 w-4 mr-2 text-blue-500" />
+              Nuevo evento rápido
+            </h3>
+            <form onSubmit={createEvent} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Título *
-                </label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Nombre</label>
                 <input
                   type="text"
                   value={newEvent.title}
-                  onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-                  className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Rounds Matutinos, Ateneo Clínico"
+                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  className="w-full bg-white dark:bg-[#2c2c2c] border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Guardia, ateneo, reunión..."
+                  required
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Tipo de Evento
-                </label>
-                <select
-                  value={newEvent.type}
-                  onChange={(e) => setNewEvent({...newEvent, type: e.target.value})}
-                  className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="clinical">Clínico (Tareas)</option>
-                  <option value="academic">📚 Académico (Clases)</option>
-                  <option value="administrative">Administrativo (Tareas)</option>
-                  <option value="social">Social (Tareas)</option>
-                  <option value="emergency">Emergencia (Tareas)</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 Selecciona "Académico" para crear clases que aparecerán en el filtro "Clases"
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Fecha y Hora Inicio *
-                </label>
-                <input
-                  type="datetime-local"
-                  value={newEvent.start_date}
-                  onChange={(e) => handleStartDateChange(e.target.value)}
-                  className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Fecha y Hora Fin *
-                </label>
-                <input
-                  type="datetime-local"
-                  value={newEvent.end_date}
-                  onChange={(e) => setNewEvent({...newEvent, end_date: e.target.value})}
-                  className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Ubicación
-                </label>
-                <input
-                  type="text"
-                  value={newEvent.location}
-                  onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
-                  className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ej: Sala de Neurología, Aula Magna"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Descripción
-                </label>
-                <input
-                  type="text"
-                  value={newEvent.description}
-                  onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
-                  className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Detalles adicionales del evento"
-                />
-              </div>
-
-              {/* Recurring Event Fields */}
-              <div className="bg-[#333333] p-3 rounded-lg border border-gray-700">
-                <div className="flex items-center mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Inicio</label>
                   <input
-                    type="checkbox"
-                    id="is_recurring"
-                    checked={newEvent.is_recurring}
-                    onChange={(e) => setNewEvent({...newEvent, is_recurring: e.target.checked})}
-                    className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-700 rounded focus:ring-blue-500"
+                    type="datetime-local"
+                    value={newEvent.start_date}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
+                    className="w-full bg-white dark:bg-[#2c2c2c] border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   />
-                  <label htmlFor="is_recurring" className="ml-2 text-sm font-medium text-gray-400">
-                    Evento Recurrente
-                  </label>
                 </div>
-
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Fin</label>
+                  <input
+                    type="datetime-local"
+                    value={newEvent.end_date}
+                    onChange={(e) => setNewEvent({ ...newEvent, end_date: e.target.value })}
+                    className="w-full bg-white dark:bg-[#2c2c2c] border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-200">Recurrente</label>
+                <input
+                  type="checkbox"
+                  checked={newEvent.is_recurring}
+                  onChange={(e) => setNewEvent({ ...newEvent, is_recurring: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
                 {newEvent.is_recurring && (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-1">
-                        Frecuencia
-                      </label>
-                      <select
-                        value={newEvent.recurrence_pattern}
-                        onChange={(e) => setNewEvent({...newEvent, recurrence_pattern: e.target.value as 'daily' | 'weekly' | 'monthly'})}
-                        className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="daily">Diario</option>
-                        <option value="weekly">Semanal</option>
-                        <option value="monthly">Mensual</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-1">
-                        Repetir hasta
-                      </label>
-                      <input
-                        type="date"
-                        value={newEvent.recurrence_end}
-                        onChange={(e) => setNewEvent({...newEvent, recurrence_end: e.target.value})}
-                        className="w-full p-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
+                  <input
+                    type="date"
+                    value={newEvent.recurrence_end}
+                    onChange={(e) => setNewEvent({ ...newEvent, recurrence_end: e.target.value })}
+                    className="bg-white dark:bg-[#2c2c2c] border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Fin de la recurrencia"
+                    required
+                  />
                 )}
               </div>
-            </div>
-
-            <div className="flex flex-col gap-3 pt-4 sm:flex-row">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-700 text-white px-4 py-1.5 rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2 text-sm"
-              >
-                <Save className="h-4 w-4" />
-                <span>{loading ? 'Guardando...' : 'Guardar Evento'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="bg-[#3a3a3a] text-white px-4 py-1.5 rounded-lg hover:bg-[#444444] transition-colors flex items-center space-x-2 text-sm"
-              >
-                <X className="h-4 w-4" />
-                <span>Cancelar</span>
-              </button>
-            </div>
-          </form>
+              <div className="flex justify-end space-x-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-3 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3a3a3a]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {loading ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
       {/* Calendar View */}
       <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-        {viewMode === 'week' ? (
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3">Vista Semanal</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-              {getWeekDays(currentDate).map((day, index) => {
-                const dayEvents = getEventsForDate(day);
-                const isToday = day.toDateString() === new Date().toDateString();
-                const dayName = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][index];
-
-                return (
-                  <div key={index} className="min-h-[200px]">
-                    <div className={`p-2 rounded-lg border h-full ${
-                      isToday
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/30'
-                        : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-[#333333]'
-                    }`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-center flex-1">
-                          <div className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                            {dayName}
-                          </div>
-                          <div className={`text-base font-bold ${isToday ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-gray-300'}`}>
-                            {day.getDate()}
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleQuickAddEvent(day);
-                          }}
-                          className="w-6 h-6 bg-blue-700 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-                          title="Agregar evento"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <div className="space-y-1.5">
-                        {dayEvents.map((event) => {
-                          const Icon = getEventTypeIcon(event.type || 'clinical');
-                          const startTime = new Date(event.start_date).toLocaleTimeString('es-ES', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          });
-
-                          return (
-                            <div
-                              key={event.id}
-                              className={`p-1.5 rounded border hover:border-gray-600 transition-all cursor-pointer ${getEventTypeColor(event.type || 'clinical')}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEventDetails(event);
-                              }}
-                            >
-                              <div className="flex items-center space-x-1.5 mb-0.5">
-                                <Icon className={`h-3 w-3 ${event.type === 'academic' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`} />
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-400">{startTime}</span>
-                              </div>
-                              <div className="text-xs font-medium line-clamp-2 flex items-center space-x-1 text-gray-900 dark:text-gray-200">
-                                {event.type === 'academic' && <span className="text-[10px]">📚</span>}
-                                <span>{event.title}</span>
-                              </div>
-                              {event.location && (
-                                <div className="text-xs text-gray-600 dark:text-gray-500 mt-0.5 flex items-center">
-                                  <MapPin className="h-2 w-2 mr-1" />
-                                  {event.location}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                        {dayEvents.length === 0 && (
-                          <div className="text-xs text-gray-500 text-center py-4">
-                            Sin eventos
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3">Vista Mensual</h3>
-            <div className="overflow-x-auto">
-              <div className="grid min-w-[520px] grid-cols-5 gap-1 sm:min-w-0 sm:gap-2 md:gap-3">
-              {/* Week headers */}
-              {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day) => (
-                <div key={day} className="p-2 text-center text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333]">
-                  {day}
-                </div>
-              ))}
-
-              {/* Month days */}
-              {getMonthDays(currentDate).map((day, index) => {
-                if (!day) {
-                  return <div key={index} className="aspect-square bg-gray-100 dark:bg-[#333333]"></div>;
-                }
-
-                const dayEvents = getEventsForDate(day);
-                const isToday = day.toDateString() === new Date().toDateString();
-                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-
-                return (
-                  <div
-                    key={index}
-                    className={`aspect-square border p-1 relative ${
-                      isCurrentMonth ? 'bg-white dark:bg-[#2a2a2a] border-gray-300 dark:border-gray-700' : 'bg-gray-100 dark:bg-[#333333] border-gray-400 dark:border-gray-800'
-                    } ${isToday ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-600' : ''}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className={`text-xs font-medium ${
-                        isToday
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : isCurrentMonth
-                            ? 'text-gray-900 dark:text-gray-300'
-                            : 'text-gray-500 dark:text-gray-600'
-                      }`}>
-                        {day.getDate()}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuickAddEvent(day);
-                        }}
-                        className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
-                        title="Agregar evento rapido"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    {dayEvents.length > 0 && (
-                      <div className="mt-1 space-y-0.5">
-                        {dayEvents.slice(0, 2).map((event) => (
-                          <div
-                            key={event.id}
-                            className={`text-xs px-1.5 py-0.5 rounded truncate font-medium flex items-center space-x-1 ${getEventTypeColor(event.type || 'clinical')}`}
-                            title={`${event.title} - ${event.type === 'academic' ? '📚 Clase' : 'Tarea'}`}
-                          >
-                            {React.createElement(getEventTypeIcon(event.type || 'clinical'), { className: "w-2 h-2 flex-shrink-0" })}
-                            <span className="truncate">{event.title}</span>
-                          </div>
-                        ))}
-                        {dayEvents.length > 2 && (
-                          <div className="text-xs text-gray-500">
-                            +{dayEvents.length - 2} más
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+        <div className="space-y-3">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3">Vista Mensual</h3>
+          <div className="overflow-x-auto">
+            <div className="grid min-w-[520px] grid-cols-5 gap-1 sm:min-w-0 sm:gap-2 md:gap-3">
+            {/* Week headers */}
+            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day) => (
+              <div key={day} className="p-2 text-center text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333]">
+                {day}
               </div>
+            ))}
+
+            {/* Month days */}
+            {getMonthDays(currentDate).map((day, index) => {
+              if (!day) {
+                return <div key={index} className="aspect-square bg-gray-100 dark:bg-[#333333]"></div>;
+              }
+
+              const dayEvents = getEventsForDate(day);
+              const isToday = day.toDateString() === new Date().toDateString();
+              const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+
+              return (
+                <div
+                  key={index}
+                  className={`aspect-square border p-1 relative ${
+                    isCurrentMonth ? 'bg-white dark:bg-[#2a2a2a] border-gray-300 dark:border-gray-700' : 'bg-gray-100 dark:bg-[#333333] border-gray-400 dark:border-gray-800'
+                  } ${isToday ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-600' : ''}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className={`text-xs font-medium ${
+                      isToday
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : isCurrentMonth
+                          ? 'text-gray-900 dark:text-gray-300'
+                          : 'text-gray-500 dark:text-gray-600'
+                    }`}>
+                      {day.getDate()}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickAddEvent(day);
+                      }}
+                      className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
+                      title="Agregar evento rapido"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {dayEvents.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {dayEvents.slice(0, 2).map((event) => (
+                        <div
+                          key={event.id}
+                          className={`text-xs px-1.5 py-0.5 rounded truncate font-medium flex items-center space-x-1 ${getEventTypeColor()}`}
+                          title={event.title}
+                        >
+                          {React.createElement(getEventTypeIcon(), { className: "w-2 h-2 flex-shrink-0" })}
+                          <span className="truncate">{event.title}</span>
+                        </div>
+                      ))}
+                      {dayEvents.length > 2 && (
+                        <div className="text-xs text-gray-500">
+                          +{dayEvents.length - 2} más
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Events List */}
@@ -1058,7 +678,7 @@ const EventManagerSupabase: React.FC = () => {
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {getFilteredEvents(events).map((event) => {
-              const Icon = getEventTypeIcon(event.type || 'clinical');
+              const Icon = getEventTypeIcon();
               const isExpanded = expandedEvent === event.id;
               const isEditing = editingEvent === event.id;
 
@@ -1087,14 +707,9 @@ const EventManagerSupabase: React.FC = () => {
                           ) : (
                             <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-200">{event.title}</h4>
                           )}
-                          <span className={`px-2 py-0.5 text-xs rounded-full border flex items-center space-x-1 ${getEventTypeColor(event.type || 'clinical')}`}>
-                            {React.createElement(getEventTypeIcon(event.type || 'clinical'), { className: "w-3 h-3" })}
-                            <span className="font-medium">
-                              {event.type === 'clinical' ? 'Clínico' :
-                               event.type === 'academic' ? '📚 Clase' :
-                               event.type === 'administrative' ? 'Admin' :
-                               event.type === 'social' ? 'Social' : 'Emergencia'}
-                            </span>
+                          <span className={`px-2 py-0.5 text-xs rounded-full border flex items-center space-x-1 ${getEventTypeColor()}`}>
+                            {React.createElement(getEventTypeIcon(), { className: "w-3 h-3" })}
+                            <span className="font-medium">Evento</span>
                           </span>
                         </div>
 
@@ -1241,131 +856,6 @@ const EventManagerSupabase: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Event Details Modal */}
-      {showEventDetails && selectedEvent && (
-        <div className="modal-overlay">
-          <div className="modal-content w-full max-w-md max-h-[80vh] overflow-y-auto p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Detalles del Evento</h3>
-              <button
-                onClick={() => setShowEventDetails(false)}
-                className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors"
-                aria-label="Cerrar"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Event Title */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Título</label>
-                <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg">
-                  <span className="text-[var(--text-primary)]">{selectedEvent.title}</span>
-                </div>
-              </div>
-
-              {/* Event Type */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Tipo</label>
-                <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg">
-                  <span className={`px-3 py-1 text-sm rounded-full border flex items-center space-x-2 ${getEventTypeColor(selectedEvent.type || 'clinical')}`}>
-                    {React.createElement(getEventTypeIcon(selectedEvent.type || 'clinical'), { className: "w-4 h-4" })}
-                    <span className="font-medium">
-                      {selectedEvent.type === 'clinical' ? 'Clínico' :
-                       selectedEvent.type === 'academic' ? '📚 Clase Académica' :
-                       selectedEvent.type === 'administrative' ? 'Administrativo' :
-                       selectedEvent.type === 'social' ? 'Social' : 'Emergencia'}
-                    </span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Date and Time */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Inicio</label>
-                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg text-sm">
-                    {new Date(selectedEvent.start_date).toLocaleString('es-ES', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Fin</label>
-                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg text-sm">
-                    {new Date(selectedEvent.end_date).toLocaleString('es-ES', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Location */}
-              {selectedEvent.location && (
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Ubicación</label>
-                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg flex items-center">
-                    <MapPin className="h-4 w-4 text-[var(--text-tertiary)] mr-2" />
-                    <span className="text-[var(--text-primary)]">{selectedEvent.location}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              {selectedEvent.description && (
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Descripción</label>
-                  <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg">
-                    <span className="text-[var(--text-primary)]">{selectedEvent.description}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Created by and date */}
-              <div className="pt-4 border-t border-[var(--border-secondary)]">
-                <div className="flex items-center text-xs text-[var(--text-tertiary)]">
-                  <User className="h-3 w-3 mr-1" />
-                  <span>Creado por: {selectedEvent.created_by || 'Usuario'}</span>
-                  {selectedEvent.created_at && (
-                    <span className="ml-4">
-                      {new Date(selectedEvent.created_at).toLocaleDateString('es-ES')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowEventDetails(false)}
-                className="px-4 py-2 rounded-lg btn-soft"
-              >
-                Cerrar
-              </button>
-              <button
-                onClick={() => {
-                  setShowEventDetails(false);
-                  setEditingEvent(selectedEvent.id!);
-                }}
-                className="px-4 py-2 rounded-lg btn-accent flex items-center space-x-2"
-              >
-                <Edit3 className="h-4 w-4" />
-                <span>Editar</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Connection Status Footer */}
       <div className="text-center text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
