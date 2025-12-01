@@ -79,6 +79,7 @@ export interface Interconsulta {
   nombre: string;
   dni: string;
   cama: string;
+  relato_consulta?: string;
   fecha_interconsulta: string; // YYYY-MM-DD
   respuesta?: string;
   user_id?: string;

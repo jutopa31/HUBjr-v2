@@ -5,6 +5,7 @@ export interface SimpleInterconsulta {
   dni: string;
   cama: string;
   fecha_interconsulta: string; // YYYY-MM-DD
+  relato_consulta?: string;
   respuesta?: string;
 }
 
@@ -22,7 +23,7 @@ export async function saveToWardRounds(ic: SimpleInterconsulta): Promise<{ succe
           nombre: ic.nombre,
           edad: '',
           antecedentes: '',
-          motivo_consulta: 'Interconsulta registrada',
+          motivo_consulta: ic.relato_consulta || 'Interconsulta registrada',
           examen_fisico: '',
           estudios: '',
           severidad: '',
@@ -49,7 +50,7 @@ export async function saveToWardRounds(ic: SimpleInterconsulta): Promise<{ succe
 export async function saveToSavedPatients(ic: SimpleInterconsulta): Promise<{ success: boolean; error?: string }>{
   try {
     console.log('[InterconsultasUtils] saveToSavedPatients -> payload:', ic);
-    const clinicalNotes = `INTERCONSULTA\n\nPaciente: ${ic.nombre} (DNI ${ic.dni})\nCama: ${ic.cama}\nFecha: ${ic.fecha_interconsulta}\n\nRespuesta: ${ic.respuesta || ''}`;
+    const clinicalNotes = `INTERCONSULTA\n\nPaciente: ${ic.nombre} (DNI ${ic.dni})\nCama: ${ic.cama}\nFecha: ${ic.fecha_interconsulta}\n\nRelato: ${ic.relato_consulta || 'No registrado'}\n\nRespuesta: ${ic.respuesta || ''}`;
 
     const { error } = await supabase
       .from('diagnostic_assessments')

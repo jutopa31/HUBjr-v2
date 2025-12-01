@@ -7,6 +7,7 @@ export interface InterconsultaRow {
   dni: string;
   cama: string;
   fecha_interconsulta: string; // ISO date or YYYY-MM-DD
+  relato_consulta?: string | null;
   respuesta?: string | null;
   hospital_context?: string; // default handled in DB
   user_id?: string;
@@ -43,7 +44,7 @@ export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; 
   }
 }
 
-export async function createInterconsulta(payload: InterconsultaRow): Promise<{ success: boolean; error?: string }>{
+export async function createInterconsulta(payload: InterconsultaRow): Promise<{ success: boolean; data?: InterconsultaRow; error?: string }>{
   try {
     console.log('[InterconsultasService] createInterconsulta -> payload:', payload);
     const resp2: any = await robustQuery(
@@ -55,42 +56,47 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
             dni: payload.dni,
             cama: payload.cama,
             fecha_interconsulta: payload.fecha_interconsulta,
+            relato_consulta: payload.relato_consulta || null,
             respuesta: payload.respuesta || null,
             hospital_context: 'Posadas'
           }
-        ]),
+        ])
+        .select()
+        .single(),
       { timeout: 15000, retries: 2, operationName: 'createInterconsulta' }
     );
-    const { error } = resp2 || {};
+    const { error, data } = resp2 || {};
     if (error) {
       console.error('[InterconsultasService] createInterconsulta error:', error);
       return { success: false, error: error.message };
     }
     console.log('[InterconsultasService] createInterconsulta -> success');
-    return { success: true };
+    return { success: true, data: data as InterconsultaRow };
   } catch (e: any) {
     console.error('[InterconsultasService] createInterconsulta unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }
 
-export async function updateRespuesta(id: string, respuesta: string): Promise<{ success: boolean; error?: string }>{
+export async function updateRespuesta(id: string, respuesta: string): Promise<{ success: boolean; data?: InterconsultaRow; error?: string }>{
   try {
     console.log('[InterconsultasService] updateRespuesta -> id:', id);
     const resp3: any = await robustQuery(
       () => supabase
         .from('interconsultas')
         .update({ respuesta })
-        .eq('id', id),
+        .eq('id', id)
+        .select()
+        .single(),
       { timeout: 8000, retries: 2, operationName: 'updateRespuesta' }
     );
-    const { error } = resp3 || {};
+    const { error, data } = resp3 || {};
     if (error) {
       console.error('[InterconsultasService] updateRespuesta error:', error);
       return { success: false, error: error.message };
     }
     console.log('[InterconsultasService] updateRespuesta -> success');
-    return { success: true };
+    return { success: true, data: data as InterconsultaRow };
   } catch (e: any) {
     console.error('[InterconsultasService] updateRespuesta unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };

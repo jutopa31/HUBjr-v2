@@ -10,6 +10,7 @@ create table if not exists public.interconsultas (
   nombre text not null,
   dni text not null,
   cama text not null,
+  relato_consulta text null,
   fecha_interconsulta date not null, -- app sends 'YYYY-MM-DD'
   respuesta text null,
   hospital_context text not null default 'Posadas',
@@ -81,6 +82,5 @@ with check (hospital_context = 'Posadas');
 -- using (hospital_context = 'Posadas');
 
 -- Manual test
--- insert into public.interconsultas (nombre, dni, cama, fecha_interconsulta, respuesta)
--- values ('Juan Perez', '12345678', 'C-12', '2025-09-29', 'Evaluar en 24h');
-
+-- insert into public.interconsultas (nombre, dni, cama, relato_consulta, fecha_interconsulta, respuesta)
+-- values ('Juan Perez', '12345678', 'C-12', 'Paciente con cefalea progresiva', '2025-09-29', 'Evaluar en 24h');

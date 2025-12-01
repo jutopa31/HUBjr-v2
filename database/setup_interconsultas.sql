@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS interconsultas (
   nombre VARCHAR NOT NULL,
   dni VARCHAR NOT NULL,
   cama VARCHAR NOT NULL,
+  relato_consulta TEXT,
   fecha_interconsulta DATE NOT NULL,
   respuesta TEXT,
   -- Seguridad/contexto
@@ -74,4 +75,3 @@ CREATE TRIGGER trg_interconsultas_set_user
 
 COMMENT ON TABLE interconsultas IS 'Interconsultas: solo visibles para hospital_context Posadas via RLS';
 COMMENT ON COLUMN interconsultas.hospital_context IS 'Contexto hospitalario de los datos (RLS aplica Posadas)';
-
