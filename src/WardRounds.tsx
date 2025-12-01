@@ -9,6 +9,12 @@ import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 import SectionHeader from './components/layout/SectionHeader';
 import { uploadImageToStorage } from './services/storageService';
+import {
+  fetchOutpatientPatients,
+  addOutpatientPatient,
+  deleteOutpatientPatient,
+  type OutpatientPatient
+} from './services/outpatientWardRoundsService';
 
 interface Patient {
   id?: string;
@@ -62,13 +68,34 @@ const WardRounds: React.FC = () => {
     assigned_resident_id: undefined
   };
 
+  const emptyOutpatient: OutpatientPatient = {
+    dni: '',
+    nombre: '',
+    edad: '',
+    antecedentes: '',
+    motivo_consulta: '',
+    examen_fisico: '',
+    estudios: '',
+    severidad: '',
+    diagnostico: '',
+    plan: '',
+    fecha_proxima_cita: '',
+    estado_pendiente: 'pendiente',
+    pendientes: '',
+    fecha: new Date().toISOString().split('T')[0]
+  };
+
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [outpatients, setOutpatients] = useState<OutpatientPatient[]>([]);
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showOutpatientModal, setShowOutpatientModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
+  const [newOutpatient, setNewOutpatient] = useState<OutpatientPatient>(emptyOutpatient);
   const [loading, setLoading] = useState(true);
+  const [outpatientLoading, setOutpatientLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [inlineDetailValues, setInlineDetailValues] = useState<Partial<Patient>>({});
   const [activeInlineField, setActiveInlineField] = useState<keyof Patient | null>(null);
@@ -125,6 +152,12 @@ const WardRounds: React.FC = () => {
     }
   }, [authLoading]);
 
+  useEffect(() => {
+    if (showOutpatientModal) {
+      loadOutpatients();
+    }
+  }, [showOutpatientModal]);
+
   const loadData = async () => {
     console.log('[WardRounds] loadData -> start');
     await Promise.all([loadPatients(), loadResidents()]);
@@ -158,6 +191,20 @@ const WardRounds: React.FC = () => {
       setPatients([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOutpatients = async () => {
+    try {
+      setOutpatientLoading(true);
+      const { data, error } = await fetchOutpatientPatients();
+      if (error) throw error;
+      setOutpatients(data || []);
+    } catch (error) {
+      console.error('[WardRounds] Error loading outpatient patients:', error);
+      setOutpatients([]);
+    } finally {
+      setOutpatientLoading(false);
     }
   };
 
@@ -236,6 +283,45 @@ const WardRounds: React.FC = () => {
       console.error('❌ Error loading residents:', error);
       // Set empty array so the component still works
       setResidents([]);
+    }
+  };
+
+  const saveOutpatient = async () => {
+    if (!newOutpatient.nombre.trim()) {
+      alert('El nombre es obligatorio');
+      return;
+    }
+
+    try {
+      setOutpatientLoading(true);
+      const payload = {
+        ...newOutpatient,
+        fecha: newOutpatient.fecha || new Date().toISOString().split('T')[0]
+      };
+      const { error } = await addOutpatientPatient(payload);
+      if (error) throw error;
+      setNewOutpatient(emptyOutpatient);
+      await loadOutpatients();
+    } catch (error) {
+      console.error('[WardRounds] Error adding outpatient patient:', error);
+      alert('No se pudo agregar el paciente ambulatorio. Intenta nuevamente.');
+    } finally {
+      setOutpatientLoading(false);
+    }
+  };
+
+  const removeOutpatient = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar a ${nombre} de ambulatorios?`)) return;
+    try {
+      setOutpatientLoading(true);
+      const { error } = await deleteOutpatientPatient(id);
+      if (error) throw error;
+      await loadOutpatients();
+    } catch (error) {
+      console.error('[WardRounds] Error deleting outpatient patient:', error);
+      alert('No se pudo eliminar el paciente ambulatorio.');
+    } finally {
+      setOutpatientLoading(false);
     }
   };
 
@@ -1414,6 +1500,13 @@ const WardRounds: React.FC = () => {
         subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         actions={
           <div className="flex space-x-3">
+            <button
+              onClick={() => setShowOutpatientModal(true)}
+              className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+            >
+              <Users className="h-4 w-4" />
+              <span>Ambulatorios</span>
+            </button>
             <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 px-3 py-2 rounded btn-accent text-sm">
               <Plus className="h-4 w-4" />
               <span>Agregar Paciente</span>
@@ -1426,6 +1519,113 @@ const WardRounds: React.FC = () => {
         }
       />
       </div>
+
+      {showOutpatientModal && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-5xl w-full h-[70vh] flex flex-col">
+            <div
+              className="p-4 border-b flex items-center justify-between sticky top-0 z-10"
+              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}
+            >
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <div>
+                  <h2 className="text-lg font-semibold">Ambulatorios</h2>
+                  <p className="text-sm text-[var(--text-secondary)]">Vista compacta en modal</p>
+                </div>
+              </div>
+              <button onClick={() => setShowOutpatientModal(false)} className="p-1 rounded-md btn-soft">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4 border-b" style={{ borderColor: 'var(--border-secondary)' }}>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <input
+                  className="input"
+                  placeholder="Nombre y apellido"
+                  value={newOutpatient.nombre}
+                  onChange={(e) => setNewOutpatient((prev) => ({ ...prev, nombre: e.target.value }))}
+                />
+                <input
+                  className="input"
+                  placeholder="DNI"
+                  value={newOutpatient.dni}
+                  onChange={(e) => setNewOutpatient((prev) => ({ ...prev, dni: e.target.value }))}
+                />
+                <input
+                  className="input"
+                  placeholder="Motivo consulta"
+                  value={newOutpatient.motivo_consulta}
+                  onChange={(e) => setNewOutpatient((prev) => ({ ...prev, motivo_consulta: e.target.value }))}
+                />
+                <input
+                  className="input"
+                  placeholder="Próxima cita (YYYY-MM-DD)"
+                  value={newOutpatient.fecha_proxima_cita}
+                  onChange={(e) => setNewOutpatient((prev) => ({ ...prev, fecha_proxima_cita: e.target.value }))}
+                />
+                <button
+                  onClick={saveOutpatient}
+                  className="btn-accent flex items-center justify-center space-x-2 rounded px-3 py-2 text-sm"
+                  disabled={outpatientLoading}
+                >
+                  <Check className="h-4 w-4" />
+                  <span>{outpatientLoading ? 'Guardando...' : 'Guardar'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              <table className="min-w-full text-sm">
+                <thead className="sticky top-0" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                  <tr>
+                    <th className="px-3 py-2 text-left">Paciente</th>
+                    <th className="px-3 py-2 text-left">Motivo</th>
+                    <th className="px-3 py-2 text-left">Pendientes</th>
+                    <th className="px-3 py-2 text-left">Próxima cita</th>
+                    <th className="px-3 py-2 text-left">Estado</th>
+                    <th className="px-3 py-2 text-left"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {outpatientLoading && (
+                    <tr>
+                      <td colSpan={6} className="px-3 py-4 text-center text-[var(--text-secondary)]">
+                        Cargando ambulatorios...
+                      </td>
+                    </tr>
+                  )}
+                  {!outpatientLoading && outpatients.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-3 py-4 text-center text-[var(--text-secondary)]">
+                        Sin pacientes ambulatorios cargados
+                      </td>
+                    </tr>
+                  )}
+                  {outpatients.map((p) => (
+                    <tr key={p.id ?? `${p.dni}-${p.fecha}`} className="border-b" style={{ borderColor: 'var(--border-secondary)' }}>
+                      <td className="px-3 py-2 font-semibold">{p.nombre}</td>
+                      <td className="px-3 py-2">{p.motivo_consulta || '-'}</td>
+                      <td className="px-3 py-2 text-[var(--text-secondary)]">{p.pendientes || '-'}</td>
+                      <td className="px-3 py-2">{p.fecha_proxima_cita || 'Sin definir'}</td>
+                      <td className="px-3 py-2 capitalize">{p.estado_pendiente}</td>
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          onClick={() => p.id && removeOutpatient(p.id, p.nombre)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Formulario para agregar paciente */}
       {showAddForm && (
