@@ -36,6 +36,8 @@ interface Patient {
   assigned_resident_id?: string;
 }
 
+const NORMAL_EF_TEXT = 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.';
+
 interface ResidentProfile {
   id: string;
   email: string;
@@ -817,8 +819,8 @@ const WardRounds: React.FC = () => {
                   onClick={() => setInlineDetailValues((prev) => ({
                     ...prev,
                     examen_fisico: (prev.examen_fisico as string) && (prev.examen_fisico as string).trim()
-                      ? prev.examen_fisico
-                      : 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.'
+                      ? `${prev.examen_fisico as string}\n${NORMAL_EF_TEXT}`
+                      : NORMAL_EF_TEXT
                   }))}
                 >
                   EF normal
@@ -1796,18 +1798,20 @@ const WardRounds: React.FC = () => {
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
-                    <button
-                      type="button"
-                      onClick={() => setNewPatient((prev) => ({
-                        ...prev,
-                        examen_fisico: prev.examen_fisico ? prev.examen_fisico : 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.'
-                      }))}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      EF normal
-                    </button>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
+                  <button
+                    type="button"
+                    onClick={() => setNewPatient((prev) => ({
+                      ...prev,
+                      examen_fisico: prev.examen_fisico && prev.examen_fisico.trim()
+                        ? `${prev.examen_fisico}\n${NORMAL_EF_TEXT}`
+                        : NORMAL_EF_TEXT
+                    }))}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    EF normal
+                  </button>
                   </div>
                   <textarea
                     value={newPatient.examen_fisico}
@@ -2544,18 +2548,20 @@ const WardRounds: React.FC = () => {
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
-                    <button
-                      type="button"
-                      onClick={() => setEditingPatient((prev) => ({
-                        ...prev,
-                        examen_fisico: prev.examen_fisico ? prev.examen_fisico : 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.'
-                      }))}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      EF normal
-                    </button>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
+                  <button
+                    type="button"
+                    onClick={() => setEditingPatient((prev) => ({
+                      ...prev,
+                      examen_fisico: prev.examen_fisico && prev.examen_fisico.trim()
+                        ? `${prev.examen_fisico}\n${NORMAL_EF_TEXT}`
+                        : NORMAL_EF_TEXT
+                    }))}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    EF normal
+                  </button>
                   </div>
                   <textarea
                     value={editingPatient.examen_fisico}
