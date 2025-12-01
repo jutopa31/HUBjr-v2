@@ -36,7 +36,7 @@ interface Patient {
   assigned_resident_id?: string;
 }
 
-const NORMAL_EF_TEXT = 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.';
+const NORMAL_EF_TEXT = 'Vigil, OTEP, MOE, PIR, Motor:, Sensitivo:, ROT, Babinski, Hoffman, Sensibilidad, Taxia';
 
 interface ResidentProfile {
   id: string;
