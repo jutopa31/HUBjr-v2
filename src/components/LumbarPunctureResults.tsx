@@ -10,13 +10,9 @@ import {
   AlertTriangle,
   Eye,
   Edit,
-  Trash2,
-  Download,
-  Activity,
-  Target,
-  BarChart3
+  Trash2
 } from 'lucide-react';
-import { useLumbarPuncture, useLPStatistics, useLPFilters, useDepartmentLPStats } from '../hooks/useLumbarPuncture';
+import { useLumbarPuncture, useLPFilters } from '../hooks/useLumbarPuncture';
 import { useAuthContext } from '../components/auth/AuthProvider';
 import { awardPointsForLumbarPuncture } from '../services/rankingService';
 import { LumbarPuncture, LPFilters, LPSearchParams } from '../types/lumbarPuncture';
@@ -27,10 +23,8 @@ interface LumbarPunctureResultsProps {
 }
 
 export default function LumbarPunctureResults({ onEdit, onView }: LumbarPunctureResultsProps) {
-  const { user, hasPrivilege } = useAuthContext();
+  const { hasPrivilege } = useAuthContext();
   const { procedures, loading, error, fetchProcedures, deleteProcedure } = useLumbarPuncture();
-  const { stats, analytics, loading: statsLoading } = useLPStatistics();
-  const { departmentStats, residentComparison, loading: deptStatsLoading } = useDepartmentLPStats();
   const { residents, supervisors, loading: filtersLoading } = useLPFilters();
 
   const [searchParams, setSearchParams] = useState<LPSearchParams>({
@@ -41,7 +35,6 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
   });
 
   const [showFilters, setShowFilters] = useState(false);
-  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     fetchProcedures(searchParams);
@@ -94,52 +87,6 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
     }
   };
 
-  const exportToCsv = () => {
-    const headers = [
-      'Fecha',
-      'Paciente',
-      'Indicación',
-      'Supervisor',
-      'Rol',
-      'Exitoso',
-      'Intentos',
-      'Complicaciones',
-      'Dificultad Técnica'
-    ];
-
-    const csvData = procedures.map(proc => [
-      proc.procedure_date,
-      proc.patient_initials,
-      proc.indication,
-      proc.supervisor,
-      proc.trainee_role,
-      proc.successful ? 'Sí' : 'No',
-      proc.attempts_count,
-      [proc.headache_post_lp, proc.bleeding, proc.infection].filter(Boolean).length,
-      proc.technical_difficulty || 'N/A'
-    ]);
-
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lumbar_punctures_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-
-  const getDifficultyColor = (difficulty?: number) => {
-    if (!difficulty) return 'text-[var(--text-secondary)]';
-    if (difficulty <= 2) return 'text-[var(--state-info)] font-medium';
-    if (difficulty === 3) return 'text-[var(--state-warning)] font-medium';
-    return 'text-[var(--state-error)] font-medium';
-  };
-
   const getComplicationCount = (procedure: LumbarPuncture) => {
     return [
       procedure.headache_post_lp,
@@ -153,259 +100,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
   const isInitialLoading = loading && procedures.length === 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header with Stats */}
-      <div className="medical-card p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] flex items-center">
-              <Stethoscope className="h-6 w-6 mr-2" style={{ color: 'var(--state-info)' }} />
-              Registros de Punciones Lumbares
-            </h2>
-            <p className="text-gray-600">Seguimiento y análisis de sus procedimientos de punción lumbar</p>
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className="px-4 py-2 text-sm font-medium btn-soft rounded-lg flex items-center"
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              {showStats ? 'Ocultar Estadísticas' : 'Mostrar Estadísticas'}
-            </button>
-            <button
-              onClick={exportToCsv}
-              className="px-4 py-2 text-sm font-medium btn-soft rounded-lg flex items-center"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar CSV
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Filter Toggle */}
-        <div className="mb-4 p-4 banner rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium">Vista de Procedimientos</h3>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                {searchParams.filters?.resident_id
-                  ? `Mostrando procedimientos de: ${residents.find(r => r.id === searchParams.filters?.resident_id)?.name || 'Usuario seleccionado'}`
-                  : 'Mostrando todos los procedimientos del departamento'
-                }
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handleFilter({ resident_id: undefined })}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  !searchParams.filters?.resident_id ? 'btn-accent' : 'btn-soft'
-                }`}
-              >
-                Todos
-              </button>
-              <button
-                onClick={() => handleFilter({ resident_id: user?.id })}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  searchParams.filters?.resident_id === user?.id ? 'btn-accent' : 'btn-soft'
-                }`}
-              >
-                Solo Míos
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        {((searchParams.filters?.resident_id && stats && !statsLoading) ||
-          (!searchParams.filters?.resident_id && departmentStats && !deptStatsLoading)) && (
-          <div className="space-y-4 mb-6">
-            {!searchParams.filters?.resident_id && (
-              <div className="text-center">
-            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-2">Estadísticas del Departamento</h3>
-                <p className="text-sm text-gray-600">Vista general de todos los procedimientos del servicio</p>
-              </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="medical-card rounded-lg p-4">
-                <div className="flex items-center">
-                  <Target className="h-8 w-8" style={{ color: 'var(--state-info)' }} />
-                  <div className="ml-3">
-                    <p className="stat-label">Total de Procedimientos</p>
-                    <p className="stat-value">
-                      {searchParams.filters?.resident_id
-                        ? stats?.total_procedures || 0
-                        : departmentStats?.total_procedures || 0
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="medical-card rounded-lg p-4">
-                <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-blue-700" />
-                  <div className="ml-3">
-                    <p className="stat-label">Tasa de Éxito</p>
-                    <p className="stat-value">
-                      {searchParams.filters?.resident_id
-                        ? (stats?.success_rate ?? 0).toFixed(1)
-                        : (departmentStats?.success_rate ?? 0).toFixed(1)
-                      }%
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="medical-card card-warning rounded-lg p-4">
-                <div className="flex items-center">
-                <Activity className="h-8 w-8" style={{ color: 'var(--state-warning)' }} />
-                  <div className="ml-3">
-                  <p className="stat-label text-[var(--text-primary)]">
-                      {searchParams.filters?.resident_id ? 'Intentos Promedio' : 'Residentes Activos'}
-                    </p>
-                  <p className="stat-value text-[var(--text-primary)]">
-                      {searchParams.filters?.resident_id
-                        ? (stats?.average_attempts ?? 0).toFixed(1)
-                        : departmentStats?.total_residents || 0
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="medical-card card-error rounded-lg p-4">
-                <div className="flex items-center">
-                <AlertTriangle className="h-8 w-8" style={{ color: 'var(--state-error)' }} />
-                  <div className="ml-3">
-                  <p className="stat-label text-[var(--text-primary)]">
-                      {searchParams.filters?.resident_id ? 'Complicaciones' : 'Promedio de Intentos'}
-                    </p>
-                  <p className="stat-value text-[var(--text-primary)]">
-                      {searchParams.filters?.resident_id
-                        ? stats?.complications_count || 0
-                        : (departmentStats?.average_attempts ?? 0).toFixed(1)
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Department-wide resident comparison */}
-            {!searchParams.filters?.resident_id && residentComparison.length > 0 && (
-              <div className="bg-white rounded-lg p-6 border border-gray-200">
-                <h4 className="heading-md mb-4">Comparación entre Residentes</h4>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2">Residente</th>
-                        <th className="text-center py-2">Procedimientos</th>
-                        <th className="text-center py-2">Éxito (%)</th>
-                        <th className="text-center py-2">Promedio Intentos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {residentComparison.slice(0, 10).map((resident, index) => (
-                        <tr key={index} className="border-b">
-                          <td className="py-2 font-medium text-blue-700">
-                            {resident.resident_name}
-                          </td>
-                          <td className="text-center py-2">{resident.total_procedures}</td>
-                          <td className="text-center py-2">
-                            <span className={`font-medium ${
-                              resident.success_rate >= 80 ? 'text-[var(--state-success)]' :
-                              resident.success_rate >= 60 ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'
-                            }`}>
-                              {(resident.success_rate ?? 0).toFixed(1)}%
-                            </span>
-                          </td>
-                          <td className="text-center py-2">{(resident.average_attempts ?? 0).toFixed(1)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Detailed Analytics */}
-        {showStats && analytics && (
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-4">Análisis Detallado</h3>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Indication Breakdown */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium  mb-3">Indicaciones Más Comunes</h4>
-                <div className="space-y-2">
-                  {analytics.indication_breakdown.slice(0, 5).map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700 truncate">{item.indication}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium ">{item.count}</span>
-                        <span className="text-xs" style={{ color: 'var(--state-success)' }}>({(item.success_rate ?? 0).toFixed(0)}% éxito)</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Difficulty Distribution */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium  mb-3">Dificultad vs Tasa de Éxito</h4>
-                <div className="space-y-2">
-                  {analytics.difficulty_trends.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Dificultad {item.difficulty}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium ">{item.count} procedimientos</span>
-                        <span className={`text-xs ${getDifficultyColor(item.difficulty)}`}>
-                          {(item.success_rate ?? 0).toFixed(0)}% éxito
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Supervisor Performance */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium  mb-3">Supervisor Performance</h4>
-                <div className="space-y-2">
-                  {analytics.supervisor_stats.slice(0, 5).map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700 truncate">{item.supervisor}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium ">{item.procedures}</span>
-                        <span className="text-xs" style={{ color: 'var(--state-success)' }}>({(item.avg_success_rate ?? 0).toFixed(0)}% avg)</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Complication Rates */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium  mb-3">Complication Types</h4>
-                <div className="space-y-2">
-                  {analytics.complication_rates.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700 capitalize">{item.complication_type.replace('_', ' ')}</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium ">{item.count}</span>
-                        <span className="text-xs text-gray-800">({(item.percentage ?? 0).toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="space-y-4">
 
       {/* Search and Filters */}
       <div className="medical-card p-6">
@@ -576,75 +271,75 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-[var(--bg-tertiary)]">
+            <table className="min-w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Paciente
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Indicación
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Supervisor
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Residente
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Rol
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Resultado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Intentos
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Complicaciones
                   </th>
-                  <th className="px-6 py-3 text-left text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Dificultad
                   </th>
-                  <th className="px-6 py-3 text-right text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white">
                 {procedures.map((procedure) => (
-                  <tr key={procedure.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                  <tr key={procedure.id} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                        {new Date(procedure.procedure_date).toLocaleDateString()}
+                        <Calendar className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
+                        <span className="font-medium">{new Date(procedure.procedure_date).toLocaleDateString()}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
                       <div>
-                        <div className="font-medium">{procedure.patient_initials}</div>
+                        <div className="font-semibold text-gray-900">{procedure.patient_initials}</div>
                         {procedure.patient_age && (
-                          <div className="text-[var(--text-secondary)]">{procedure.patient_age}y {procedure.patient_gender}</div>
+                          <div className="text-xs text-gray-500">{procedure.patient_age}a · {procedure.patient_gender}</div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                    <td className="px-4 py-3 text-sm text-gray-700">
                       <div className="max-w-xs truncate">{procedure.indication}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                       <div className="flex items-center">
-                        <User className="h-4 w-4 text-gray-400 mr-2" />
+                        <User className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
                         {procedure.supervisor}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
                       <div className="flex items-center">
-                        <User className="h-4 w-4 text-blue-400 mr-2" />
+                        <User className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
                         <div>
-                          <div className="font-medium text-[var(--text-primary)]">
+                          <div className="font-medium text-gray-900">
                             {procedure.resident_name || 'Desconocido'}
                           </div>
                           {procedure.resident_level && (
@@ -653,10 +348,10 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600">
                       <span className="capitalize">{procedure.trainee_role?.replace('_', ' ')}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
                       <span
                         className={`badge ${procedure.successful ? 'badge-success' : 'badge-error'}`}
                         aria-label={procedure.successful ? 'Procedimiento exitoso' : 'Procedimiento fallido'}
@@ -669,10 +364,10 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         {procedure.successful ? 'Exitoso' : 'Fallido'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm md:text-base text-[var(--text-primary)]">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center font-medium text-gray-900">
                       {procedure.attempts_count}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm ">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
                       {(() => {
                         const count = getComplicationCount(procedure);
                         const cls = count > 0 ? 'badge badge-error' : 'badge badge-success';
@@ -688,7 +383,7 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
                       {(() => {
                         const lvl = procedure.technical_difficulty;
                         const label = lvl == null ? 'N/A' : (lvl <= 2 ? 'Baja' : (lvl === 3 ? 'Media' : 'Alta'));
@@ -702,35 +397,35 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2 items-center">
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                      <div className="flex justify-end space-x-1 items-center">
                         <button
                           onClick={() => onView?.(procedure)}
-                          className="text-blue-700 hover:"
-                          title="View details"
+                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                          title="Ver detalles"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => onEdit?.(procedure)}
-                          className="text-blue-700 hover:text-blue-900"
-                          title="Edit procedure"
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          title="Editar"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(procedure.id)}
-                          className="text-blue-700 hover:text-blue-900"
-                          title="Delete procedure"
+                          className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
+                          title="Eliminar"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                         {canAward && (
-                          <div className="flex items-center gap-2 ml-2">
+                          <div className="flex items-center gap-1 ml-2 border-l border-gray-200 pl-2">
                             <input type="number" min="0" value={awardPointsMap[procedure.id] ?? 0}
                               onChange={e=>setAwardPointsMap(prev=>({ ...prev, [procedure.id]: Number(e.target.value) }))}
-                              className="w-20 rounded border border-gray-300 dark:border-gray-600 p-1" />
-                            <button onClick={() => handleAward(procedure)} className="px-2 py-1 rounded bg-blue-600 text-white text-xs">Sumar pts</button>
+                              className="w-16 rounded border border-gray-300 px-2 py-1 text-xs" />
+                            <button onClick={() => handleAward(procedure)} className="px-2 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700">+Pts</button>
                           </div>
                         )}
                       </div>

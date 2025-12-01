@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, Users, GraduationCap, BookOpen, FileText, AlertCircle } from 'lucide-react';
+import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, GraduationCap } from 'lucide-react';
 import { supabase } from './utils/supabase';
-import SectionHeader from './components/layout/SectionHeader';
 
 interface AcademicClass {
   id?: string;
@@ -23,14 +22,14 @@ interface AcademicClass {
 
 interface ClasesSchedulerProps {
   isAdminMode?: boolean;
+  filterType?: 'clases' | 'rotaciones';
 }
 
-const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }) => {
+const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false, filterType = 'clases' }) => {
   const [classes, setClasses] = useState<AcademicClass[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<string | null>(null);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(['magistral', 'ateneo', 'seminario', 'examen', 'taller', 'rotacion']);
 
   const [newClass, setNewClass] = useState<AcademicClass>({
     title: '',
@@ -115,12 +114,13 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
     fetchClasses();
   }, []);
 
+  // Mantener todos los tipos para compatibilidad con BD, pero unificar labels en UI
   const classTypeConfig = {
-    magistral: { color: 'bg-blue-500', label: 'Clase Magistral', icon: GraduationCap },
-    ateneo: { color: 'bg-green-500', label: 'Ateneo', icon: Users },
-    seminario: { color: 'bg-purple-500', label: 'Seminario', icon: BookOpen },
-    examen: { color: 'bg-red-500', label: 'Examen', icon: AlertCircle },
-    taller: { color: 'bg-orange-500', label: 'Taller', icon: FileText },
+    magistral: { color: 'bg-blue-500', label: 'Clase', icon: GraduationCap },
+    ateneo: { color: 'bg-blue-500', label: 'Clase', icon: GraduationCap },
+    seminario: { color: 'bg-blue-500', label: 'Clase', icon: GraduationCap },
+    examen: { color: 'bg-blue-500', label: 'Clase', icon: GraduationCap },
+    taller: { color: 'bg-blue-500', label: 'Clase', icon: GraduationCap },
     rotacion: { color: 'bg-teal-500', label: 'Rotación', icon: Clock }
   };
 
@@ -228,89 +228,49 @@ const ClasesScheduler: React.FC<ClasesSchedulerProps> = ({ isAdminMode = false }
     });
   };
 
+  // Función helper para mapear tipos de BD a categorías UI
+  const mapActivityType = (dbType: string): 'clases' | 'rotaciones' => {
+    if (dbType === 'rotacion') return 'rotaciones';
+    // magistral, ateneo, seminario, taller, examen → todos = 'clases'
+    return 'clases';
+  };
 
-  const filteredClasses = classes.filter(classItem =>
-    selectedTypes.includes(classItem.type)
-  );
+  const filteredClasses = classes.filter(classItem => {
+    const mappedType = mapActivityType(classItem.type);
+    return mappedType === filterType;
+  });
 
   const upcomingClasses = filteredClasses.filter(classItem =>
     new Date(classItem.start_date) > new Date()
   ).slice(0, 5);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header unificado */}
-      <div className="max-w-6xl mx-auto mb-6">
-      <SectionHeader
-        title={"Cronograma de Clases"}
-        subtitle={"Gestión del calendario académico"}
-        actions={
-          isAdminMode ? (
-            <button onClick={() => setShowForm(true)} className="flex items-center space-x-2 btn-accent px-3 py-2 text-sm rounded">
-              <Plus className="h-4 w-4" />
-              <span>Nueva Clase</span>
-            </button>
-          ) : null
-        }
-      />
-      </div>
-
-      {/* Type Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">Filtrar por tipo de actividad</h3>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(classTypeConfig).map(([type, config]) => {
-            const Icon = config.icon;
-            const isSelected = selectedTypes.includes(type);
-
-            return (
-              <button
-                key={type}
-                onClick={() => {
-                  if (isSelected) {
-                    setSelectedTypes(selectedTypes.filter(t => t !== type));
-                  } else {
-                    setSelectedTypes([...selectedTypes, type]);
-                  }
-                }}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isSelected
-                    ? `${config.color} text-white`
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{config.label}</span>
-              </button>
-            );
-          })}
+    <div className="p-6 space-y-4">
+      {/* Admin actions */}
+      {isAdminMode && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nueva {filterType === 'clases' ? 'Clase' : 'Rotación'}</span>
+          </button>
         </div>
-      </div>
-
-      {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start space-x-3">
-          <Calendar className="h-5 w-5 text-blue-600 mt-0.5" />
-          <div>
-            <h4 className="text-sm font-medium text-blue-800">Eventos Académicos Integrados</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              Esta sección muestra tanto las clases específicas de academia como los eventos académicos
-              creados en el cronograma principal. Los eventos marcados con 📅 provienen del calendario general.
-            </p>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Upcoming Classes */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Próximas Clases</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            Próximas {filterType === 'clases' ? 'Clases' : 'Rotaciones'}
+          </h3>
         </div>
         <div className="p-4">
           {upcomingClasses.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No hay clases programadas próximamente</p>
+              <p>No hay {filterType === 'clases' ? 'clases' : 'rotaciones'} programadas próximamente</p>
             </div>
           ) : (
             <div className="space-y-4">

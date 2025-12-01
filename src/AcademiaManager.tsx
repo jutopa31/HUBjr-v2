@@ -1,100 +1,67 @@
 import React, { useState } from 'react';
-import { Calendar, FolderOpen, FileText } from 'lucide-react';
 import ClasesScheduler from './ClasesScheduler';
 import RecursosManager from './RecursosManager';
-import SectionHeader from './components/layout/SectionHeader';
 
 interface AcademiaManagerProps {
   isAdminMode?: boolean;
 }
 
-const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }) => {
-  const [activeTab, setActiveTab] = useState<'clases' | 'recursos'>('clases');
+type ContentType = 'clases' | 'rotaciones' | 'recursos';
 
-  const tabs = [
-    {
-      id: 'clases' as const,
-      label: 'Clases y Actividades',
-      icon: Calendar,
-      description: 'Cronograma académico, clases magistrales y ateneos'
-    },
-    {
-      id: 'recursos' as const,
-      label: 'Recursos Educativos',
-      icon: FolderOpen,
-      description: 'Guías, papers y materiales de estudio'
-    }
+const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }) => {
+  const [contentType, setContentType] = useState<ContentType>('clases');
+
+  const contentOptions = [
+    { value: 'clases' as const, label: 'Clases', description: 'Magistrales, ateneos y seminarios' },
+    { value: 'rotaciones' as const, label: 'Rotaciones', description: 'Rotaciones clínicas' },
+    { value: 'recursos' as const, label: 'Recursos educativos', description: 'Guías, papers y materiales' }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto mt-4 mb-6">
-        <SectionHeader
-          title={"Academia"}
-          subtitle={"Gestión académica y recursos educativos"}
-          actions={
-            isAdminMode ? (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium btn-soft">
-                Modo Admin
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto mt-4 max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-500">Academia</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Clases, actividades y recursos en un solo lugar</h1>
+              <p className="text-sm text-gray-600">
+                Cronograma académico integrado con la biblioteca de materiales para que planifiques y prepares tus sesiones.
+              </p>
+            </div>
+            {isAdminMode && (
+              <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                Modo admin
               </span>
-            ) : null
-          }
-        />
-      </div>
+            )}
+          </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    isActive
-                      ? 'border-blue-600 text-blue-700'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="text-sm font-medium text-gray-700">Mostrar:</label>
+            <select
+              value={contentType}
+              onChange={(e) => setContentType(e.target.value as ContentType)}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            >
+              {contentOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className="text-sm text-gray-500">
+              {contentOptions.find((opt) => opt.value === contentType)?.description}
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* Tab Description */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-2">
-            <FileText className="h-4 w-4 text-blue-600" />
-            <p className="text-sm text-blue-800">
-              {tabs.find(tab => tab.id === activeTab)?.description}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        {activeTab === 'clases' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <ClasesScheduler isAdminMode={isAdminMode} />
-          </div>
-        )}
-
-        {activeTab === 'recursos' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          {contentType === 'recursos' ? (
             <RecursosManager isAdminMode={isAdminMode} />
-          </div>
-        )}
+          ) : (
+            <ClasesScheduler isAdminMode={isAdminMode} filterType={contentType} />
+          )}
+        </div>
       </div>
     </div>
   );

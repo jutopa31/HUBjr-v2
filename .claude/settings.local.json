@@ -40,8 +40,11 @@
       "Bash(find:*)",
       "Bash(timeout 2 2:*)",
       "Bash(nul)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(gh pr create:*)",
+      "Bash(timeout 5 npm run build:*)"
     ],
     "deny": []
-  }
+  },
+  "outputStyle": "default"
 }

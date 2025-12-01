@@ -97,11 +97,6 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
     return PROCEDURE_TYPES.find(t => t.value === type) || PROCEDURE_TYPES[0];
   };
 
-  const getSuccessRate = () => {
-    if (procedures.length === 0) return 0;
-    return Math.round((procedures.filter(p => p.success).length / procedures.length) * 100);
-  };
-
   if (proceduresLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -111,41 +106,31 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Stethoscope className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Registro de Procedimientos</h2>
-            <p className="text-sm text-gray-600">
-              {procedures.length} procedimientos registrados • {getSuccessRate()}% tasa de éxito
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nuevo Procedimiento</span>
-          </button>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      </div>
+    <div className="relative h-full">
+      {/* Close Button */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 z-40 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+          title="Cerrar"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      )}
+
+      {/* Floating Add Button */}
+      {!showAddForm && (
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-110"
+          title="Nuevo Procedimiento"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+      )}
 
       {error && (
-        <div className="medical-card card-error rounded-lg p-4">
+        <div className="medical-card card-error rounded-lg p-4 mb-4">
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 text-blue-700 mr-2" />
             <span className="text-sm text-gray-800">{error}</span>
@@ -322,17 +307,18 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
       )}
 
       {/* Procedures List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {procedures.length === 0 ? (
-          <div className="text-center py-12">
-            <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay procedimientos registrados</h3>
-            <p className="text-gray-600 mb-4">Comience a registrar sus procedimientos para hacer seguimiento de su progreso.</p>
+          <div className="text-center py-16">
+            <Stethoscope className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No hay procedimientos registrados</h3>
+            <p className="text-gray-600 mb-6">Comience a registrar sus procedimientos para hacer seguimiento de su progreso.</p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 mx-auto"
             >
-              Registrar Primer Procedimiento
+              <Plus className="h-5 w-5" />
+              <span>Registrar Primer Procedimiento</span>
             </button>
           </div>
         ) : (
@@ -340,61 +326,63 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
             const typeInfo = getProcedureTypeInfo(procedure.procedure_type);
 
             return (
-              <div key={procedure.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className={`p-2 rounded-lg ${procedure.success ? 'bg-green-100' : 'bg-red-100'}`}>
+              <div key={procedure.id} className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-lg transition-all hover:border-blue-300">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start space-x-2 flex-1">
+                    <div className={`p-1.5 rounded-lg ${procedure.success ? 'bg-green-100' : 'bg-red-100'}`}>
                       {procedure.success ? (
-                        <CheckCircle className="h-5 w-5 text-blue-700" />
+                        <CheckCircle className="h-4 w-4 text-green-600" />
                       ) : (
-                        <AlertTriangle className="h-5 w-5 text-blue-700" />
+                        <AlertTriangle className="h-4 w-4 text-red-600" />
                       )}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-lg font-medium text-gray-900">{procedure.procedure_name}</h3>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1 flex-wrap">
+                        <h3 className="text-base font-semibold text-gray-900">{procedure.procedure_name}</h3>
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full whitespace-nowrap">
                           {typeInfo.label}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-2">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 mb-2">
                         <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
+                          <Calendar className="h-3.5 w-3.5" />
                           <span>{formatDate(procedure.date_performed)}</span>
                         </div>
                         {procedure.patient_name && (
                           <div className="flex items-center space-x-1">
-                            <User className="h-4 w-4" />
+                            <User className="h-3.5 w-3.5" />
                             <span>{procedure.patient_name}</span>
                           </div>
                         )}
                         {procedure.supervisor && (
                           <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>Supervisor: {procedure.supervisor}</span>
+                            <Users className="h-3.5 w-3.5" />
+                            <span>{procedure.supervisor}</span>
                           </div>
                         )}
                       </div>
 
                       {procedure.notes && (
-                        <div className="mb-2">
-                          <p className="text-sm text-gray-700">{procedure.notes}</p>
+                        <div className="mb-1.5">
+                          <p className="text-xs text-gray-700 line-clamp-2">{procedure.notes}</p>
                         </div>
                       )}
 
                       {procedure.learning_points && (
-                        <div className="mb-2">
+                        <div className="mb-1.5">
                           <div className="flex items-start space-x-1">
-                            <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
-                            <p className="text-sm text-blue-700 font-medium">Aprendizaje: {procedure.learning_points}</p>
+                            <FileText className="h-3.5 w-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-blue-700 font-medium line-clamp-2">
+                              <span className="font-semibold">Aprendizaje:</span> {procedure.learning_points}
+                            </p>
                           </div>
                         </div>
                       )}
 
                       {!procedure.success && procedure.complications && (
-                        <div className="mt-2 p-2 medical-card card-error rounded">
-                          <p className="text-sm text-gray-800">
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                          <p className="text-xs text-red-800">
                             <strong>Complicaciones:</strong> {procedure.complications}
                           </p>
                         </div>
@@ -402,18 +390,18 @@ const ProcedureLogger: React.FC<ProcedureLoggerProps> = ({ onClose }) => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-1 flex-shrink-0">
                     <button
                       onClick={() => handleEdit(procedure)}
-                      className="p-2 text-gray-400 hover:text-blue-600 rounded-lg"
-                      title="Editar procedimiento"
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Editar"
                     >
                       <FileText className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(procedure.id!)}
-                      className="p-2 text-gray-400 hover:text-blue-700 rounded-lg"
-                      title="Eliminar procedimiento"
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Eliminar"
                     >
                       <X className="h-4 w-4" />
                     </button>
