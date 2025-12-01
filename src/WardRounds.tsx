@@ -809,6 +809,22 @@ const WardRounds: React.FC = () => {
         </div>
         {isEditing ? (
           <div className="space-y-2">
+            {field === 'examen_fisico' && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() => setInlineDetailValues((prev) => ({
+                    ...prev,
+                    examen_fisico: (prev.examen_fisico as string) && (prev.examen_fisico as string).trim()
+                      ? prev.examen_fisico
+                      : 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.'
+                  }))}
+                >
+                  EF normal
+                </button>
+              </div>
+            )}
             {multiline ? (
               <textarea
                 value={value}
@@ -1780,7 +1796,19 @@ const WardRounds: React.FC = () => {
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">EF/NIHSS/ABCD2</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewPatient((prev) => ({
+                        ...prev,
+                        examen_fisico: prev.examen_fisico ? prev.examen_fisico : 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.'
+                      }))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      EF normal
+                    </button>
+                  </div>
                   <textarea
                     value={newPatient.examen_fisico}
                     onChange={(e) => setNewPatient({...newPatient, examen_fisico: e.target.value})}
@@ -2516,7 +2544,19 @@ const WardRounds: React.FC = () => {
                   <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">EF/NIHSS/ABCD2</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
+                    <button
+                      type="button"
+                      onClick={() => setEditingPatient((prev) => ({
+                        ...prev,
+                        examen_fisico: prev.examen_fisico ? prev.examen_fisico : 'EF normal. Paciente vigil, orientado, sin focalidad. PA estable. NIHSS 0.'
+                      }))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      EF normal
+                    </button>
+                  </div>
                   <textarea
                     value={editingPatient.examen_fisico}
                     onChange={(e) => setEditingPatient({...editingPatient, examen_fisico: e.target.value})}
