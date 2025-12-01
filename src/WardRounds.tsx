@@ -33,6 +33,7 @@ interface Patient {
   fecha: string;
   image_thumbnail_url?: string;
   image_full_url?: string;
+  exa_url?: string;
   assigned_resident_id?: string;
 }
 
@@ -66,6 +67,7 @@ const WardRounds: React.FC = () => {
     pendientes: '',
     image_thumbnail_url: '',
     image_full_url: '',
+    exa_url: '',
     fecha: new Date().toISOString().split('T')[0],
     assigned_resident_id: undefined
   };
@@ -881,7 +883,9 @@ const WardRounds: React.FC = () => {
   const renderImagePreviewCard = () => {
     const rawThumb = (inlineDetailValues.image_thumbnail_url as string) || '';
     const rawFull = (inlineDetailValues.image_full_url as string) || '';
+    const rawExa = (inlineDetailValues.exa_url as string) || '';
     const fullImageUrl = normalizeUrl(rawFull);
+    const exaUrl = normalizeUrl(rawExa);
     const thumbnailUrl = normalizeUrl(rawThumb) || fullImageUrl;
     const hasImage = Boolean(thumbnailUrl);
 
@@ -922,7 +926,18 @@ const WardRounds: React.FC = () => {
             </span>
             <div className="flex items-center space-x-2">
               <h4 className="text-sm font-semibold text-[var(--text-primary)]">Miniatura</h4>
-              {fullImageUrl && (
+              {exaUrl && (
+                <a
+                  href={exaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-xs"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>EXA</span>
+                </a>
+              )}
+              {!exaUrl && fullImageUrl && (
                 <a
                   href={fullImageUrl}
                   target="_blank"
@@ -948,6 +963,16 @@ const WardRounds: React.FC = () => {
                   onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, image_full_url: e.target.value }))}
                   className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="https://.../imagen.jpg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL para EXA / visor</label>
+                <input
+                  type="url"
+                  value={rawExa}
+                  onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, exa_url: e.target.value }))}
+                  className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://imagenes.hospitalposadas.gob.ar/viewer#..."
                 />
               </div>
               <div>
