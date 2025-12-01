@@ -76,7 +76,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   'user-dashboard': {
     id: 'user-dashboard',
     label: 'Mi Panel',
-    audience: 'core',
+    audience: 'auxiliary',
     corePath: '/mi-panel',
     auxiliaryPath: '/aux/mi-panel'
   },
@@ -104,7 +104,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   ranking: {
     id: 'ranking',
     label: 'Ranking',
-    audience: 'core',
+    audience: 'auxiliary',
     corePath: '/ranking',
     auxiliaryPath: '/aux/ranking'
   },
@@ -126,15 +126,15 @@ export const CORE_MODULE_IDS: ModuleId[] = [
   'interconsultas',
   'diagnostic',
   'pacientes-post-alta',
-  'user-dashboard',
   'lumbar-punctures',
-  'academia',
-  'ranking'
+  'academia'
 ];
 
 export const AUXILIARY_MODULE_IDS: ModuleId[] = [
   'saved-patients',
-  'resident-management'
+  'resident-management',
+  'user-dashboard',
+  'ranking'
 ];
 
 export const DEFAULT_AUXILIARY_NAMESPACE = '/aux';

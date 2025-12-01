@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2 } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
@@ -8,6 +8,7 @@ import { useAuthContext } from './components/auth/AuthProvider';
 import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 import SectionHeader from './components/layout/SectionHeader';
+import { uploadImageToStorage } from './services/storageService';
 
 interface Patient {
   id?: string;
@@ -24,6 +25,8 @@ interface Patient {
   plan: string;
   pendientes: string;
   fecha: string;
+  image_thumbnail_url?: string;
+  image_full_url?: string;
   assigned_resident_id?: string;
 }
 
@@ -38,6 +41,8 @@ const WardRounds: React.FC = () => {
   const { user, loading: authLoading } = useAuthContext();
   // Feature flag: toggle DNI duplicate verification
   const ENABLE_DNI_CHECK = false;
+  const normalizeUrl = (url?: string) =>
+    url && (url.startsWith('http://') || url.startsWith('https://')) ? url : '';
   const emptyPatient: Patient = {
     cama: '',
     dni: '',
@@ -51,6 +56,8 @@ const WardRounds: React.FC = () => {
     diagnostico: '',
     plan: '',
     pendientes: '',
+    image_thumbnail_url: '',
+    image_full_url: '',
     fecha: new Date().toISOString().split('T')[0],
     assigned_resident_id: undefined
   };
@@ -67,6 +74,10 @@ const WardRounds: React.FC = () => {
   const [activeInlineField, setActiveInlineField] = useState<keyof Patient | null>(null);
   const [isDetailSaving, setIsDetailSaving] = useState(false);
   const [isDetailEditMode, setIsDetailEditMode] = useState(false);
+  const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
+  const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -451,10 +462,13 @@ const WardRounds: React.FC = () => {
 
   // Abrir modal + ventana detallada al seleccionar paciente
   const handlePatientSelection = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setInlineDetailValues(patient);
+    const patientWithDefaults = { ...emptyPatient, ...patient };
+    setSelectedPatient(patientWithDefaults);
+    setInlineDetailValues(patientWithDefaults);
     setActiveInlineField(null);
     setIsDetailEditMode(false);
+    setImagePreviewError(null);
+    setImageUploadError(null);
   };
 
   // Ventana emergente con todos los datos del paciente en formato legible
@@ -754,6 +768,135 @@ const WardRounds: React.FC = () => {
         ) : (
           <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-5">
             {displayValue}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  const renderImagePreviewCard = () => {
+    const rawThumb = (inlineDetailValues.image_thumbnail_url as string) || '';
+    const rawFull = (inlineDetailValues.image_full_url as string) || '';
+    const fullImageUrl = normalizeUrl(rawFull);
+    const thumbnailUrl = normalizeUrl(rawThumb) || fullImageUrl;
+    const hasImage = Boolean(thumbnailUrl);
+
+    const patientIdForUpload = selectedPatient?.id || '';
+
+    const handleFileUpload = async (fileList: FileList | null) => {
+      if (!fileList || fileList.length === 0) return;
+      if (!patientIdForUpload) {
+        setImageUploadError('No hay ID de paciente; guarda primero el paciente antes de subir imagen.');
+        return;
+      }
+      const file = fileList[0];
+      setIsUploadingImage(true);
+      setImageUploadError(null);
+      setImagePreviewError(null);
+      try {
+        const result = await uploadImageToStorage(file, patientIdForUpload);
+        const chosenUrl = result.signedUrl || result.publicUrl;
+        setInlineDetailValues((prev) => ({
+          ...prev,
+          image_full_url: chosenUrl,
+          image_thumbnail_url: chosenUrl
+        }));
+      } catch (e: any) {
+        console.error('[WardRounds] Image upload failed', e);
+        setImageUploadError(e?.message || 'No se pudo subir la imagen');
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
+
+    return (
+      <div className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+              IMG
+            </span>
+            <div className="flex items-center space-x-2">
+              <h4 className="text-sm font-semibold text-[var(--text-primary)]">Miniatura</h4>
+              {fullImageUrl && (
+                <a
+                  href={fullImageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-xs"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>EXA</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {isDetailEditMode ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
+                <input
+                  type="url"
+                  value={rawFull}
+                  onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, image_full_url: e.target.value }))}
+                  className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://.../imagen.jpg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
+                <input
+                  type="url"
+                  value={rawThumb}
+                  onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, image_thumbnail_url: e.target.value }))}
+                  className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://.../thumbnail.jpg"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">O sube una imagen a Supabase Storage</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files)}
+                className="block w-full text-sm text-gray-700"
+                disabled={isUploadingImage}
+              />
+              <p className="text-xs text-[var(--text-secondary)]">Se guardará en ward-images (usa link directo o upload).</p>
+              {isUploadingImage && <p className="text-xs text-blue-700">Subiendo imagen...</p>}
+              {imageUploadError && <p className="text-xs text-red-600">{imageUploadError}</p>}
+            </div>
+          </div>
+        ) : hasImage ? (
+          <div className="space-y-2">
+            <button
+              type="button"
+              className="relative w-full overflow-hidden rounded-lg border border-[var(--border-primary)] group aspect-square"
+              onClick={() => setImageLightboxUrl(fullImageUrl || thumbnailUrl)}
+            >
+              <img
+                src={thumbnailUrl}
+                alt="Vista previa de imagen"
+                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                onError={() => {
+                  setImagePreviewError('No se pudo cargar la miniatura. Revisa que el link sea público/directo.');
+                  console.error('[WardRounds] Image preview failed', { thumbnailUrl, fullImageUrl });
+                }}
+              />
+              <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-sm space-x-2">
+                <Maximize2 className="h-5 w-5" />
+                <span>Ver en grande</span>
+              </div>
+            </button>
+            {imagePreviewError && <p className="text-xs text-red-600">{imagePreviewError}</p>}
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--text-secondary)]">
+            Sin imagen. Usa el link directo o sube un archivo para ver la miniatura.
           </p>
         )}
       </div>
@@ -1466,6 +1609,37 @@ const WardRounds: React.FC = () => {
                 </div>
               </section>
 
+              {/* Sección 4b: Imágenes y links */}
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+                <div className="flex items-center mb-4">
+                  <ImageIcon className="h-5 w-5 text-blue-700 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Imágenes / Multimedia</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
+                    <input
+                      type="url"
+                      value={newPatient.image_thumbnail_url}
+                      onChange={(e) => setNewPatient({ ...newPatient, image_thumbnail_url: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://.../thumbnail.jpg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
+                    <input
+                      type="url"
+                      value={newPatient.image_full_url}
+                      onChange={(e) => setNewPatient({ ...newPatient, image_full_url: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://.../imagen.jpg"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">Usa enlaces directos (Supabase Storage o Google Drive con link de vista) para permitir la previsualización y ampliación.</p>
+              </section>
+
               {/* Sección 5: Diagnóstico y Plan */}
               <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
@@ -1777,7 +1951,7 @@ const WardRounds: React.FC = () => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEditingId(patient.id || null);
-                                setEditingPatient(patient);
+                                setEditingPatient({ ...emptyPatient, ...patient });
                               }}
                               className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Editar paciente completo"
@@ -1896,6 +2070,7 @@ const WardRounds: React.FC = () => {
             })}
           </div>
         </div>
+      </div>
 
       {/* Modal de detalle con ediciA3n inline */}
       {selectedPatient && (
@@ -1962,6 +2137,7 @@ const WardRounds: React.FC = () => {
                     setSelectedPatient(null);
                     setActiveInlineField(null);
                     setIsDetailEditMode(false);
+                    setImageLightboxUrl(null);
                   }}
                   title="Cerrar"
                 >
@@ -1971,16 +2147,19 @@ const WardRounds: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[var(--bg-secondary)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {renderDetailCard('Antecedentes', 'antecedentes', 'Sin antecedentes', { multiline: true })}
-                {renderDetailCard('Motivo de Consulta', 'motivo_consulta', 'Sin motivo', { multiline: true })}
-                {renderDetailCard('EF/NIHSS/ABCD2', 'examen_fisico', 'Sin examen', { multiline: true })}
-                {renderDetailCard('Estudios Complementarios', 'estudios', 'Sin estudios', { multiline: true })}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {renderDetailCard('Diagnostico', 'diagnostico', 'Sin diagnostico', { multiline: true })}
-                {renderDetailCard('Plan', 'plan', 'Sin plan', { multiline: true })}
-                {renderDetailCard('Pendientes', 'pendientes', 'Sin pendientes', { multiline: true })}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)] gap-4 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {renderDetailCard('Antecedentes', 'antecedentes', 'Sin antecedentes', { multiline: true })}
+                  {renderDetailCard('Motivo de Consulta', 'motivo_consulta', 'Sin motivo', { multiline: true })}
+                  {renderDetailCard('EF/NIHSS/ABCD2', 'examen_fisico', 'Sin examen', { multiline: true })}
+                  {renderDetailCard('Estudios Complementarios', 'estudios', 'Sin estudios', { multiline: true })}
+                  {renderDetailCard('Diagnostico', 'diagnostico', 'Sin diagnostico', { multiline: true })}
+                  {renderDetailCard('Plan', 'plan', 'Sin plan', { multiline: true })}
+                  {renderDetailCard('Pendientes', 'pendientes', 'Sin pendientes', { multiline: true })}
+                </div>
+                <div className="flex justify-end items-start">
+                  <div className="w-full max-w-xs lg:max-w-sm">{renderImagePreviewCard()}</div>
+                </div>
               </div>
             </div>
 
@@ -2166,6 +2345,37 @@ const WardRounds: React.FC = () => {
                 </div>
               </section>
 
+              {/* Sección 4b: Imágenes y links */}
+              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+                <div className="flex items-center mb-4">
+                  <ImageIcon className="h-5 w-5 text-blue-700 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">Imágenes / Multimedia</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
+                    <input
+                      type="url"
+                      value={editingPatient.image_thumbnail_url || ''}
+                      onChange={(e) => setEditingPatient({ ...editingPatient, image_thumbnail_url: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://.../thumbnail.jpg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
+                    <input
+                      type="url"
+                      value={editingPatient.image_full_url || ''}
+                      onChange={(e) => setEditingPatient({ ...editingPatient, image_full_url: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://.../imagen.jpg"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">Enlaces directos permiten previsualizar y abrir la imagen ampliada desde el modal.</p>
+              </section>
+
               {/* Sección 5: Diagnóstico y Plan */}
               <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
@@ -2275,18 +2485,56 @@ const WardRounds: React.FC = () => {
         </div>
       )}
         
-        {patients.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="mt-4 text-blue-600 hover:text-blue-800"
-            >
-              Agregar el primer paciente
-            </button>
+      {patients.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="mt-4 text-blue-600 hover:text-blue-800"
+          >
+            Agregar el primer paciente
+          </button>
+        </div>
+      )}
+    </div>
+
+      {imageLightboxUrl && (
+        <div className="modal-overlay" onClick={() => setImageLightboxUrl(null)}>
+          <div
+            className="modal-content w-[80vw] h-[80vh] max-w-5xl bg-black text-white rounded-2xl shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
+              <span className="text-xs text-white/80 truncate">{imageLightboxUrl}</span>
+              <div className="flex items-center space-x-2">
+                <a
+                  href={imageLightboxUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 px-3 py-1 rounded bg-white/10 hover:bg-white/20 text-xs font-semibold"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Abrir</span>
+                </a>
+                <button
+                  type="button"
+                  className="p-2 rounded bg-white/10 hover:bg-white/20"
+                  onClick={() => setImageLightboxUrl(null)}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-4 bg-black">
+              <img
+                src={imageLightboxUrl}
+                alt="Vista ampliada"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal para eliminar/archivar paciente */}
       <DeletePatientModal
@@ -2296,7 +2544,6 @@ const WardRounds: React.FC = () => {
         onConfirmDelete={handleDeleteAction}
         isProcessing={isProcessingDeletion}
       />
-      </div>
     </LoadingWithRecovery>
   );
 };
