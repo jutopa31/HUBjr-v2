@@ -9,6 +9,7 @@ import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 import SectionHeader from './components/layout/SectionHeader';
 import { uploadImageToStorage } from './services/storageService';
+import useEscapeKey from './hooks/useEscapeKey';
 import {
   fetchOutpatientPatients,
   addOutpatientPatient,
@@ -135,6 +136,53 @@ const WardRounds: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<{ id: string; nombre: string; dni: string } | null>(null);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
+
+  const closeOutpatientModal = () => setShowOutpatientModal(false);
+
+  const closeAddForm = () => {
+    setShowAddForm(false);
+    setNewPatient(emptyPatient);
+    setDniError('');
+  };
+
+  const closeEditingModal = () => {
+    setEditingId(null);
+    setEditingPatient(emptyPatient);
+    setDniError('');
+  };
+
+  const closeSelectedPatientModal = () => {
+    setSelectedPatient(null);
+    setActiveInlineField(null);
+    setIsDetailEditMode(false);
+    setImageLightboxUrl(null);
+  };
+
+  const closeImageLightbox = () => setImageLightboxUrl(null);
+
+  const isAnyModalOpen = showOutpatientModal || showAddForm || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
+
+  useEscapeKey(() => {
+    if (imageLightboxUrl) {
+      closeImageLightbox();
+      return;
+    }
+    if (selectedPatient) {
+      closeSelectedPatientModal();
+      return;
+    }
+    if (editingId) {
+      closeEditingModal();
+      return;
+    }
+    if (showAddForm) {
+      closeAddForm();
+      return;
+    }
+    if (showOutpatientModal) {
+      closeOutpatientModal();
+    }
+  }, isAnyModalOpen);
 
   // Apply section accent for this view
   useEffect(() => {
@@ -1577,7 +1625,7 @@ const WardRounds: React.FC = () => {
                   <p className="text-sm text-[var(--text-secondary)]">Vista compacta en modal</p>
                 </div>
               </div>
-              <button onClick={() => setShowOutpatientModal(false)} className="p-1 rounded-md btn-soft">
+              <button onClick={closeOutpatientModal} className="p-1 rounded-md btn-soft">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -1677,11 +1725,7 @@ const WardRounds: React.FC = () => {
             <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}>
               <h2 className="text-lg font-semibold">Agregar Nuevo Paciente</h2>
               <button
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewPatient(emptyPatient);
-                  setDniError(''); // Clear DNI error when closing
-                }}
+                onClick={closeAddForm}
                 className="p-1 rounded-md btn-soft"
               >
                 <X className="h-5 w-5" />
@@ -2390,12 +2434,7 @@ const WardRounds: React.FC = () => {
                 <button
                   type="button"
                   className="p-2 rounded hover:bg-gray-100 text-gray-500"
-                  onClick={() => {
-                    setSelectedPatient(null);
-                    setActiveInlineField(null);
-                    setIsDetailEditMode(false);
-                    setImageLightboxUrl(null);
-                  }}
+                  onClick={closeSelectedPatientModal}
                   title="Cerrar"
                 >
                   <X className="h-5 w-5" />
@@ -2454,11 +2493,7 @@ const WardRounds: React.FC = () => {
             <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10 rounded-t-2xl">
               <h2 className="text-lg font-semibold text-gray-900">Editar Paciente</h2>
               <button
-                onClick={() => {
-                  setEditingId(null);
-                  setEditingPatient(emptyPatient);
-                  setDniError(''); // Clear DNI error when closing
-                }}
+                onClick={closeEditingModal}
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
@@ -2771,11 +2806,11 @@ const WardRounds: React.FC = () => {
     </div>
 
       {imageLightboxUrl && (
-        <div className="modal-overlay" onClick={() => setImageLightboxUrl(null)}>
-          <div
-            className="modal-content w-[80vw] h-[80vh] max-w-5xl bg-black text-white rounded-2xl shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <div className="modal-overlay" onClick={closeImageLightbox}>
+        <div
+          className="modal-content w-[80vw] h-[80vh] max-w-5xl bg-black text-white rounded-2xl shadow-2xl flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
             <div className="flex items-center justify-between px-4 py-2 border-b border-white/10">
               <span className="text-xs text-white/80 truncate">{imageLightboxUrl}</span>
               <div className="flex items-center space-x-2">
@@ -2791,7 +2826,7 @@ const WardRounds: React.FC = () => {
                 <button
                   type="button"
                   className="p-2 rounded bg-white/10 hover:bg-white/20"
-                  onClick={() => setImageLightboxUrl(null)}
+                  onClick={closeImageLightbox}
                 >
                   <X className="h-4 w-4" />
                 </button>
