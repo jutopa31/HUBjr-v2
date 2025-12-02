@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2 } from 'lucide-react';
+import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
@@ -36,6 +36,9 @@ interface Patient {
   image_full_url?: string;
   exa_url?: string;
   assigned_resident_id?: string;
+  display_order?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const NORMAL_EF_TEXT = 'Vigil, OTEP, MOE, PIR, Motor:, Sensitivo:, ROT, Babinski, Hoffman, Sensibilidad, Taxia';
@@ -137,6 +140,11 @@ const WardRounds: React.FC = () => {
   const [selectedPatientForDeletion, setSelectedPatientForDeletion] = useState<{ id: string; nombre: string; dni: string } | null>(null);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
 
+  // Estados para drag & drop y persistencia de orden
+  const [draggedPatientId, setDraggedPatientId] = useState<string | null>(null);
+  const [dragOverPatientId, setDragOverPatientId] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+
   const closeOutpatientModal = () => setShowOutpatientModal(false);
 
   const closeAddForm = () => {
@@ -210,6 +218,37 @@ const WardRounds: React.FC = () => {
     }
   }, [showOutpatientModal]);
 
+  const sortPatientsByDisplayOrder = (list: Patient[]) => {
+    return [...list].sort((a, b) => {
+      const orderA = typeof a.display_order === 'number' ? a.display_order : Number.MAX_SAFE_INTEGER;
+      const orderB = typeof b.display_order === 'number' ? b.display_order : Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
+  };
+
+  const normalizePatientOrders = (data: Patient[]) => {
+    const withDefaults = (data || []).map((patient, index) => ({
+      ...patient,
+      display_order: typeof patient.display_order === 'number' ? patient.display_order : index
+    }));
+    return sortPatientsByDisplayOrder(withDefaults);
+  };
+
+  const getNextDisplayOrder = () => {
+    if (!patients.length) return 0;
+    const maxOrder = patients.reduce((max, patient) => {
+      const current = typeof patient.display_order === 'number' ? patient.display_order : -1;
+      return current > max ? current : max;
+    }, -1);
+    return maxOrder + 1;
+  };
+
   const loadData = async () => {
     console.log('[WardRounds] loadData -> start');
     await Promise.all([loadPatients(), loadResidents()]);
@@ -222,6 +261,7 @@ const WardRounds: React.FC = () => {
         () => supabase
           .from('ward_round_patients')
           .select('*')
+          .order('display_order', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: false }),
         {
           timeout: 8000,
@@ -234,7 +274,7 @@ const WardRounds: React.FC = () => {
 
       if (error) throw error;
       console.log('[WardRounds] loadPatients -> rows:', (data || []).length);
-      setPatients(data || []);
+      setPatients(normalizePatientOrders(data || []));
     } catch (error) {
       console.error('[WardRounds] Error loading patients:', error);
       const errorMessage = formatQueryError(error);
@@ -440,11 +480,13 @@ const WardRounds: React.FC = () => {
     setExpandedRows(newExpandedRows);
   };
 
+  const orderedPatients = React.useMemo(() => sortPatientsByDisplayOrder(patients), [patients]);
+
   // Ordenar pacientes basado en el estado actual
   const sortedPatients = React.useMemo(() => {
-    if (!sortField) return patients;
+    if (!sortField) return orderedPatients;
 
-    return [...patients].sort((a, b) => {
+    return [...orderedPatients].sort((a, b) => {
       const aValue = a[sortField] || '';
       const bValue = b[sortField] || '';
       
@@ -458,7 +500,84 @@ const WardRounds: React.FC = () => {
         return bStr.localeCompare(aStr, 'es');
       }
     });
-  }, [patients, sortField, sortDirection]);
+  }, [orderedPatients, sortField, sortDirection]);
+
+  const resetDragState = () => {
+    setDraggedPatientId(null);
+    setDragOverPatientId(null);
+  };
+
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, patientId: string) => {
+    if (!patientId) return;
+    setDraggedPatientId(patientId);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOverRow = (event: React.DragEvent<HTMLDivElement>, patientId: string) => {
+    event.preventDefault();
+    if (dragOverPatientId !== patientId) {
+      setDragOverPatientId(patientId);
+    }
+  };
+
+  const persistNewOrder = async (orderedList: Patient[]) => {
+    setIsReordering(true);
+    setPatients(orderedList);
+    try {
+      const updates = orderedList
+        .map((patient, index) => ({
+          id: patient.id,
+          display_order: index
+        }))
+        .filter((p) => p.id);
+
+      const results = await Promise.all(
+        updates.map(({ id, display_order }) =>
+          supabase.from('ward_round_patients').update({ display_order }).eq('id', id as string)
+        )
+      );
+
+      const errorResult = results.find((r: any) => r.error);
+      if (errorResult?.error) throw errorResult.error;
+    } catch (error) {
+      console.error('[WardRounds] Error saving order:', error);
+      alert('No se pudo guardar el nuevo orden. Vuelve a intentar.');
+      await loadPatients();
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
+  const handleDropRow = async (event: React.DragEvent<HTMLDivElement>, targetPatientId: string) => {
+    event.preventDefault();
+    if (!draggedPatientId || draggedPatientId === targetPatientId) {
+      resetDragState();
+      return;
+    }
+
+    const currentList = sortField ? sortedPatients : orderedPatients;
+    const fromIndex = currentList.findIndex((p) => p.id === draggedPatientId);
+    const toIndex = currentList.findIndex((p) => p.id === targetPatientId);
+
+    if (fromIndex === -1 || toIndex === -1) {
+      resetDragState();
+      return;
+    }
+
+    const reordered = [...currentList];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    const withOrder = reordered.map((patient, index) => ({
+      ...patient,
+      display_order: index
+    }));
+
+    setSortField(null);
+    setSortDirection('asc');
+    resetDragState();
+    await persistNewOrder(withOrder);
+  };
 
   // Agregar nuevo paciente
   const addPatient = async () => {
@@ -471,9 +590,15 @@ const WardRounds: React.FC = () => {
     try {
       setIsSavingNewPatient(true);
       console.log('[WardRounds] addPatient -> payload:', newPatient);
+
+      const payload = {
+        ...newPatient,
+        display_order: getNextDisplayOrder()
+      };
+
       const { data, error } = await supabase
         .from('ward_round_patients')
-        .insert([newPatient])
+        .insert([payload])
         .select();
 
       if (error) throw error;
@@ -2129,18 +2254,30 @@ const WardRounds: React.FC = () => {
                   </div>
                 </div>
               </div>
+              <div className="hidden md:flex items-center space-x-2 px-6 pt-1 text-[11px] text-gray-500">
+                {isReordering && <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>}
+                <span>{isReordering ? 'Guardando nuevo orden...' : 'Arrastra el icono ⋮ para reordenar'}</span>
+              </div>
             </div>
 
             {/* Lista de pacientes */}
             {sortedPatients.map((patient) => {
               const isExpanded = expandedRows.has(patient.id || '');
+              const isDragTarget = dragOverPatientId === (patient.id || '');
               return (
-                <div key={patient.id} className={`expandable-row mb-2 ${
+                <div
+                  key={patient.id}
+                  className={`expandable-row mb-2 ${
                   patient.severidad === 'I' ? 'bg-green-50 border-l-4 border-l-green-400' :
                   patient.severidad === 'II' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' :
                   patient.severidad === 'III' ? 'bg-orange-50 border-l-4 border-l-orange-400' :
                   patient.severidad === 'IV' ? 'bg-red-50 border-l-4 border-l-red-400' : 'bg-white border-l-4 border-l-gray-300'
-                } ${isExpanded ? 'shadow-md mb-6' : 'hover:bg-gray-50'}`}>
+                } ${isExpanded ? 'shadow-md mb-6' : 'hover:bg-gray-50'} ${isDragTarget ? 'ring-2 ring-blue-200 ring-inset' : ''}`}
+                  onDragOver={(e) => handleDragOverRow(e, patient.id || '')}
+                  onDrop={(e) => handleDropRow(e, patient.id || '')}
+                  onDragEnd={resetDragState}
+                  onDragLeave={() => setDragOverPatientId(null)}
+                >
                   
                   {/* Fila principal compacta */}
                   <div 
@@ -2148,6 +2285,9 @@ const WardRounds: React.FC = () => {
                     onClick={() => handlePatientSelection(patient)}
                   >
                     <div className="flex items-center space-x-4 flex-1">
+                      <div className="flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing" draggable={Boolean(patient.id) && !isReordering} onClick={(e) => e.stopPropagation()} onDragStart={(e) => handleDragStart(e, patient.id || '')} title="Arrastrar para reordenar">
+                        <GripVertical className="h-4 w-4 text-gray-400" />
+                      </div>
                       {/* Icono de expansión */}
                       <div className="flex-shrink-0">
                         <button
@@ -2856,3 +2996,4 @@ const WardRounds: React.FC = () => {
 };
 
 export default WardRounds;
+

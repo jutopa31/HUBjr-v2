@@ -17,6 +17,7 @@ export interface OutpatientPatient {
   pendientes: string;
   fecha: string;
   assigned_resident_id?: string;
+  display_order?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -30,6 +31,7 @@ export async function fetchOutpatientPatients() {
       supabase
         .from('outpatient_ward_rounds')
         .select('*')
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false }),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), 12000)
