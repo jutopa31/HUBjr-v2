@@ -50,3 +50,43 @@ export async function uploadImageToStorage(file: File, patientId: string): Promi
     path
   };
 }
+
+/**
+ * Subir múltiples imágenes en paralelo
+ * @param files - Array de archivos File para subir
+ * @param patientId - ID del paciente para generar rutas
+ * @returns Promise con array de UploadedImage
+ */
+export async function uploadMultipleImagesToStorage(
+  files: File[],
+  patientId: string
+): Promise<UploadedImage[]> {
+  if (!patientId) {
+    throw new Error('El paciente no tiene ID; no se puede subir la imagen.');
+  }
+  if (files.length === 0) return [];
+
+  // Upload paralelo para mejor performance
+  const uploadPromises = files.map(file => uploadImageToStorage(file, patientId));
+
+  try {
+    const results = await Promise.all(uploadPromises);
+    return results;
+  } catch (error) {
+    console.error('[storageService] Error uploading multiple images:', error);
+    throw new Error(`Error al subir imágenes: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+  }
+}
+
+/**
+ * Eliminar imagen del storage
+ * @param path - Ruta de la imagen en el storage
+ */
+export async function deleteImageFromStorage(path: string): Promise<void> {
+  const { error } = await supabase.storage.from(BUCKET_NAME).remove([path]);
+
+  if (error) {
+    console.error('[storageService] Error deleting image:', error);
+    throw error;
+  }
+}

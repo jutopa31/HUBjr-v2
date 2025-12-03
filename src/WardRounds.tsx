@@ -8,7 +8,6 @@ import { useAuthContext } from './components/auth/AuthProvider';
 import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 import SectionHeader from './components/layout/SectionHeader';
-import { uploadImageToStorage } from './services/storageService';
 import useEscapeKey from './hooks/useEscapeKey';
 import {
   fetchOutpatientPatients,
@@ -32,9 +31,9 @@ interface Patient {
   plan: string;
   pendientes: string;
   fecha: string;
-  image_thumbnail_url?: string;
-  image_full_url?: string;
-  exa_url?: string;
+  image_thumbnail_url?: string[];
+  image_full_url?: string[];
+  exa_url?: (string | null)[];
   assigned_resident_id?: string;
   display_order?: number;
   created_at?: string;
@@ -69,9 +68,9 @@ const WardRounds: React.FC = () => {
     diagnostico: '',
     plan: '',
     pendientes: '',
-    image_thumbnail_url: '',
-    image_full_url: '',
-    exa_url: '',
+    image_thumbnail_url: [],
+    image_full_url: [],
+    exa_url: [],
     fecha: new Date().toISOString().split('T')[0],
     assigned_resident_id: undefined
   };
@@ -112,7 +111,8 @@ const WardRounds: React.FC = () => {
   const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<{uploaded: number, total: number}>({uploaded: 0, total: 0});
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -651,7 +651,14 @@ const WardRounds: React.FC = () => {
 
       const { data, error } = await supabase
         .from('ward_round_patients')
-        .update(updatedPatient)
+        .update({
+          ...updatedPatient,
+          // Asegurar que los arrays de imagen estén correctamente formateados
+          image_thumbnail_url: updatedPatient.image_thumbnail_url || [],
+          image_full_url: updatedPatient.image_full_url || [],
+          exa_url: updatedPatient.exa_url || [],
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select(); // Add select to see what was actually updated
 
@@ -1053,152 +1060,292 @@ const WardRounds: React.FC = () => {
     );
   };
 
-  const renderImagePreviewCard = () => {
-    const rawThumb = (inlineDetailValues.image_thumbnail_url as string) || '';
-    const rawFull = (inlineDetailValues.image_full_url as string) || '';
-    const rawExa = (inlineDetailValues.exa_url as string) || '';
-    const fullImageUrl = normalizeUrl(rawFull);
-    const exaUrl = normalizeUrl(rawExa);
-    const thumbnailUrl = normalizeUrl(rawThumb) || fullImageUrl;
-    const hasImage = Boolean(thumbnailUrl);
+  /**
+   * Obtener imágenes del paciente como objetos estructurados
+   * Combina los arrays paralelos en un solo array de objetos
+   */
+  const getPatientImages = (patient: Patient | Partial<Patient>) => {
+    const thumbs = (patient.image_thumbnail_url as string[]) || [];
+    const fulls = (patient.image_full_url as string[]) || [];
+    const exas = (patient.exa_url as (string | null)[]) || [];
 
-    const patientIdForUpload = selectedPatient?.id || '';
+    const maxLength = Math.max(thumbs.length, fulls.length, exas.length);
+    const images = [];
 
-    const handleFileUpload = async (fileList: FileList | null) => {
-      if (!fileList || fileList.length === 0) return;
-      if (!patientIdForUpload) {
-        setImageUploadError('No hay ID de paciente; guarda primero el paciente antes de subir imagen.');
-        return;
-      }
-      const file = fileList[0];
-      setIsUploadingImage(true);
-      setImageUploadError(null);
-      setImagePreviewError(null);
-      try {
-        const result = await uploadImageToStorage(file, patientIdForUpload);
-        const chosenUrl = result.signedUrl || result.publicUrl;
-        setInlineDetailValues((prev) => ({
-          ...prev,
-          image_full_url: chosenUrl,
-          image_thumbnail_url: chosenUrl
-        }));
-      } catch (e: any) {
-        console.error('[WardRounds] Image upload failed', e);
-        setImageUploadError(e?.message || 'No se pudo subir la imagen');
-      } finally {
-        setIsUploadingImage(false);
-      }
+    for (let i = 0; i < maxLength; i++) {
+      images.push({
+        thumbnail: thumbs[i] || fulls[i] || '',
+        full: fulls[i] || thumbs[i] || '',
+        exa: exas[i] || undefined,
+        index: i
+      });
+    }
+
+    return images.filter(img => img.thumbnail || img.full);
+  };
+
+  /**
+   * Agregar nuevas imágenes a un paciente
+   * Añade las URLs de las imágenes subidas a los arrays existentes
+   */
+  const addImagesToPatient = (
+    currentPatient: Patient | Partial<Patient>,
+    newImages: any[]
+  ): Partial<Patient> => {
+    const currentThumbs = (currentPatient.image_thumbnail_url as string[]) || [];
+    const currentFulls = (currentPatient.image_full_url as string[]) || [];
+    const currentExas = (currentPatient.exa_url as (string | null)[]) || [];
+
+    return {
+      ...currentPatient,
+      image_thumbnail_url: [
+        ...currentThumbs,
+        ...newImages.map(img => img.signedUrl || img.publicUrl)
+      ],
+      image_full_url: [
+        ...currentFulls,
+        ...newImages.map(img => img.signedUrl || img.publicUrl)
+      ],
+      exa_url: [
+        ...currentExas,
+        ...newImages.map(() => null)
+      ]
     };
+  };
+
+  /**
+   * Eliminar imagen en el índice específico
+   * Remueve la imagen de todos los arrays paralelos
+   */
+  const removeImageAtIndex = (
+    currentPatient: Patient | Partial<Patient>,
+    index: number
+  ): Partial<Patient> => {
+    const thumbs = [...((currentPatient.image_thumbnail_url as string[]) || [])];
+    const fulls = [...((currentPatient.image_full_url as string[]) || [])];
+    const exas = [...((currentPatient.exa_url as (string | null)[]) || [])];
+
+    thumbs.splice(index, 1);
+    fulls.splice(index, 1);
+    exas.splice(index, 1);
+
+    return {
+      ...currentPatient,
+      image_thumbnail_url: thumbs,
+      image_full_url: fulls,
+      exa_url: exas
+    };
+  };
+
+  /**
+   * Handler para subir múltiples archivos
+   * Sube imágenes secuencialmente mostrando progreso
+   */
+  const handleMultipleFileUpload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const patientIdForUpload = selectedPatient?.id || '';
+    if (!patientIdForUpload) {
+      setImageUploadError('No hay ID de paciente; guarda primero el paciente antes de subir imagen.');
+      return;
+    }
+
+    const filesArray = Array.from(fileList);
+    setUploadingImages(true);
+    setUploadProgress({uploaded: 0, total: filesArray.length});
+    setImageUploadError(null);
+    setImagePreviewError(null);
+
+    try {
+      const { uploadImageToStorage } = await import('./services/storageService');
+      const results: any[] = [];
+      for (let i = 0; i < filesArray.length; i++) {
+        const result = await uploadImageToStorage(filesArray[i], patientIdForUpload);
+        results.push(result);
+        setUploadProgress({uploaded: i + 1, total: filesArray.length});
+      }
+
+      const updatedPatient = addImagesToPatient(inlineDetailValues, results);
+      setInlineDetailValues(updatedPatient);
+    } catch (e: any) {
+      console.error('[WardRounds] Multiple image upload failed', e);
+      setImageUploadError(e?.message || 'No se pudieron subir las imágenes');
+    } finally {
+      setUploadingImages(false);
+      setUploadProgress({uploaded: 0, total: 0});
+    }
+  };
+
+  /**
+   * Handler para eliminar imagen
+   * Elimina la imagen del índice especificado y actualiza la base de datos
+   */
+  const handleRemoveImage = async (index: number) => {
+    if (!selectedPatient?.id) return;
+
+    const updatedPatient = removeImageAtIndex(inlineDetailValues, index);
+
+    try {
+      await updatePatient(selectedPatient.id, updatedPatient as Patient);
+      setInlineDetailValues(updatedPatient);
+      setSelectedPatient({...selectedPatient, ...updatedPatient} as Patient);
+    } catch (error) {
+      console.error('[WardRounds] Error removing image:', error);
+      setImageUploadError('Error al eliminar la imagen');
+    }
+  };
+
+  const renderImagePreviewCard = () => {
+    const images = getPatientImages(inlineDetailValues);
+    const imageCount = images.length;
 
     return (
       <div className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
+        {/* Header con contador de fotos */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
               IMG
             </span>
-            <div className="flex items-center space-x-2">
-              <h4 className="text-sm font-semibold text-[var(--text-primary)]">Miniatura</h4>
-              {exaUrl && (
-                <a
-                  href={exaUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-xs"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  <span>EXA</span>
-                </a>
-              )}
-              {!exaUrl && fullImageUrl && (
-                <a
-                  href={fullImageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-xs"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  <span>EXA</span>
-                </a>
-              )}
-            </div>
+            <h4 className="text-sm font-semibold text-[var(--text-primary)]">
+              Imágenes {imageCount > 0 && `(${imageCount})`}
+            </h4>
           </div>
+          {imageCount > 0 && (
+            <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+              {imageCount} {imageCount === 1 ? 'foto' : 'fotos'}
+            </span>
+          )}
         </div>
 
         {isDetailEditMode ? (
           <div className="space-y-3">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
-                <input
-                  type="url"
-                  value={rawFull}
-                  onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, image_full_url: e.target.value }))}
-                  className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://.../imagen.jpg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL para EXA / visor</label>
-                <input
-                  type="url"
-                  value={rawExa}
-                  onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, exa_url: e.target.value }))}
-                  className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://imagenes.hospitalposadas.gob.ar/viewer#..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
-                <input
-                  type="url"
-                  value={rawThumb}
-                  onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, image_thumbnail_url: e.target.value }))}
-                  className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://.../thumbnail.jpg"
-                />
-              </div>
-            </div>
+            {/* URL inputs para cada imagen */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">O sube una imagen a Supabase Storage</label>
+              {images.map((img, idx) => (
+                <div key={idx} className="p-2 border border-gray-200 rounded-lg bg-gray-50 space-y-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-gray-600">Imagen {idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="text-xs text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <input
+                    type="url"
+                    value={img.full}
+                    onChange={(e) => {
+                      const fulls = [...((inlineDetailValues.image_full_url as string[]) || [])];
+                      fulls[idx] = e.target.value;
+                      setInlineDetailValues(prev => ({...prev, image_full_url: fulls}));
+                    }}
+                    className="w-full text-xs rounded border border-gray-300 px-2 py-1"
+                    placeholder="URL imagen completa"
+                  />
+                  <input
+                    type="url"
+                    value={img.exa || ''}
+                    onChange={(e) => {
+                      const exas = [...((inlineDetailValues.exa_url as (string | null)[]) || [])];
+                      exas[idx] = e.target.value || null;
+                      setInlineDetailValues(prev => ({...prev, exa_url: exas}));
+                    }}
+                    className="w-full text-xs rounded border border-gray-300 px-2 py-1"
+                    placeholder="URL EXA (opcional)"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Upload section */}
+            <div className="space-y-2 border-t border-gray-200 pt-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Subir nuevas imágenes
+              </label>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleFileUpload(e.target.files)}
+                multiple
+                onChange={(e) => handleMultipleFileUpload(e.target.files)}
                 className="block w-full text-sm text-gray-700"
-                disabled={isUploadingImage}
+                disabled={uploadingImages}
               />
-              <p className="text-xs text-[var(--text-secondary)]">Se guardará en ward-images (usa link directo o upload).</p>
-              {isUploadingImage && <p className="text-xs text-blue-700">Subiendo imagen...</p>}
-              {imageUploadError && <p className="text-xs text-red-600">{imageUploadError}</p>}
+              <p className="text-xs text-[var(--text-secondary)]">
+                Puedes seleccionar múltiples imágenes. Se guardarán en ward-images.
+              </p>
+              {uploadingImages && (
+                <div className="text-xs text-blue-700">
+                  Subiendo {uploadProgress.uploaded} de {uploadProgress.total} imágenes...
+                </div>
+              )}
+              {imageUploadError && (
+                <p className="text-xs text-red-600">{imageUploadError}</p>
+              )}
             </div>
           </div>
-        ) : hasImage ? (
+        ) : imageCount > 0 ? (
           <div className="space-y-2">
-            <button
-              type="button"
-              className="relative w-full overflow-hidden rounded-lg border border-[var(--border-primary)] group aspect-square"
-              onClick={() => setImageLightboxUrl(fullImageUrl || thumbnailUrl)}
-            >
-              <img
-                src={thumbnailUrl}
-                alt="Vista previa de imagen"
-                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-                onError={() => {
-                  setImagePreviewError('No se pudo cargar la miniatura. Revisa que el link sea público/directo.');
-                  console.error('[WardRounds] Image preview failed', { thumbnailUrl, fullImageUrl });
-                }}
-              />
-              <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-sm space-x-2">
-                <Maximize2 className="h-5 w-5" />
-                <span>Ver en grande</span>
-              </div>
-            </button>
-            {imagePreviewError && <p className="text-xs text-red-600">{imagePreviewError}</p>}
+            {/* Grilla 2 columnas responsive */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {images.map((img, idx) => {
+                const fullUrl = normalizeUrl(img.full);
+                const thumbUrl = normalizeUrl(img.thumbnail) || fullUrl;
+                const exaUrl = img.exa ? normalizeUrl(img.exa) : '';
+
+                return (
+                  <div key={idx} className="relative group">
+                    <button
+                      type="button"
+                      className="relative w-full overflow-hidden rounded-lg border border-[var(--border-primary)] group/img"
+                      onClick={() => setImageLightboxUrl(fullUrl || thumbUrl)}
+                      style={{ minHeight: '120px' }}
+                    >
+                      {/* Container flexible con aspect ratio preservado */}
+                      <div className="w-full flex items-center justify-center bg-gray-100" style={{ minHeight: '120px' }}>
+                        <img
+                          src={thumbUrl}
+                          alt={`Imagen ${idx + 1}`}
+                          className="max-w-full max-h-48 object-contain transition-transform duration-200 group-hover/img:scale-[1.02]"
+                          onError={() => {
+                            setImagePreviewError(`Error cargando imagen ${idx + 1}`);
+                            console.error('[WardRounds] Image preview failed', { thumbUrl, fullUrl, idx });
+                          }}
+                        />
+                      </div>
+
+                      {/* Overlay al hover */}
+                      <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs space-x-1">
+                        <Maximize2 className="h-4 w-4" />
+                        <span>Ver</span>
+                      </div>
+                    </button>
+
+                    {/* Badge EXA individual */}
+                    {exaUrl && (
+                      <a
+                        href={exaUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 flex items-center space-x-0.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span>EXA</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {imagePreviewError && (
+              <p className="text-xs text-red-600">{imagePreviewError}</p>
+            )}
           </div>
         ) : (
           <p className="text-sm text-[var(--text-secondary)]">
-            Sin imagen. Usa el link directo o sube un archivo para ver la miniatura.
+            Sin imágenes. Usa modo edición para agregar URLs o subir archivos.
           </p>
         )}
       </div>
@@ -2046,8 +2193,8 @@ const WardRounds: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
                     <input
                       type="url"
-                      value={newPatient.image_thumbnail_url}
-                      onChange={(e) => setNewPatient({ ...newPatient, image_thumbnail_url: e.target.value })}
+                      value={(newPatient.image_thumbnail_url && newPatient.image_thumbnail_url[0]) || ''}
+                      onChange={(e) => setNewPatient({ ...newPatient, image_thumbnail_url: e.target.value ? [e.target.value] : [] })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="https://.../thumbnail.jpg"
                     />
@@ -2056,8 +2203,8 @@ const WardRounds: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
                     <input
                       type="url"
-                      value={newPatient.image_full_url}
-                      onChange={(e) => setNewPatient({ ...newPatient, image_full_url: e.target.value })}
+                      value={(newPatient.image_full_url && newPatient.image_full_url[0]) || ''}
+                      onChange={(e) => setNewPatient({ ...newPatient, image_full_url: e.target.value ? [e.target.value] : [] })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="https://.../imagen.jpg"
                     />
@@ -2803,8 +2950,8 @@ const WardRounds: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
                     <input
                       type="url"
-                      value={editingPatient.image_thumbnail_url || ''}
-                      onChange={(e) => setEditingPatient({ ...editingPatient, image_thumbnail_url: e.target.value })}
+                      value={(editingPatient.image_thumbnail_url && editingPatient.image_thumbnail_url[0]) || ''}
+                      onChange={(e) => setEditingPatient({ ...editingPatient, image_thumbnail_url: e.target.value ? [e.target.value] : [] })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="https://.../thumbnail.jpg"
                     />
@@ -2813,8 +2960,8 @@ const WardRounds: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
                     <input
                       type="url"
-                      value={editingPatient.image_full_url || ''}
-                      onChange={(e) => setEditingPatient({ ...editingPatient, image_full_url: e.target.value })}
+                      value={(editingPatient.image_full_url && editingPatient.image_full_url[0]) || ''}
+                      onChange={(e) => setEditingPatient({ ...editingPatient, image_full_url: e.target.value ? [e.target.value] : [] })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="https://.../imagen.jpg"
                     />
