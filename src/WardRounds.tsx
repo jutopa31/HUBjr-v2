@@ -1449,21 +1449,21 @@ const WardRounds: React.FC = () => {
 
         return `
           <tr>
-            <td class="number-cell">${index + 1}</td>
-            <td class="text-cell bold">${patient.cama || '-'}</td>
-            <td class="text-cell bold">${patient.nombre || '-'}</td>
-            <td class="text-cell">${patient.dni || '-'}</td>
-            <td class="text-cell">${patient.edad || '-'}</td>
-            <td class="severity-cell" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
+            <td class="number-cell col-num">${index + 1}</td>
+            <td class="text-cell bold col-bed">${patient.cama || '-'}</td>
+            <td class="text-cell bold col-name">${patient.nombre || '-'}</td>
+            <td class="text-cell col-dni">${patient.dni || '-'}</td>
+            <td class="text-cell col-age">${patient.edad || '-'}</td>
+            <td class="severity-cell col-severity" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
               <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
             </td>
-            <td class="text-cell small">${truncateText(patient.antecedentes, 80)}</td>
-            <td class="text-cell small">${truncateText(patient.motivo_consulta, 80)}</td>
-            <td class="text-cell small">${truncateText(patient.examen_fisico, 60)}</td>
-            <td class="text-cell small">${truncateText(patient.estudios, 80)}</td>
-            <td class="text-cell small">${truncateText(patient.diagnostico, 80)}</td>
-            <td class="text-cell small">${truncateText(patient.plan, 80)}</td>
-            <td class="text-cell small pending-cell">${truncateText(patient.pendientes, 60)}</td>
+            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 80)}</td>
+            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 80)}</td>
+            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 60)}</td>
+            <td class="text-cell small col-studies">${truncateText(patient.estudios, 80)}</td>
+            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 80)}</td>
+            <td class="text-cell small col-plan">${truncateText(patient.plan, 80)}</td>
+            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 60)}</td>
           </tr>
         `;
       }).join('');
@@ -1608,18 +1608,19 @@ const WardRounds: React.FC = () => {
             }
             
             /* Optimización de columnas */
-            .col-name { width: 10%; }
+            .col-num { width: 3%; }
+            .col-bed { width: 4%; }
+            .col-name { width: 11%; }
             .col-dni { width: 7%; }
-            .col-age { width: 5%; }
-            .col-bed { width: 8%; }
-            .col-severity { width: 5%; }
-            .col-history { width: 12%; }
-            .col-reason { width: 12%; }
-            .col-exam { width: 10%; }
-            .col-studies { width: 12%; }
-            .col-diagnosis { width: 12%; }
-            .col-plan { width: 12%; }
-            .col-pending { width: 10%; }
+            .col-age { width: 4%; }
+            .col-severity { width: 4%; }
+            .col-history { width: 13%; }
+            .col-reason { width: 13%; }
+            .col-exam { width: 11%; }
+            .col-studies { width: 13%; }
+            .col-diagnosis { width: 13%; }
+            .col-plan { width: 13%; }
+            .col-pending { width: 11%; }
             
             .footer {
               margin-top: 8px;
