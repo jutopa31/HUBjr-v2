@@ -2585,6 +2585,7 @@ const WardRounds: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[var(--bg-secondary)]">
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)] gap-4 items-start">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {renderDetailCard('Cama / Ubicación', 'cama', 'Sin ubicación')}
                   {renderDetailCard('DNI', 'dni', 'Sin DNI')}
                   {renderDetailCard('Antecedentes', 'antecedentes', 'Sin antecedentes', { multiline: true })}
                   {renderDetailCard('Motivo de Consulta', 'motivo_consulta', 'Sin motivo', { multiline: true })}
