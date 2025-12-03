@@ -9,8 +9,18 @@ export type UploadedImage = {
 };
 
 function buildPath(patientId: string, fileName: string) {
-  const cleanName = fileName.replace(/\s+/g, '-').toLowerCase();
-  return `patients/${patientId}/${Date.now()}-${cleanName}`;
+  // Normalizar caracteres especiales (ñ, tildes, etc.)
+  const normalized = fileName
+    .normalize('NFD') // Descomponer caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, '') // Eliminar marcas diacríticas (tildes)
+    .replace(/ñ/gi, 'n') // Reemplazar ñ por n
+    .replace(/\s+/g, '-') // Espacios a guiones
+    .toLowerCase();
+
+  // Mantener solo caracteres seguros (alfanuméricos, guiones, puntos)
+  const safeName = normalized.replace(/[^a-z0-9.-]/g, '');
+
+  return `patients/${patientId}/${Date.now()}-${safeName}`;
 }
 
 export async function uploadImageToStorage(file: File, patientId: string): Promise<UploadedImage> {
