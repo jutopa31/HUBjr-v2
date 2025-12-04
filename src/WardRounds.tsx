@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical } from 'lucide-react';
+import { Plus, Download, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
@@ -108,6 +108,7 @@ const WardRounds: React.FC = () => {
   const [activeInlineField, setActiveInlineField] = useState<keyof Patient | null>(null);
   const [isDetailSaving, setIsDetailSaving] = useState(false);
   const [isDetailEditMode, setIsDetailEditMode] = useState(false);
+  const [isHeaderEditMode, setIsHeaderEditMode] = useState(false);
   const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
@@ -163,6 +164,7 @@ const WardRounds: React.FC = () => {
     setSelectedPatient(null);
     setActiveInlineField(null);
     setIsDetailEditMode(false);
+    setIsHeaderEditMode(false);
     setImageLightboxUrl(null);
   };
 
@@ -737,6 +739,7 @@ const WardRounds: React.FC = () => {
     setInlineDetailValues(patientWithDefaults);
     setActiveInlineField(null);
     setIsDetailEditMode(false);
+    setIsHeaderEditMode(false);
     setImagePreviewError(null);
     setImageUploadError(null);
   };
@@ -769,6 +772,9 @@ const WardRounds: React.FC = () => {
 
   const startDetailEditMode = () => {
     if (!selectedPatient) return;
+    if (isHeaderEditMode) {
+      cancelHeaderEditMode();
+    }
     setInlineDetailValues(selectedPatient);
     setActiveInlineField(null);
     setIsDetailEditMode(true);
@@ -792,6 +798,47 @@ const WardRounds: React.FC = () => {
       setIsDetailEditMode(false);
     } catch (error) {
       console.error('Error saving all detail edits:', error);
+    } finally {
+      setIsDetailSaving(false);
+    }
+  };
+
+  const startHeaderEditMode = () => {
+    if (!selectedPatient) return;
+    if (isDetailEditMode) {
+      cancelDetailEditMode();
+    }
+    setInlineDetailValues(selectedPatient);
+    setActiveInlineField(null);
+    setIsHeaderEditMode(true);
+  };
+
+  const cancelHeaderEditMode = () => {
+    setInlineDetailValues(selectedPatient || {});
+    setActiveInlineField(null);
+    setIsHeaderEditMode(false);
+  };
+
+  const saveHeaderEdits = async () => {
+    if (!selectedPatient?.id) return;
+
+    const headerUpdates = {
+      nombre: inlineDetailValues.nombre || selectedPatient.nombre,
+      dni: inlineDetailValues.dni || selectedPatient.dni,
+      edad: inlineDetailValues.edad || selectedPatient.edad,
+      cama: inlineDetailValues.cama || selectedPatient.cama,
+      fecha: inlineDetailValues.fecha || selectedPatient.fecha
+    };
+
+    const updatedPatient: Patient = { ...selectedPatient, ...headerUpdates };
+    setIsDetailSaving(true);
+    try {
+      await updatePatient(selectedPatient.id, updatedPatient);
+      setSelectedPatient(updatedPatient);
+      setInlineDetailValues(updatedPatient);
+      setIsHeaderEditMode(false);
+    } catch (error) {
+      console.error('Error saving header edits:', error);
     } finally {
       setIsDetailSaving(false);
     }
@@ -2526,39 +2573,95 @@ const WardRounds: React.FC = () => {
         <div className="modal-overlay">
           <div className="modal-content max-w-4xl w-full h-[90vh] flex flex-col">
             <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <span>{selectedPatient.nombre || 'Paciente sin nombre'}</span>
-                  <span className="text-xs text-gray-500 font-normal">DNI {selectedPatient.dni || 'Sin DNI'}</span>
-                </h2>
-                {isDetailEditMode ? (
-                  <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+              <div className="flex-1">
+                {isHeaderEditMode ? (
+                  // HEADER EDIT MODE: Grid de 5 campos editables
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                     <input
                       type="text"
-                      value={(inlineDetailValues.cama as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, cama: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Cama / ubicacion"
+                      value={(inlineDetailValues.nombre as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, nombre: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Nombre del paciente"
+                    />
+                    <input
+                      type="text"
+                      value={(inlineDetailValues.dni as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, dni: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="DNI"
                     />
                     <input
                       type="text"
                       value={(inlineDetailValues.edad as string) || ''}
                       onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, edad: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Edad"
+                    />
+                    <input
+                      type="text"
+                      value={(inlineDetailValues.cama as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, cama: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Cama / ubicación"
                     />
                     <input
                       type="date"
                       value={(inlineDetailValues.fecha as string) || ''}
                       onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, fecha: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Fecha"
                     />
                   </div>
+                ) : isDetailEditMode ? (
+                  // FULL EDIT MODE: Layout original con 3 campos
+                  <>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      {selectedPatient.nombre || 'Paciente sin nombre'}
+                    </h2>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+                      <input
+                        type="text"
+                        value={(inlineDetailValues.cama as string) || ''}
+                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, cama: e.target.value }))}
+                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Cama / ubicacion"
+                      />
+                      <input
+                        type="text"
+                        value={(inlineDetailValues.edad as string) || ''}
+                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, edad: e.target.value }))}
+                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Edad"
+                      />
+                      <input
+                        type="date"
+                        value={(inlineDetailValues.fecha as string) || ''}
+                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, fecha: e.target.value }))}
+                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Fecha"
+                      />
+                    </div>
+                  </>
                 ) : (
-                  <p className="text-sm text-gray-600">
-                    Cama {selectedPatient.cama || 'Sin cama'} | {selectedPatient.edad ? `${selectedPatient.edad} anos` : 'Edad sin registrar'} | {selectedPatient.fecha || 'Sin fecha'}
-                  </p>
+                  // READ-ONLY MODE: Vista normal con botón Edit2
+                  <>
+                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                      <span>{selectedPatient.nombre || 'Paciente sin nombre'}</span>
+                      <span className="text-xs text-gray-500 font-normal">DNI {selectedPatient.dni || 'Sin DNI'}</span>
+                      <button
+                        type="button"
+                        className="ml-2 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+                        onClick={startHeaderEditMode}
+                        title="Editar datos básicos"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Cama {selectedPatient.cama || 'Sin cama'} | {selectedPatient.edad ? `${selectedPatient.edad} anos` : 'Edad sin registrar'} | {selectedPatient.fecha || 'Sin fecha'}
+                    </p>
+                  </>
                 )}
               </div>
               <div className="flex items-center space-x-2">
@@ -2586,8 +2689,6 @@ const WardRounds: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[var(--bg-secondary)]">
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)] gap-4 items-start">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {renderDetailCard('Cama / Ubicación', 'cama', 'Sin ubicación')}
-                  {renderDetailCard('DNI', 'dni', 'Sin DNI')}
                   {renderDetailCard('Antecedentes', 'antecedentes', 'Sin antecedentes', { multiline: true })}
                   {renderDetailCard('Motivo de Consulta', 'motivo_consulta', 'Sin motivo', { multiline: true })}
                   {renderDetailCard('EF/NIHSS/ABCD2', 'examen_fisico', 'Sin examen', { multiline: true })}
@@ -2602,14 +2703,16 @@ const WardRounds: React.FC = () => {
               </div>
             </div>
 
-            {isDetailEditMode && (
+            {(isDetailEditMode || isHeaderEditMode) && (
               <div className="p-3 border-t bg-white flex items-center justify-between sticky bottom-0">
-                <div className="text-xs text-gray-500">Editando todas las secciones</div>
+                <div className="text-xs text-gray-500">
+                  {isHeaderEditMode ? 'Editando datos básicos' : 'Editando todas las secciones'}
+                </div>
                 <div className="flex space-x-2">
                   <button
                     type="button"
                     className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
-                    onClick={cancelDetailEditMode}
+                    onClick={isHeaderEditMode ? cancelHeaderEditMode : cancelDetailEditMode}
                   >
                     Cancelar
                   </button>
@@ -2617,9 +2720,9 @@ const WardRounds: React.FC = () => {
                     type="button"
                     className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm"
                     disabled={isDetailSaving || isUpdatingPatient}
-                    onClick={saveAllDetailEdits}
+                    onClick={isHeaderEditMode ? saveHeaderEdits : saveAllDetailEdits}
                   >
-                    {isDetailSaving || isUpdatingPatient ? 'Guardando...' : 'Guardar todo'}
+                    {isDetailSaving || isUpdatingPatient ? 'Guardando...' : (isHeaderEditMode ? 'Guardar cambios' : 'Guardar todo')}
                   </button>
                 </div>
               </div>
