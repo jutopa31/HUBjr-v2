@@ -1260,11 +1260,6 @@ const WardRounds: React.FC = () => {
   };
 
   // Abrir modal para eliminar/archivar paciente
-  const openDeleteModal = (id: string, patientName: string, dni: string) => {
-    setSelectedPatientForDeletion({ id, nombre: patientName, dni });
-    setShowDeleteModal(true);
-  };
-
   // Cerrar modal de eliminación
   const closeDeleteModal = () => {
     // Permitir cierre programático incluso si está procesando
@@ -2297,11 +2292,6 @@ const WardRounds: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <div className="col-span-1">
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
-                    <span>Acciones</span>
-                  </div>
-                </div>
                 <div className="col-span-2 hidden lg:block">
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     <Users className="h-3 w-3 inline mr-1" />
@@ -2440,31 +2430,6 @@ const WardRounds: React.FC = () => {
                               {patient.pendientes ? patient.pendientes.slice(0, 30) + (patient.pendientes.length > 30 ? '...' : '') : 'Sin pendientes'}
                             </div>
                           )}
-                        </div>
-                        <div className="col-span-1">
-                          <div className="flex items-center space-x-1 justify-center">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingId(patient.id || null);
-                                setEditingPatient({ ...emptyPatient, ...patient });
-                              }}
-                              className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Editar paciente completo"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDeleteModal(patient.id || '', patient.nombre, patient.dni);
-                              }}
-                              className="p-2 text-blue-700 hover:text-blue-900 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Eliminar o archivar paciente"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
                         </div>
                         <div className="col-span-2 hidden lg:block">
                           {patient.assigned_resident_id ? (
