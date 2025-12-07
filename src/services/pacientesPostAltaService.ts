@@ -17,6 +17,8 @@ export interface PacientePostAltaRow {
   diagnostico: string;
   pendiente?: string | null;
   fecha_visita: string; // ISO date or YYYY-MM-DD
+  telefono?: string | null;  // NEW: contact phone number
+  notas_evolucion?: string | null;  // NEW: evolution notes from ambulatory visits
   hospital_context?: string; // default handled in DB
   user_id?: string;
   created_at?: string;
@@ -65,6 +67,8 @@ export async function createPacientePostAlta(payload: PacientePostAltaRow): Prom
           diagnostico: payload.diagnostico,
           pendiente: payload.pendiente || null,
           fecha_visita: payload.fecha_visita,
+          telefono: payload.telefono || null,  // NEW
+          notas_evolucion: payload.notas_evolucion || null,  // NEW
           hospital_context: 'Posadas'
         }
       ])
@@ -105,6 +109,67 @@ export async function updatePendiente(id: string, pendiente: string): Promise<{ 
     return { success: true };
   } catch (e: any) {
     console.error('[PacientesPostAltaService] updatePendiente unexpected error:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+}
+
+// NEW: List all patients for an entire month (for calendar view)
+export async function listPacientesPostAltaMonth(year: number, month: number): Promise<{ data: PacientePostAltaRow[]; error?: string }> {
+  try {
+    // Calculate first and last day of month
+    const firstDay = new Date(year, month, 1).toISOString().slice(0, 10);
+    const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+
+    console.log('[PacientesPostAltaService] listPacientesPostAltaMonth -> fetching for', year, month, 'range:', firstDay, 'to', lastDay);
+
+    const resp: any = await withTimeout(
+      supabase
+      .from('pacientes_post_alta')
+      .select('*')
+      .eq('hospital_context', 'Posadas')
+      .gte('fecha_visita', firstDay)
+      .lte('fecha_visita', lastDay)
+      .order('fecha_visita', { ascending: true })
+    );
+
+    const { data, error } = resp || {};
+    if (error) {
+      console.error('[PacientesPostAltaService] listPacientesPostAltaMonth error:', error);
+      return { data: [], error: error.message };
+    }
+
+    console.log('[PacientesPostAltaService] listPacientesPostAltaMonth -> rows:', (data || []).length);
+    return { data: (data || []) as PacientePostAltaRow[] };
+  } catch (e: any) {
+    console.error('[PacientesPostAltaService] listPacientesPostAltaMonth unexpected error:', e);
+    return { data: [], error: e?.message || 'Unknown error' };
+  }
+}
+
+// NEW: Update all fields of a patient (for modal editing)
+export async function updatePacientePostAlta(id: string, payload: Partial<PacientePostAltaRow>): Promise<{ success: boolean; data?: PacientePostAltaRow; error?: string }> {
+  try {
+    console.log('[PacientesPostAltaService] updatePacientePostAlta -> id:', id, 'payload:', payload);
+
+    const resp: any = await withTimeout(
+      supabase
+      .from('pacientes_post_alta')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single()
+    );
+
+    const { data, error } = resp || {};
+    if (error) {
+      console.error('[PacientesPostAltaService] updatePacientePostAlta error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[PacientesPostAltaService] updatePacientePostAlta -> success');
+    return { success: true, data: data as PacientePostAltaRow };
+  } catch (e: any) {
+    console.error('[PacientesPostAltaService] updatePacientePostAlta unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }

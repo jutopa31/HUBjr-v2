@@ -1,43 +1,38 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Save, Download } from 'lucide-react';
-import { createInterconsulta, listInterconsultas, updateRespuesta } from './services/interconsultasService';
-import { saveToSavedPatients, saveToWardRounds } from './utils/interconsultasUtils';
+import { Plus, Download, ChevronUp } from 'lucide-react';
+import { createInterconsulta, listInterconsultas, InterconsultaRow, InterconsultaFilters } from './services/interconsultasService';
 import { useAuthContext } from './components/auth/AuthProvider';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
+import InterconsultaCard from './components/interconsultas/InterconsultaCard';
+import InterconsultaDetailModal from './components/interconsultas/InterconsultaDetailModal';
+import InterconsultaFiltersComponent from './components/interconsultas/InterconsultaFilters';
 
-type Row = {
-  id?: string;
-  nombre: string;
-  dni: string;
-  cama: string;
-  relato_consulta?: string | null;
-  fecha_interconsulta: string; // YYYY-MM-DD
-  respuesta?: string | null;
-  created_at?: string;
-};
+type Row = InterconsultaRow;
 
 const required = (v: string) => v && v.trim().length > 0;
-const buildDefaultForm = (): Row => ({
+const buildDefaultForm = (): Omit<Row, 'status'> & { status?: string } => ({
   nombre: '',
   dni: '',
   cama: '',
   relato_consulta: '',
   fecha_interconsulta: new Date().toISOString().slice(0, 10),
-  respuesta: ''
+  respuesta: '',
+  status: 'Pendiente'
 });
 
 const Interconsultas: React.FC = () => {
   const { user } = useAuthContext();
   const [rows, setRows] = useState<Row[]>([]);
+  const [filteredRows, setFilteredRows] = useState<Row[]>([]);
+  const [filters, setFilters] = useState<InterconsultaFilters>({});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [savingPaseId, setSavingPaseId] = useState<string | null>(null);
-  const [savingPacientesId, setSavingPacientesId] = useState<string | null>(null);
-  const [savingRespuestaId, setSavingRespuestaId] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Row>(buildDefaultForm());
+  const [form, setForm] = useState(buildDefaultForm());
   const isValid = useMemo(() => (
     required(form.nombre)
     && required(form.dni)
@@ -79,10 +74,54 @@ const Interconsultas: React.FC = () => {
     }
   }, [successMessage]);
 
+  // Client-side filtering
+  useEffect(() => {
+    let filtered = [...rows];
+
+    // Filter by status
+    if (filters.status && filters.status.length > 0) {
+      filtered = filtered.filter(row => filters.status!.includes(row.status));
+    }
+
+    // Filter by search text (nombre or DNI)
+    if (filters.searchText && filters.searchText.trim() !== '') {
+      const searchLower = filters.searchText.toLowerCase();
+      filtered = filtered.filter(
+        row =>
+          row.nombre.toLowerCase().includes(searchLower) ||
+          row.dni.includes(searchLower)
+      );
+    }
+
+    // Filter by date range
+    if (filters.dateFrom) {
+      filtered = filtered.filter(row => row.fecha_interconsulta >= filters.dateFrom!);
+    }
+    if (filters.dateTo) {
+      filtered = filtered.filter(row => row.fecha_interconsulta <= filters.dateTo!);
+    }
+
+    setFilteredRows(filtered);
+  }, [rows, filters]);
+
+  // Calculate status counts for filter badges
+  const statusCounts = useMemo(() => {
+    const counts = {
+      Pendiente: 0,
+      'En Proceso': 0,
+      Resuelta: 0,
+      Cancelada: 0,
+    };
+    rows.forEach(row => {
+      counts[row.status] = (counts[row.status] || 0) + 1;
+    });
+    return counts;
+  }, [rows]);
+
   const handleCreate = async () => {
     if (!user) {
       console.warn('[Interconsultas] handleCreate blocked: unauthenticated');
-      setError('Debes iniciar sesion para agregar interconsultas');
+      setError('Debes iniciar sesión para agregar interconsultas');
       return;
     }
     if (!isValid) {
@@ -97,10 +136,15 @@ const Interconsultas: React.FC = () => {
     setCreating(true);
     console.log('[Interconsultas] handleCreate -> payload:', form);
     const optimisticId = `tmp-${Date.now()}`;
-    const optimisticRow: Row = { ...form, id: optimisticId, created_at: new Date().toISOString() };
+    const optimisticRow: Row = {
+      ...form,
+      id: optimisticId,
+      created_at: new Date().toISOString(),
+      status: 'Pendiente'
+    } as Row;
     setRows(prev => [optimisticRow, ...prev]);
 
-    const { success, error, data } = await createInterconsulta(form);
+    const { success, error, data } = await createInterconsulta(form as any);
     setCreating(false);
 
     if (!success || !data) {
@@ -113,112 +157,21 @@ const Interconsultas: React.FC = () => {
     setRows(prev => [data, ...prev.filter(r => r.id !== optimisticId)]);
     setSuccessMessage('Interconsulta guardada');
     setForm(buildDefaultForm());
+    setShowCreateForm(false);
   };
 
-  const handleUpdateRespuesta = async (id: string, respuesta: string) => {
-    console.log('[Interconsultas] handleUpdateRespuesta -> id:', id);
-    const previousRespuesta = rows.find(r => r.id === id)?.respuesta || '';
-    setSavingRespuestaId(id);
-    setRows(prev => prev.map(r => r.id === id ? { ...r, respuesta } : r));
-
-    const { success, error, data } = await updateRespuesta(id, respuesta);
-    setSavingRespuestaId(null);
-
-    if (!success) {
-      console.error('[Interconsultas] handleUpdateRespuesta error:', error);
-      setRows(prev => prev.map(r => r.id === id ? { ...r, respuesta: previousRespuesta } : r));
-      setError(error || 'Error al guardar respuesta');
-      return;
-    }
-
-    setError(null);
-    setRows(prev => prev.map(r => r.id === id ? { ...r, respuesta: data?.respuesta ?? respuesta } : r));
-    setSuccessMessage('Respuesta guardada');
-  };
-
-  const handleGuardarPase = async (row: Row) => {
-    if (!user) {
-      console.warn('[Interconsultas] handleGuardarPase blocked: unauthenticated');
-      setError('Debes iniciar sesion para guardar en Pase de Sala');
-      return;
-    }
-    if (!row.id) {
-      setError('Error: ID de interconsulta no disponible');
-      return;
-    }
-
-    setSavingPaseId(row.id);
-    setError(null);
-    setSuccessMessage(null);
-
-    console.log('[Interconsultas] handleGuardarPase -> row:', row);
-    const { success, error } = await saveToWardRounds({
-      nombre: row.nombre,
-      dni: row.dni,
-      cama: row.cama,
-      relato_consulta: row.relato_consulta || '',
-      fecha_interconsulta: row.fecha_interconsulta,
-      respuesta: row.respuesta || ''
-    });
-
-    setSavingPaseId(null);
-
-    if (!success) {
-      console.error('[Interconsultas] handleGuardarPase error:', error);
-      setError(error || 'No se pudo guardar en Pase de Sala');
-    } else {
-      setError(null);
-      const message = `Paciente "${row.nombre}" guardado exitosamente en Pase de Sala`;
-      setSuccessMessage(message);
-      window.alert(message);
-    }
-  };
-
-  const handleGuardarPacientes = async (row: Row) => {
-    if (!user) {
-      console.warn('[Interconsultas] handleGuardarPacientes blocked: unauthenticated');
-      setError('Debes iniciar sesion para guardar en Pacientes');
-      return;
-    }
-    if (!row.id) {
-      setError('Error: ID de interconsulta no disponible');
-      return;
-    }
-
-    setSavingPacientesId(row.id);
-    setError(null);
-    setSuccessMessage(null);
-
-    console.log('[Interconsultas] handleGuardarPacientes -> row:', row);
-    const { success, error } = await saveToSavedPatients({
-      nombre: row.nombre,
-      dni: row.dni,
-      cama: row.cama,
-      relato_consulta: row.relato_consulta || '',
-      fecha_interconsulta: row.fecha_interconsulta,
-      respuesta: row.respuesta || ''
-    });
-
-    setSavingPacientesId(null);
-
-    if (!success) {
-      console.error('[Interconsultas] handleGuardarPacientes error:', error);
-      setError(error || 'No se pudo guardar en Pacientes');
-    } else {
-      setError(null);
-      const message = `Paciente "${row.nombre}" guardado exitosamente en la base de pacientes`;
-      setSuccessMessage(message);
-      window.alert(message);
-    }
+  const handleUpdateRow = (updated: InterconsultaRow) => {
+    setRows(prev => prev.map(r => (r.id === updated.id ? updated : r)));
   };
 
   const exportCSV = () => {
-    const header = ['Nombre', 'DNI', 'Cama', 'Fecha', 'Relato', 'Respuesta'];
-    const data = rows.map(r => [
+    const header = ['Nombre', 'DNI', 'Cama', 'Fecha', 'Estado', 'Relato', 'Respuesta'];
+    const data = filteredRows.map(r => [
       r.nombre,
       r.dni,
       r.cama,
       r.fecha_interconsulta,
+      r.status,
       (r.relato_consulta || '').replace(/\n/g, ' '),
       (r.respuesta || '').replace(/\n/g, ' ')
     ]);
@@ -230,6 +183,8 @@ const Interconsultas: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const selectedInterconsulta = selectedId ? rows.find(r => r.id === selectedId) : null;
+
   return (
     <LoadingWithRecovery
       isLoading={loading}
@@ -240,179 +195,167 @@ const Interconsultas: React.FC = () => {
       loadingMessage="Cargando interconsultas..."
       recoveryTimeout={15000}
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
+        {/* Banner Header */}
         <div className="flex items-center justify-between mb-6 banner rounded-lg p-4">
           <h1 className="text-2xl font-bold">Interconsultas</h1>
           <div className="flex gap-2">
-            <button onClick={fetchAll} className="px-3 py-2 text-sm btn-soft rounded">Actualizar</button>
-            <button onClick={exportCSV} className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2"><Download className="h-4 w-4"/>Exportar CSV</button>
+            <button onClick={fetchAll} className="px-3 py-2 text-sm btn-soft rounded">
+              Actualizar
+            </button>
+            <button onClick={exportCSV} className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </button>
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="px-3 py-2 text-sm btn-accent rounded inline-flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva Interconsulta
+            </button>
           </div>
         </div>
 
         {!user && (
           <div className="mb-4 p-3 rounded medical-card text-sm">
-            Debes iniciar sesion para crear o guardar interconsultas.
+            Debes iniciar sesión para crear o guardar interconsultas.
           </div>
         )}
 
         {error && (
-          <div className="mb-4 p-3 rounded medical-card text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm">
+            {error}
+          </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 p-3 rounded medical-card text-sm">{successMessage}</div>
+          <div className="mb-4 p-3 rounded bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm">
+            {successMessage}
+          </div>
         )}
 
-        <div className="medical-card p-4 mb-6">
-          <h2 className="font-medium mb-3">Nueva interconsulta</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <input
-              className="border rounded px-3 py-2 text-sm"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-              placeholder="Nombre"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            />
-            <input
-              className="border rounded px-3 py-2 text-sm"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-              placeholder="DNI"
-              value={form.dni}
-              onChange={(e) => setForm({ ...form, dni: e.target.value })}
-            />
-            <input
-              className="border rounded px-3 py-2 text-sm"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-              placeholder="Cama"
-              value={form.cama}
-              onChange={(e) => setForm({ ...form, cama: e.target.value })}
-            />
-            <input
-              type="date"
-              className="border rounded px-3 py-2 text-sm"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-              value={form.fecha_interconsulta}
-              onChange={(e) => setForm({ ...form, fecha_interconsulta: e.target.value })}
-            />
+        {/* Create Form (Collapsible) */}
+        {showCreateForm && (
+          <div className="medical-card p-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-medium">Nueva interconsulta</h2>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <ChevronUp className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <input
+                className="border rounded px-3 py-2 text-sm"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                placeholder="Nombre"
+                value={form.nombre}
+                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              />
+              <input
+                className="border rounded px-3 py-2 text-sm"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                placeholder="DNI"
+                value={form.dni}
+                onChange={(e) => setForm({ ...form, dni: e.target.value })}
+              />
+              <input
+                className="border rounded px-3 py-2 text-sm"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                placeholder="Cama"
+                value={form.cama}
+                onChange={(e) => setForm({ ...form, cama: e.target.value })}
+              />
+              <input
+                type="date"
+                className="border rounded px-3 py-2 text-sm"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                value={form.fecha_interconsulta}
+                onChange={(e) => setForm({ ...form, fecha_interconsulta: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+              <textarea
+                className="w-full border rounded px-3 py-2 text-sm"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                placeholder="Relato o motivo de la consulta"
+                rows={4}
+                value={form.relato_consulta ?? ''}
+                onChange={(e) => setForm({ ...form, relato_consulta: e.target.value })}
+              />
+              <textarea
+                className="w-full border rounded px-3 py-2 text-sm"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                placeholder="Respuesta inicial (opcional)"
+                rows={4}
+                value={form.respuesta ?? ''}
+                onChange={(e) => setForm({ ...form, respuesta: e.target.value })}
+              />
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={handleCreate}
+                disabled={!isValid || loading || creating || !user}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded ${(isValid && !creating) ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
+              >
+                <Plus className="h-4 w-4" />{creating ? 'Guardando...' : 'Agregar'}
+              </button>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="px-4 py-2 rounded btn-soft"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-            <textarea
-              className="w-full border rounded px-3 py-2 text-sm"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-              placeholder="Relato o motivo de la consulta"
-              rows={4}
-              value={form.relato_consulta ?? ''}
-              onChange={(e) => setForm({ ...form, relato_consulta: e.target.value })}
-            />
-            <textarea
-              className="w-full border rounded px-3 py-2 text-sm"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-              placeholder="Respuesta inicial (opcional)"
-              rows={4}
-              value={form.respuesta ?? ''}
-              onChange={(e) => setForm({ ...form, respuesta: e.target.value })}
-            />
-          </div>
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={handleCreate}
-              disabled={!isValid || loading || creating || !user}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded ${(isValid && !creating) ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
-            >
-              <Plus className="h-4 w-4"/>{creating ? 'Guardando...' : 'Agregar'}
-            </button>
-          </div>
+        )}
+
+        {/* Filters */}
+        <InterconsultaFiltersComponent
+          filters={filters}
+          onFiltersChange={setFilters}
+          statusCounts={statusCounts}
+        />
+
+        {/* Results count */}
+        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          Mostrando {filteredRows.length} de {rows.length} interconsultas
         </div>
 
-        <div className="medical-card">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left">
-                  <th className="px-3 py-2">Fecha</th>
-                  <th className="px-3 py-2">Nombre</th>
-                  <th className="px-3 py-2">DNI</th>
-                  <th className="px-3 py-2">Cama</th>
-                  <th className="px-3 py-2">Relato</th>
-                  <th className="px-3 py-2">Respuesta</th>
-                  <th className="px-3 py-2">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t align-top">
-                    <td className="px-3 py-2 text-gray-700">{r.fecha_interconsulta}</td>
-                    <td className="px-3 py-2 font-medium">{r.nombre}</td>
-                    <td className="px-3 py-2">{r.dni}</td>
-                    <td className="px-3 py-2">{r.cama}</td>
-                    <td className="px-3 py-2 w-[280px]">
-                      <div className="text-gray-700 whitespace-pre-line leading-snug max-h-36 overflow-auto">{r.relato_consulta || '-'}</div>
-                    </td>
-                    <td className="px-3 py-2 w-[360px]">
-                      <InlineRespuesta
-                        initial={r.respuesta || ''}
-                        onSave={(value) => handleUpdateRespuesta(r.id!, value)}
-                        isSaving={savingRespuestaId === r.id}
-                      />
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap flex gap-2">
-                      <button
-                        onClick={() => handleGuardarPase(r)}
-                        disabled={savingPaseId === r.id || !user}
-                        className={`px-2 py-1 rounded text-xs ${savingPaseId === r.id ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
-                      >
-                        {savingPaseId === r.id ? 'Guardando...' : 'Guardar al pase'}
-                      </button>
-                      <button
-                        onClick={() => handleGuardarPacientes(r)}
-                        disabled={savingPacientesId === r.id || !user}
-                        className={`px-2 py-1 rounded text-xs ${savingPacientesId === r.id ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
-                      >
-                        {savingPacientesId === r.id ? 'Guardando...' : 'Guardar en pacientes'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Card Grid */}
+        {filteredRows.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredRows.map((row) => (
+              <InterconsultaCard
+                key={row.id}
+                interconsulta={row}
+                onClick={() => setSelectedId(row.id || null)}
+              />
+            ))}
           </div>
-          {rows.length === 0 && (
-            <div className="p-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>No hay interconsultas registradas.</div>
-          )}
-        </div>
+        ) : (
+          <div className="medical-card p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-500">
+              {filters.searchText || filters.status?.length || filters.dateFrom || filters.dateTo
+                ? 'No se encontraron interconsultas con los filtros aplicados.'
+                : 'No hay interconsultas registradas.'}
+            </p>
+          </div>
+        )}
+
+        {/* Detail Modal */}
+        {selectedInterconsulta && (
+          <InterconsultaDetailModal
+            interconsulta={selectedInterconsulta}
+            onClose={() => setSelectedId(null)}
+            onUpdate={handleUpdateRow}
+          />
+        )}
       </div>
     </LoadingWithRecovery>
-  );
-};
-
-const InlineRespuesta: React.FC<{ initial: string; onSave: (value: string) => Promise<void>; isSaving: boolean }> = ({ initial, onSave, isSaving }) => {
-  const [value, setValue] = useState(initial);
-  const [dirty, setDirty] = useState(false);
-  useEffect(() => { setValue(initial); setDirty(false); }, [initial]);
-  const handleSave = async () => {
-    await onSave(value);
-    setDirty(false);
-  };
-  return (
-    <div className="flex flex-col gap-2">
-      <textarea
-        className="border rounded px-2 py-1 w-full text-sm"
-        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-        placeholder="Escribe respuesta"
-        rows={3}
-        value={value}
-        onChange={(e) => { setValue(e.target.value); setDirty(true); }}
-      />
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={!dirty || isSaving}
-          className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${dirty ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
-        >
-          <Save className="h-3 w-3"/>{isSaving ? 'Guardando...' : 'Guardar'}
-        </button>
-      </div>
-    </div>
   );
 };
 

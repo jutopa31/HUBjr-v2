@@ -3,7 +3,6 @@ import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle, Trash2, Edit3, Save
 import { supabase } from './utils/supabase.js';
 import { syncAllPendientes, completeTaskAndClearPatientPendientes } from './utils/pendientesSync';
 import { useAuthContext } from './components/auth/AuthProvider';
-import SectionHeader from './components/layout/SectionHeader';
 
 interface Task {
   id?: string;
@@ -18,6 +17,16 @@ interface Task {
   created_at?: string;
   updated_at?: string;
 }
+
+type ColumnConfig = {
+  id: Task['status'];
+  title: string;
+  helper: string;
+  accent: string;
+  icon: typeof AlertCircle;
+  iconColor: string;
+  emptyText: string;
+};
 
 const PendientesManager: React.FC = () => {
   const { user } = useAuthContext();
@@ -280,10 +289,24 @@ const PendientesManager: React.FC = () => {
     return statusMatch && priorityMatch && sourceMatch;
   });
 
-  const columns: { id: Task['status']; title: string; helper: string }[] = [
-    { id: 'pending', title: 'Pendientes', helper: 'Tareas por hacer' },
-    { id: 'in_progress', title: 'En progreso', helper: 'Tareas en curso' }
+  const filteredCounts = {
+    pending: filteredTasks.filter((task) => task.status === 'pending').length,
+    inProgress: filteredTasks.filter((task) => task.status === 'in_progress').length,
+    completed: filteredTasks.filter((task) => task.status === 'completed').length
+  };
+
+  const columns: ColumnConfig[] = [
+    { id: 'pending', title: 'Pendientes', helper: 'Listas para asignar', accent: 'from-amber-50 via-white to-white', icon: AlertCircle, iconColor: 'text-amber-600', emptyText: 'Suelta tareas aquA- para iniciarlas.' },
+    { id: 'in_progress', title: 'En progreso', helper: 'En marcha', accent: 'from-blue-50 via-white to-white', icon: Clock, iconColor: 'text-blue-600', emptyText: 'Nada en curso. Arrastra una tarea para comenzar.' },
+    { id: 'completed', title: 'Completadas', helper: 'Cerradas recientemente', accent: 'from-emerald-50 via-white to-white', icon: CheckCircle, iconColor: 'text-emerald-600', emptyText: 'Aun no se han completado tareas.' }
   ];
+
+  const statusCounts = {
+    total: tasks.length,
+    pending: tasks.filter((task) => task.status === 'pending').length,
+    inProgress: tasks.filter((task) => task.status === 'in_progress').length,
+    completed: tasks.filter((task) => task.status === 'completed').length
+  };
 
   const handleDragStart = (taskId: string) => {
     setDraggedTaskId(taskId);
@@ -375,15 +398,39 @@ const PendientesManager: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
-      <SectionHeader
-        title="Pendientes"
-        icon={<CheckSquare className="h-6 w-6 text-accent" />}
-        actions={
+      <div className="banner rounded-lg p-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-white/70 p-2 shadow-sm ring-1 ring-gray-200">
+                <CheckSquare className="h-6 w-6 text-blue-700" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Pendientes</h1>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Tablero tipo interconsultas para priorizar pendientes clA-nicos y de guardia.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/70 px-3 py-1 text-sm font-medium text-[var(--text-secondary)] shadow-sm ring-1 ring-gray-100">
+                Total {statusCounts.total}
+              </span>
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm text-amber-800 ring-1 ring-amber-100">
+                Pendientes {filteredCounts.pending}
+              </span>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-800 ring-1 ring-blue-100">
+                En curso {filteredCounts.inProgress}
+              </span>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-800 ring-1 ring-emerald-100">
+                Completadas {filteredCounts.completed}
+              </span>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex items-center space-x-1.5 bg-gray-600 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
+              className="inline-flex items-center gap-2 rounded-md px-3 py-2 btn-accent text-sm font-medium"
               disabled={loading}
             >
               <Plus className="h-4 w-4" />
@@ -391,77 +438,91 @@ const PendientesManager: React.FC = () => {
             </button>
             <button
               onClick={handleSyncWithWardRounds}
-              className="flex items-center space-x-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
+              className="inline-flex items-center gap-2 rounded-md px-3 py-2 btn-soft text-sm font-medium"
               disabled={syncing || loading}
             >
               <Users className="h-4 w-4" />
-              <span>{syncing ? 'Sincronizando...' : 'Sincronizar'}</span>
+              <span>{syncing ? 'Sincronizando...' : 'Sincronizar pase de sala'}</span>
             </button>
           </div>
-        }
-      />
+        </div>
+      </div>
 
       {/* Filters */}
-      <div className="medical-card">
-        <div className="flex items-center justify-between px-4 py-3 md:hidden">
-          <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+      <div className="medical-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-[var(--text-secondary)]">
             <Filter className="h-5 w-5" />
-            <span className="text-sm font-medium">Filtros</span>
+            <span className="text-sm font-medium">Filtros rA?pidos</span>
           </div>
-          <button
-            onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-            className="text-sm font-medium text-blue-700"
-          >
-            {isFilterPanelOpen ? 'Ocultar' : 'Mostrar'}
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-[var(--text-tertiary)]">
+              Mostrando {filteredTasks.length} de {tasks.length} tareas
+            </span>
+            <button
+              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+              className="text-xs font-semibold text-blue-700 md:hidden"
+            >
+              {isFilterPanelOpen ? 'Ocultar' : 'Mostrar'}
+            </button>
+          </div>
         </div>
-        <div className={`${isFilterPanelOpen ? 'block' : 'hidden'} px-4 pb-4 md:block md:px-6 md:pb-6`}>
-          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
-            <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-              <Filter className="hidden h-5 w-5 md:block" />
-              <span className="hidden text-sm font-medium md:inline">Filtros:</span>
+        <div className={`${isFilterPanelOpen ? 'grid' : 'hidden md:grid'} grid-cols-1 gap-3 md:grid-cols-3 mt-4`}>
+          <div className="rounded-lg border border-gray-200 bg-[var(--bg-secondary)]/60 p-3 shadow-sm">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
+              <span>Estado</span>
+              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--text-secondary)] shadow-sm">
+                {filteredCounts.pending + filteredCounts.inProgress + filteredCounts.completed}
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Estado:</label>
-              <select 
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded px-3 py-1 text-sm"
-              >
-                <option value="all">Todos</option>
-                <option value="pending">Pendientes</option>
-                <option value="in_progress">En Progreso</option>
-                <option value="completed">Completadas</option>
-              </select>
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+            >
+              <option value="all">Todos</option>
+              <option value="pending">Pendientes</option>
+              <option value="in_progress">En Progreso</option>
+              <option value="completed">Completadas</option>
+            </select>
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">Refina por fase de avance.</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-[var(--bg-secondary)]/60 p-3 shadow-sm">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
+              <span>Prioridad</span>
+              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--text-secondary)] shadow-sm">
+                {filterPriority === 'all' ? 'Todas' : getPriorityDisplay(filterPriority as Task['priority']).label}
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Prioridad:</label>
-              <select 
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-                className="rounded px-3 py-1 text-sm"
-              >
-                <option value="all">Todas</option>
-                <option value="high">Alta</option>
-                <option value="medium">Media</option>
-                <option value="low">Baja</option>
-              </select>
+            <select 
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+            >
+              <option value="all">Todas</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">Sube la prioridad para destacar.</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-[var(--bg-secondary)]/60 p-3 shadow-sm">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
+              <span>Origen</span>
+              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--text-secondary)] shadow-sm">
+                {filterSource === 'all' ? 'Todos' : filterSource === 'ward_rounds' ? 'Pase de Sala' : 'Manual'}
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Origen:</label>
-              <select 
-                value={filterSource}
-                onChange={(e) => setFilterSource(e.target.value)}
-                className="rounded px-3 py-1 text-sm"
-              >
-                <option value="all">Todas</option>
-                <option value="ward_rounds">Pase de Sala</option>
-                <option value="manual">Manuales</option>
-              </select>
-            </div>
-            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {filteredTasks.length} de {tasks.length} tareas
-            </div>
+            <select 
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+            >
+              <option value="all">Todas</option>
+              <option value="ward_rounds">Pase de Sala</option>
+              <option value="manual">Manuales</option>
+            </select>
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">Separa lo que viene del pase de sala.</p>
           </div>
         </div>
       </div>
@@ -557,11 +618,14 @@ const PendientesManager: React.FC = () => {
       )}
 
       {/* Tasks Board */}
-      <div className="medical-card p-6">
-        <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-xl font-semibold">Lista de Tareas ({filteredTasks.length})</h2>
+      <div className="medical-card p-6 space-y-4">
+        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Tablero de tareas ({filteredTasks.length})</h2>
+            <p className="text-sm text-[var(--text-secondary)]">Arrastra tarjetas entre columnas, al estilo interconsultas.</p>
+          </div>
           <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {loading ? 'Sincronizando...' : error ? 'Error de conexión' : 'Conectado a Supabase'}
+            {loading ? 'Sincronizando...' : error ? 'Revisar conexiA3n' : 'Conectado a Supabase'}
           </div>
         </div>
 
@@ -577,199 +641,160 @@ const PendientesManager: React.FC = () => {
             </p>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {columns.map((column) => {
-                const columnTasks = filteredTasks.filter(task => task.status === column.id);
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {columns.map((column) => {
+              const columnTasks = filteredTasks.filter(task => task.status === column.id);
+              const ColumnIcon = column.icon;
 
-                return (
-                  <div
-                    key={column.id}
-                    onDragOver={(e) => handleDragOverColumn(e, column.id)}
-                    onDrop={() => handleDropOnColumn(column.id)}
-                    className={`rounded-lg border p-4 transition ${
-                      dragOverColumn === column.id ? 'border-blue-500 bg-blue-50/60' : 'border-gray-200'
-                    }`}
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
+              return (
+                <div
+                  key={column.id}
+                  onDragOver={(e) => handleDragOverColumn(e, column.id)}
+                  onDrop={() => handleDropOnColumn(column.id)}
+                  className={`group rounded-xl border border-gray-200 bg-gradient-to-br ${column.accent} p-4 shadow-sm transition duration-150 ${
+                    dragOverColumn === column.id ? 'ring-2 ring-blue-200 scale-[1.01]' : ''
+                  }`}
+                >
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <ColumnIcon className={`h-5 w-5 ${column.iconColor}`} />
                         <h3 className="text-lg font-semibold text-[var(--text-primary)]">{column.title}</h3>
-                        <p className="text-sm text-[var(--text-secondary)]">{column.helper}</p>
                       </div>
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-[var(--text-tertiary)]">
-                        {columnTasks.length}
-                      </span>
+                      <p className="text-sm text-[var(--text-secondary)]">{column.helper}</p>
                     </div>
+                    <span className="rounded-full bg-white/80 px-3 py-1 text-sm font-semibold text-[var(--text-secondary)] shadow-sm ring-1 ring-gray-100">
+                      {columnTasks.length}
+                    </span>
+                  </div>
 
-                    <div className="space-y-3">
-                      {columnTasks.length === 0 ? (
-                        <div className="rounded-md border border-dashed border-gray-200 bg-white p-3 text-sm text-[var(--text-tertiary)]">
-                          Suelta tareas aquí para moverlas.
-                        </div>
-                      ) : (
-                        columnTasks.map((task) => {
-                          const priorityDisplay = getPriorityDisplay(task.priority);
-                          const statusDisplay = getStatusDisplay(task.status);
-                          const PriorityIcon = priorityDisplay.icon;
-                          const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+                  <div className="space-y-3">
+                    {columnTasks.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-gray-200 bg-white/80 p-4 text-sm text-[var(--text-tertiary)] shadow-inner">
+                        {column.emptyText}
+                      </div>
+                    ) : (
+                      columnTasks.map((task) => {
+                        const priorityDisplay = getPriorityDisplay(task.priority);
+                        const statusDisplay = getStatusDisplay(task.status);
+                        const PriorityIcon = priorityDisplay.icon;
+                        const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+                        const priorityAccent =
+                          task.priority === 'high'
+                            ? 'border-l-4 border-l-red-400'
+                            : task.priority === 'medium'
+                              ? 'border-l-4 border-l-amber-300'
+                              : 'border-l-4 border-l-emerald-300';
 
-                          return (
-                            <div 
-                              key={task.id}
-                              draggable
-                              onDragStart={() => handleDragStart(task.id!)}
-                              onDragEnd={handleDragEnd}
-                              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md"
-                            >
-                              <div className="flex flex-col gap-3">
-                                <div className="flex flex-wrap items-center gap-2">
+                        return (
+                          <div 
+                            key={task.id}
+                            draggable
+                            onDragStart={() => handleDragStart(task.id!)}
+                            onDragEnd={handleDragEnd}
+                            className={`medical-card relative overflow-hidden p-4 shadow-sm transition-transform hover:-translate-y-0.5 ${priorityAccent}`}
+                          >
+                            <div className="flex flex-col gap-3">
+                              <div className="flex flex-wrap items-start gap-3 justify-between">
+                                <div className="flex items-start gap-3">
                                   <button
                                     onClick={() => {
                                       const newStatus = task.status === 'completed' ? 'pending' : 'completed';
                                       updateTaskStatus(task.id!, newStatus);
                                     }}
-                                    className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-colors ${
+                                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                                       task.status === 'completed' 
-                                        ? 'bg-green-500 border-green-500 text-white' 
-                                        : 'border-gray-300 hover:border-green-500'
+                                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                                        : 'border-gray-300 bg-white hover:border-emerald-400'
                                     }`}
                                   >
-                                    {task.status === 'completed' && <CheckCircle className="h-3 w-3" />}
+                                    {task.status === 'completed' && <CheckCircle className="h-3.5 w-3.5" />}
                                   </button>
-                                  
-                                  <h3 className={`font-medium ${
-                                    task.status === 'completed' ? 'line-through' : ''
-                                  }`}>
-                                    {task.title}
-                                  </h3>
-                                  
-                                  {task.source === 'ward_rounds' && (
-                                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs bg-blue-100 text-blue-800">
-                                      <Users className="h-3 w-3" />
-                                      <span>Pase de Sala</span>
-                                    </span>
-                                  )}
-                                  
-                                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs btn-soft`} style={{ border: '1px solid var(--border-primary)' }}>
-                                    <PriorityIcon className="h-3 w-3" />
-                                    <span>{priorityDisplay.label}</span>
-                                  </div>
-                                  
-                                  <span className={`inline-block px-2 py-1 rounded-full text-xs btn-soft`} style={{ border: '1px solid var(--border-primary)' }}>
-                                    {statusDisplay.label}
-                                  </span>
-
-                                  {isOverdue && (
-                                    <span className="inline-block px-2 py-1 rounded-full text-xs btn-soft" style={{ border: '1px solid var(--border-primary)' }}>
-                                      Vencida
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {task.description && (
-                                  <p className={`text-sm`} style={{ color: task.status === 'completed' ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}>
-                                    {task.description}
-                                  </p>
-                                )}
-                                
-                                <div className="flex flex-wrap items-center gap-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                  {task.due_date && (
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      <span>
-                                        Vence: {new Date(task.due_date).toLocaleDateString('es-ES')}
+                                  <div>
+                                    <h3 className={`font-semibold ${
+                                      task.status === 'completed' ? 'line-through text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'
+                                    }`}>
+                                      {task.title}
+                                    </h3>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                                      {task.source === 'ward_rounds' && (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-blue-800 ring-1 ring-blue-200">
+                                          <Users className="h-3 w-3" />
+                                          <span>Pase de Sala</span>
+                                        </span>
+                                      )}
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[var(--text-secondary)] ring-1 ring-gray-200">
+                                        <PriorityIcon className="h-3 w-3" />
+                                        <span>{priorityDisplay.label}</span>
                                       </span>
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[var(--text-secondary)] ring-1 ring-gray-200">
+                                        {statusDisplay.label}
+                                      </span>
+                                      {isOverdue && (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-red-700 ring-1 ring-red-100">
+                                          Vencida
+                                        </span>
+                                      )}
                                     </div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-2 text-xs text-[var(--text-tertiary)]">
+                                  {task.due_date && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
+                                      <Calendar className="h-3 w-3" />
+                                      {new Date(task.due_date).toLocaleDateString('es-ES')}
+                                    </span>
                                   )}
                                   {task.created_at && (
-                                    <div className="flex items-center gap-1">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
                                       <Clock className="h-3 w-3" />
-                                      <span>
-                                        Creada: {new Date(task.created_at).toLocaleDateString('es-ES')}
-                                      </span>
-                                    </div>
+                                      {new Date(task.created_at).toLocaleDateString('es-ES')}
+                                    </span>
                                   )}
                                 </div>
-                              
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <select
-                                    value={task.status}
-                                    onChange={(e) => updateTaskStatus(task.id!, e.target.value as Task['status'])}
-                                    className="text-xs rounded px-2 py-1"
-                                  >
-                                    <option value="pending">Pendiente</option>
-                                    <option value="in_progress">En Progreso</option>
-                                    <option value="completed">Completada</option>
-                                  </select>
-                                  
-                                  <button
-                                    onClick={() => setEditingTask(task.id!)}
-                                    className="p-1 transition-colors btn-soft"
-                                  >
-                                    <Edit3 className="h-4 w-4" />
-                                  </button>
-                                  
-                                  <button
-                                    onClick={() => deleteTask(task.id!)}
-                                    className="p-1 transition-colors btn-soft"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
+                              </div>
+
+                              {task.description && (
+                                <p className="text-sm text-[var(--text-secondary)]">
+                                  {task.description}
+                                </p>
+                              )}
+                            
+                              <div className="flex flex-wrap items-center gap-2">
+                                <select
+                                  value={task.status}
+                                  onChange={(e) => updateTaskStatus(task.id!, e.target.value as Task['status'])}
+                                  className="text-xs rounded-md border border-gray-200 bg-white px-3 py-1.5"
+                                >
+                                  <option value="pending">Pendiente</option>
+                                  <option value="in_progress">En Progreso</option>
+                                  <option value="completed">Completada</option>
+                                </select>
+                                
+                                <button
+                                  onClick={() => setEditingTask(task.id!)}
+                                  className="p-1.5 transition-colors btn-soft rounded"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </button>
+                                
+                                <button
+                                  onClick={() => deleteTask(task.id!)}
+                                  className="p-1.5 transition-colors btn-soft rounded"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
                               </div>
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {filteredTasks.some((task) => task.status === 'completed') && (
-              <div className="mt-6 rounded-lg border border-gray-200 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">Completadas</h3>
-                    <p className="text-sm text-[var(--text-secondary)]">Arrastra a otra columna para reabrir.</p>
-                  </div>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-[var(--text-tertiary)]">
-                    {filteredTasks.filter((task) => task.status === 'completed').length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {filteredTasks
-                    .filter((task) => task.status === 'completed')
-                    .map((task) => {
-                      const priorityDisplay = getPriorityDisplay(task.priority);
-                      const PriorityIcon = priorityDisplay.icon;
-                      return (
-                        <div
-                          key={task.id}
-                          draggable
-                          onDragStart={() => handleDragStart(task.id!)}
-                          onDragEnd={handleDragEnd}
-                          className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition hover:shadow-md"
-                        >
-                          <div className="flex flex-wrap items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                            <h4 className="font-medium line-through text-[var(--text-secondary)]">{task.title}</h4>
-                            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs btn-soft`} style={{ border: '1px solid var(--border-primary)' }}>
-                              <PriorityIcon className="h-3 w-3" />
-                              <span>{priorityDisplay.label}</span>
-                            </div>
                           </div>
-                          {task.description && (
-                            <p className="mt-1 text-sm text-[var(--text-tertiary)]">{task.description}</p>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

@@ -9,10 +9,18 @@ export interface InterconsultaRow {
   fecha_interconsulta: string; // ISO date or YYYY-MM-DD
   relato_consulta?: string | null;
   respuesta?: string | null;
+  status: 'Pendiente' | 'En Proceso' | 'Resuelta' | 'Cancelada';
   hospital_context?: string; // default handled in DB
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface InterconsultaFilters {
+  status?: string[];
+  searchText?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export async function listInterconsultas(): Promise<{ data: InterconsultaRow[]; error?: string }>{
@@ -99,6 +107,64 @@ export async function updateRespuesta(id: string, respuesta: string): Promise<{ 
     return { success: true, data: data as InterconsultaRow };
   } catch (e: any) {
     console.error('[InterconsultasService] updateRespuesta unexpected error:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+}
+
+export async function updateStatus(id: string, status: string): Promise<{ success: boolean; data?: InterconsultaRow; error?: string }>{
+  try {
+    console.log('[InterconsultasService] updateStatus -> id:', id, 'status:', status);
+    const resp: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single(),
+      { timeout: 8000, retries: 2, operationName: 'updateStatus' }
+    );
+    const { error, data } = resp || {};
+    if (error) {
+      console.error('[InterconsultasService] updateStatus error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[InterconsultasService] updateStatus -> success');
+    return { success: true, data: data as InterconsultaRow };
+  } catch (e: any) {
+    console.error('[InterconsultasService] updateStatus unexpected error:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+}
+
+export async function updateRespuestaWithStatus(id: string, respuesta: string, currentStatus: string): Promise<{ success: boolean; data?: InterconsultaRow; error?: string }>{
+  try {
+    console.log('[InterconsultasService] updateRespuestaWithStatus -> id:', id, 'currentStatus:', currentStatus);
+
+    // Auto-status logic: If currentStatus is 'Pendiente' and respuesta is not empty, set status to 'En Proceso'
+    const updatePayload: any = { respuesta };
+    if (currentStatus === 'Pendiente' && respuesta.trim() !== '') {
+      updatePayload.status = 'En Proceso';
+      console.log('[InterconsultasService] Auto-updating status to "En Proceso"');
+    }
+
+    const resp: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .update(updatePayload)
+        .eq('id', id)
+        .select()
+        .single(),
+      { timeout: 8000, retries: 2, operationName: 'updateRespuestaWithStatus' }
+    );
+    const { error, data } = resp || {};
+    if (error) {
+      console.error('[InterconsultasService] updateRespuestaWithStatus error:', error);
+      return { success: false, error: error.message };
+    }
+    console.log('[InterconsultasService] updateRespuestaWithStatus -> success');
+    return { success: true, data: data as InterconsultaRow };
+  } catch (e: any) {
+    console.error('[InterconsultasService] updateRespuestaWithStatus unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }

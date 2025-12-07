@@ -1,53 +1,29 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Save, Download } from 'lucide-react';
-import { createPacientePostAlta, listPacientesPostAlta, updatePendiente } from './services/pacientesPostAltaService';
+import { Download, Plus } from 'lucide-react';
+import { listPacientesPostAltaMonth, PacientePostAltaRow } from './services/pacientesPostAltaService';
 import { useAuthContext } from './components/auth/AuthProvider';
-
-type Row = {
-  id?: string;
-  dni: string;
-  nombre: string;
-  diagnostico: string;
-  pendiente?: string | null;
-  fecha_visita: string; // YYYY-MM-DD
-  created_at?: string;
-};
-
-const required = (v: string) => v && v.trim().length > 0;
+import CalendarView from './components/postAlta/CalendarView';
+import PatientCard from './components/postAlta/PatientCard';
+import PatientDetailModal from './components/postAlta/PatientDetailModal';
+import CreatePatientForm from './components/postAlta/CreatePatientForm';
 
 const PacientesPostAlta: React.FC = () => {
   const { user } = useAuthContext();
-  const [rows, setRows] = useState<Row[]>([]);
+
+  // State
+  const [allPatients, setAllPatients] = useState<PacientePostAltaRow[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [filteredPatients, setFilteredPatients] = useState<PacientePostAltaRow[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Row>({
-    dni: '',
-    nombre: '',
-    diagnostico: '',
-    pendiente: '',
-    fecha_visita: new Date().toISOString().slice(0, 10)
-  });
+  // Load patients for current month whenever month/year changes
+  useEffect(() => {
+    fetchMonthPatients(selectedDate);
+  }, [selectedDate.getMonth(), selectedDate.getFullYear()]);
 
-  const isValid = useMemo(() => (
-    required(form.dni) && required(form.nombre) && required(form.diagnostico) && required(form.fecha_visita)
-  ), [form]);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    setError(null);
-    console.log('[PacientesPostAlta] fetchAll -> start');
-    const res = await listPacientesPostAlta();
-    if (res.error) {
-      console.error('[PacientesPostAlta] fetchAll error:', res.error);
-      setError(res.error);
-    }
-    console.log('[PacientesPostAlta] fetchAll -> rows:', (res.data || []).length);
-    setRows(res.data || []);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchAll(); }, []);
   // Section accent for readability
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -60,191 +36,207 @@ const PacientesPostAlta: React.FC = () => {
     };
   }, []);
 
-  const handleCreate = async () => {
-    if (!user) {
-      console.warn('[PacientesPostAlta] handleCreate blocked: unauthenticated');
-      setError('Debes iniciar sesión para agregar pacientes');
-      return;
-    }
-    if (!isValid) {
-      setError('Completa los campos requeridos: DNI, nombre, diagnóstico y fecha');
-      return;
-    }
-    setError(null);
-    console.log('[PacientesPostAlta] handleCreate -> payload:', form);
-    const { success, error } = await createPacientePostAlta(form);
-    if (!success) {
-      console.error('[PacientesPostAlta] handleCreate error:', error);
-      setError(error || 'Error al crear paciente post alta');
-      return;
-    }
-    setForm({
-      dni: '',
-      nombre: '',
-      diagnostico: '',
-      pendiente: '',
-      fecha_visita: new Date().toISOString().slice(0, 10)
+  // Filter patients by selected date
+  useEffect(() => {
+    const dateString = selectedDate.toISOString().split('T')[0];
+    const filtered = allPatients.filter(p => p.fecha_visita === dateString);
+    setFilteredPatients(filtered);
+  }, [selectedDate, allPatients]);
+
+  // Calculate patient counts by date for calendar badges
+  const patientCountByDate = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allPatients.forEach(p => {
+      counts[p.fecha_visita] = (counts[p.fecha_visita] || 0) + 1;
     });
-    fetchAll();
+    return counts;
+  }, [allPatients]);
+
+  const fetchMonthPatients = async (date: Date) => {
+    setLoading(true);
+    setError(null);
+    console.log('[PacientesPostAlta] fetchMonthPatients -> year:', date.getFullYear(), 'month:', date.getMonth());
+
+    const res = await listPacientesPostAltaMonth(date.getFullYear(), date.getMonth());
+
+    if (res.error) {
+      console.error('[PacientesPostAlta] fetchMonthPatients error:', res.error);
+      setError(res.error);
+    }
+
+    console.log('[PacientesPostAlta] fetchMonthPatients -> rows:', (res.data || []).length);
+    setAllPatients(res.data || []);
+    setLoading(false);
   };
 
-  const handleUpdatePendiente = async (id: string, pendiente: string) => {
-    console.log('[PacientesPostAlta] handleUpdatePendiente -> id:', id);
-    const { success, error } = await updatePendiente(id, pendiente);
-    if (!success) {
-      console.error('[PacientesPostAlta] handleUpdatePendiente error:', error);
-      setError(error || 'Error al guardar pendiente');
-    } else {
-      setError(null);
-      fetchAll();
+  const handleCreatePatient = (patient: PacientePostAltaRow) => {
+    // If patient's month matches current calendar month, add to allPatients
+    const patientDate = new Date(patient.fecha_visita);
+    if (patientDate.getMonth() === selectedDate.getMonth() &&
+        patientDate.getFullYear() === selectedDate.getFullYear()) {
+      setAllPatients(prev => [...prev, patient]);
+    }
+  };
+
+  const handleUpdatePatient = (updated: PacientePostAltaRow) => {
+    setAllPatients(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+
+    // If date was changed and patient moved to different month, remove from current view
+    if (updated.fecha_visita) {
+      const updatedDate = new Date(updated.fecha_visita);
+      if (updatedDate.getMonth() !== selectedDate.getMonth() ||
+          updatedDate.getFullYear() !== selectedDate.getFullYear()) {
+        setAllPatients(prev => prev.filter(p => p.id !== updated.id));
+      }
     }
   };
 
   const exportCSV = () => {
-    const header = ['DNI', 'Nombre', 'Diagnóstico', 'Pendiente', 'Fecha Visita'];
-    const data = rows.map(r => [r.dni, r.nombre, r.diagnostico, (r.pendiente || '').replace(/\n/g, ' '), r.fecha_visita]);
-    const csv = [header, ...data].map(cols => cols.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+    const header = ['Fecha Visita', 'DNI', 'Nombre', 'Teléfono', 'Diagnóstico', 'Pendiente', 'Notas Evolución'];
+    const data = filteredPatients.map(r => [
+      r.fecha_visita,
+      r.dni,
+      r.nombre,
+      r.telefono || '',
+      r.diagnostico,
+      (r.pendiente || '').replace(/\n/g, ' '),
+      (r.notas_evolucion || '').replace(/\n/g, ' ')
+    ]);
+    const csv = [header, ...data]
+      .map(cols => cols.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'pacientes_post_alta.csv'; a.click();
+    const monthName = selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    a.href = url;
+    a.download = `pacientes-post-alta-${monthName}.csv`;
+    a.click();
     URL.revokeObjectURL(url);
   };
 
-  const today = new Date().toISOString().slice(0, 10);
+  const selectedPatient = selectedPatientId
+    ? allPatients.find(p => p.id === selectedPatientId)
+    : null;
+
+  const formattedSelectedDate = selectedDate.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-7xl mx-auto">
+      {/* Banner Header */}
       <div className="flex items-center justify-between mb-6 banner rounded-lg p-4">
         <div>
-          <h1 className="text-2xl font-bold">Post alta + Ambulatorio</h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Pacientes programados para consulta hoy ({today})</p>
+          <h1 className="text-2xl font-bold">Post Alta + Ambulatorio</h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} para el {formattedSelectedDate}
+          </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={fetchAll} className="px-3 py-2 text-sm btn-soft rounded">Actualizar</button>
-          <button onClick={exportCSV} className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2">
-            <Download className="h-4 w-4"/>Exportar CSV
+          <button
+            onClick={() => fetchMonthPatients(selectedDate)}
+            className="px-3 py-2 text-sm btn-soft rounded"
+          >
+            Actualizar
+          </button>
+          <button
+            onClick={exportCSV}
+            className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </button>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="px-3 py-2 text-sm btn-accent rounded inline-flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Paciente
           </button>
         </div>
       </div>
 
+      {/* Auth Warning */}
       {!user && (
-        <div className="mb-4 p-3 rounded medical-card text-sm">
+        <div className="mb-4 p-3 rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-sm">
           Debes iniciar sesión para crear o modificar pacientes post alta.
         </div>
       )}
 
+      {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 rounded medical-card text-sm">{error}</div>
+        <div className="mb-4 p-3 rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm">
+          {error}
+        </div>
       )}
 
-      {/* Formulario de nuevo paciente */}
-      <div className="bg-white dark:bg-[#2a2a2a] rounded-lg border border-gray-300 dark:border-gray-800 p-4 mb-6">
-        <h2 className="font-medium mb-3 text-gray-900 dark:text-gray-200">Nuevo paciente ambulatorio</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input
-            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
-            placeholder="DNI"
-            value={form.dni}
-            onChange={(e) => setForm({ ...form, dni: e.target.value })}
-          />
-          <input
-            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
-            placeholder="Nombre"
-            value={form.nombre}
-            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-          />
-          <input
-            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
-            placeholder="Diagnóstico"
-            value={form.diagnostico}
-            onChange={(e) => setForm({ ...form, diagnostico: e.target.value })}
-          />
-          <input
-            type="date"
-            className="border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
-            value={form.fecha_visita}
-            onChange={(e) => setForm({ ...form, fecha_visita: e.target.value })}
-          />
-        </div>
-        <textarea
-          className="mt-3 w-full border border-gray-300 dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
-          placeholder="Pendiente (opcional)"
-          rows={3}
-          value={form.pendiente ?? ''}
-          onChange={(e) => setForm({ ...form, pendiente: e.target.value })}
+      {/* Create Patient Form (Collapsible) */}
+      {showCreateForm && (
+        <CreatePatientForm
+          isOpen={showCreateForm}
+          onToggle={() => setShowCreateForm(!showCreateForm)}
+          onCreate={handleCreatePatient}
         />
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={handleCreate}
-            disabled={!isValid || loading || !user}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded ${isValid ? 'btn-accent' : 'btn-soft'} `}
-          >
-            <Plus className="h-4 w-4"/>Agregar
-          </button>
-        </div>
-      </div>
+      )}
 
-      {/* Listado */}
-      <div className="medical-card">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="px-3 py-2">Fecha</th>
-                <th className="px-3 py-2">DNI</th>
-                <th className="px-3 py-2">Nombre</th>
-                <th className="px-3 py-2">Diagnóstico</th>
-                <th className="px-3 py-2">Pendiente</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-gray-200 dark:border-gray-700">
-                  <td className="px-3 py-2 text-gray-900 dark:text-gray-300">{r.fecha_visita}</td>
-                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-200">{r.dni}</td>
-                  <td className="px-3 py-2 text-gray-900 dark:text-gray-300">{r.nombre}</td>
-                  <td className="px-3 py-2 text-gray-900 dark:text-gray-300">{r.diagnostico}</td>
-                  <td className="px-3 py-2 w-[360px]">
-                    <InlinePendiente id={r.id!} initial={r.pendiente || ''} onSave={handleUpdatePendiente} />
-                  </td>
-                </tr>
+      {/* Main Content: Two-Panel Layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Panel: Calendar */}
+        <div className="lg:w-1/3">
+          <CalendarView
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            patientCountByDate={patientCountByDate}
+          />
+        </div>
+
+        {/* Right Panel: Patient Cards */}
+        <div className="lg:w-2/3">
+          {loading ? (
+            <div className="medical-card p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">Cargando pacientes...</p>
+            </div>
+          ) : filteredPatients.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredPatients.map((patient) => (
+                <PatientCard
+                  key={patient.id}
+                  patient={patient}
+                  onClick={() => setSelectedPatientId(patient.id || null)}
+                />
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <div className="medical-card p-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                No hay pacientes programados para el {formattedSelectedDate}.
+              </p>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="mt-4 btn-accent px-4 py-2 rounded inline-flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Agregar Paciente
+              </button>
+            </div>
+          )}
         </div>
-        {rows.length === 0 && (
-          <div className="p-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>No hay pacientes ambulatorios programados para hoy.</div>
-        )}
       </div>
-    </div>
-  );
-};
 
-const InlinePendiente: React.FC<{ id: string; initial: string; onSave: (id: string, value: string) => void }> = ({ id, initial, onSave }) => {
-  const [value, setValue] = useState(initial);
-  const [dirty, setDirty] = useState(false);
-  useEffect(() => { setValue(initial); setDirty(false); }, [initial]);
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 w-full bg-white dark:bg-[#333333] text-gray-900 dark:text-gray-200"
-        placeholder="Escribe pendiente"
-        value={value}
-        onChange={(e) => { setValue(e.target.value); setDirty(true); }}
-      />
-      <button
-        onClick={() => { onSave(id, value); setDirty(false); }}
-        disabled={!dirty}
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${dirty ? 'btn-accent' : 'btn-soft'}`}
-      >
-        <Save className="h-3 w-3"/>Guardar
-      </button>
+      {/* Patient Detail Modal */}
+      {selectedPatient && (
+        <PatientDetailModal
+          patient={selectedPatient}
+          onClose={() => setSelectedPatientId(null)}
+          onUpdate={handleUpdatePatient}
+        />
+      )}
     </div>
   );
 };
 
 export default PacientesPostAlta;
-
-
-
