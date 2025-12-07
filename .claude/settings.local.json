@@ -42,7 +42,9 @@
       "Bash(nul)",
       "Bash(sed:*)",
       "Bash(gh pr create:*)",
-      "Bash(timeout 5 npm run build:*)"
+      "Bash(timeout 5 npm run build:*)",
+      "Bash(timeout 10 bash:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   },

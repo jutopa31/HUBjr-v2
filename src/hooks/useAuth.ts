@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, forceLogout } from '../utils/supabase';
-import { hasAdminPrivilege, AdminPrivilegeType } from '../utils/diagnosticAssessmentDB';
+import { AdminPrivilegeType } from '../utils/diagnosticAssessmentDB';
 
 export interface AuthState {
   user: User | null;
@@ -26,7 +26,23 @@ export function useAuth() {
   // Guard to prevent duplicate auth initialization
   const authInitialized = React.useRef(false);
 
-  // Function to check and update user privileges
+  // Privilege cache to avoid redundant checks
+  const privilegeCache = React.useRef<{
+    email: string | null;
+    privileges: AdminPrivilegeType[];
+    hasHospitalContextAccess: boolean;
+    timestamp: number;
+  }>({
+    email: null,
+    privileges: [],
+    hasHospitalContextAccess: false,
+    timestamp: 0
+  });
+
+  // Debounce timer for privilege checks
+  const privilegeCheckTimer = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Function to check and update user privileges - OPTIMIZED VERSION with CACHING
   const checkUserPrivileges = useCallback(async (user: User | null) => {
     if (!user?.email) {
       setState(prev => ({
@@ -34,71 +50,96 @@ export function useAuth() {
         hasHospitalContextAccess: false,
         privileges: []
       }));
+      privilegeCache.current = {
+        email: null,
+        privileges: [],
+        hasHospitalContextAccess: false,
+        timestamp: 0
+      };
       return;
     }
 
-    try {
-      // Add timeout to prevent privilege check from hanging
-      const privilegeCheckPromise = (async () => {
-        const userEmail = user.email!; // Already checked above
+    const userEmail = user.email;
 
-        // Check for specific admin privileges - ALL IN PARALLEL
-        const privilegeTypes: AdminPrivilegeType[] = [
-          'hospital_context_access',
-          'full_admin',
-          'lumbar_puncture_admin',
-          'scale_management',
-          'user_management'
-        ];
+    // Check cache first - if we checked this user in the last 5 minutes, use cached result
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    const now = Date.now();
+    if (
+      privilegeCache.current.email === userEmail &&
+      now - privilegeCache.current.timestamp < CACHE_DURATION
+    ) {
+      console.log('[useAuth] Using cached privileges for', userEmail);
+      setState(prev => ({
+        ...prev,
+        hasHospitalContextAccess: privilegeCache.current.hasHospitalContextAccess,
+        privileges: privilegeCache.current.privileges
+      }));
+      return;
+    }
 
-        // Execute ALL privilege checks in parallel using Promise.all
-        const privilegeChecks = await Promise.all(
-          privilegeTypes.map(async (privilegeType) => {
-            const result = await hasAdminPrivilege(userEmail, privilegeType);
+    // Debounce: clear any pending check
+    if (privilegeCheckTimer.current) {
+      clearTimeout(privilegeCheckTimer.current);
+    }
+
+    // Debounce privilege checks by 500ms to avoid rapid-fire calls
+    privilegeCheckTimer.current = setTimeout(async () => {
+      try {
+        console.log('[useAuth] Checking privileges for', userEmail);
+
+        // Use the optimized RPC function that returns all privileges in a single call
+        const privilegeCheckPromise = supabase
+          .rpc('get_user_privileges_fast', { user_email_param: userEmail })
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('RPC error checking privileges:', error);
+              return {
+                hasHospitalContextAccess: false,
+                privileges: [] as AdminPrivilegeType[]
+              };
+            }
+
+            // Parse the response from the optimized function
+            const privilegesArray = (data?.privileges || []) as AdminPrivilegeType[];
+            const hasContextAccess = data?.hasHospitalContextAccess || false;
+
             return {
-              type: privilegeType,
-              hasPrivilege: result.success && result.hasPrivilege
+              hasHospitalContextAccess: hasContextAccess,
+              privileges: privilegesArray
             };
-          })
+          });
+
+        // Reduced timeout from 15s to 5s since we're now making only 1 call
+        const timeoutPromise = new Promise<{ hasHospitalContextAccess: boolean; privileges: AdminPrivilegeType[] }>((_, reject) =>
+          setTimeout(() => reject(new Error('Privilege check timeout')), 5000)
         );
 
-        // Extract privileges that returned true
-        const userPrivileges: AdminPrivilegeType[] = privilegeChecks
-          .filter(check => check.hasPrivilege)
-          .map(check => check.type);
+        const result = await Promise.race([privilegeCheckPromise, timeoutPromise]);
 
-        // Check if user has hospital_context_access or full_admin
-        const hasContextAccess = userPrivileges.includes('hospital_context_access') ||
-                                 userPrivileges.includes('full_admin');
-
-        return {
-          hasHospitalContextAccess: hasContextAccess,
-          privileges: userPrivileges
+        // Update cache
+        privilegeCache.current = {
+          email: userEmail,
+          privileges: result.privileges,
+          hasHospitalContextAccess: result.hasHospitalContextAccess,
+          timestamp: Date.now()
         };
-      })();
 
-      // Race between privilege check and 15-second timeout (increased to account for parallel calls)
-      const timeoutPromise = new Promise<{ hasHospitalContextAccess: boolean; privileges: AdminPrivilegeType[] }>((_, reject) =>
-        setTimeout(() => reject(new Error('Privilege check timeout')), 15000)
-      );
+        setState(prev => ({
+          ...prev,
+          hasHospitalContextAccess: result.hasHospitalContextAccess,
+          privileges: result.privileges
+        }));
 
-      const result = await Promise.race([privilegeCheckPromise, timeoutPromise]);
-
-      setState(prev => ({
-        ...prev,
-        hasHospitalContextAccess: result.hasHospitalContextAccess,
-        privileges: result.privileges
-      }));
-
-    } catch (error) {
-      console.error('Error checking user privileges:', error);
-      // Set default values on error or timeout
-      setState(prev => ({
-        ...prev,
-        hasHospitalContextAccess: false,
-        privileges: []
-      }));
-    }
+      } catch (error) {
+        console.error('Error checking user privileges:', error);
+        // Set default values on error or timeout
+        setState(prev => ({
+          ...prev,
+          hasHospitalContextAccess: false,
+          privileges: []
+        }));
+      }
+    }, 500); // 500ms debounce
   }, []);
 
   useEffect(() => {
@@ -148,11 +189,16 @@ export function useAuth() {
       }
     });
 
+    // Track last user email to prevent duplicate checks
+    let lastUserEmail: string | null = null;
+
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[useAuth] Auth state changed:', event, 'user:', session?.user?.email || 'none');
+      const currentUserEmail = session?.user?.email || null;
+
+      console.log('[useAuth] Auth state changed:', event, 'user:', currentUserEmail || 'none');
 
       setState(prev => ({
         ...prev,
@@ -161,10 +207,20 @@ export function useAuth() {
         loading: false,
       }));
 
-      // Check user privileges when auth state changes
+      // Only check privileges if:
+      // 1. User is signed in AND
+      // 2. User email has changed OR event is not SIGNED_IN (to avoid redundant checks)
       if (session?.user) {
+        // Skip privilege check for redundant SIGNED_IN events with same user
+        if (event === 'SIGNED_IN' && currentUserEmail === lastUserEmail) {
+          console.log('[useAuth] Skipping redundant privilege check for', currentUserEmail);
+          return;
+        }
+
+        lastUserEmail = currentUserEmail;
         await checkUserPrivileges(session.user);
       } else {
+        lastUserEmail = null;
         setState(prev => ({
           ...prev,
           hasHospitalContextAccess: false,
@@ -175,9 +231,12 @@ export function useAuth() {
 
     return () => {
       clearTimeout(emergencyTimeout);
+      if (privilegeCheckTimer.current) {
+        clearTimeout(privilegeCheckTimer.current);
+      }
       subscription.unsubscribe();
     };
-  }, []);
+  }, [checkUserPrivileges]);
 
 
   const signUp = useCallback(async (email: string, password: string, metadata?: Record<string, any>) => {
