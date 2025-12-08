@@ -23,6 +23,7 @@
     "googleapis": "^154.0.0",
     "lucide-react": "^0.400.0",
     "next": "^14.2.32",
+    "papaparse": "^5.5.3",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.4.149",
     "Playwright": "npm:playwright@^1.55.0",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
+    "@types/papaparse": "^5.5.1",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -42,10 +44,27 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
-    "playwright": "^1.47.0",
+    "playwright": "^1.57.0",
     "postcss": "^8.4.38",
+    "shadcn": "^3.5.1",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
-  }
+  },
+  "description": "[![Vercel Status](https://img.shields.io/badge/Vercel-Deployed-brightgreen)](https://github.com/jutopa31/HUBjr-v2)\r [![Next.js](https://img.shields.io/badge/Next.js-14.2.31-blue)](https://nextjs.org/)\r [![React](https://img.shields.io/badge/React-18.2.0-61DAFB)](https://reactjs.org/)\r [![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-3178C6)](https://www.typescriptlang.org/)\r [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E)](https://supabase.com/)",
+  "main": "create_user_script.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jutopa31/HUBjr-v2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jutopa31/HUBjr-v2/issues"
+  },
+  "homepage": "https://github.com/jutopa31/HUBjr-v2#readme"
 }
