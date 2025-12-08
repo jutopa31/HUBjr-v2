@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical } from 'lucide-react';
+import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
+import CSVImportModal from './components/wardRounds/CSVImportModal';
 import { useAuthContext } from './components/auth/AuthProvider';
 import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
@@ -15,6 +16,7 @@ import {
   deleteOutpatientPatient,
   type OutpatientPatient
 } from './services/outpatientWardRoundsService';
+import WardPatientCard from './components/wardRounds/WardPatientCard';
 
 interface Patient {
   id?: string;
@@ -97,6 +99,7 @@ const WardRounds: React.FC = () => {
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showOutpatientModal, setShowOutpatientModal] = useState(false);
+  const [showCSVImportModal, setShowCSVImportModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
@@ -146,6 +149,9 @@ const WardRounds: React.FC = () => {
   const [dragOverPatientId, setDragOverPatientId] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
 
+  // Estado para vista dual (tabla vs cards)
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
   const closeOutpatientModal = () => setShowOutpatientModal(false);
 
   const closeAddForm = () => {
@@ -170,7 +176,7 @@ const WardRounds: React.FC = () => {
 
   const closeImageLightbox = () => setImageLightboxUrl(null);
 
-  const isAnyModalOpen = showOutpatientModal || showAddForm || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
+  const isAnyModalOpen = showOutpatientModal || showAddForm || showCSVImportModal || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
 
   useEscapeKey(() => {
     if (imageLightboxUrl) {
@@ -187,6 +193,10 @@ const WardRounds: React.FC = () => {
     }
     if (showAddForm) {
       closeAddForm();
+      return;
+    }
+    if (showCSVImportModal) {
+      setShowCSVImportModal(false);
       return;
     }
     if (showOutpatientModal) {
@@ -1766,20 +1776,55 @@ const WardRounds: React.FC = () => {
         subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         actions={
           <div className="flex space-x-3">
+            {/* View Mode Toggle */}
+            <button
+              onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
+              className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+              title={viewMode === 'table' ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de tabla'}
+            >
+              {viewMode === 'table' ? (
+                <>
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Vista Cards</span>
+                </>
+              ) : (
+                <>
+                  <TableIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Vista Tabla</span>
+                </>
+              )}
+            </button>
             <button
               onClick={() => setShowOutpatientModal(true)}
               className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+              title="Ambulatorios"
             >
               <Users className="h-4 w-4" />
-              <span>Ambulatorios</span>
+              <span className="hidden sm:inline">Ambulatorios</span>
             </button>
-            <button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2 px-3 py-2 rounded btn-accent text-sm">
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center space-x-2 px-3 py-2 rounded btn-accent text-sm"
+              title="Agregar Paciente"
+            >
               <Plus className="h-4 w-4" />
-              <span>Agregar Paciente</span>
+              <span className="hidden sm:inline">Agregar Paciente</span>
             </button>
-            <button onClick={exportToPDF} className="flex items-center space-x-2 btn-soft px-3 py-2 text-sm rounded">
+            <button
+              onClick={() => setShowCSVImportModal(true)}
+              className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+              title="Importar CSV"
+            >
+              <Upload className="h-4 w-4" />
+              <span className="hidden md:inline">Importar CSV</span>
+            </button>
+            <button
+              onClick={exportToPDF}
+              className="flex items-center space-x-2 btn-soft px-3 py-2 text-sm rounded"
+              title="Exportar PDF"
+            >
               <Download className="h-4 w-4" />
-              <span>Exportar PDF</span>
+              <span className="hidden md:inline">Exportar PDF</span>
             </button>
           </div>
         }
@@ -2220,13 +2265,24 @@ const WardRounds: React.FC = () => {
         </div>
       )}
 
-      {/* Lista de pacientes compacta y expandible */}
-      <div className="flex-1 bg-white shadow-lg rounded-lg overflow-hidden flex flex-col">
-        <div id="ward-round-table" className="flex-1 overflow-auto">
-          <div className="divide-y divide-gray-200">
+      {/* Main Patient Display - Conditional Rendering */}
+      {viewMode === 'table' ? (
+        <div className="flex-1 bg-white shadow-lg rounded-lg overflow-hidden flex flex-col">
+          <div id="ward-round-table" className="flex-1 overflow-auto">
+            <div className="divide-y divide-gray-200">
             {/* Header para ordenamiento */}
-            <div className="bg-gray-50 px-6 py-1.5 border-b border-gray-200 sticky top-0 z-10">
-              <div className="grid grid-cols-12 gap-2 items-center px-6">
+            <div className="bg-gray-50 px-3 sm:px-6 py-1.5 border-b border-gray-200 sticky top-0 z-10">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                {/* Indicador de reordenamiento alineado con los íconos - oculto en mobile */}
+                <div className="hidden sm:flex items-center space-x-1 flex-shrink-0" style={{ width: '56px' }}>
+                  {isReordering ? (
+                    <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
+                  ) : (
+                    <span className="text-[10px] text-gray-400">⋮ Ordenar</span>
+                  )}
+                </div>
+
+                <div className="flex-1 grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1 sm:gap-2 items-center">
                 <div className="col-span-2">
                   <button
                     onClick={() => handleSort('cama')}
@@ -2279,7 +2335,7 @@ const WardRounds: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <button
                     onClick={() => handleSort('pendientes')}
                     className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
@@ -2299,9 +2355,6 @@ const WardRounds: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="hidden md:flex items-center space-x-2 px-6 pt-1 text-[11px] text-gray-500">
-                {isReordering && <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>}
-                <span>{isReordering ? 'Guardando nuevo orden...' : 'Arrastra el icono ⋮ para reordenar'}</span>
               </div>
             </div>
 
@@ -2325,12 +2378,13 @@ const WardRounds: React.FC = () => {
                 >
                   
                   {/* Fila principal compacta */}
-                  <div 
-                    className="px-6 py-4 cursor-pointer flex items-center justify-between"
+                  <div
+                    className="px-3 sm:px-6 py-3 sm:py-4 cursor-pointer flex items-center justify-between"
                     onClick={() => handlePatientSelection(patient)}
                   >
-                    <div className="flex items-center space-x-4 flex-1">
-                      <div className="flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing" draggable={Boolean(patient.id) && !isReordering} onClick={(e) => e.stopPropagation()} onDragStart={(e) => handleDragStart(e, patient.id || '')} title="Arrastrar para reordenar">
+                    <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
+                      {/* Drag handle - hidden on mobile */}
+                      <div className="hidden sm:block flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing" draggable={Boolean(patient.id) && !isReordering} onClick={(e) => e.stopPropagation()} onDragStart={(e) => handleDragStart(e, patient.id || '')} title="Arrastrar para reordenar">
                         <GripVertical className="h-4 w-4 text-gray-400" />
                       </div>
                       {/* Icono de expansión */}
@@ -2344,25 +2398,25 @@ const WardRounds: React.FC = () => {
                           }}
                           title={isExpanded ? 'Contraer' : 'Expandir'}
                         >
-                          <ChevronRight 
+                          <ChevronRight
                             className={`expand-icon h-4 w-4 text-gray-500 ${
                               isExpanded ? 'expanded' : ''
                             }`}
                           />
                         </button>
                       </div>
-                      
+
                       {/* Información principal */}
-                      <div className="flex-1 grid grid-cols-12 gap-2 items-center">
+                      <div className="flex-1 grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1 sm:gap-2 items-center min-w-0">
                         <div className="col-span-2">
                           <div className="text-sm font-medium text-gray-900">{patient.cama}</div>
-                          <div className="text-xs text-gray-500">{patient.edad} años</div>
+                          <div className="text-xs text-gray-500 hidden sm:block">{patient.edad} años</div>
                         </div>
                         <div className="col-span-2">
-                          <div className="text-sm font-medium text-gray-900">{patient.nombre}</div>
+                          <div className="text-sm font-medium text-gray-900 truncate">{patient.nombre}</div>
                           <div className="text-xs text-gray-500">
-                            <span>DNI: {patient.dni}</span>
-                            <span className="sm:hidden"> • {patient.edad} años</span>
+                            <span className="hidden sm:inline">DNI: {patient.dni}</span>
+                            <span className="sm:hidden">{patient.edad} años</span>
                           </div>
                         </div>
                         <div className="col-span-2 hidden md:block">
@@ -2382,7 +2436,7 @@ const WardRounds: React.FC = () => {
                             {patient.severidad || '-'}
                           </span>
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-3">
                           {editingPendientesId === patient.id ? (
                             <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
                               <textarea
@@ -2531,7 +2585,95 @@ const WardRounds: React.FC = () => {
             })}
           </div>
         </div>
+
+        {patients.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="mt-4 text-blue-600 hover:text-blue-800"
+            >
+              Agregar el primer paciente
+            </button>
+          </div>
+        )}
       </div>
+      ) : (
+        <div className="flex-1 overflow-auto p-4">
+        {sortedPatients.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {sortedPatients.map((patient) => {
+              const resident = residents.find(r => r.id === patient.assigned_resident_id);
+              return (
+                <WardPatientCard
+                  key={patient.id}
+                  patient={patient}
+                  resident={resident}
+                  onClick={() => setSelectedPatient(patient)}
+                  onDragStart={(e) => {
+                    setDraggedPatientId(patient.id || null);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    setDragOverPatientId(patient.id || null);
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    if (!draggedPatientId || draggedPatientId === patient.id) return;
+
+                    const draggedIndex = patients.findIndex(p => p.id === draggedPatientId);
+                    const targetIndex = patients.findIndex(p => p.id === patient.id);
+
+                    if (draggedIndex === -1 || targetIndex === -1) return;
+
+                    const newPatients = [...patients];
+                    const [draggedPatient] = newPatients.splice(draggedIndex, 1);
+                    newPatients.splice(targetIndex, 0, draggedPatient);
+
+                    const updatedPatients = newPatients.map((p, index) => ({
+                      ...p,
+                      display_order: index
+                    }));
+
+                    setPatients(updatedPatients);
+                    setDraggedPatientId(null);
+                    setDragOverPatientId(null);
+
+                    setIsReordering(true);
+                    try {
+                      const draggedPatientData = updatedPatients.find(p => p.id === draggedPatientId);
+                      if (draggedPatientData && draggedPatientData.id) {
+                        await updatePatient(draggedPatientData.id, draggedPatientData);
+                      }
+                    } catch (error) {
+                      console.error('Error updating display order:', error);
+                    } finally {
+                      setIsReordering(false);
+                    }
+                  }}
+                  isDragging={draggedPatientId === patient.id}
+                  isDragOver={dragOverPatientId === patient.id}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="medical-card p-12 text-center">
+            <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-500 text-lg mb-4">No hay pacientes registrados en el pase de sala</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="btn-accent px-4 py-2 rounded inline-flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Agregar primer paciente
+            </button>
+          </div>
+        )}
+      </div>
+      )}
 
       {/* Modal de detalle con ediciA3n inline */}
       {selectedPatient && (
@@ -3001,19 +3143,15 @@ const WardRounds: React.FC = () => {
           </div>
         </div>
       )}
-        
-      {patients.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="mt-4 text-blue-600 hover:text-blue-800"
-          >
-            Agregar el primer paciente
-          </button>
-        </div>
+
+      {showCSVImportModal && (
+        <CSVImportModal
+          isOpen={showCSVImportModal}
+          onClose={() => setShowCSVImportModal(false)}
+          onImportComplete={loadPatients}
+          hospitalContext="Posadas"
+        />
       )}
-    </div>
 
       {imageLightboxUrl && (
       <div className="modal-overlay" onClick={closeImageLightbox}>
@@ -3061,9 +3199,9 @@ const WardRounds: React.FC = () => {
         onConfirmDelete={handleDeleteAction}
         isProcessing={isProcessingDeletion}
       />
+    </div>
     </LoadingWithRecovery>
   );
 };
 
 export default WardRounds;
-
