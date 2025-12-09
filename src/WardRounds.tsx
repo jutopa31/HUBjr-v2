@@ -1182,6 +1182,34 @@ const WardRounds: React.FC = () => {
 
     return (
       <div className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm">
+        {/* Hidden inputs for file uploads - always available */}
+        <input
+          ref={quickImageInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            handleMultipleFileUpload(e.target.files);
+            if (quickImageInputRef.current) {
+              quickImageInputRef.current.value = '';
+            }
+          }}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            handleMultipleFileUpload(e.target.files);
+            if (cameraInputRef.current) {
+              cameraInputRef.current.value = '';
+            }
+          }}
+        />
+
         {/* Header con contador de fotos */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
@@ -1200,19 +1228,6 @@ const WardRounds: React.FC = () => {
             )}
             {!isDetailEditMode && (
               <>
-                <input
-                  ref={quickImageInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    handleMultipleFileUpload(e.target.files);
-                    if (quickImageInputRef.current) {
-                      quickImageInputRef.current.value = '';
-                    }
-                  }}
-                />
                 <button
                   type="button"
                   className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
@@ -1327,19 +1342,6 @@ const WardRounds: React.FC = () => {
                   <span>Pegar imagen</span>
                 </button>
 
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => {
-                    handleMultipleFileUpload(e.target.files);
-                    if (cameraInputRef.current) {
-                      cameraInputRef.current.value = '';
-                    }
-                  }}
-                />
                 <button
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
