@@ -66,6 +66,7 @@ export interface AcademicClass {
   class_time: string; // HH:MM:SS
   instructor_email: string;
   instructor_name: string | null;
+  bibliography_url?: string | null;
   created_by: string;
   created_at: string;
   updated_at?: string;
@@ -181,7 +182,11 @@ export async function addClass(
     const { data, error } = await withTimeout(
       supabase
         .from('academic_classes')
-        .insert([{ ...classData, class_time: normalizeTimeValue(classData.class_time) }])
+        .insert([{
+          ...classData,
+          class_time: normalizeTimeValue(classData.class_time),
+          bibliography_url: classData.bibliography_url || null
+        }])
         .select()
         .single()
     );
@@ -217,7 +222,8 @@ export async function updateClass(id: string, classData: Partial<AcademicClass>)
         .from('academic_classes')
         .update({
           ...rest,
-          class_time: rest.class_time ? normalizeTimeValue(rest.class_time) : undefined
+          class_time: rest.class_time ? normalizeTimeValue(rest.class_time) : undefined,
+          bibliography_url: rest.bibliography_url === undefined ? undefined : (rest.bibliography_url || null)
         })
         .eq('id', id)
         .select()

@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Calendar, Plus, Clock, User, Trash2, Edit3, X } from 'lucide-react';
+import { Calendar, Plus, Clock, User, Trash2, Edit3, X, BookOpen } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import {
   ClassTopic,
@@ -43,6 +43,7 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
   const [classDate, setClassDate] = useState<string>('');
   const [classTime, setClassTime] = useState<string>('08:00');
   const [showTimeInput, setShowTimeInput] = useState(false);
+  const [bibliographyLink, setBibliographyLink] = useState<string>('');
 
   // Estado del modal de agregar tema
   const [showAddTopicModal, setShowAddTopicModal] = useState(false);
@@ -155,6 +156,7 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
     }
 
     const instructorName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
+    const normalizedBibliography = bibliographyLink.trim();
 
     const classData = {
       topic_id: selectedTopicId,
@@ -163,7 +165,8 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
       class_time: normalizedTime,
       instructor_email: user.email,
       instructor_name: instructorName,
-      created_by: userId
+      created_by: userId,
+      bibliography_url: normalizedBibliography || null
     };
 
     setSavingClass(true);
@@ -201,6 +204,7 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
     setSelectedTopicId(academicClass.topic_id || '');
     setClassDate(academicClass.class_date);
     setClassTime(academicClass.class_time.substring(0, 5)); // HH:MM
+    setBibliographyLink(academicClass.bibliography_url || '');
     setActiveTab('register');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -229,6 +233,7 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
     setClassDate('');
     setClassTime('08:00');
     setShowTimeInput(false);
+    setBibliographyLink('');
     setEditingClass(null);
   };
 
@@ -349,6 +354,17 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
                       <span className="sm:hidden">Tema</span>
                     </button>
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700">Link de bibliografA­a (opcional)</label>
+                  <input
+                    type="url"
+                    value={bibliographyLink}
+                    onChange={(e) => setBibliographyLink(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                  />
                 </div>
 
                 {/* Botones */}
@@ -582,6 +598,20 @@ const ClassCard: React.FC<ClassCardProps> = ({
               <User className="h-4 w-4 shrink-0 text-slate-400" />
               <span className="truncate">{academicClass.instructor_name || academicClass.instructor_email}</span>
             </div>
+
+            {academicClass.bibliography_url && (
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 shrink-0 text-slate-400" />
+                <a
+                  href={academicClass.bibliography_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate text-sky-700 underline decoration-sky-200 hover:text-sky-900"
+                >
+                  BibliografA­a
+                </a>
+              </div>
+            )}
           </div>
         </div>
 

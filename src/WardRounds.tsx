@@ -122,6 +122,12 @@ const WardRounds: React.FC = () => {
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const quickImageInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCameraStarting, setIsCameraStarting] = useState(false);
+  const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -157,6 +163,21 @@ const WardRounds: React.FC = () => {
   // Estado para vista dual (tabla vs cards)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
+  const stopCameraStream = React.useCallback(() => {
+    setCameraStream((currentStream) => {
+      if (currentStream) {
+        currentStream.getTracks().forEach((track) => track.stop());
+      }
+      return null;
+    });
+  }, []);
+
+  const closeCameraModal = React.useCallback(() => {
+    setShowCameraModal(false);
+    setCameraError(null);
+    stopCameraStream();
+  }, [stopCameraStream]);
+
   const closeOutpatientModal = () => setShowOutpatientModal(false);
 
   const closeAddForm = () => {
@@ -177,15 +198,20 @@ const WardRounds: React.FC = () => {
     setIsDetailEditMode(false);
     setIsHeaderEditMode(false);
     setImageLightboxUrl(null);
+    closeCameraModal();
   };
 
   const closeImageLightbox = () => setImageLightboxUrl(null);
 
-  const isAnyModalOpen = showOutpatientModal || showAddForm || showCSVImportModal || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
+  const isAnyModalOpen = showOutpatientModal || showAddForm || showCSVImportModal || showCameraModal || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
 
   useEscapeKey(() => {
     if (imageLightboxUrl) {
       closeImageLightbox();
+      return;
+    }
+    if (showCameraModal) {
+      closeCameraModal();
       return;
     }
     if (selectedPatient) {
@@ -234,6 +260,32 @@ const WardRounds: React.FC = () => {
       loadOutpatients();
     }
   }, [showOutpatientModal]);
+
+  useEffect(() => {
+    const videoElement = cameraVideoRef.current;
+    if (!videoElement) return;
+
+    if (cameraStream) {
+      videoElement.srcObject = cameraStream;
+      const playPromise = videoElement.play();
+      if (playPromise) {
+        playPromise.catch(() => {});
+      }
+    } else {
+      videoElement.srcObject = null;
+    }
+  }, [cameraStream]);
+
+  useEffect(() => {
+    if (!showCameraModal) {
+      stopCameraStream();
+      setIsCameraStarting(false);
+      setIsCapturingPhoto(false);
+      setCameraError(null);
+    }
+  }, [showCameraModal, stopCameraStream]);
+
+  useEffect(() => () => stopCameraStream(), [stopCameraStream]);
 
   const sortPatientsByDisplayOrder = (list: Patient[]) => {
     return [...list].sort((a, b) => {
@@ -1157,6 +1209,95 @@ const WardRounds: React.FC = () => {
     }
   };
 
+  const isMobileCameraDevice = () =>
+    typeof navigator !== 'undefined' && /android|iphone|ipad|mobile/i.test(navigator.userAgent || '');
+
+  const startDesktopCamera = async () => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Este navegador no permite abrir la camara directamente.');
+      return;
+    }
+
+    if (cameraStream || isCameraStarting) return;
+
+    try {
+      setIsCameraStarting(true);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false
+      });
+      setCameraStream(stream);
+      setCameraError(null);
+    } catch (error) {
+      console.error('[WardRounds] Error al abrir la camara', error);
+      setCameraError('No pudimos acceder a la camara. Revisa los permisos del navegador.');
+      stopCameraStream();
+    } finally {
+      setIsCameraStarting(false);
+    }
+  };
+
+  const handleCameraButtonClick = async () => {
+    if (isMobileCameraDevice()) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    setShowCameraModal(true);
+    setCameraError(null);
+    await startDesktopCamera();
+  };
+
+  const handleCaptureFromCamera = async () => {
+    if (!cameraVideoRef.current) {
+      setCameraError('Camara no inicializada.');
+      return;
+    }
+
+    if (!selectedPatient?.id) {
+      setImageUploadError('Selecciona o guarda el paciente antes de subir la foto.');
+      return;
+    }
+
+    try {
+      setIsCapturingPhoto(true);
+      const videoElement = cameraVideoRef.current;
+      const canvas = document.createElement('canvas');
+      const width = videoElement.videoWidth || videoElement.clientWidth || 1280;
+      const height = videoElement.videoHeight || videoElement.clientHeight || 720;
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setCameraError('No pudimos procesar la imagen de la camara.');
+        return;
+      }
+
+      ctx.drawImage(videoElement, 0, 0, width, height);
+
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.92)
+      );
+
+      if (!blob) {
+        setCameraError('No se pudo generar la imagen.');
+        return;
+      }
+
+      const file = new File([blob], `ward-camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      await handleMultipleFileUpload(dataTransfer.files);
+      closeCameraModal();
+    } catch (error) {
+      console.error('[WardRounds] Error capturando foto de camara', error);
+      setCameraError('Error al capturar la foto.');
+    } finally {
+      setIsCapturingPhoto(false);
+    }
+  };
+
   /**
    * Handler para eliminar imagen
    * Elimina la imagen del índice especificado y actualiza la base de datos
@@ -1253,7 +1394,7 @@ const WardRounds: React.FC = () => {
                 <button
                   type="button"
                   className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={handleCameraButtonClick}
                   disabled={uploadingImages || !selectedPatient?.id}
                   title="Capturar con cámara"
                 >
@@ -1344,7 +1485,7 @@ const WardRounds: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={handleCameraButtonClick}
                   disabled={uploadingImages}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-purple-700 dark:hover:bg-purple-600"
                   title="Abrir cámara"
@@ -2839,6 +2980,78 @@ const WardRounds: React.FC = () => {
           </div>
         )}
       </div>
+      )}
+
+      {showCameraModal && (
+        <div className="modal-overlay">
+          <div className="modal-content max-w-3xl w-full rounded-2xl overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between bg-white">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Capturar foto</h2>
+                <p className="text-sm text-gray-600">Vista previa en vivo desde la camara (desktop)</p>
+              </div>
+              <button
+                type="button"
+                className="p-2 rounded hover:bg-gray-100 text-gray-500"
+                onClick={closeCameraModal}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3 bg-[var(--bg-secondary)]">
+              {cameraError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {cameraError}
+                </div>
+              )}
+
+              <div className="aspect-video bg-black rounded-lg overflow-hidden relative flex items-center justify-center">
+                <video
+                  ref={cameraVideoRef}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  playsInline
+                  muted
+                />
+                {isCameraStarting && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-sm">
+                    Iniciando camara...
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>En moviles usamos el selector nativo con capture=&quot;environment&quot;.</span>
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-800"
+                  onClick={() => quickImageInputRef.current?.click()}
+                >
+                  Preferir archivos
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
+                  onClick={closeCameraModal}
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 text-sm font-medium"
+                  onClick={handleCaptureFromCamera}
+                  disabled={isCameraStarting || isCapturingPhoto || uploadingImages}
+                >
+                  {isCapturingPhoto ? 'Guardando...' : 'Capturar y subir'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal de detalle con ediciA3n inline */}
