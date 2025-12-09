@@ -3152,12 +3152,12 @@ const WardRounds: React.FC = () => {
                     </select>
                   </div>
                 ) : isDetailEditMode ? (
-                  // FULL EDIT MODE: Layout original con 3 campos
+                  // FULL EDIT MODE: Layout original con 4 campos (agregado severidad)
                   <>
                     <h2 className="text-lg font-semibold text-gray-900">
                       {selectedPatient.nombre || 'Paciente sin nombre'}
                     </h2>
-                    <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-gray-700">
                       <input
                         type="text"
                         value={(inlineDetailValues.cama as string) || ''}
@@ -3179,6 +3179,17 @@ const WardRounds: React.FC = () => {
                         className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Fecha"
                       />
+                      <select
+                        value={(inlineDetailValues.severidad as string) || ''}
+                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, severidad: e.target.value }))}
+                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Severidad</option>
+                        <option value="I">I - Estable</option>
+                        <option value="II">II - Moderado</option>
+                        <option value="III">III - Severo</option>
+                        <option value="IV">IV - Crítico</option>
+                      </select>
                     </div>
                   </>
                 ) : (
