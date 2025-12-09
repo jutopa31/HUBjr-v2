@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Download, ChevronUp } from 'lucide-react';
-import { createInterconsulta, listInterconsultas, InterconsultaRow, InterconsultaFilters } from './services/interconsultasService';
+import { Plus, Download, ChevronUp, Stethoscope, Trash2, CheckSquare } from 'lucide-react';
+import { createInterconsulta, listInterconsultas, InterconsultaRow, InterconsultaFilters, deleteInterconsulta, deleteMultipleInterconsultas } from './services/interconsultasService';
 import { useAuthContext } from './components/auth/AuthProvider';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 import InterconsultaCard from './components/interconsultas/InterconsultaCard';
@@ -31,6 +31,11 @@ const Interconsultas: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Estados para selección múltiple y borrado
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [form, setForm] = useState(buildDefaultForm());
   const isValid = useMemo(() => (
@@ -183,6 +188,75 @@ const Interconsultas: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Selección múltiple
+  const handleToggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredRows.length) {
+      // Deseleccionar todas
+      setSelectedIds(new Set());
+    } else {
+      // Seleccionar todas las filtradas
+      setSelectedIds(new Set(filteredRows.map(r => r.id!)));
+    }
+  };
+
+  // Borrado individual
+  const handleDeleteSingle = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar esta interconsulta? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    setError(null);
+    const { success, error } = await deleteInterconsulta(id);
+
+    if (success) {
+      setRows(prev => prev.filter(r => r.id !== id));
+      setSuccessMessage('Interconsulta eliminada');
+    } else {
+      setError(error || 'Error al eliminar la interconsulta');
+    }
+  };
+
+  // Borrado múltiple
+  const handleDeleteMultiple = async () => {
+    if (selectedIds.size === 0) {
+      setError('No hay interconsultas seleccionadas');
+      return;
+    }
+
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteMultiple = async () => {
+    setDeleting(true);
+    setError(null);
+
+    const idsArray = Array.from(selectedIds);
+    const { success, error, deletedCount } = await deleteMultipleInterconsultas(idsArray);
+
+    setDeleting(false);
+    setShowDeleteModal(false);
+
+    if (success) {
+      setRows(prev => prev.filter(r => !selectedIds.has(r.id!)));
+      setSelectedIds(new Set());
+      setSuccessMessage(`${deletedCount} interconsulta(s) eliminada(s)`);
+    } else {
+      setError(error || 'Error al eliminar las interconsultas');
+    }
+  };
+
   const selectedInterconsulta = selectedId ? rows.find(r => r.id === selectedId) : null;
 
   return (
@@ -196,48 +270,104 @@ const Interconsultas: React.FC = () => {
       recoveryTimeout={15000}
     >
       <div className="max-w-7xl mx-auto">
-        {/* Banner Header */}
-        <div className="flex items-center justify-between mb-6 banner rounded-lg p-4">
-          <h1 className="text-2xl font-bold">Interconsultas</h1>
+        {/* Compact Header with Gradient and Badges */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 mb-3">
+          <div className="flex items-center gap-3">
+            {/* Icono redondeado con sombra */}
+            <div className="rounded-full bg-white p-1.5 shadow-sm ring-1 ring-gray-200">
+              <Stethoscope className="h-5 w-5 text-blue-700" />
+            </div>
+
+            {/* Título */}
+            <div>
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Interconsultas</h1>
+            </div>
+
+            {/* Badges de estadísticas */}
+            <div className="hidden md:flex items-center gap-2 ml-4">
+              <span className="text-xs px-2 py-1 bg-white rounded-full ring-1 ring-gray-200 text-[var(--text-secondary)]">
+                {rows.length} total
+              </span>
+              <span className="text-xs px-2 py-1 bg-amber-50 rounded-full ring-1 ring-amber-100 text-amber-800">
+                {statusCounts.Pendiente} Pendiente
+              </span>
+              <span className="text-xs px-2 py-1 bg-blue-50 rounded-full ring-1 ring-blue-100 text-blue-800">
+                {statusCounts['En Proceso']} En Proceso
+              </span>
+              <span className="text-xs px-2 py-1 bg-emerald-50 rounded-full ring-1 ring-emerald-100 text-emerald-800">
+                {statusCounts.Resuelta} Resuelta
+              </span>
+              <span className="text-xs px-2 py-1 bg-gray-50 rounded-full ring-1 ring-gray-100 text-gray-800">
+                {statusCounts.Cancelada} Cancelada
+              </span>
+            </div>
+          </div>
+
           <div className="flex gap-2">
-            <button onClick={fetchAll} className="px-3 py-2 text-sm btn-soft rounded">
+            <button onClick={fetchAll} className="px-2.5 py-1.5 text-xs btn-soft rounded">
               Actualizar
             </button>
-            <button onClick={exportCSV} className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2">
-              <Download className="h-4 w-4" />
+            <button onClick={exportCSV} className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5">
+              <Download className="h-3.5 w-3.5" />
               Exportar CSV
             </button>
+
+            {/* Botón de seleccionar todas */}
+            {filteredRows.length > 0 && (
+              <button
+                onClick={handleSelectAll}
+                className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+                title={selectedIds.size === filteredRows.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+              >
+                <CheckSquare className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">
+                  {selectedIds.size === filteredRows.length ? 'Deseleccionar' : 'Seleccionar'}
+                </span>
+              </button>
+            )}
+
+            {/* Botón de borrado múltiple */}
+            {selectedIds.size > 0 && (
+              <button
+                onClick={handleDeleteMultiple}
+                className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Eliminar ({selectedIds.size})
+              </button>
+            )}
+
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="px-3 py-2 text-sm btn-accent rounded inline-flex items-center gap-2"
+              className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
             >
-              <Plus className="h-4 w-4" />
-              Nueva Interconsulta
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Nueva Interconsulta</span>
             </button>
           </div>
         </div>
 
         {!user && (
-          <div className="mb-4 p-3 rounded medical-card text-sm">
+          <div className="mb-2 p-2 rounded medical-card text-xs">
             Debes iniciar sesión para crear o guardar interconsultas.
           </div>
         )}
 
         {error && (
-          <div className="mb-4 p-3 rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm">
+          <div className="mb-2 p-2 rounded bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 p-3 rounded bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm">
+          <div className="mb-2 p-2 rounded bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
             {successMessage}
           </div>
         )}
 
         {/* Create Form (Collapsible) */}
         {showCreateForm && (
-          <div className="medical-card p-4 mb-6">
+          <div className="medical-card p-3 mb-3">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-medium">Nueva interconsulta</h2>
               <button
@@ -320,11 +450,6 @@ const Interconsultas: React.FC = () => {
           statusCounts={statusCounts}
         />
 
-        {/* Results count */}
-        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-          Mostrando {filteredRows.length} de {rows.length} interconsultas
-        </div>
-
         {/* Card Grid */}
         {filteredRows.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -333,6 +458,9 @@ const Interconsultas: React.FC = () => {
                 key={row.id}
                 interconsulta={row}
                 onClick={() => setSelectedId(row.id || null)}
+                isSelected={selectedIds.has(row.id!)}
+                onToggleSelection={handleToggleSelection}
+                onDelete={handleDeleteSingle}
               />
             ))}
           </div>
@@ -353,6 +481,50 @@ const Interconsultas: React.FC = () => {
             onClose={() => setSelectedId(null)}
             onUpdate={handleUpdateRow}
           />
+        )}
+
+        {/* Modal de confirmación de borrado múltiple */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="medical-card max-w-md w-full p-6 rounded-lg">
+              <h2 className="text-xl font-semibold mb-4 text-red-700 dark:text-red-400">
+                Confirmar Eliminación
+              </h2>
+              <p className="mb-4 text-gray-700 dark:text-gray-300">
+                ¿Estás seguro de que quieres eliminar <strong>{selectedIds.size}</strong> interconsulta(s)?
+                Esta acción no se puede deshacer.
+              </p>
+
+              {/* Lista de interconsultas a borrar */}
+              <div className="mb-4 max-h-48 overflow-y-auto border rounded p-2 bg-gray-50 dark:bg-gray-800">
+                {Array.from(selectedIds).map(id => {
+                  const consulta = rows.find(r => r.id === id);
+                  return consulta ? (
+                    <div key={id} className="text-sm py-1 text-gray-700 dark:text-gray-300">
+                      • {consulta.nombre} - DNI: {consulta.dni}
+                    </div>
+                  ) : null;
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={confirmDeleteMultiple}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Eliminando...' : 'Eliminar'}
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2 btn-soft rounded"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </LoadingWithRecovery>

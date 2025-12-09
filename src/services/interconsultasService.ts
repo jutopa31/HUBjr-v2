@@ -168,3 +168,51 @@ export async function updateRespuestaWithStatus(id: string, respuesta: string, c
     return { success: false, error: e?.message || 'Unknown error' };
   }
 }
+
+/**
+ * Borra una interconsulta permanentemente (hard delete)
+ */
+export async function deleteInterconsulta(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('[InterconsultasService] deleteInterconsulta -> id:', id);
+    const { error } = await supabase
+      .from('interconsultas')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('[InterconsultasService] deleteInterconsulta error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[InterconsultasService] deleteInterconsulta -> success');
+    return { success: true };
+  } catch (e: any) {
+    console.error('[InterconsultasService] deleteInterconsulta unexpected error:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+}
+
+/**
+ * Borra múltiples interconsultas permanentemente (hard delete)
+ */
+export async function deleteMultipleInterconsultas(ids: string[]): Promise<{ success: boolean; error?: string; deletedCount?: number }> {
+  try {
+    console.log('[InterconsultasService] deleteMultipleInterconsultas -> ids:', ids);
+    const { error, count } = await supabase
+      .from('interconsultas')
+      .delete({ count: 'exact' })
+      .in('id', ids);
+
+    if (error) {
+      console.error('[InterconsultasService] deleteMultipleInterconsultas error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[InterconsultasService] deleteMultipleInterconsultas -> deleted count:', count);
+    return { success: true, deletedCount: count || 0 };
+  } catch (e: any) {
+    console.error('[InterconsultasService] deleteMultipleInterconsultas unexpected error:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+}

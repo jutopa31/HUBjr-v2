@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Calendar } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { InterconsultaFilters } from '../../services/interconsultasService';
 
 interface InterconsultaFiltersProps {
@@ -85,149 +85,124 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
   ];
 
   return (
-    <div className="medical-card p-4 mb-4 space-y-4">
-      {/* Search Input */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    <div className="mb-4">
+      {/* Compact Horizontal Filters */}
+      <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg" style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: 'var(--border-primary)',
+      }}>
+        {/* Search Input - Compact */}
+        <div className="relative flex-shrink-0" style={{ minWidth: '200px', maxWidth: '240px' }}>
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por nombre o DNI..."
+            placeholder="Buscar..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-10 pr-3 py-2 text-sm border rounded-lg"
+            className="w-full pl-8 pr-2 py-1.5 text-xs border rounded"
             style={{
-              backgroundColor: 'var(--bg-secondary)',
+              backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-primary)',
               borderColor: 'var(--border-primary)',
             }}
           />
         </div>
 
+        {/* Status Pills - Inline */}
+        {allStatuses.map((status) => {
+          const isActive = filters.status?.includes(status);
+          const count = statusCounts?.[status] || 0;
+
+          return (
+            <button
+              key={status}
+              onClick={() => handleStatusToggle(status)}
+              className={`px-2 py-1 text-xs rounded-full transition-colors whitespace-nowrap ${
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {status} {count > 0 && `(${count})`}
+            </button>
+          );
+        })}
+
+        {/* Date Preset Dropdown */}
+        <div className="relative">
+          <select
+            value={datePreset}
+            onChange={(e) => handleDatePreset(e.target.value as any)}
+            className="pl-2 pr-7 py-1.5 text-xs border rounded appearance-none cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              borderColor: 'var(--border-primary)',
+            }}
+          >
+            <option value="all">📅 Todas</option>
+            <option value="week">📅 Última semana</option>
+            <option value="month">📅 Último mes</option>
+            <option value="custom">📅 Personalizado</option>
+          </select>
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Clear Filters Button */}
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="px-4 py-2 text-sm btn-soft rounded-lg inline-flex items-center gap-2 whitespace-nowrap"
+            className="px-2 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1 whitespace-nowrap"
           >
-            <X className="h-4 w-4" />
-            Limpiar filtros
+            <X className="h-3 w-3" />
+            Limpiar
           </button>
         )}
       </div>
 
-      {/* Status Filter Buttons */}
-      <div>
-        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-          Estado
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {allStatuses.map((status) => {
-            const isActive = filters.status?.includes(status);
-            const count = statusCounts?.[status] || 0;
-
-            return (
-              <button
-                key={status}
-                onClick={() => handleStatusToggle(status)}
-                className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                {status} {count > 0 && `(${count})`}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Date Range Filter */}
-      <div>
-        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-          <Calendar className="inline h-4 w-4 mr-1" />
-          Fecha
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => handleDatePreset('all')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              datePreset === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'btn-soft'
-            }`}
-          >
-            Todas
-          </button>
-          <button
-            onClick={() => handleDatePreset('week')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              datePreset === 'week'
-                ? 'bg-blue-600 text-white'
-                : 'btn-soft'
-            }`}
-          >
-            Última semana
-          </button>
-          <button
-            onClick={() => handleDatePreset('month')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              datePreset === 'month'
-                ? 'bg-blue-600 text-white'
-                : 'btn-soft'
-            }`}
-          >
-            Último mes
-          </button>
-          <button
-            onClick={() => handleDatePreset('custom')}
-            className={`px-3 py-1.5 text-sm rounded-lg ${
-              datePreset === 'custom'
-                ? 'bg-blue-600 text-white'
-                : 'btn-soft'
-            }`}
-          >
-            Personalizado
-          </button>
-        </div>
-
-        {datePreset === 'custom' && (
-          <div className="mt-3 flex flex-col sm:flex-row gap-2">
-            <div className="flex-1">
-              <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Desde</label>
-              <input
-                type="date"
-                value={filters.dateFrom || ''}
-                onChange={(e) =>
-                  onFiltersChange({ ...filters, dateFrom: e.target.value || undefined })
-                }
-                className="w-full px-3 py-2 text-sm border rounded-lg"
-                style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  borderColor: 'var(--border-primary)',
-                }}
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Hasta</label>
-              <input
-                type="date"
-                value={filters.dateTo || ''}
-                onChange={(e) =>
-                  onFiltersChange({ ...filters, dateTo: e.target.value || undefined })
-                }
-                className="w-full px-3 py-2 text-sm border rounded-lg"
-                style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  borderColor: 'var(--border-primary)',
-                }}
-              />
-            </div>
+      {/* Custom Date Range - Expandable */}
+      {datePreset === 'custom' && (
+        <div className="mt-2 flex gap-2 p-2 rounded-lg" style={{
+          backgroundColor: 'var(--bg-secondary)',
+        }}>
+          <div className="flex-1">
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Desde</label>
+            <input
+              type="date"
+              value={filters.dateFrom || ''}
+              onChange={(e) =>
+                onFiltersChange({ ...filters, dateFrom: e.target.value || undefined })
+              }
+              className="w-full px-2 py-1.5 text-xs border rounded"
+              style={{
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                borderColor: 'var(--border-primary)',
+              }}
+            />
           </div>
-        )}
-      </div>
+          <div className="flex-1">
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Hasta</label>
+            <input
+              type="date"
+              value={filters.dateTo || ''}
+              onChange={(e) =>
+                onFiltersChange({ ...filters, dateTo: e.target.value || undefined })
+              }
+              className="w-full px-2 py-1.5 text-xs border rounded"
+              style={{
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                borderColor: 'var(--border-primary)',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

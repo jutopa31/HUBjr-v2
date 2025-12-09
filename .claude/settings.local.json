@@ -44,7 +44,19 @@
       "Bash(gh pr create:*)",
       "Bash(timeout 5 npm run build:*)",
       "Bash(timeout 10 bash:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(pnpm dlx:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_evaluate",
+      "Bash(timeout 5 bash:*)",
+      "mcp__playwright__browser_run_code",
+      "mcp__playwright__browser_close",
+      "mcp__playwright__browser_resize",
+      "Bash(timeout 2 curl:*)"
     ],
     "deny": []
   },

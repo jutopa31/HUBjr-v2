@@ -211,6 +211,25 @@ hospital_context IN (SELECT accessible_context FROM user_contexts WHERE user_id 
 - **Medical Data**: Always validate inputs and handle null/undefined safely
 - **Error Handling**: Log errors to console with descriptive prefixes (e.g., `🔴 Error:`, `⚠️ Warning:`)
 
+### UI/UX Design Principles
+**CRITICAL - Content-First Design**:
+- **Primary content MUST be visible without scrolling** (above the fold)
+- Headers and filters should be **compact and collapsible** by default
+- Use horizontal layouts for filters when possible to save vertical space
+- Maximum header height: **80px** (including navigation and filters)
+- Filters should use dropdowns, pills, or inline controls instead of full-width sections
+- **Never** create layouts where users must scroll to see the main content cards/tables
+- Prioritize information density - medical staff need to see multiple items at once
+- If filters are complex, use a **modal or drawer** instead of inline expansion
+- Follow the "80/20 rule": 80% of viewport for content, 20% for controls
+
+**Layout Guidelines**:
+- Use `sticky` positioning for headers/filters only when absolutely necessary
+- Grid/card layouts should start immediately after header (max 80px from top)
+- Implement "show/hide filters" toggle if filters exceed 40px height
+- Default state: filters collapsed or minimal
+- Empty states should be compact and actionable
+
 ### Dark Theme Implementation
 The application supports comprehensive dark theme:
 - **Context**: `src/contexts/ThemeContext.tsx` provides theme state

@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, MapPin, User, Trash2, Edit3, Save, X, CalendarDays, Users } from 'lucide-react';
+import {
+  Calendar,
+  Plus,
+  Clock,
+  MapPin,
+  User,
+  Trash2,
+  Edit3,
+  Save,
+  X,
+  CalendarDays,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Search
+} from 'lucide-react';
 import { supabase } from './utils/supabase.js';
 import { useAuthContext } from './components/auth/AuthProvider';
-import SectionHeader from './components/layout/SectionHeader';
 
 interface MedicalEvent {
   id?: string;
@@ -43,6 +58,10 @@ const EventManagerSupabase: React.FC = () => {
     recurrence_pattern: 'weekly',
     recurrence_end: ''
   });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('month');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch events from Supabase
   const fetchEvents = async () => {
@@ -360,7 +379,49 @@ const EventManagerSupabase: React.FC = () => {
     return events;
   };
 
-  const getFilteredEvents = (events: MedicalEvent[]) => events;
+  const normalizeDateToStartOfDay = (date: Date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
+  const isWithinTimeFilter = (date: Date) => {
+    if (timeFilter === 'all') return true;
+
+    const today = normalizeDateToStartOfDay(new Date());
+
+    if (timeFilter === 'today') {
+      return normalizeDateToStartOfDay(date).getTime() === today.getTime();
+    }
+
+    if (timeFilter === 'week') {
+      const weekAhead = new Date(today);
+      weekAhead.setDate(weekAhead.getDate() + 7);
+      return date >= today && date <= weekAhead;
+    }
+
+    if (timeFilter === 'month') {
+      return date.getMonth() === currentDate.getMonth() && date.getFullYear() === currentDate.getFullYear();
+    }
+
+    return true;
+  };
+
+  const getFilteredEvents = (events: MedicalEvent[]) => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return events.filter((event) => {
+      const matchesType = typeFilter === 'all' || (event.type ?? 'other') === typeFilter;
+      const matchesSearch =
+        !query ||
+        event.title.toLowerCase().includes(query) ||
+        (event.location && event.location.toLowerCase().includes(query));
+      const startDate = event.start_date ? new Date(event.start_date) : null;
+      const matchesTime = startDate ? isWithinTimeFilter(startDate) : true;
+
+      return matchesType && matchesSearch && matchesTime;
+    });
+  };
 
   // Delete events in bulk by title pattern
   const deleteEventsByTitle = async (titlePattern: string) => {
@@ -419,70 +480,133 @@ const EventManagerSupabase: React.FC = () => {
     }
   };
 
+  const filteredEvents = getFilteredEvents(events);
+  const monthLabel = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const eventTypeOptions = Array.from(new Set(events.map((event) => event.type).filter(Boolean)));
+
   return (
-    <div className="space-y-4">
-      <div className="max-w-6xl mx-auto mb-6">
-        <SectionHeader
-          title={"Cronograma Neurología"}
-          subtitle={"Vista mensual simplificada"}
-          actions={
-            <div className="flex items-center space-x-2">
+    <div className="max-w-6xl mx-auto space-y-3">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 px-3 py-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-300">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Cronograma</p>
+              <p className="text-base font-semibold leading-tight text-gray-900 dark:text-gray-100 truncate">
+                Neurologia | agenda mensual
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#262626] shadow-inner">
               <button
-                onClick={() => setShowForm(!showForm)}
-                className="flex items-center space-x-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 px-3 py-1.5 rounded-md transition-all text-white text-xs font-medium"
-                disabled={loading}
+                onClick={() => navigateMonth('prev')}
+                className="h-8 w-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full transition-colors"
+                title="Mes anterior"
               >
-                <Plus className="h-4 w-4" />
-                <span>Nuevo Evento</span>
+                <ChevronLeft className="h-4 w-4" />
               </button>
+              <div className="px-3 text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                {monthLabel}
+              </div>
               <button
-                onClick={() => {
-                  const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
-                  if (pattern) deleteEventsByTitle(pattern);
-                }}
-                className="flex items-center justify-center bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 px-3 py-1.5 rounded-md transition-all text-white"
-                disabled={loading}
-                title="Eliminar eventos por título"
+                onClick={() => navigateMonth('next')}
+                className="h-8 w-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full transition-colors"
+                title="Mes siguiente"
               >
-                <Trash2 className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-          }
-        />
-      </div>
-
-      <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-3">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigateMonth('prev')}
-            className="flex items-center space-x-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
-            title="Mes anterior"
-          >
-            <span>←</span>
-            <span className="hidden sm:inline">Anterior</span>
-          </button>
-
-          <div className="text-center flex-1">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-200">
-              {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-            </h2>
             <button
               onClick={goToToday}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-0.5"
+              className="h-10 px-3 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
             >
               Hoy
             </button>
+            <button
+              onClick={() => setFiltersOpen((open) => !open)}
+              className="h-10 px-3 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">{filtersOpen ? 'Ocultar' : 'Filtros'}</span>
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="h-10 px-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold flex items-center gap-1.5"
+              disabled={loading}
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Nuevo</span>
+            </button>
+            <button
+              onClick={() => {
+                const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
+                if (pattern) deleteEventsByTitle(pattern);
+              }}
+              className="h-10 w-10 flex items-center justify-center rounded-full border border-red-200 dark:border-red-700 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+              disabled={loading}
+              title="Eliminar eventos por título"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
-
-          <button
-            onClick={() => navigateMonth('next')}
-            className="flex items-center space-x-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#333333] hover:text-gray-900 dark:hover:text-gray-200 rounded-md transition-colors text-sm"
-            title="Mes siguiente"
-          >
-            <span className="hidden sm:inline">Siguiente</span>
-            <span>→</span>
-          </button>
         </div>
+
+        {filtersOpen ? (
+          <div className="flex flex-wrap items-center gap-2 px-3 pb-3">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Tipo</span>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#262626] text-sm px-3 text-gray-900 dark:text-gray-100"
+              >
+                <option value="all">Todos</option>
+                {eventTypeOptions.map((type) => (
+                  <option key={type} value={type as string}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Rango</span>
+              <div className="flex items-center bg-gray-100 dark:bg-[#262626] rounded-full p-1 border border-gray-200 dark:border-gray-700">
+                {[
+                  { id: 'today', label: 'Hoy' },
+                  { id: 'week', label: '7 dias' },
+                  { id: 'month', label: 'Mes' },
+                  { id: 'all', label: 'Todo' }
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => setTimeFilter(id as 'today' | 'week' | 'month' | 'all')}
+                    className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
+                      timeFilter === id
+                        ? 'bg-white dark:bg-[#1f1f1f] text-blue-600 dark:text-blue-300 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Search className="h-3.5 w-3.5 text-gray-400" />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar titulo o lugar"
+                className="h-9 w-48 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#262626] text-sm px-3 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {showForm && (
@@ -572,303 +696,321 @@ const EventManagerSupabase: React.FC = () => {
         </div>
       )}
 
-      {/* Calendar View */}
-      <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-200 mb-3">Vista Mensual</h3>
+      <div className="grid gap-3 xl:grid-cols-[1.15fr,0.85fr]">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] p-3 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200">Vista mensual compacta</h3>
+            <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Contenido prioritario</span>
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <div className="grid min-w-[520px] grid-cols-5 gap-1 sm:min-w-0 sm:gap-2 md:gap-3">
-            {/* Week headers */}
-            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day) => (
-              <div key={day} className="p-2 text-center text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333]">
-                {day}
-              </div>
-            ))}
-
-            {/* Month days */}
-            {getMonthDays(currentDate).map((day, index) => {
-              if (!day) {
-                return <div key={index} className="aspect-square bg-gray-100 dark:bg-[#333333]"></div>;
-              }
-
-              const dayEvents = getEventsForDate(day);
-              const isToday = day.toDateString() === new Date().toDateString();
-              const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-
-              return (
-                <div
-                  key={index}
-                  className={`aspect-square border p-1 relative ${
-                    isCurrentMonth ? 'bg-white dark:bg-[#2a2a2a] border-gray-300 dark:border-gray-700' : 'bg-gray-100 dark:bg-[#333333] border-gray-400 dark:border-gray-800'
-                  } ${isToday ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-600' : ''}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className={`text-xs font-medium ${
-                      isToday
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : isCurrentMonth
-                          ? 'text-gray-900 dark:text-gray-300'
-                          : 'text-gray-500 dark:text-gray-600'
-                    }`}>
-                      {day.getDate()}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleQuickAddEvent(day);
-                      }}
-                      className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
-                      title="Agregar evento rapido"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  {dayEvents.length > 0 && (
-                    <div className="mt-1 space-y-0.5">
-                      {dayEvents.slice(0, 2).map((event) => (
-                        <div
-                          key={event.id}
-                          className={`text-xs px-1.5 py-0.5 rounded truncate font-medium flex items-center space-x-1 ${getEventTypeColor()}`}
-                          title={event.title}
-                        >
-                          {React.createElement(getEventTypeIcon(), { className: "w-2 h-2 flex-shrink-0" })}
-                          <span className="truncate">{event.title}</span>
-                        </div>
-                      ))}
-                      {dayEvents.length > 2 && (
-                        <div className="text-xs text-gray-500">
-                          +{dayEvents.length - 2} más
-                        </div>
-                      )}
-                    </div>
-                  )}
+            <div className="grid min-w-[520px] grid-cols-5 auto-rows-[120px] gap-1.5 sm:gap-2 md:gap-3">
+              {['Lun', 'Mar', 'Mie', 'Jue', 'Vie'].map((day) => (
+                <div key={day} className="p-2 text-center text-[11px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333] rounded-md">
+                  {day}
                 </div>
-              );
-            })}
+              ))}
+
+              {getMonthDays(currentDate).map((day, index) => {
+                if (!day) {
+                  return <div key={index} className="rounded-md bg-gray-100 dark:bg-[#333333]" />;
+                }
+
+                const dayEvents = getEventsForDate(day);
+                const isToday = day.toDateString() === new Date().toDateString();
+                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+
+                return (
+                  <div
+                    key={index}
+                    className={`rounded-md border p-1.5 flex flex-col gap-1 ${
+                      isCurrentMonth ? 'bg-white dark:bg-[#262626] border-gray-300 dark:border-gray-700' : 'bg-gray-100 dark:bg-[#333333] border-gray-300 dark:border-gray-800'
+                    } ${isToday ? 'ring-1 ring-blue-500 dark:ring-blue-500/70' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <div
+                        className={`text-xs font-semibold ${
+                          isToday
+                            ? 'text-blue-600 dark:text-blue-300'
+                            : isCurrentMonth
+                              ? 'text-gray-900 dark:text-gray-200'
+                              : 'text-gray-500 dark:text-gray-500'
+                        }`}
+                      >
+                        {day.getDate()}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuickAddEvent(day);
+                        }}
+                        className="h-6 w-6 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
+                        title="Agregar evento rapido"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {dayEvents.length > 0 && (
+                      <div className="space-y-1 overflow-hidden">
+                        {dayEvents.slice(0, 3).map((event) => (
+                          <div
+                            key={event.id}
+                            className={`text-[11px] px-1.5 py-0.5 rounded truncate font-semibold flex items-center space-x-1 ${getEventTypeColor()}`}
+                            title={event.title}
+                          >
+                            {React.createElement(getEventTypeIcon(), { className: 'w-2 h-2 flex-shrink-0' })}
+                            <span className="truncate">{event.title}</span>
+                          </div>
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <div className="text-[11px] text-blue-600 dark:text-blue-300">
+                            +{dayEvents.length - 3} más
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Events List */}
-      <div className="bg-gray-50 dark:bg-[#2a2a2a] rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold flex items-center text-gray-900 dark:text-gray-200">
-            <CalendarDays className="h-5 w-5 mr-2 text-blue-500" />
-            Lista de Eventos ({events.length})
-          </h2>
-          <div className="text-sm text-gray-500">
-            {loading ? 'Sincronizando...' : 'Conectado a Supabase'}
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] p-3 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-blue-500" />
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-200">Agenda filtrada</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {filteredEvents.length} eventos visibles
+                </p>
+              </div>
+            </div>
+            <span
+              className={`text-xs px-2 py-1 rounded-full border ${
+                loading
+                  ? 'border-yellow-400 text-yellow-700 dark:text-yellow-300'
+                  : 'border-green-500 text-green-600 dark:text-green-300'
+              }`}
+            >
+              {loading ? 'Sincronizando' : 'Al dia'}
+            </span>
           </div>
-        </div>
 
-        {loading ? (
-          <div className="text-center py-8 text-gray-400 flex items-center justify-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-            <span>Cargando eventos desde Supabase...</span>
-          </div>
-        ) : events.length === 0 ? (
-          <div className="text-center py-12 text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-[#333333] rounded-lg border border-gray-300 dark:border-gray-700">
-            <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-500 dark:text-gray-600" />
-            <p className="text-base mb-2">No hay eventos programados</p>
-            <p className="text-sm">¡Crea el primer evento médico para tu servicio!</p>
-          </div>
-        ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {getFilteredEvents(events).map((event) => {
-              const Icon = getEventTypeIcon();
-              const isExpanded = expandedEvent === event.id;
-              const isEditing = editingEvent === event.id;
+          {loading ? (
+            <div className="text-center py-8 text-gray-400 flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <span>Cargando eventos desde Supabase...</span>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="text-center py-6 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-[#262626] rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+              <Calendar className="h-10 w-10 mx-auto mb-3 text-gray-500 dark:text-gray-600" />
+              <p className="text-sm font-semibold mb-1">Sin eventos en este rango</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Activa filtros o crea el primer evento.</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Nuevo evento
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              {filteredEvents.map((event) => {
+                const Icon = getEventTypeIcon();
+                const isExpanded = expandedEvent === event.id;
+                const isEditing = editingEvent === event.id;
 
-              return (
-                <div key={event.id} className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 hover:border-gray-400 dark:hover:border-gray-600 transition-all bg-white dark:bg-[#333333]">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => setExpandedEvent(isExpanded ? null : event.id!)}
-                      >
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              value={event.title}
-                              onChange={(e) => {
-                                const updatedEvents = events.map(ev =>
-                                  ev.id === event.id ? {...ev, title: e.target.value} : ev
-                                );
-                                setEvents(updatedEvents);
-                              }}
-                              className="font-semibold text-sm text-gray-900 dark:text-gray-200 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                            />
-                          ) : (
-                            <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-200">{event.title}</h4>
-                          )}
-                          <span className={`px-2 py-0.5 text-xs rounded-full border flex items-center space-x-1 ${getEventTypeColor()}`}>
-                            {React.createElement(getEventTypeIcon(), { className: "w-3 h-3" })}
-                            <span className="font-medium">Evento</span>
-                          </span>
-                        </div>
-
-                        <div className="space-y-1 text-xs text-gray-400 ml-6">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                return (
+                  <div
+                    key={event.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:border-blue-200 dark:hover:border-blue-700 transition-colors bg-gray-50 dark:bg-[#262626]"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => setExpandedEvent(isExpanded ? null : event.id!)}
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
                             {isEditing ? (
-                              <div className="flex gap-2">
-                                <input
-                                  type="datetime-local"
-                                  value={event.start_date ? new Date(event.start_date).toISOString().slice(0, 16) : ''}
-                                  onChange={(e) => {
-                                    const updatedEvents = events.map(ev =>
-                                      ev.id === event.id ? {...ev, start_date: e.target.value} : ev
-                                    );
-                                    setEvents(updatedEvents);
-                                  }}
-                                  className="text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                                />
-                                <span>-</span>
-                                <input
-                                  type="datetime-local"
-                                  value={event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : ''}
-                                  onChange={(e) => {
-                                    const updatedEvents = events.map(ev =>
-                                      ev.id === event.id ? {...ev, end_date: e.target.value} : ev
-                                    );
-                                    setEvents(updatedEvents);
-                                  }}
-                                  className="text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                                />
-                              </div>
-                            ) : (
-                              <span>
-                                {new Date(event.start_date).toLocaleString('es-ES', {
-                                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                })} - {new Date(event.end_date).toLocaleString('es-ES', {
-                                  month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                })}
-                              </span>
-                            )}
-                          </div>
-                          {event.location && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {isEditing ? (
-                                <input
-                                  type="text"
-                                  value={event.location}
-                                  onChange={(e) => {
-                                    const updatedEvents = events.map(ev => 
-                                      ev.id === event.id ? {...ev, location: e.target.value} : ev
-                                    );
-                                    setEvents(updatedEvents);
-                                  }}
-                                  className="text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
-                                />
-                              ) : (
-                                <span>{event.location}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expanded Details */}
-                      {isExpanded && event.description && (
-                        <div className="mt-4 pt-4 border-t bg-gray-50 rounded-lg p-3 ml-8">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <User className="w-4 h-4" />
-                            {isEditing ? (
-                              <textarea
-                                value={event.description}
+                              <input
+                                type="text"
+                                value={event.title}
                                 onChange={(e) => {
-                                  const updatedEvents = events.map(ev => 
-                                    ev.id === event.id ? {...ev, description: e.target.value} : ev
+                                  const updatedEvents = events.map(ev =>
+                                    ev.id === event.id ? {...ev, title: e.target.value} : ev
                                   );
                                   setEvents(updatedEvents);
                                 }}
-                                className="w-full text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 resize-none focus:ring-2 focus:ring-blue-500"
-                                rows={2}
+                                className="font-semibold text-sm text-gray-900 dark:text-gray-200 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                               />
                             ) : (
-                              <span>{event.description}</span>
+                              <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-200 truncate">{event.title}</h4>
+                            )}
+                            <span className={`px-2 py-0.5 text-[11px] rounded-full border flex items-center space-x-1 ${getEventTypeColor()}`}>
+                              {React.createElement(getEventTypeIcon(), { className: "w-3 h-3" })}
+                              <span className="font-medium">Evento</span>
+                            </span>
+                          </div>
+
+                          <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400 ml-6">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {isEditing ? (
+                                <div className="flex gap-2">
+                                  <input
+                                    type="datetime-local"
+                                    value={event.start_date ? new Date(event.start_date).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => {
+                                      const updatedEvents = events.map(ev =>
+                                        ev.id === event.id ? {...ev, start_date: e.target.value} : ev
+                                      );
+                                      setEvents(updatedEvents);
+                                    }}
+                                    className="text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                                  />
+                                  <span>-</span>
+                                  <input
+                                    type="datetime-local"
+                                    value={event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => {
+                                      const updatedEvents = events.map(ev =>
+                                        ev.id === event.id ? {...ev, end_date: e.target.value} : ev
+                                      );
+                                      setEvents(updatedEvents);
+                                    }}
+                                    className="text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                                  />
+                                </div>
+                              ) : (
+                                <span>
+                                  {new Date(event.start_date).toLocaleString('es-ES', {
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                  })} - {new Date(event.end_date).toLocaleString('es-ES', {
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                            {event.location && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    value={event.location}
+                                    onChange={(e) => {
+                                      const updatedEvents = events.map(ev => 
+                                        ev.id === event.id ? {...ev, location: e.target.value} : ev
+                                      );
+                                      setEvents(updatedEvents);
+                                    }}
+                                    className="text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                                  />
+                                ) : (
+                                  <span className="truncate">{event.location}</span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-2 ml-4">
-                      {isEditing ? (
-                        <>
-                          <button
-                            onClick={async () => {
-                              // Save all changes
-                              await updateEvent(event.id!, 'title', event.title);
-                              await updateEvent(event.id!, 'start_date', new Date(event.start_date).toISOString());
-                              await updateEvent(event.id!, 'end_date', new Date(event.end_date).toISOString());
-                              if (event.location) await updateEvent(event.id!, 'location', event.location);
-                              if (event.description) await updateEvent(event.id!, 'description', event.description);
-                              setEditingEvent(null);
-                            }}
-                            className="p-2 text-blue-700 hover:bg-green-50 rounded-full transition-colors"
-                            title="Guardar cambios"
-                          >
-                            <Save className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingEvent(null);
-                              fetchEvents(); // Reload original data
-                            }}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
-                            title="Cancelar edición"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setEditingEvent(event.id!)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                            title="Editar evento"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteEvent(event.id!)}
-                            className="p-2 text-blue-700 hover:bg-red-50 rounded-full transition-colors"
-                            title="Eliminar evento"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
+
+                        {isExpanded && event.description && (
+                          <div className="mt-3 pt-3 border-t bg-gray-100 dark:bg-[#1f1f1f] rounded-lg p-3 ml-6">
+                            <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200">
+                              <User className="w-4 h-4" />
+                              {isEditing ? (
+                                <textarea
+                                  value={event.description}
+                                  onChange={(e) => {
+                                    const updatedEvents = events.map(ev => 
+                                      ev.id === event.id ? {...ev, description: e.target.value} : ev
+                                    );
+                                    setEvents(updatedEvents);
+                                  }}
+                                  className="w-full text-sm bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-2 py-1 resize-none focus:ring-2 focus:ring-blue-500"
+                                  rows={2}
+                                />
+                              ) : (
+                                <span>{event.description}</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-2 ml-2">
+                        {isEditing ? (
+                          <>
+                            <button
+                              onClick={async () => {
+                                await updateEvent(event.id!, 'title', event.title);
+                                await updateEvent(event.id!, 'start_date', new Date(event.start_date).toISOString());
+                                await updateEvent(event.id!, 'end_date', new Date(event.end_date).toISOString());
+                                if (event.location) await updateEvent(event.id!, 'location', event.location);
+                                if (event.description) await updateEvent(event.id!, 'description', event.description);
+                                setEditingEvent(null);
+                              }}
+                              className="p-2 text-blue-700 hover:bg-green-50 rounded-full transition-colors"
+                              title="Guardar cambios"
+                            >
+                              <Save className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingEvent(null);
+                                fetchEvents();
+                              }}
+                              className="p-2 text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                              title="Cancelar edición"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setEditingEvent(event.id!)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                              title="Editar evento"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteEvent(event.id!)}
+                              className="p-2 text-blue-700 hover:bg-red-50 rounded-full transition-colors"
+                              title="Eliminar evento"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
 
-      {/* Connection Status Footer */}
-      <div className="text-center text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-center space-x-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span>Conectado a Supabase - Base de datos en tiempo real</span>
+          <div className="mt-3 border-t border-gray-200 dark:border-gray-800 pt-3 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Conectado a Supabase - Base de datos en tiempo real</span>
+          </div>
         </div>
-        <p className="mt-1 text-xs">
-          Los eventos se sincronizan automáticamente con la base de datos
-        </p>
       </div>
     </div>
   );
 };
 
 export default EventManagerSupabase;
+
+

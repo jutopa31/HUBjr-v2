@@ -37,7 +37,6 @@ const PendientesManager: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -378,7 +377,7 @@ const PendientesManager: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -398,138 +397,94 @@ const PendientesManager: React.FC = () => {
         </div>
       )}
 
-      <div className="banner rounded-lg p-5 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white/70 p-2 shadow-sm ring-1 ring-gray-200">
-                <CheckSquare className="h-6 w-6 text-blue-700" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Pendientes</h1>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Tablero tipo interconsultas para priorizar pendientes clA-nicos y de guardia.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/70 px-3 py-1 text-sm font-medium text-[var(--text-secondary)] shadow-sm ring-1 ring-gray-100">
-                Total {statusCounts.total}
-              </span>
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm text-amber-800 ring-1 ring-amber-100">
-                Pendientes {filteredCounts.pending}
-              </span>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-800 ring-1 ring-blue-100">
-                En curso {filteredCounts.inProgress}
-              </span>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-800 ring-1 ring-emerald-100">
-                Completadas {filteredCounts.completed}
-              </span>
-            </div>
+      {/* Compact Header - Max 50px */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white rounded-lg px-4 py-3 shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-white p-1.5 shadow-sm ring-1 ring-gray-200">
+            <CheckSquare className="h-5 w-5 text-blue-700" />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 btn-accent text-sm font-medium"
-              disabled={loading}
-            >
-              <Plus className="h-4 w-4" />
-              <span>{showForm ? 'Cerrar' : 'Nueva Tarea'}</span>
-            </button>
-            <button
-              onClick={handleSyncWithWardRounds}
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 btn-soft text-sm font-medium"
-              disabled={syncing || loading}
-            >
-              <Users className="h-4 w-4" />
-              <span>{syncing ? 'Sincronizando...' : 'Sincronizar pase de sala'}</span>
-            </button>
+          <div>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Pendientes</h1>
           </div>
+          <div className="hidden md:flex items-center gap-2 ml-4">
+            <span className="text-xs px-2 py-1 bg-white rounded-full ring-1 ring-gray-200 text-[var(--text-secondary)]">
+              {statusCounts.total} total
+            </span>
+            <span className="text-xs px-2 py-1 bg-amber-50 rounded-full ring-1 ring-amber-100 text-amber-800">
+              {filteredCounts.pending}
+            </span>
+            <span className="text-xs px-2 py-1 bg-blue-50 rounded-full ring-1 ring-blue-100 text-blue-800">
+              {filteredCounts.inProgress}
+            </span>
+            <span className="text-xs px-2 py-1 bg-emerald-50 rounded-full ring-1 ring-emerald-100 text-emerald-800">
+              {filteredCounts.completed}
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 btn-accent text-sm font-medium"
+            disabled={loading}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{showForm ? 'Cerrar' : 'Nueva'}</span>
+          </button>
+          <button
+            onClick={handleSyncWithWardRounds}
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 btn-soft text-sm font-medium"
+            disabled={syncing || loading}
+            title="Sincronizar con pase de sala"
+          >
+            <Users className="h-4 w-4" />
+            <span className="hidden lg:inline">{syncing ? 'Sync...' : 'Sync'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="medical-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-            <Filter className="h-5 w-5" />
-            <span className="text-sm font-medium">Filtros rA?pidos</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-[var(--text-tertiary)]">
-              Mostrando {filteredTasks.length} de {tasks.length} tareas
-            </span>
-            <button
-              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-              className="text-xs font-semibold text-blue-700 md:hidden"
-            >
-              {isFilterPanelOpen ? 'Ocultar' : 'Mostrar'}
-            </button>
-          </div>
+      {/* Compact Horizontal Filters - Max 30px */}
+      <div className="flex flex-wrap items-center gap-3 px-2 py-2">
+        <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+          <Filter className="h-4 w-4" />
+          <span className="text-xs font-medium hidden sm:inline">Filtros:</span>
         </div>
-        <div className={`${isFilterPanelOpen ? 'grid' : 'hidden md:grid'} grid-cols-1 gap-3 md:grid-cols-3 mt-4`}>
-          <div className="rounded-lg border border-gray-200 bg-[var(--bg-secondary)]/60 p-3 shadow-sm">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
-              <span>Estado</span>
-              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--text-secondary)] shadow-sm">
-                {filteredCounts.pending + filteredCounts.inProgress + filteredCounts.completed}
-              </span>
-            </div>
-            <select 
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
-            >
-              <option value="all">Todos</option>
-              <option value="pending">Pendientes</option>
-              <option value="in_progress">En Progreso</option>
-              <option value="completed">Completadas</option>
-            </select>
-            <p className="mt-2 text-xs text-[var(--text-tertiary)]">Refina por fase de avance.</p>
-          </div>
-          <div className="rounded-lg border border-gray-200 bg-[var(--bg-secondary)]/60 p-3 shadow-sm">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
-              <span>Prioridad</span>
-              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--text-secondary)] shadow-sm">
-                {filterPriority === 'all' ? 'Todas' : getPriorityDisplay(filterPriority as Task['priority']).label}
-              </span>
-            </div>
-            <select 
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-              className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
-            >
-              <option value="all">Todas</option>
-              <option value="high">Alta</option>
-              <option value="medium">Media</option>
-              <option value="low">Baja</option>
-            </select>
-            <p className="mt-2 text-xs text-[var(--text-tertiary)]">Sube la prioridad para destacar.</p>
-          </div>
-          <div className="rounded-lg border border-gray-200 bg-[var(--bg-secondary)]/60 p-3 shadow-sm">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
-              <span>Origen</span>
-              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--text-secondary)] shadow-sm">
-                {filterSource === 'all' ? 'Todos' : filterSource === 'ward_rounds' ? 'Pase de Sala' : 'Manual'}
-              </span>
-            </div>
-            <select 
-              value={filterSource}
-              onChange={(e) => setFilterSource(e.target.value)}
-              className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
-            >
-              <option value="all">Todas</option>
-              <option value="ward_rounds">Pase de Sala</option>
-              <option value="manual">Manuales</option>
-            </select>
-            <p className="mt-2 text-xs text-[var(--text-tertiary)]">Separa lo que viene del pase de sala.</p>
-          </div>
-        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="text-xs rounded-md border border-gray-200 bg-white px-2 py-1.5"
+        >
+          <option value="all">Todos los estados</option>
+          <option value="pending">Pendientes</option>
+          <option value="in_progress">En Progreso</option>
+          <option value="completed">Completadas</option>
+        </select>
+        <select
+          value={filterPriority}
+          onChange={(e) => setFilterPriority(e.target.value)}
+          className="text-xs rounded-md border border-gray-200 bg-white px-2 py-1.5"
+        >
+          <option value="all">Todas las prioridades</option>
+          <option value="high">Alta</option>
+          <option value="medium">Media</option>
+          <option value="low">Baja</option>
+        </select>
+        <select
+          value={filterSource}
+          onChange={(e) => setFilterSource(e.target.value)}
+          className="text-xs rounded-md border border-gray-200 bg-white px-2 py-1.5"
+        >
+          <option value="all">Todos los orígenes</option>
+          <option value="ward_rounds">Pase de Sala</option>
+          <option value="manual">Manuales</option>
+        </select>
+        <span className="ml-auto text-xs text-[var(--text-tertiary)]">
+          {filteredTasks.length} de {tasks.length} tareas
+        </span>
       </div>
 
       {/* New Task Form */}
       {showForm && (
-        <div className="medical-card p-6">
+        <div className="medical-card p-4">
           <h3 className="text-lg font-semibold mb-4">Nueva Tarea</h3>
           <div className="space-y-4">
             <div>
@@ -618,14 +573,11 @@ const PendientesManager: React.FC = () => {
       )}
 
       {/* Tasks Board */}
-      <div className="medical-card p-6 space-y-4">
-        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Tablero de tareas ({filteredTasks.length})</h2>
-            <p className="text-sm text-[var(--text-secondary)]">Arrastra tarjetas entre columnas, al estilo interconsultas.</p>
-          </div>
-          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {loading ? 'Sincronizando...' : error ? 'Revisar conexiA3n' : 'Conectado a Supabase'}
+      <div className="medical-card p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Tablero ({filteredTasks.length})</h2>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {loading ? 'Sync...' : error ? 'Error' : ''}
           </div>
         </div>
 
