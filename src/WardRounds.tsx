@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon } from 'lucide-react';
+import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
 import { readImageFromClipboard, isClipboardSupported } from './services/clipboardService';
@@ -121,6 +121,7 @@ const WardRounds: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<{uploaded: number, total: number}>({uploaded: 0, total: 0});
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const quickImageInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -1233,6 +1234,17 @@ const WardRounds: React.FC = () => {
                   <Clipboard className="h-4 w-4" />
                   <span className="hidden sm:inline">Pegar</span>
                 </button>
+
+                <button
+                  type="button"
+                  className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={uploadingImages || !selectedPatient?.id}
+                  title="Capturar con cámara"
+                >
+                  <Camera className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cámara</span>
+                </button>
               </>
             )}
           </div>
@@ -1286,7 +1298,7 @@ const WardRounds: React.FC = () => {
                 Subir nuevas imágenes
               </label>
 
-              {/* Button row - file picker + paste */}
+              {/* Button row - file picker + paste + camera */}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -1314,10 +1326,34 @@ const WardRounds: React.FC = () => {
                   <Clipboard className="h-4 w-4" />
                   <span>Pegar imagen</span>
                 </button>
+
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleMultipleFileUpload(e.target.files);
+                    if (cameraInputRef.current) {
+                      cameraInputRef.current.value = '';
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={uploadingImages}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-purple-700 dark:hover:bg-purple-600"
+                  title="Abrir cámara"
+                >
+                  <Camera className="h-4 w-4" />
+                  <span>Cámara</span>
+                </button>
               </div>
 
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Puedes seleccionar múltiples archivos o pegar una imagen desde el portapapeles.
+                Puedes seleccionar archivos, pegar desde portapapeles o capturar con la cámara.
               </p>
 
               {uploadingImages && (
