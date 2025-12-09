@@ -947,7 +947,8 @@ const WardRounds: React.FC = () => {
       dni: inlineDetailValues.dni || selectedPatient.dni,
       edad: inlineDetailValues.edad || selectedPatient.edad,
       cama: inlineDetailValues.cama || selectedPatient.cama,
-      fecha: inlineDetailValues.fecha || selectedPatient.fecha
+      fecha: inlineDetailValues.fecha || selectedPatient.fecha,
+      severidad: inlineDetailValues.severidad || selectedPatient.severidad
     };
 
     const updatedPatient: Patient = { ...selectedPatient, ...headerUpdates };
@@ -1577,6 +1578,11 @@ const WardRounds: React.FC = () => {
   };
 
   // Abrir modal para eliminar/archivar paciente
+  const openDeleteModal = (id: string, patientName: string, dni: string) => {
+    setSelectedPatientForDeletion({ id, nombre: patientName, dni });
+    setShowDeleteModal(true);
+  };
+
   // Cerrar modal de eliminación
   const closeDeleteModal = () => {
     // Permitir cierre programático incluso si está procesando
@@ -2577,91 +2583,85 @@ const WardRounds: React.FC = () => {
         <div className="flex-1 bg-white shadow-lg rounded-lg overflow-hidden flex flex-col">
           <div id="ward-round-table" className="flex-1 overflow-auto">
             <div className="divide-y divide-gray-200">
-            {/* Header para ordenamiento */}
-            <div className="bg-gray-50 px-3 sm:px-6 py-1.5 border-b border-gray-200 sticky top-0 z-10">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                {/* Indicador de reordenamiento alineado con los íconos - oculto en mobile */}
-                <div className="hidden sm:flex items-center space-x-1 flex-shrink-0" style={{ width: '56px' }}>
-                  {isReordering ? (
-                    <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
-                  ) : (
-                    <span className="text-[10px] text-gray-400">⋮ Ordenar</span>
-                  )}
-                </div>
+              {/* Header para ordenamiento */}
+              <div className="bg-gray-50 px-3 sm:px-6 py-1.5 border-b border-gray-200 sticky top-0 z-10">
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  {/* Indicador de reordenamiento alineado con los íconos - oculto en mobile */}
+                  <div className="hidden sm:flex items-center space-x-1 flex-shrink-0" style={{ width: '56px' }}>
+                    {isReordering ? (
+                      <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
+                    ) : (
+                      <span className="text-[10px] text-gray-400">Ordenar</span>
+                    )}
+                  </div>
 
-                <div className="flex-1 grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1 sm:gap-2 items-center">
-                <div className="col-span-2">
-                  <button
-                    onClick={() => handleSort('cama')}
-                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
-                  >
-                    <span>Ubicación</span>
-                    {sortField === 'cama' && (
-                      sortDirection === 'asc' ?
-                        <ChevronUp className="h-3 w-3" /> :
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <div className="col-span-2">
-                  <button
-                    onClick={() => handleSort('nombre')}
-                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
-                  >
-                    <span>Pacientes</span>
-                    {sortField === 'nombre' && (
-                      sortDirection === 'asc' ?
-                        <ChevronUp className="h-3 w-3" /> :
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <div className="col-span-2 hidden md:block">
-                  <button
-                    onClick={() => handleSort('diagnostico')}
-                    className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 justify-start py-1"
-                  >
-                    <span>Diagnóstico</span>
-                    {sortField === 'diagnostico' && (
-                      sortDirection === 'asc' ?
-                        <ChevronUp className="h-3 w-3" /> :
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <div className="col-span-1">
-                  <button
-                    onClick={() => handleSort('severidad')}
-                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-center py-1"
-                  >
-                    <span>Sev</span>
-                    {sortField === 'severidad' && (
-                      sortDirection === 'asc' ?
-                        <ChevronUp className="h-3 w-3" /> :
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <div className="col-span-3">
-                  <button
-                    onClick={() => handleSort('pendientes')}
-                    className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
-                  >
-                    <span>Pendientes</span>
-                    {sortField === 'pendientes' && (
-                      sortDirection === 'asc' ?
-                        <ChevronUp className="h-3 w-3" /> :
-                        <ChevronDown className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <div className="col-span-2 hidden lg:block">
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    <Users className="h-3 w-3 inline mr-1" />
-                    <span>Residente</span>
+                  <div className="flex-1 grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1 sm:gap-2 items-center">
+                    <div className="col-span-2">
+                      <button
+                        onClick={() => handleSort('cama')}
+                        className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                      >
+                        <span>Ubicación</span>
+                        {sortField === 'cama' && (
+                          sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="col-span-2">
+                      <button
+                        onClick={() => handleSort('nombre')}
+                        className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                      >
+                        <span>Pacientes</span>
+                        {sortField === 'nombre' && (
+                          sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="col-span-2 hidden md:block">
+                      <button
+                        onClick={() => handleSort('diagnostico')}
+                        className="flex items-center space-x-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700 justify-start py-1"
+                      >
+                        <span>Diagnóstico</span>
+                        {sortField === 'diagnostico' && (
+                          sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="col-span-1">
+                      <button
+                        onClick={() => handleSort('severidad')}
+                        className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-center py-1"
+                      >
+                        <span>Sev</span>
+                        {sortField === 'severidad' && (
+                          sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="col-span-3">
+                      <button
+                        onClick={() => handleSort('pendientes')}
+                        className="flex items-center space-x-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-800 justify-start py-1"
+                      >
+                        <span>Pendientes</span>
+                        {sortField === 'pendientes' && (
+                          sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="col-span-2 hidden lg:block">
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <Users className="h-3 w-3 inline mr-1" />
+                        <span>Residente</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center justify-end w-20 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Acciones
                   </div>
                 </div>
-              </div>
               </div>
             </div>
 
@@ -2673,17 +2673,21 @@ const WardRounds: React.FC = () => {
                 <div
                   key={patient.id}
                   className={`expandable-row mb-2 ${
-                  patient.severidad === 'I' ? 'bg-green-50 border-l-4 border-l-green-400' :
-                  patient.severidad === 'II' ? 'bg-yellow-50 border-l-4 border-l-yellow-400' :
-                  patient.severidad === 'III' ? 'bg-orange-50 border-l-4 border-l-orange-400' :
-                  patient.severidad === 'IV' ? 'bg-red-50 border-l-4 border-l-red-400' : 'bg-white border-l-4 border-l-gray-300'
-                } ${isExpanded ? 'shadow-md mb-6' : 'hover:bg-gray-50'} ${isDragTarget ? 'ring-2 ring-blue-200 ring-inset' : ''}`}
+                    patient.severidad === 'I'
+                      ? 'bg-green-50 border-l-4 border-l-green-400'
+                      : patient.severidad === 'II'
+                        ? 'bg-yellow-50 border-l-4 border-l-yellow-400'
+                        : patient.severidad === 'III'
+                          ? 'bg-orange-50 border-l-4 border-l-orange-400'
+                          : patient.severidad === 'IV'
+                            ? 'bg-red-50 border-l-4 border-l-red-400'
+                            : 'bg-white border-l-4 border-l-gray-300'
+                  } ${isExpanded ? 'shadow-md mb-6' : 'hover:bg-gray-50'} ${isDragTarget ? 'ring-2 ring-blue-200 ring-inset' : ''}`}
                   onDragOver={(e) => handleDragOverRow(e, patient.id || '')}
                   onDrop={(e) => handleDropRow(e, patient.id || '')}
                   onDragEnd={resetDragState}
                   onDragLeave={() => setDragOverPatientId(null)}
                 >
-                  
                   {/* Fila principal compacta */}
                   <div
                     className="px-3 sm:px-6 py-3 sm:py-4 cursor-pointer flex items-center justify-between"
@@ -2691,7 +2695,13 @@ const WardRounds: React.FC = () => {
                   >
                     <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
                       {/* Drag handle - hidden on mobile */}
-                      <div className="hidden sm:block flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing" draggable={Boolean(patient.id) && !isReordering} onClick={(e) => e.stopPropagation()} onDragStart={(e) => handleDragStart(e, patient.id || '')} title="Arrastrar para reordenar">
+                      <div
+                        className="hidden sm:block flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-grab active:cursor-grabbing"
+                        draggable={Boolean(patient.id) && !isReordering}
+                        onClick={(e) => e.stopPropagation()}
+                        onDragStart={(e) => handleDragStart(e, patient.id || '')}
+                        title="Arrastrar para reordenar"
+                      >
                         <GripVertical className="h-4 w-4 text-gray-400" />
                       </div>
                       {/* Icono de expansión */}
@@ -2706,9 +2716,7 @@ const WardRounds: React.FC = () => {
                           title={isExpanded ? 'Contraer' : 'Expandir'}
                         >
                           <ChevronRight
-                            className={`expand-icon h-4 w-4 text-gray-500 ${
-                              isExpanded ? 'expanded' : ''
-                            }`}
+                            className={`expand-icon h-4 w-4 text-gray-500 ${isExpanded ? 'expanded' : ''}`}
                           />
                         </button>
                       </div>
@@ -2728,16 +2736,21 @@ const WardRounds: React.FC = () => {
                         </div>
                         <div className="col-span-2 hidden md:block">
                           <div className="text-xs text-gray-600 truncate">
-                            {patient.diagnostico ? patient.diagnostico.slice(0, 25) + '...' : 'Sin diagnóstico'}
+                            {patient.diagnostico ? `${patient.diagnostico.slice(0, 25)}...` : 'Sin diagnóstico'}
                           </div>
                         </div>
                         <div className="col-span-1">
                           <span
                             className={`severity-indicator badge ${
-                              patient.severidad === 'I' ? 'badge-severity-1' :
-                              patient.severidad === 'II' ? 'badge-severity-2' :
-                              patient.severidad === 'III' ? 'badge-severity-3' :
-                              patient.severidad === 'IV' ? 'badge-severity-4' : ''
+                              patient.severidad === 'I'
+                                ? 'badge-severity-1'
+                                : patient.severidad === 'II'
+                                  ? 'badge-severity-2'
+                                  : patient.severidad === 'III'
+                                    ? 'badge-severity-3'
+                                    : patient.severidad === 'IV'
+                                      ? 'badge-severity-4'
+                                      : ''
                             }`}
                           >
                             {patient.severidad || '-'}
@@ -2780,7 +2793,7 @@ const WardRounds: React.FC = () => {
                               </div>
                             </div>
                           ) : (
-                            <div 
+                            <div
                               className="text-xs text-gray-600 truncate cursor-text hover:bg-blue-50 p-1 rounded"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2788,7 +2801,9 @@ const WardRounds: React.FC = () => {
                               }}
                               title="Clic para editar pendientes"
                             >
-                              {patient.pendientes ? patient.pendientes.slice(0, 30) + (patient.pendientes.length > 30 ? '...' : '') : 'Sin pendientes'}
+                              {patient.pendientes
+                                ? `${patient.pendientes.slice(0, 30)}${patient.pendientes.length > 30 ? '...' : ''}`
+                                : 'Sin pendientes'}
                             </div>
                           )}
                         </div>
@@ -2797,7 +2812,7 @@ const WardRounds: React.FC = () => {
                             <div className="flex items-center space-x-1">
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               <span className="text-xs text-gray-700">
-                                {residents.find(r => r.id === patient.assigned_resident_id)?.full_name || 'Residente'}
+                                {residents.find((r) => r.id === patient.assigned_resident_id)?.full_name || 'Residente'}
                               </span>
                             </div>
                           ) : (
@@ -2813,7 +2828,7 @@ const WardRounds: React.FC = () => {
                               onClick={(e) => e.stopPropagation()}
                             >
                               <option value="">Asignar...</option>
-                              {residents.map(resident => (
+                              {residents.map((resident) => (
                                 <option key={resident.id} value={resident.id}>
                                   {resident.full_name}
                                 </option>
@@ -2822,16 +2837,43 @@ const WardRounds: React.FC = () => {
                           )}
                         </div>
                       </div>
+                      {/* Columna de Acciones - fuera del grid para alinearse con el header */}
+                      <div className="hidden sm:flex items-center justify-end space-x-1 w-20">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!patient.id) return;
+                            setEditingId(patient.id);
+                            setEditingPatient(patient);
+                          }}
+                          className="p-2 text-blue-700 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar paciente completo"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!patient.id) return;
+                            openDeleteModal(patient.id, patient.nombre, patient.dni);
+                          }}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar o archivar paciente"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   {/* Contenido expandible */}
-                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    isExpanded ? 'max-h-screen opacity-100 mb-4' : 'max-h-0 opacity-0'
-                  }`}>
+                  <div
+                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isExpanded ? 'max-h-screen opacity-100 mb-4' : 'max-h-0 opacity-0'
+                    }`}
+                  >
                     <div className="px-6 pb-6 pt-4 border-t border-gray-200 bg-gray-50 medical-details">
                       <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        
                         <div className="space-y-3">
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Antecedentes</h4>
@@ -2839,14 +2881,14 @@ const WardRounds: React.FC = () => {
                               {patient.antecedentes || 'No especificado'}
                             </p>
                           </div>
-                          
+
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Motivo de Consulta</h4>
                             <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.motivo_consulta || 'No especificado'}
                             </p>
                           </div>
-                          
+
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</h4>
                             <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
@@ -2854,7 +2896,7 @@ const WardRounds: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-3">
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Estudios Complementarios</h4>
@@ -2862,21 +2904,21 @@ const WardRounds: React.FC = () => {
                               {patient.estudios || 'No especificado'}
                             </p>
                           </div>
-                          
+
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Diagnóstico</h4>
                             <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.diagnostico || 'No especificado'}
                             </p>
                           </div>
-                          
+
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Plan</h4>
                             <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
                               {patient.plan || 'No especificado'}
                             </p>
                           </div>
-                          
+
                           <div>
                             <h4 className="font-medium text-gray-700 mb-1">Pendientes</h4>
                             <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
@@ -2891,95 +2933,94 @@ const WardRounds: React.FC = () => {
               );
             })}
           </div>
-        </div>
 
-        {patients.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="mt-4 text-blue-600 hover:text-blue-800"
-            >
-              Agregar el primer paciente
-            </button>
-          </div>
-        )}
-      </div>
+          {patients.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="mt-4 text-blue-600 hover:text-blue-800"
+              >
+                Agregar el primer paciente
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="flex-1 overflow-auto p-4">
-        {sortedPatients.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {sortedPatients.map((patient) => {
-              const resident = residents.find(r => r.id === patient.assigned_resident_id);
-              return (
-                <WardPatientCard
-                  key={patient.id}
-                  patient={patient}
-                  resident={resident}
-                  onClick={() => setSelectedPatient(patient)}
-                  onDragStart={(e) => {
-                    setDraggedPatientId(patient.id || null);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    setDragOverPatientId(patient.id || null);
-                  }}
-                  onDrop={async (e) => {
-                    e.preventDefault();
-                    if (!draggedPatientId || draggedPatientId === patient.id) return;
+          {sortedPatients.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {sortedPatients.map((patient) => {
+                const resident = residents.find((r) => r.id === patient.assigned_resident_id);
+                return (
+                  <WardPatientCard
+                    key={patient.id}
+                    patient={patient}
+                    resident={resident}
+                    onClick={() => setSelectedPatient(patient)}
+                    onDragStart={(e) => {
+                      setDraggedPatientId(patient.id || null);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                      setDragOverPatientId(patient.id || null);
+                    }}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      if (!draggedPatientId || draggedPatientId === patient.id) return;
 
-                    const draggedIndex = patients.findIndex(p => p.id === draggedPatientId);
-                    const targetIndex = patients.findIndex(p => p.id === patient.id);
+                      const draggedIndex = patients.findIndex((p) => p.id === draggedPatientId);
+                      const targetIndex = patients.findIndex((p) => p.id === patient.id);
 
-                    if (draggedIndex === -1 || targetIndex === -1) return;
+                      if (draggedIndex === -1 || targetIndex === -1) return;
 
-                    const newPatients = [...patients];
-                    const [draggedPatient] = newPatients.splice(draggedIndex, 1);
-                    newPatients.splice(targetIndex, 0, draggedPatient);
+                      const newPatients = [...patients];
+                      const [draggedPatient] = newPatients.splice(draggedIndex, 1);
+                      newPatients.splice(targetIndex, 0, draggedPatient);
 
-                    const updatedPatients = newPatients.map((p, index) => ({
-                      ...p,
-                      display_order: index
-                    }));
+                      const updatedPatients = newPatients.map((p, index) => ({
+                        ...p,
+                        display_order: index
+                      }));
 
-                    setPatients(updatedPatients);
-                    setDraggedPatientId(null);
-                    setDragOverPatientId(null);
+                      setPatients(updatedPatients);
+                      setDraggedPatientId(null);
+                      setDragOverPatientId(null);
 
-                    setIsReordering(true);
-                    try {
-                      const draggedPatientData = updatedPatients.find(p => p.id === draggedPatientId);
-                      if (draggedPatientData && draggedPatientData.id) {
-                        await updatePatient(draggedPatientData.id, draggedPatientData);
+                      setIsReordering(true);
+                      try {
+                        const draggedPatientData = updatedPatients.find((p) => p.id === draggedPatientId);
+                        if (draggedPatientData && draggedPatientData.id) {
+                          await updatePatient(draggedPatientData.id, draggedPatientData);
+                        }
+                      } catch (error) {
+                        console.error('Error updating display order:', error);
+                      } finally {
+                        setIsReordering(false);
                       }
-                    } catch (error) {
-                      console.error('Error updating display order:', error);
-                    } finally {
-                      setIsReordering(false);
-                    }
-                  }}
-                  isDragging={draggedPatientId === patient.id}
-                  isDragOver={dragOverPatientId === patient.id}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="medical-card p-12 text-center">
-            <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-500 text-lg mb-4">No hay pacientes registrados en el pase de sala</p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="btn-accent px-4 py-2 rounded inline-flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Agregar primer paciente
-            </button>
-          </div>
-        )}
-      </div>
+                    }}
+                    isDragging={draggedPatientId === patient.id}
+                    isDragOver={dragOverPatientId === patient.id}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="medical-card p-12 text-center">
+              <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-500 text-lg mb-4">No hay pacientes registrados en el pase de sala</p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="btn-accent px-4 py-2 rounded inline-flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Agregar primer paciente
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {showCameraModal && (
@@ -3062,7 +3103,7 @@ const WardRounds: React.FC = () => {
               <div className="flex-1">
                 {isHeaderEditMode ? (
                   // HEADER EDIT MODE: Grid de 5 campos editables
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                     <input
                       type="text"
                       value={(inlineDetailValues.nombre as string) || ''}
@@ -3098,6 +3139,17 @@ const WardRounds: React.FC = () => {
                       className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Fecha"
                     />
+                    <select
+                      value={(inlineDetailValues.severidad as string) || ''}
+                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, severidad: e.target.value }))}
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Severidad</option>
+                      <option value="I">I - Estable</option>
+                      <option value="II">II - Moderado</option>
+                      <option value="III">III - Severo</option>
+                      <option value="IV">IV - Crítico</option>
+                    </select>
                   </div>
                 ) : isDetailEditMode ? (
                   // FULL EDIT MODE: Layout original con 3 campos
