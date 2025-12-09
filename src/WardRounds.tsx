@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon } from 'lucide-react';
 import { supabase } from './utils/supabase';
+import Toast from './components/Toast';
+import { readImageFromClipboard, isClipboardSupported } from './services/clipboardService';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
@@ -117,6 +119,8 @@ const WardRounds: React.FC = () => {
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [uploadingImages, setUploadingImages] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<{uploaded: number, total: number}>({uploaded: 0, total: 0});
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const quickImageInputRef = useRef<HTMLInputElement | null>(null);
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -259,6 +263,59 @@ const WardRounds: React.FC = () => {
       return current > max ? current : max;
     }, -1);
     return maxOrder + 1;
+  };
+
+  /**
+   * Show toast notification
+   */
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ message, type });
+  };
+
+  /**
+   * Handler para pegar imagen desde portapapeles
+   * Lee la imagen del portapapeles y usa el flujo de upload existente
+   */
+  const handlePasteFromClipboard = async () => {
+    // Check browser support
+    if (!isClipboardSupported()) {
+      showToast('Tu navegador no soporta pegar desde portapapeles', 'error');
+      return;
+    }
+
+    // Check patient ID exists
+    if (!selectedPatient?.id) {
+      showToast('Guarda el paciente antes de pegar imágenes', 'error');
+      return;
+    }
+
+    try {
+      // Read image from clipboard
+      const files = await readImageFromClipboard();
+
+      if (!files || files.length === 0) {
+        showToast('No hay imagen en el portapapeles', 'info');
+        return;
+      }
+
+      // Use existing upload flow
+      await handleMultipleFileUpload(files);
+
+      // Show success message
+      showToast('Imagen pegada correctamente', 'success');
+
+    } catch (error: any) {
+      console.error('[WardRounds] Clipboard paste error:', error);
+
+      // Handle specific error types
+      if (error.name === 'NotAllowedError') {
+        showToast('Permiso denegado para acceder al portapapeles', 'error');
+      } else if (error.name === 'NotFoundError') {
+        showToast('No hay imagen en el portapapeles', 'info');
+      } else {
+        showToast('Error al pegar imagen del portapapeles', 'error');
+      }
+    }
   };
 
   const loadData = async () => {
@@ -1066,6 +1123,11 @@ const WardRounds: React.FC = () => {
       return;
     }
 
+    const basePatient = {
+      ...selectedPatient,
+      ...(inlineDetailValues as Patient)
+    };
+
     const filesArray = Array.from(fileList);
     setUploadingImages(true);
     setUploadProgress({uploaded: 0, total: filesArray.length});
@@ -1081,8 +1143,10 @@ const WardRounds: React.FC = () => {
         setUploadProgress({uploaded: i + 1, total: filesArray.length});
       }
 
-      const updatedPatient = addImagesToPatient(inlineDetailValues, results);
+      const updatedPatient = addImagesToPatient(basePatient, results);
+      await updatePatient(patientIdForUpload, updatedPatient as Patient);
       setInlineDetailValues(updatedPatient);
+      setSelectedPatient(prev => ({ ...(prev as Patient), ...(updatedPatient as Patient) }));
     } catch (e: any) {
       console.error('[WardRounds] Multiple image upload failed', e);
       setImageUploadError(e?.message || 'No se pudieron subir las imágenes');
@@ -1127,11 +1191,51 @@ const WardRounds: React.FC = () => {
               Imágenes {imageCount > 0 && `(${imageCount})`}
             </h4>
           </div>
-          {imageCount > 0 && (
-            <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-              {imageCount} {imageCount === 1 ? 'foto' : 'fotos'}
-            </span>
-          )}
+          <div className="flex items-center space-x-2">
+            {imageCount > 0 && (
+              <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold dark:bg-blue-900 dark:text-blue-300">
+                {imageCount} {imageCount === 1 ? 'foto' : 'fotos'}
+              </span>
+            )}
+            {!isDetailEditMode && (
+              <>
+                <input
+                  ref={quickImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    handleMultipleFileUpload(e.target.files);
+                    if (quickImageInputRef.current) {
+                      quickImageInputRef.current.value = '';
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
+                  onClick={() => quickImageInputRef.current?.click()}
+                  disabled={uploadingImages || !selectedPatient?.id}
+                  title="Agregar imágenes desde archivo"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Agregar</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
+                  onClick={handlePasteFromClipboard}
+                  disabled={uploadingImages || !selectedPatient?.id}
+                  title="Pegar imagen desde portapapeles"
+                >
+                  <Clipboard className="h-4 w-4" />
+                  <span className="hidden sm:inline">Pegar</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {isDetailEditMode ? (
@@ -1177,28 +1281,52 @@ const WardRounds: React.FC = () => {
             </div>
 
             {/* Upload section */}
-            <div className="space-y-2 border-t border-gray-200 pt-3">
-              <label className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Subir nuevas imágenes
               </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handleMultipleFileUpload(e.target.files)}
-                className="block w-full text-sm text-gray-700"
-                disabled={uploadingImages}
-              />
-              <p className="text-xs text-[var(--text-secondary)]">
-                Puedes seleccionar múltiples imágenes. Se guardarán en ward-images.
+
+              {/* Button row - file picker + paste */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.multiple = true;
+                    input.accept = 'image/*';
+                    input.onchange = (e: any) => handleMultipleFileUpload(e.target.files);
+                    input.click();
+                  }}
+                  disabled={uploadingImages}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-blue-700 dark:hover:bg-blue-600"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Seleccionar archivos</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePasteFromClipboard}
+                  disabled={uploadingImages}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-green-700 dark:hover:bg-green-600"
+                >
+                  <Clipboard className="h-4 w-4" />
+                  <span>Pegar imagen</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Puedes seleccionar múltiples archivos o pegar una imagen desde el portapapeles.
               </p>
+
               {uploadingImages && (
-                <div className="text-xs text-blue-700">
+                <div className="text-xs text-blue-700 dark:text-blue-400">
                   Subiendo {uploadProgress.uploaded} de {uploadProgress.total} imágenes...
                 </div>
               )}
               {imageUploadError && (
-                <p className="text-xs text-red-600">{imageUploadError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{imageUploadError}</p>
               )}
             </div>
           </div>
@@ -1262,7 +1390,7 @@ const WardRounds: React.FC = () => {
           </div>
         ) : (
           <p className="text-sm text-[var(--text-secondary)]">
-            Sin imágenes. Usa modo edición para agregar URLs o subir archivos.
+            Sin imágenes. Usa el botón + para agregar fotos sin entrar en modo edición.
           </p>
         )}
       </div>
@@ -3199,6 +3327,15 @@ const WardRounds: React.FC = () => {
         onConfirmDelete={handleDeleteAction}
         isProcessing={isProcessingDeletion}
       />
+
+      {/* Toast notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
     </LoadingWithRecovery>
   );
