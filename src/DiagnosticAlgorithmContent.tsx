@@ -85,6 +85,21 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     };
   }, [userCollapsed]);
 
+  // Auto-resize del textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // Resetear altura para calcular correctamente el scrollHeight
+    textarea.style.height = 'auto';
+
+    // Calcular nueva altura basada en contenido
+    const newHeight = Math.max(300, textarea.scrollHeight);
+
+    // Aplicar nueva altura
+    textarea.style.height = `${newHeight}px`;
+  }, [notes]);
+
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
   
@@ -526,7 +541,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 
       {/* Main Content Area */}
       <div className="order-1 flex flex-1 flex-col p-2 lg:order-1 bg-gray-50 dark:bg-[#0a0a0a]">
-        <div className="flex flex-1 flex-col h-full p-3">
+        <div className="flex flex-col p-3">
             {/* Mensaje de estado del guardado */}
             {saveStatus && (
               <div className={`mb-2 flex items-center space-x-2 rounded-lg border px-3 py-2 ${
@@ -546,7 +561,12 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               ref={textareaRef}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="flex-1 w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              style={{
+                minHeight: '300px',
+                height: '300px',
+                overflowY: 'hidden'
+              }}
               placeholder="Escriba aquí las notas del paciente..."
             />
         </div>
@@ -576,147 +596,28 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             <div className="divide-y divide-gray-200 dark:divide-gray-800">
               {commonPathologies.map((pathology, index) => (
                 <button
-                onClick={handleSavePatient}
-                className="flex items-center space-x-2 rounded-lg btn-accent px-3 py-2 text-sm"
-                title="Guardar paciente en base de datos"
-              >
-                <Database className="h-4 w-4" />
-                <span>Guardar Paciente</span>
-              </button>
-              <button
-                onClick={copyNotes}
-                className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
-              >
-                <Copy className="h-4 w-4" />
-                <span>Copiar</span>
-              </button>
-              {/* HINTS/HINTS+ ahora se abre desde la lista de escalas cuando exista una escala HINTS */}
-              {isAdminMode && (
-                <button
-                  onClick={() => setShowOcrModal(true)}
-                  className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm"
-                  style={{
-                    backgroundColor: 'color-mix(in srgb, var(--state-info) 85%, #000)',
-                    color: 'var(--on-accent)'
+                  key={index}
+                  onClick={() => {
+                    insertAtCursor(pathology.abbreviation);
+                    setShowPathologyDropdown(false);
                   }}
-                  title="Procesar PDF/Imagen con OCR"
+                  className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-teal-50 dark:hover:bg-teal-950/30"
                 >
-                  <Upload className="h-4 w-4" />
-                  <span>OCR notas</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{pathology.label}</p>
+                  </div>
+                  <div className="ml-3 flex items-center space-x-2">
+                    <span className="rounded-full bg-blue-900/50 px-2 py-1 text-xs font-semibold text-blue-300 border border-blue-800">
+                      {pathology.abbreviation}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-gray-500" />
+                  </div>
                 </button>
-              )}
-              {clearNotes && (
-                <button
-                  onClick={clearNotes}
-                  className="flex items-center space-x-2 rounded-lg btn-error px-3 py-2 text-sm"
-                >
-                  <X className="h-4 w-4" />
-                  <span>Limpiar</span>
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  const normalExamText = `Examen neurológico:
-Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
-
-`;
-                  setNotes(notes + normalExamText);
-                }}
-                className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
-              >
-                <Plus className="h-4 w-4" />
-                <span>EF normal</span>
-              </button>
-              <button
-                onClick={() => {
-                  const testText = `Paciente con temblor en reposo y rigidez muscular. Presenta hemiparesia derecha y disartria severa.`;
-                  setNotes(notes + (notes ? '\n\n' : '') + testText);
-                }}
-                className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Test IA</span>
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowPathologyDropdown(!showPathologyDropdown)}
-                  className="flex items-center space-x-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)]"
-                  title="Insertar antecedentes patológicos frecuentes"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Antecedentes</span>
-                </button>
-                {showPathologyDropdown && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowPathologyDropdown(false)}
-                    />
-                    <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] shadow-2xl">
-                      <div className="sticky top-0 border-b border-gray-300 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/50 dark:to-cyan-950/50 px-4 py-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Antecedentes Frecuentes</h3>
-                          <button
-                            onClick={() => setShowPathologyDropdown(false)}
-                            className="rounded p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Click para insertar en el cursor</p>
-                      </div>
-                      <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                        {commonPathologies.map((pathology, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              insertAtCursor(pathology.abbreviation);
-                            }}
-                            className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-teal-50 dark:hover:bg-teal-950/30"
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{pathology.label}</p>
-                            </div>
-                            <div className="ml-3 flex items-center space-x-2">
-                              <span className="rounded-full bg-blue-900/50 px-2 py-1 text-xs font-semibold text-blue-300 border border-blue-800">
-                                {pathology.abbreviation}
-                              </span>
-                              <ChevronRight className="h-4 w-4 text-gray-500" />
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+              ))}
             </div>
           </div>
-          <div className="flex-1 p-4 lg:p-6">
-            {/* Mensaje de estado del guardado */}
-            {saveStatus && (
-              <div className={`mb-4 flex items-center space-x-2 rounded-lg border p-3 ${
-                saveStatus.success
-                  ? 'border-green-800 bg-green-950/30 text-blue-300'
-                  : 'border-red-800 bg-red-950/30 text-blue-300'
-              }`}
-              >
-                <div className={`h-2 w-2 rounded-full ${
-                  saveStatus.success ? 'bg-green-500' : 'bg-red-500'
-                }`} />
-                <span className="text-sm">{saveStatus.message}</span>
-              </div>
-            )}
-
-            <textarea
-              ref={textareaRef}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="h-full min-h-[18rem] w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              placeholder="Escriba aquí las notas del paciente..."
-            />
-          </div>
-        </div>
+        </>
+      )}
       </div>
 
       {/* Modal de guardar paciente */}

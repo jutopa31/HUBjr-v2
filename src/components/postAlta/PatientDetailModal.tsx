@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Save } from 'lucide-react';
 import { PacientePostAltaRow, updatePacientePostAlta } from '../../services/pacientesPostAltaService';
 
@@ -13,6 +13,20 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const notasEvolucionRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    const maxHeight = 640; // keep field readable while preventing runaway growth
+    el.style.height = 'auto';
+    if (el.scrollHeight > maxHeight) {
+      el.style.height = `${maxHeight}px`;
+      el.style.overflowY = 'auto';
+    } else {
+      el.style.height = `${el.scrollHeight}px`;
+      el.style.overflowY = 'hidden';
+    }
+  };
 
   useEffect(() => {
     // Check if any field has changed
@@ -27,6 +41,10 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
 
     setIsDirty(hasChanges);
   }, [editedPatient, patient]);
+
+  useEffect(() => {
+    autoResize(notasEvolucionRef.current);
+  }, [editedPatient.notas_evolucion]);
 
   const handleChange = (field: keyof PacientePostAltaRow, value: string) => {
     setEditedPatient(prev => ({ ...prev, [field]: value }));
@@ -232,10 +250,14 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
                   Notas de Evolución
                 </label>
                 <textarea
+                  ref={notasEvolucionRef}
                   value={editedPatient.notas_evolucion || ''}
-                  onChange={(e) => handleChange('notas_evolucion', e.target.value)}
+                  onChange={(e) => {
+                    handleChange('notas_evolucion', e.target.value);
+                    autoResize(e.target);
+                  }}
                   rows={5}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full min-h-32 px-3 py-3 rounded-lg border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-700 text-gray-900 dark:text-gray-100 leading-relaxed shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-[height] duration-200 ease-out resize-none overflow-y-auto"
                   placeholder="Evolución del paciente en visitas ambulatorias"
                 />
               </div>

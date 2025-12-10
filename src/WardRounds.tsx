@@ -7,10 +7,10 @@ import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
 import CSVImportModal from './components/wardRounds/CSVImportModal';
+import OCRStudiesModal from './components/wardRounds/OCRStudiesModal';
 import { useAuthContext } from './components/auth/AuthProvider';
 import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
-import SectionHeader from './components/layout/SectionHeader';
 import useEscapeKey from './hooks/useEscapeKey';
 import {
   fetchOutpatientPatients,
@@ -18,6 +18,7 @@ import {
   deleteOutpatientPatient,
   type OutpatientPatient
 } from './services/outpatientWardRoundsService';
+import { appendStudyText } from './services/ocrAutoService';
 import WardPatientCard from './components/wardRounds/WardPatientCard';
 
 interface Patient {
@@ -128,6 +129,9 @@ const WardRounds: React.FC = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraStarting, setIsCameraStarting] = useState(false);
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
+  const [isStudiesOcrOpen, setIsStudiesOcrOpen] = useState(false);
+  const [ocrTarget, setOcrTarget] = useState<'new' | 'edit'>('new');
+  const [ocrSeedText, setOcrSeedText] = useState<string>('');
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -184,12 +188,14 @@ const WardRounds: React.FC = () => {
     setShowAddForm(false);
     setNewPatient(emptyPatient);
     setDniError('');
+    setIsStudiesOcrOpen(false);
   };
 
   const closeEditingModal = () => {
     setEditingId(null);
     setEditingPatient(emptyPatient);
     setDniError('');
+    setIsStudiesOcrOpen(false);
   };
 
   const closeSelectedPatientModal = () => {
@@ -198,12 +204,30 @@ const WardRounds: React.FC = () => {
     setIsDetailEditMode(false);
     setIsHeaderEditMode(false);
     setImageLightboxUrl(null);
+    setIsStudiesOcrOpen(false);
     closeCameraModal();
   };
 
   const closeImageLightbox = () => setImageLightboxUrl(null);
+  const closeStudiesOcrModal = () => setIsStudiesOcrOpen(false);
 
-  const isAnyModalOpen = showOutpatientModal || showAddForm || showCSVImportModal || showCameraModal || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
+  const openStudiesOcrModal = (target: 'new' | 'edit') => {
+    const baseText = target === 'edit' ? editingPatient.estudios : newPatient.estudios;
+    setOcrTarget(target);
+    setOcrSeedText(baseText || '');
+    setIsStudiesOcrOpen(true);
+  };
+
+  const handleApplyOcrStudies = (text: string) => {
+    if (ocrTarget === 'edit') {
+      setEditingPatient((prev) => ({ ...prev, estudios: appendStudyText(prev.estudios || '', text) }));
+    } else {
+      setNewPatient((prev) => ({ ...prev, estudios: appendStudyText(prev.estudios || '', text) }));
+    }
+    setIsStudiesOcrOpen(false);
+  };
+
+  const isAnyModalOpen = showOutpatientModal || showAddForm || showCSVImportModal || showCameraModal || isStudiesOcrOpen || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
 
   useEscapeKey(() => {
     if (imageLightboxUrl) {
@@ -212,6 +236,10 @@ const WardRounds: React.FC = () => {
     }
     if (showCameraModal) {
       closeCameraModal();
+      return;
+    }
+    if (isStudiesOcrOpen) {
+      closeStudiesOcrModal();
       return;
     }
     if (selectedPatient) {
@@ -623,6 +651,22 @@ const WardRounds: React.FC = () => {
       }
     });
   }, [orderedPatients, sortField, sortDirection]);
+
+  // Calculate severity counts for header badges
+  const severityCounts = React.useMemo(() => {
+    const counts = {
+      I: 0,
+      II: 0,
+      III: 0,
+      IV: 0
+    };
+    patients.forEach((patient) => {
+      if (patient.severidad && Object.prototype.hasOwnProperty.call(counts, patient.severidad)) {
+        counts[patient.severidad as 'I' | 'II' | 'III' | 'IV'] += 1;
+      }
+    });
+    return counts;
+  }, [patients]);
 
   const resetDragState = () => {
     setDraggedPatientId(null);
@@ -2081,68 +2125,96 @@ const WardRounds: React.FC = () => {
       loadingMessage={authLoading ? 'Inicializando...' : 'Cargando pacientes...'}
       recoveryTimeout={15000}
     >
-      <div className="h-full flex flex-col p-6 overflow-hidden" style={{ color: 'var(--text-primary)' }}>
-      {/* Header */}
-      <div className="max-w-6xl mx-auto w-full mb-6">
-      <SectionHeader
-        title={"Pase de Sala - Neurología"}
-        subtitle={new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        actions={
-          <div className="flex space-x-3">
-            {/* View Mode Toggle */}
+      <div className="max-w-7xl mx-auto" style={{ color: 'var(--text-primary)' }}>
+      {/* Compact Header with Gradient and Badges */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 mb-3">
+          <div className="flex items-center gap-3">
+            {/* Icono redondeado con sombra */}
+            <div className="rounded-full bg-white p-1.5 shadow-sm ring-1 ring-gray-200">
+              <Stethoscope className="h-5 w-5 text-blue-700" />
+            </div>
+
+            {/* Título y subtítulo */}
+            <div>
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Pase de Sala - Neurología</h1>
+              <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
+                {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Badges de estadísticas */}
+            <div className="hidden lg:flex items-center gap-2 ml-4">
+              <span className="text-xs px-2 py-1 bg-white rounded-full ring-1 ring-gray-200 text-[var(--text-secondary)]">
+                {patients.length} total
+              </span>
+              <span className="text-xs px-2 py-1 bg-emerald-50 rounded-full ring-1 ring-emerald-100 text-emerald-800">
+                {severityCounts['I']} Leve
+              </span>
+              <span className="text-xs px-2 py-1 bg-amber-50 rounded-full ring-1 ring-amber-100 text-amber-800">
+                {severityCounts['II']} Moderado
+              </span>
+              <span className="text-xs px-2 py-1 bg-orange-50 rounded-full ring-1 ring-orange-100 text-orange-800">
+                {severityCounts['III']} Severo
+              </span>
+              <span className="text-xs px-2 py-1 bg-red-50 rounded-full ring-1 ring-red-100 text-red-800">
+                {severityCounts['IV']} Crítico
+              </span>
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="flex gap-2 flex-wrap justify-end">
             <button
               onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-              className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
               title={viewMode === 'table' ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de tabla'}
             >
               {viewMode === 'table' ? (
                 <>
-                  <LayoutGrid className="h-4 w-4" />
-                  <span className="hidden sm:inline">Vista Cards</span>
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Cards</span>
                 </>
               ) : (
                 <>
-                  <TableIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Vista Tabla</span>
+                  <TableIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Tabla</span>
                 </>
               )}
             </button>
             <button
               onClick={() => setShowOutpatientModal(true)}
-              className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
               title="Ambulatorios"
             >
-              <Users className="h-4 w-4" />
+              <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ambulatorios</span>
             </button>
             <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center space-x-2 px-3 py-2 rounded btn-accent text-sm"
-              title="Agregar Paciente"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Agregar Paciente</span>
-            </button>
-            <button
               onClick={() => setShowCSVImportModal(true)}
-              className="flex items-center space-x-2 px-3 py-2 rounded btn-soft text-sm"
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
               title="Importar CSV"
             >
-              <Upload className="h-4 w-4" />
-              <span className="hidden md:inline">Importar CSV</span>
+              <Upload className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">CSV</span>
             </button>
             <button
               onClick={exportToPDF}
-              className="flex items-center space-x-2 btn-soft px-3 py-2 text-sm rounded"
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
               title="Exportar PDF"
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden md:inline">Exportar PDF</span>
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">PDF</span>
+            </button>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+              title="Agregar Paciente"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Agregar</span>
             </button>
           </div>
-        }
-      />
-      </div>
+        </div>
 
       {showOutpatientModal && (
         <div className="modal-overlay">
@@ -2416,7 +2488,6 @@ const WardRounds: React.FC = () => {
                   </button>
                   </div>
                   <textarea
-                    value={newPatient.examen_fisico}
                     onChange={(e) => setNewPatient({...newPatient, examen_fisico: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
@@ -2432,7 +2503,16 @@ const WardRounds: React.FC = () => {
                   <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Laboratorio e Imágenes</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Laboratorio e Imagenes</label>
+                    <button
+                      type="button"
+                      onClick={() => openStudiesOcrModal('new')}
+                      className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> OCR
+                    </button>
+                  </div>
                   <textarea
                     value={newPatient.estudios}
                     onChange={(e) => setNewPatient({...newPatient, estudios: e.target.value})}
@@ -2440,6 +2520,7 @@ const WardRounds: React.FC = () => {
                     rows={3}
                     placeholder="TC sin contraste, laboratorio, ECG..."
                   />
+                  <p className="mt-1 text-xs text-gray-500">Convierte PDF o imagen en texto editable sin guardar la imagen.</p>
                 </div>
               </section>
 
@@ -3435,7 +3516,16 @@ const WardRounds: React.FC = () => {
                   <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Laboratorio e Imágenes</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Laboratorio e Imagenes</label>
+                    <button
+                      type="button"
+                      onClick={() => openStudiesOcrModal('edit')}
+                      className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> OCR
+                    </button>
+                  </div>
                   <textarea
                     value={editingPatient.estudios}
                     onChange={(e) => setEditingPatient({...editingPatient, estudios: e.target.value})}
@@ -3443,9 +3533,9 @@ const WardRounds: React.FC = () => {
                     rows={3}
                     placeholder="TC sin contraste, laboratorio, ECG..."
                   />
+                  <p className="mt-1 text-xs text-gray-500">Convierte PDF o imagen en texto editable sin guardar la imagen.</p>
                 </div>
               </section>
-
               {/* Sección 4b: Imágenes y links */}
               <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
                 <div className="flex items-center mb-4">
@@ -3586,6 +3676,13 @@ const WardRounds: React.FC = () => {
         </div>
       )}
 
+      <OCRStudiesModal
+        isOpen={isStudiesOcrOpen}
+        onClose={closeStudiesOcrModal}
+        onApply={handleApplyOcrStudies}
+        initialValue={ocrSeedText}
+      />
+
       {showCSVImportModal && (
         <CSVImportModal
           isOpen={showCSVImportModal}
@@ -3656,3 +3753,4 @@ const WardRounds: React.FC = () => {
 };
 
 export default WardRounds;
+

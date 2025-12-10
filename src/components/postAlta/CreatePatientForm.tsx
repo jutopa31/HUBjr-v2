@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronUp, ChevronDown, Plus } from 'lucide-react';
 import { PacientePostAltaRow, createPacientePostAlta } from '../../services/pacientesPostAltaService';
 
@@ -22,11 +22,29 @@ const CreatePatientForm: React.FC<CreatePatientFormProps> = ({ isOpen, onToggle,
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const notasEvolucionRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    const maxHeight = 640; // keep field readable while preventing runaway growth
+    el.style.height = 'auto';
+    if (el.scrollHeight > maxHeight) {
+      el.style.height = `${maxHeight}px`;
+      el.style.overflowY = 'auto';
+    } else {
+      el.style.height = `${el.scrollHeight}px`;
+      el.style.overflowY = 'hidden';
+    }
+  };
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setMessage(null);
   };
+
+  useEffect(() => {
+    autoResize(notasEvolucionRef.current);
+  }, [formData.notas_evolucion]);
 
   const isValid = (): boolean => {
     return !!(
@@ -210,10 +228,14 @@ const CreatePatientForm: React.FC<CreatePatientFormProps> = ({ isOpen, onToggle,
                   Notas de Evolución
                 </label>
                 <textarea
+                  ref={notasEvolucionRef}
                   value={formData.notas_evolucion || ''}
-                  onChange={(e) => handleChange('notas_evolucion', e.target.value)}
+                  onChange={(e) => {
+                    handleChange('notas_evolucion', e.target.value);
+                    autoResize(e.target);
+                  }}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full min-h-28 px-3 py-3 rounded-lg border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-700 text-gray-900 dark:text-gray-100 leading-relaxed shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-[height] duration-200 ease-out resize-none overflow-y-auto"
                   placeholder="Evolución del paciente en visitas ambulatorias"
                 />
               </div>
