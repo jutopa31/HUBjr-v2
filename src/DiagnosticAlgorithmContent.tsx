@@ -1,5 +1,5 @@
 ﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, Upload, LayoutList } from 'lucide-react';
+import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -20,7 +20,6 @@ interface DiagnosticAlgorithmContentProps {
   openScaleModal: (scaleId: string) => void;
   medicalScales: Scale[];
   clickedScale?: string | null;
-  isAdminMode?: boolean;
   currentHospitalContext?: 'Posadas' | 'Julian';
 }
 
@@ -32,7 +31,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   openScaleModal,
   medicalScales,
   clickedScale,
-  isAdminMode = false,
   currentHospitalContext = 'Posadas'
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({

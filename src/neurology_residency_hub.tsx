@@ -5252,7 +5252,6 @@ const NeurologyResidencyHub = () => {
             clearNotes={clearNotes}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
-            isAdminMode={isAdminMode}
             currentHospitalContext={currentHospitalContext}
           />
         );
@@ -5613,7 +5612,6 @@ const NeurologyResidencyHub = () => {
             copyNotes={copyNotes}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
-            isAdminMode={isAdminMode}
             currentHospitalContext={currentHospitalContext}
           />
         );
