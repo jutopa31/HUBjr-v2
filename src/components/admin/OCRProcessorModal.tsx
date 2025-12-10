@@ -1,12 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useEscapeKey from '../../hooks/useEscapeKey';
-import { X, Upload, FileText, Loader2, Copy, Check, AlertTriangle } from 'lucide-react';
+import { X, Upload, FileText, Loader2, Copy, Check, AlertTriangle, Camera, Clipboard } from 'lucide-react';
 import {
-  extractTextFromDocument,
   isSupportedOCRFile,
-  OCRProgress,
-  OCRResult,
 } from '../../services/ocrService';
+import { runSequentialOcr, type OCRAutoProgress, type OCRAutoResult } from '../../services/ocrAutoService';
 
 interface OCRProcessorModalProps {
   isOpen: boolean;
@@ -16,11 +14,12 @@ interface OCRProcessorModalProps {
 
 const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, onInsert }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [result, setResult] = useState<OCRResult | null>(null);
-  const [progress, setProgress] = useState<OCRProgress | null>(null);
+  const [result, setResult] = useState<OCRAutoResult | null>(null);
+  const [progress, setProgress] = useState<OCRAutoProgress | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const resetState = useCallback(() => {
     setSelectedFile(null);
@@ -46,9 +45,18 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
     setCopied(false);
 
     try {
-      const extraction = await extractTextFromDocument(file, setProgress);
-      setResult(extraction);
-      setProgress({ stage: 'complete', message: 'Procesamiento finalizado' });
+      const { results } = await runSequentialOcr([file], {
+        onProgress: setProgress,
+        minChars: 60
+      });
+      setResult(results[0] || null);
+      setProgress((prev) => ({
+        stage: 'complete',
+        message: 'Procesamiento finalizado',
+        fileName: prev?.fileName || file.name,
+        fileIndex: prev?.fileIndex || 1,
+        totalFiles: prev?.totalFiles || 1
+      }));
     } catch (ex) {
       console.error('OCR processing error', ex);
       setError(ex instanceof Error ? ex.message : 'No se pudo procesar el archivo.');
@@ -73,6 +81,44 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
     },
     [handleProcessFile]
   );
+
+  const handleCameraClick = useCallback(() => {
+    cameraInputRef.current?.click();
+  }, []);
+
+  const handleCameraChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (!isSupportedOCRFile(file)) {
+        setError('Formato no soportado. Utilice PDF, PNG o JPG.');
+        return;
+      }
+      void handleProcessFile(file);
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = '';
+      }
+    },
+    [handleProcessFile]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items || items.length === 0) return;
+      const imageItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+      if (imageItem) {
+        const file = imageItem.getAsFile();
+        if (file) {
+          event.preventDefault();
+          void handleProcessFile(file);
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [handleProcessFile, isOpen]);
 
   const handleDrop = useCallback(
     (event: React.DragEvent<HTMLLabelElement>) => {
@@ -168,6 +214,31 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
               onChange={handleFileChange}
             />
           </label>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+            <button
+              type="button"
+              onClick={handleCameraClick}
+              className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold hover:bg-gray-100"
+            >
+              <Camera className="h-3.5 w-3.5" /> Tomar foto
+            </button>
+            <button
+              type="button"
+              onClick={() => { /* paste handled globally via window listener */ }}
+              className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold hover:bg-gray-100"
+              title="Usa Ctrl+V o Cmd+V para pegar imagen del portapapeles"
+            >
+              <Clipboard className="h-3.5 w-3.5" /> Pegar imagen (Ctrl+V)
+            </button>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleCameraChange}
+            />
+          </div>
 
           {selectedFile && (
             <div className="rounded-lg border border-gray-200 bg-white p-4">

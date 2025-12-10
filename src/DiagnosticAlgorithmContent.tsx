@@ -274,6 +274,77 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const groupedScales = createDynamicGroups();
 
   return (
+    <div className="max-w-7xl mx-auto">
+      {/* Compact Header with Gradient */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 mb-3 dark:from-gray-900 dark:via-gray-800 dark:to-gray-800 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          {/* Icono redondeado con sombra */}
+          <div className="rounded-full bg-white p-1.5 shadow-sm ring-1 ring-gray-200 dark:bg-gray-700 dark:ring-gray-600">
+            <Stethoscope className="h-5 w-5 text-blue-700 dark:text-blue-400" />
+          </div>
+
+          {/* Título */}
+          <div>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Evolucionador</h1>
+            <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
+              Notas y escalas neurológicas
+            </p>
+          </div>
+        </div>
+
+        {/* Botones de acción - solo en desktop, en mobile están en Mobile Controls */}
+        <div className="hidden lg:flex gap-2 flex-wrap">
+          <button
+            onClick={handleToggleScales}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Mostrar/Ocultar escalas"
+          >
+            <LayoutList className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">{isScalesVisible ? 'Ocultar' : 'Mostrar'}</span>
+          </button>
+          <button
+            onClick={handleSavePatient}
+            className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+            title="Guardar paciente"
+          >
+            <Database className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Guardar</span>
+          </button>
+          <button
+            onClick={copyNotes}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Copiar notas"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Copiar</span>
+          </button>
+          <button
+            onClick={() => {
+              const normalExamText = `Examen neurológico:
+Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
+
+`;
+              setNotes(notes + normalExamText);
+            }}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Insertar examen físico normal"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">EF normal</span>
+          </button>
+          {clearNotes && (
+            <button
+              onClick={clearNotes}
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Limpiar notas"
+            >
+              <X className="h-3.5 w-3.5" />
+              <span className="hidden xl:inline">Limpiar</span>
+            </button>
+          )}
+        </div>
+      </div>
+
     <div className="flex h-full flex-col lg:flex-row">
       {/* Mobile Controls */}
       <div className="border-b bg-white dark:bg-[#1a1a1a] px-4 py-3 shadow-sm lg:hidden">
@@ -454,22 +525,57 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       )}
 
       {/* Main Content Area */}
-      <div className="order-1 flex flex-1 flex-col bg-gray-100 dark:bg-[#0a0a0a] p-4 lg:order-1 lg:p-6">
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col rounded-2xl bg-white dark:bg-[#171717] shadow-2xl border border-gray-200 dark:border-gray-800">
-          <div className="border-b border-gray-200 dark:border-gray-800 p-4 lg:p-6">
-            <div className="mb-4 flex flex-col items-center justify-between gap-3 text-center lg:flex-row lg:text-left">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Notas del Paciente</h2>
-              <button
-                type="button"
-                onClick={handleToggleScales}
-                className="hidden items-center gap-2 rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-secondary)] border border-[var(--border-primary)] lg:inline-flex"
+      <div className="order-1 flex flex-1 flex-col p-2 lg:order-1 bg-gray-50 dark:bg-[#0a0a0a]">
+        <div className="flex flex-1 flex-col h-full p-3">
+            {/* Mensaje de estado del guardado */}
+            {saveStatus && (
+              <div className={`mb-2 flex items-center space-x-2 rounded-lg border px-3 py-2 ${
+                saveStatus.success
+                  ? 'border-green-300 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300'
+                  : 'border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300'
+              }`}
               >
-                <LayoutList className="h-4 w-4" />
-                {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
-              </button>
+                <div className={`h-2 w-2 rounded-full ${
+                  saveStatus.success ? 'bg-green-500' : 'bg-red-500'
+                }`} />
+                <span className="text-sm">{saveStatus.message}</span>
+              </div>
+            )}
+
+            <textarea
+              ref={textareaRef}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="flex-1 w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="Escriba aquí las notas del paciente..."
+            />
+        </div>
+      </div>
+
+      {/* BOTONES DUPLICADOS ELIMINADOS - ahora todos están en el header */}
+      {/* Dropdown de Antecedentes */}
+      {showPathologyDropdown && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowPathologyDropdown(false)}
+          />
+          <div className="fixed top-20 right-4 z-50 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] shadow-2xl">
+            <div className="sticky top-0 border-b border-gray-300 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/50 dark:to-cyan-950/50 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Antecedentes Frecuentes</h3>
+                <button
+                  onClick={() => setShowPathologyDropdown(false)}
+                  className="rounded p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Click para insertar en el cursor</p>
             </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              <button
+            <div className="divide-y divide-gray-200 dark:divide-gray-800">
+              {commonPathologies.map((pathology, index) => (
+                <button
                 onClick={handleSavePatient}
                 className="flex items-center space-x-2 rounded-lg btn-accent px-3 py-2 text-sm"
                 title="Guardar paciente en base de datos"
