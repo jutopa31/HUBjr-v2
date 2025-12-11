@@ -56,7 +56,12 @@
       "mcp__playwright__browser_run_code",
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_resize",
-      "Bash(timeout 2 curl:*)"
+      "Bash(timeout 2 curl:*)",
+      "Bash(timeout 5 npm run dev:*)",
+      "Bash(xargs cat:*)",
+      "mcp__playwright__browser_type",
+      "Bash(git stash:*)",
+      "Bash(timeout 30 npx tsc:*)"
     ],
     "deny": []
   },

@@ -12,7 +12,7 @@ export interface OutpatientPatient {
   severidad: string;
   diagnostico: string;
   plan: string;
-  fecha_proxima_cita?: string;
+  fecha_proxima_cita?: string | null;
   estado_pendiente: 'pendiente' | 'en_proceso' | 'resuelto';
   pendientes: string;
   fecha: string;
@@ -56,9 +56,7 @@ export async function addOutpatientPatient(
     const { data, error } = await Promise.race([
       supabase
         .from('outpatient_ward_rounds')
-        .insert([patient])
-        .select()
-        .single(),
+        .insert([patient]),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), 12000)
       )

@@ -20,11 +20,19 @@ const buildDefaultForm = (): Omit<Row, 'status'> & { status?: string } => ({
   status: 'Pendiente'
 });
 
-const Interconsultas: React.FC = () => {
+interface InterconsultasProps {
+  onGoToEvolucionador?: (interconsulta: InterconsultaRow) => void;
+}
+
+const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) => {
   const { user } = useAuthContext();
+  const today = new Date().toISOString().split('T')[0];
   const [rows, setRows] = useState<Row[]>([]);
   const [filteredRows, setFilteredRows] = useState<Row[]>([]);
-  const [filters, setFilters] = useState<InterconsultaFilters>({});
+  const [filters, setFilters] = useState<InterconsultaFilters>({
+    dateFrom: today,
+    dateTo: today,
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,6 +69,7 @@ const Interconsultas: React.FC = () => {
   };
 
   useEffect(() => { fetchAll(); }, []);
+
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.body.dataset.section = 'patients';
@@ -300,6 +309,13 @@ const Interconsultas: React.FC = () => {
               <span className="text-xs px-2 py-1 bg-gray-50 rounded-full ring-1 ring-gray-100 text-gray-800">
                 {statusCounts.Cancelada} Cancelada
               </span>
+
+              {/* Indicador de filtro del día actual */}
+              {filters.dateFrom === filters.dateTo && filters.dateFrom === today && (
+                <span className="text-xs px-2.5 py-1 bg-blue-100 dark:bg-blue-900 rounded-full ring-1 ring-blue-200 dark:ring-blue-700 text-blue-800 dark:text-blue-200 font-medium">
+                  📅 Solo hoy
+                </span>
+              )}
             </div>
           </div>
 
@@ -480,6 +496,7 @@ const Interconsultas: React.FC = () => {
             interconsulta={selectedInterconsulta}
             onClose={() => setSelectedId(null)}
             onUpdate={handleUpdateRow}
+            onGoToEvolucionador={onGoToEvolucionador}
           />
         )}
 

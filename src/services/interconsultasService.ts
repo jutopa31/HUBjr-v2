@@ -14,6 +14,13 @@ export interface InterconsultaRow {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+
+  // Nuevos campos de imágenes (workflow integration)
+  image_thumbnail_url?: string[];
+  image_full_url?: string[];
+  exa_url?: string[];
+  estudios_ocr?: string;
+  edad?: string; // Agregado para template de evolucionador
 }
 
 export interface InterconsultaFilters {
@@ -214,5 +221,219 @@ export async function deleteMultipleInterconsultas(ids: string[]): Promise<{ suc
   } catch (e: any) {
     console.error('[InterconsultasService] deleteMultipleInterconsultas unexpected error:', e);
     return { success: false, error: e?.message || 'Unknown error' };
+  }
+}
+
+// ============================================================================
+// NUEVAS FUNCIONES PARA WORKFLOW INTEGRATION
+// ============================================================================
+
+/**
+ * Sube una imagen a una interconsulta y actualiza sus arrays de URLs
+ * @param interconsultaId - ID de la interconsulta
+ * @param file - Archivo de imagen a subir
+ * @returns URLs de thumbnail y full, o null si falla
+ */
+export async function uploadImageToInterconsulta(
+  interconsultaId: string,
+  file: File
+): Promise<{ thumbnailUrl: string; fullUrl: string } | null> {
+  try {
+    console.log('[InterconsultasService] uploadImageToInterconsulta -> id:', interconsultaId);
+
+    // Import dinámico del storageService para evitar dependencias circulares
+    const { uploadImageToStorage } = await import('./storageService');
+
+    // Subir imagen a Supabase Storage
+    const uploadResult = await uploadImageToStorage(file, 'interconsultas');
+    if (!uploadResult) {
+      throw new Error('Error al subir imagen a storage');
+    }
+
+    const { publicUrl } = uploadResult;
+
+    // Obtener arrays actuales
+    const { data: current, error: fetchError } = await supabase
+      .from('interconsultas')
+      .select('image_thumbnail_url, image_full_url')
+      .eq('id', interconsultaId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Append nueva imagen a los arrays (usamos publicUrl para ambos por ahora)
+    const newThumbnails = [...(current?.image_thumbnail_url || []), publicUrl];
+    const newFulls = [...(current?.image_full_url || []), publicUrl];
+
+    // Actualizar en BD
+    const { error: updateError } = await supabase
+      .from('interconsultas')
+      .update({
+        image_thumbnail_url: newThumbnails,
+        image_full_url: newFulls,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', interconsultaId);
+
+    if (updateError) throw updateError;
+
+    console.log('[InterconsultasService] uploadImageToInterconsulta -> success');
+    return { thumbnailUrl: publicUrl, fullUrl: publicUrl };
+  } catch (error: any) {
+    console.error('[InterconsultasService] uploadImageToInterconsulta error:', error);
+    return null;
+  }
+}
+
+/**
+ * Remueve una imagen de una interconsulta por índice
+ * @param interconsultaId - ID de la interconsulta
+ * @param index - Índice de la imagen a remover
+ * @returns true si se removió exitosamente
+ */
+export async function removeImageFromInterconsulta(
+  interconsultaId: string,
+  index: number
+): Promise<boolean> {
+  try {
+    console.log('[InterconsultasService] removeImageFromInterconsulta -> id:', interconsultaId, 'index:', index);
+
+    // Obtener arrays actuales
+    const { data: current, error: fetchError } = await supabase
+      .from('interconsultas')
+      .select('image_thumbnail_url, image_full_url')
+      .eq('id', interconsultaId)
+      .single();
+
+    if (fetchError || !current) {
+      console.error('[InterconsultasService] removeImageFromInterconsulta fetch error:', fetchError);
+      return false;
+    }
+
+    // Crear copias y remover por índice
+    const newThumbnails = [...(current.image_thumbnail_url || [])];
+    const newFulls = [...(current.image_full_url || [])];
+
+    newThumbnails.splice(index, 1);
+    newFulls.splice(index, 1);
+
+    // Actualizar en BD
+    const { error: updateError } = await supabase
+      .from('interconsultas')
+      .update({
+        image_thumbnail_url: newThumbnails,
+        image_full_url: newFulls,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', interconsultaId);
+
+    if (updateError) {
+      console.error('[InterconsultasService] removeImageFromInterconsulta update error:', updateError);
+      return false;
+    }
+
+    console.log('[InterconsultasService] removeImageFromInterconsulta -> success');
+    return true;
+  } catch (error: any) {
+    console.error('[InterconsultasService] removeImageFromInterconsulta error:', error);
+    return false;
+  }
+}
+
+/**
+ * Agrega texto OCR extraído al campo estudios_ocr de una interconsulta
+ * @param interconsultaId - ID de la interconsulta
+ * @param ocrText - Texto extraído mediante OCR
+ * @returns true si se agregó exitosamente
+ */
+export async function appendOCRTextToInterconsulta(
+  interconsultaId: string,
+  ocrText: string
+): Promise<boolean> {
+  try {
+    console.log('[InterconsultasService] appendOCRTextToInterconsulta -> id:', interconsultaId);
+
+    // Obtener texto OCR actual
+    const { data: current, error: fetchError } = await supabase
+      .from('interconsultas')
+      .select('estudios_ocr')
+      .eq('id', interconsultaId)
+      .single();
+
+    if (fetchError) {
+      console.error('[InterconsultasService] appendOCRTextToInterconsulta fetch error:', fetchError);
+      return false;
+    }
+
+    // Appendear nuevo texto con separador si ya existe contenido
+    const existingText = current?.estudios_ocr || '';
+    const newText = existingText
+      ? `${existingText}\n\n--- Nuevo estudio ---\n${ocrText}`
+      : ocrText;
+
+    // Actualizar en BD
+    const { error: updateError } = await supabase
+      .from('interconsultas')
+      .update({
+        estudios_ocr: newText,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', interconsultaId);
+
+    if (updateError) {
+      console.error('[InterconsultasService] appendOCRTextToInterconsulta update error:', updateError);
+      return false;
+    }
+
+    console.log('[InterconsultasService] appendOCRTextToInterconsulta -> success');
+    return true;
+  } catch (error: any) {
+    console.error('[InterconsultasService] appendOCRTextToInterconsulta error:', error);
+    return false;
+  }
+}
+
+/**
+ * Actualiza la respuesta y status de una interconsulta (usado desde Evolucionador)
+ * @param interconsultaId - ID de la interconsulta
+ * @param respuesta - Texto de respuesta (clinical notes del evolucionador)
+ * @param newStatus - Nuevo status de la interconsulta
+ * @returns true si se actualizó exitosamente
+ */
+export async function updateInterconsultaResponse(
+  interconsultaId: string,
+  respuesta: string,
+  newStatus: 'Pendiente' | 'En Proceso' | 'Resuelta' | 'Cancelada'
+): Promise<boolean> {
+  try {
+    console.log('[InterconsultasService] updateInterconsultaResponse -> id:', interconsultaId, 'status:', newStatus);
+
+    const result: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .update({
+          respuesta,
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', interconsultaId),
+      {
+        timeout: 8000,
+        retries: 2,
+        operationName: 'updateInterconsultaResponse'
+      }
+    );
+
+    const { error } = result || {};
+    if (error) {
+      console.error('[InterconsultasService] updateInterconsultaResponse error:', error);
+      return false;
+    }
+
+    console.log('[InterconsultasService] updateInterconsultaResponse -> success');
+    return true;
+  } catch (error: any) {
+    console.error('[InterconsultasService] updateInterconsultaResponse unexpected error:', error);
+    return false;
   }
 }

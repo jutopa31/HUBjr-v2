@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera } from 'lucide-react';
+import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
 import { readImageFromClipboard, isClipboardSupported } from './services/clipboardService';
@@ -80,6 +80,23 @@ const WardRounds: React.FC = () => {
     assigned_resident_id: undefined
   };
 
+  const refreshSignedUrl = async (url: string): Promise<string> => {
+    try {
+      const match = url.match(/storage\/v1\/object\/sign\/ward-images\/([^?]+)/);
+      if (!match || !match[1]) return url;
+      const path = decodeURIComponent(match[1]);
+      const { data, error } = await supabase.storage.from('ward-images').createSignedUrl(path, 60 * 60 * 24 * 7);
+      if (error || !data?.signedUrl) {
+        console.warn('[WardRounds] Failed to refresh signed url', error);
+        return url;
+      }
+      return data.signedUrl;
+    } catch (error) {
+      console.error('[WardRounds] Unexpected error refreshing signed url', error);
+      return url;
+    }
+  };
+
   const emptyOutpatient: OutpatientPatient = {
     dni: '',
     nombre: '',
@@ -121,6 +138,7 @@ const WardRounds: React.FC = () => {
   const [uploadingImages, setUploadingImages] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<{uploaded: number, total: number}>({uploaded: 0, total: 0});
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [imageOverrides, setImageOverrides] = useState<Record<number, string>>({});
   const quickImageInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -139,6 +157,7 @@ const WardRounds: React.FC = () => {
 
   // Estado para el control de expansión de filas
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedOutpatientRows, setExpandedOutpatientRows] = useState<Set<string>>(new Set());
 
   // Estados para edición inline de pendientes
   const [editingPendientesId, setEditingPendientesId] = useState<string | null>(null);
@@ -315,6 +334,11 @@ const WardRounds: React.FC = () => {
 
   useEffect(() => () => stopCameraStream(), [stopCameraStream]);
 
+  useEffect(() => {
+    setImageOverrides({});
+    setImagePreviewError(null);
+  }, [selectedPatient?.id]);
+
   const sortPatientsByDisplayOrder = (list: Patient[]) => {
     return [...list].sort((a, b) => {
       const orderA = typeof a.display_order === 'number' ? a.display_order : Number.MAX_SAFE_INTEGER;
@@ -401,7 +425,7 @@ const WardRounds: React.FC = () => {
 
   const loadData = async () => {
     console.log('[WardRounds] loadData -> start');
-    await Promise.all([loadPatients(), loadResidents()]);
+    await Promise.all([loadPatients(), loadResidents(), loadOutpatients()]);
     console.log('[WardRounds] loadData -> done');
   };
 
@@ -449,6 +473,24 @@ const WardRounds: React.FC = () => {
       setOutpatientLoading(false);
     }
   };
+
+  const mapWardPatientToOutpatient = (patient: Patient): Omit<OutpatientPatient, 'id' | 'created_at' | 'updated_at'> => ({
+    dni: patient.dni,
+    nombre: patient.nombre,
+    edad: patient.edad,
+    antecedentes: patient.antecedentes || '',
+    motivo_consulta: patient.motivo_consulta || '',
+    examen_fisico: patient.examen_fisico || '',
+    estudios: patient.estudios || '',
+    severidad: patient.severidad || '',
+    diagnostico: patient.diagnostico || '',
+    plan: patient.plan || '',
+    fecha_proxima_cita: null,
+    estado_pendiente: 'pendiente',
+    pendientes: patient.pendientes || '',
+    fecha: patient.fecha || new Date().toISOString().split('T')[0],
+    assigned_resident_id: null
+  });
 
   const loadResidents = async () => {
     try {
@@ -538,8 +580,11 @@ const WardRounds: React.FC = () => {
       setOutpatientLoading(true);
       const payload = {
         ...newOutpatient,
-        fecha: newOutpatient.fecha || new Date().toISOString().split('T')[0]
+        fecha: newOutpatient.fecha || new Date().toISOString().split('T')[0],
+        fecha_proxima_cita: newOutpatient.fecha_proxima_cita?.trim() ? newOutpatient.fecha_proxima_cita : null,
+        assigned_resident_id: null
       };
+      console.log('[WardRounds] Saving outpatient from modal', payload);
       const { error } = await addOutpatientPatient(payload);
       if (error) throw error;
       setNewOutpatient(emptyOutpatient);
@@ -630,6 +675,16 @@ const WardRounds: React.FC = () => {
     setExpandedRows(newExpandedRows);
   };
 
+  const toggleOutpatientRow = (patientId: string) => {
+    const newExpandedRows = new Set(expandedOutpatientRows);
+    if (newExpandedRows.has(patientId)) {
+      newExpandedRows.delete(patientId);
+    } else {
+      newExpandedRows.add(patientId);
+    }
+    setExpandedOutpatientRows(newExpandedRows);
+  };
+
   const orderedPatients = React.useMemo(() => sortPatientsByDisplayOrder(patients), [patients]);
 
   // Ordenar pacientes basado en el estado actual
@@ -652,6 +707,14 @@ const WardRounds: React.FC = () => {
     });
   }, [orderedPatients, sortField, sortDirection]);
 
+  const sortedOutpatients = React.useMemo(() => {
+    return [...outpatients].sort((a, b) => {
+      const nextDateA = a.fecha_proxima_cita || a.fecha || '';
+      const nextDateB = b.fecha_proxima_cita || b.fecha || '';
+      return nextDateA.localeCompare(nextDateB, 'es');
+    });
+  }, [outpatients]);
+
   // Calculate severity counts for header badges
   const severityCounts = React.useMemo(() => {
     const counts = {
@@ -667,6 +730,10 @@ const WardRounds: React.FC = () => {
     });
     return counts;
   }, [patients]);
+
+  const assignedResident = selectedPatient
+    ? residents.find((resident) => resident.id === selectedPatient.assigned_resident_id)
+    : null;
 
   const resetDragState = () => {
     setDraggedPatientId(null);
@@ -897,13 +964,13 @@ const WardRounds: React.FC = () => {
   };
 
   // Abrir modal + ventana detallada al seleccionar paciente
-  const handlePatientSelection = (patient: Patient) => {
+  const handlePatientSelection = (patient: Patient, options?: { editMode?: 'detail' | 'header' }) => {
     const patientWithDefaults = { ...emptyPatient, ...patient };
     setSelectedPatient(patientWithDefaults);
     setInlineDetailValues(patientWithDefaults);
     setActiveInlineField(null);
-    setIsDetailEditMode(false);
-    setIsHeaderEditMode(false);
+    setIsDetailEditMode(options?.editMode === 'detail');
+    setIsHeaderEditMode(options?.editMode === 'header');
     setImagePreviewError(null);
     setImageUploadError(null);
   };
@@ -986,13 +1053,19 @@ const WardRounds: React.FC = () => {
   const saveHeaderEdits = async () => {
     if (!selectedPatient?.id) return;
 
+    const assignedResidentId =
+      inlineDetailValues.assigned_resident_id === ''
+        ? null
+        : inlineDetailValues.assigned_resident_id ?? selectedPatient.assigned_resident_id ?? null;
+
     const headerUpdates = {
       nombre: inlineDetailValues.nombre || selectedPatient.nombre,
       dni: inlineDetailValues.dni || selectedPatient.dni,
       edad: inlineDetailValues.edad || selectedPatient.edad,
       cama: inlineDetailValues.cama || selectedPatient.cama,
       fecha: inlineDetailValues.fecha || selectedPatient.fecha,
-      severidad: inlineDetailValues.severidad || selectedPatient.severidad
+      severidad: inlineDetailValues.severidad || selectedPatient.severidad,
+      assigned_resident_id: assignedResidentId
     };
 
     const updatedPatient: Patient = { ...selectedPatient, ...headerUpdates };
@@ -1559,8 +1632,9 @@ const WardRounds: React.FC = () => {
             {/* Grilla 2 columnas responsive */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {images.map((img, idx) => {
-                const fullUrl = normalizeUrl(img.full);
-                const thumbUrl = normalizeUrl(img.thumbnail) || fullUrl;
+                const overrideUrl = imageOverrides[idx];
+                const fullUrl = overrideUrl || normalizeUrl(img.full);
+                const thumbUrl = overrideUrl || normalizeUrl(img.thumbnail) || fullUrl;
                 const exaUrl = img.exa ? normalizeUrl(img.exa) : '';
 
                 return (
@@ -1577,9 +1651,16 @@ const WardRounds: React.FC = () => {
                           src={thumbUrl}
                           alt={`Imagen ${idx + 1}`}
                           className="max-w-full max-h-48 object-contain transition-transform duration-200 group-hover/img:scale-[1.02]"
-                          onError={() => {
-                            setImagePreviewError(`Error cargando imagen ${idx + 1}`);
-                            console.error('[WardRounds] Image preview failed', { thumbUrl, fullUrl, idx });
+                          onError={async () => {
+                            setImagePreviewError(`Error cargando imagen ${idx + 1}, reintentando...`);
+                            const refreshed = await refreshSignedUrl(fullUrl || thumbUrl);
+                            if (refreshed && refreshed !== fullUrl && refreshed !== thumbUrl) {
+                              setImageOverrides((prev) => ({ ...prev, [idx]: refreshed }));
+                              setImagePreviewError(null);
+                            } else {
+                              setImagePreviewError(`No se pudo cargar la imagen ${idx + 1}`);
+                              console.error('[WardRounds] Image preview failed', { thumbUrl, fullUrl, idx });
+                            }
                           }}
                         />
                       </div>
@@ -1660,7 +1741,7 @@ const WardRounds: React.FC = () => {
   }, [isProcessingDeletion]);
 
   // Ejecutar acción de eliminación o archivo
-  const handleDeleteAction = async (action: 'delete' | 'archive') => {
+  const handleDeleteAction = async (action: 'delete' | 'archive' | 'outpatient') => {
     if (!selectedPatientForDeletion) return;
 
     setIsProcessingDeletion(true);
@@ -1672,11 +1753,10 @@ const WardRounds: React.FC = () => {
       const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
       console.log(`[WardRounds] ${action} action for patient:`, { id, patientName, isProduction });
 
-      if (action === 'archive') {
-        console.log('[WardRounds] Starting archive process...');
+      let fullPatientData: Patient | null = null;
 
-        // Obtener toda la información del paciente (simplified, no timeout)
-        const { data: fullPatientData, error: fetchError } = await supabase
+      if (action === 'archive' || action === 'outpatient') {
+        const { data, error: fetchError } = await supabase
           .from('ward_round_patients')
           .select('*')
           .eq('id', id)
@@ -1686,10 +1766,19 @@ const WardRounds: React.FC = () => {
           throw new Error(`Error al obtener datos del paciente: ${fetchError.message}`);
         }
 
-        console.log('[WardRounds] Patient data fetched, starting archive...');
+        fullPatientData = data as Patient;
+      }
+
+      if ((action === 'archive' || action === 'outpatient') && !fullPatientData) {
+        throw new Error('No se pudieron obtener los datos completos del paciente');
+      }
+
+      if (action === 'archive') {
+        console.log('[WardRounds] Starting archive process...');
+
 
         // Intentar archivar el paciente (simplified, will use auto-recovery instead of manual timeout)
-        const archiveResult = await archiveWardPatient(fullPatientData, 'Posadas');
+        const archiveResult = await archiveWardPatient(fullPatientData as Patient, 'Posadas');
 
         if (!archiveResult.success) {
           if (archiveResult.duplicate) {
@@ -1703,6 +1792,17 @@ const WardRounds: React.FC = () => {
 
         // Si el archivo fue exitoso, proceder con la eliminación del pase
         console.log('✅ Paciente archivado exitosamente, procediendo con eliminación del pase...');
+      }
+
+      if (action === 'outpatient') {
+        const sourcePatient = patients.find((p) => p.id === id) || fullPatientData;
+        const outpatientPayload = mapWardPatientToOutpatient(sourcePatient as Patient);
+        console.log('[WardRounds] Outpatient payload preview', outpatientPayload);
+        const { error: outpatientError } = await addOutpatientPatient(outpatientPayload);
+        if (outpatientError) {
+          throw outpatientError;
+        }
+        await loadOutpatients();
       }
 
       console.log('[WardRounds] Deleting related tasks...');
@@ -1740,6 +1840,8 @@ const WardRounds: React.FC = () => {
 
       if (action === 'archive') {
         alert(`Paciente "${patientName}" guardado y eliminado del pase de sala.`);
+      } else if (action === 'outpatient') {
+        alert(`Paciente "${patientName}" movido a ambulatorios y eliminado del pase de sala.`);
       } else {
         alert(`Paciente "${patientName}" eliminado completamente.`);
       }
@@ -1762,7 +1864,9 @@ const WardRounds: React.FC = () => {
       console.error('[WardRounds] Detailed deletion error:', detailedError);
 
       // User-friendly error messages
-      let userMessage = `Error al ${action === 'archive' ? 'archivar' : 'eliminar'} paciente`;
+      let userMessage = `Error al ${
+        action === 'archive' ? 'archivar' : action === 'outpatient' ? 'mover a ambulatorios' : 'eliminar'
+      } paciente`;
 
       if (errorMessage.includes('Timeout')) {
         userMessage += ': La operación tardó demasiado. Intenta nuevamente.';
@@ -2218,7 +2322,7 @@ const WardRounds: React.FC = () => {
 
       {showOutpatientModal && (
         <div className="modal-overlay">
-          <div className="modal-content max-w-5xl w-full h-[70vh] flex flex-col">
+          <div className="modal-content max-w-6xl w-full h-[80vh] flex flex-col">
             <div
               className="p-4 border-b flex items-center justify-between sticky top-0 z-10"
               style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}
@@ -2227,12 +2331,22 @@ const WardRounds: React.FC = () => {
                 <Users className="h-5 w-5 text-blue-600" />
                 <div>
                   <h2 className="text-lg font-semibold">Ambulatorios</h2>
-                  <p className="text-sm text-[var(--text-secondary)]">Vista compacta en modal</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Lista intermedia con el mismo formato del pase</p>
                 </div>
               </div>
-              <button onClick={closeOutpatientModal} className="p-1 rounded-md btn-soft">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={loadOutpatients}
+                  className="p-2 rounded-md btn-soft text-sm flex items-center space-x-1"
+                  disabled={outpatientLoading}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Refrescar</span>
+                </button>
+                <button onClick={closeOutpatientModal} className="p-1 rounded-md btn-soft">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             <div className="p-4 border-b" style={{ borderColor: 'var(--border-secondary)' }}>
@@ -2257,7 +2371,7 @@ const WardRounds: React.FC = () => {
                 />
                 <input
                   className="input"
-                  placeholder="Próxima cita (YYYY-MM-DD)"
+                  placeholder="Proxima cita (YYYY-MM-DD)"
                   value={newOutpatient.fecha_proxima_cita}
                   onChange={(e) => setNewOutpatient((prev) => ({ ...prev, fecha_proxima_cita: e.target.value }))}
                 />
@@ -2272,56 +2386,192 @@ const WardRounds: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto">
-              <table className="min-w-full text-sm">
-                <thead className="sticky top-0" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                  <tr>
-                    <th className="px-3 py-2 text-left">Paciente</th>
-                    <th className="px-3 py-2 text-left">Motivo</th>
-                    <th className="px-3 py-2 text-left">Pendientes</th>
-                    <th className="px-3 py-2 text-left">Próxima cita</th>
-                    <th className="px-3 py-2 text-left">Estado</th>
-                    <th className="px-3 py-2 text-left"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {outpatientLoading && (
-                    <tr>
-                      <td colSpan={6} className="px-3 py-4 text-center text-[var(--text-secondary)]">
-                        Cargando ambulatorios...
-                      </td>
-                    </tr>
-                  )}
-                  {!outpatientLoading && outpatients.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-3 py-4 text-center text-[var(--text-secondary)]">
-                        Sin pacientes ambulatorios cargados
-                      </td>
-                    </tr>
-                  )}
-                  {outpatients.map((p) => (
-                    <tr key={p.id ?? `${p.dni}-${p.fecha}`} className="border-b" style={{ borderColor: 'var(--border-secondary)' }}>
-                      <td className="px-3 py-2 font-semibold">{p.nombre}</td>
-                      <td className="px-3 py-2">{p.motivo_consulta || '-'}</td>
-                      <td className="px-3 py-2 text-[var(--text-secondary)]">{p.pendientes || '-'}</td>
-                      <td className="px-3 py-2">{p.fecha_proxima_cita || 'Sin definir'}</td>
-                      <td className="px-3 py-2 capitalize">{p.estado_pendiente}</td>
-                      <td className="px-3 py-2 text-right">
-                        <button
-                          onClick={() => p.id && removeOutpatient(p.id, p.nombre)}
-                          className="text-red-600 hover:text-red-700"
+            <div className="flex-1 overflow-auto bg-[var(--bg-secondary)] px-3 sm:px-4 py-4">
+              {outpatientLoading && (
+                <div className="text-center text-[var(--text-secondary)] py-8">Cargando ambulatorios...</div>
+              )}
+              {!outpatientLoading && sortedOutpatients.length === 0 && (
+                <div className="text-center text-[var(--text-secondary)] py-8">
+                  Sin pacientes ambulatorios cargados
+                </div>
+              )}
+              {!outpatientLoading && sortedOutpatients.length > 0 && (
+                <div className="space-y-2">
+                  <div className="hidden sm:block bg-white/80 border border-[var(--border-secondary)] rounded-lg px-4 py-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <div className="grid grid-cols-8 md:grid-cols-12 gap-2 items-center">
+                      <div className="col-span-3">Paciente</div>
+                      <div className="col-span-3">Motivo / Diagnostico</div>
+                      <div className="col-span-2">Pendientes</div>
+                      <div className="col-span-2">Proxima cita</div>
+                      <div className="col-span-2 text-right">Estado</div>
+                    </div>
+                  </div>
+                  {sortedOutpatients.map((p) => {
+                    const outpatientId = p.id ?? `${p.dni}-${p.fecha}`;
+                    const isExpanded = expandedOutpatientRows.has(outpatientId);
+                    return (
+                      <div
+                        key={outpatientId}
+                        className={`expandable-row mb-2 bg-white border border-[var(--border-secondary)] rounded-lg ${
+                          p.estado_pendiente === 'resuelto'
+                            ? 'border-l-4 border-l-emerald-400'
+                            : p.estado_pendiente === 'en_proceso'
+                              ? 'border-l-4 border-l-blue-400'
+                              : 'border-l-4 border-l-amber-400'
+                        } ${isExpanded ? 'shadow-md' : 'hover:bg-gray-50'}`}
+                      >
+                        <div
+                          className="px-3 sm:px-4 py-3 flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleOutpatientRow(outpatientId)}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <button
+                              type="button"
+                              className="p-1 rounded hover:bg-gray-100 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleOutpatientRow(outpatientId);
+                              }}
+                              title={isExpanded ? 'Contraer' : 'Expandir'}
+                            >
+                              <ChevronRight
+                                className={`expand-icon h-4 w-4 text-gray-500 ${isExpanded ? 'expanded' : ''}`}
+                              />
+                            </button>
+                            <div className="flex-1 grid grid-cols-8 md:grid-cols-12 gap-2 items-center min-w-0">
+                              <div className="col-span-3">
+                                <div className="text-sm font-medium text-gray-900 truncate">{p.nombre}</div>
+                                <div className="text-xs text-gray-500">DNI: {p.dni || 'N/D'}</div>
+                              </div>
+                              <div className="col-span-3">
+                                <div className="text-xs text-gray-700 truncate">{p.motivo_consulta || 'Sin motivo'}</div>
+                                <div className="text-xs text-gray-500 truncate">{p.diagnostico || 'Sin diagnostico'}</div>
+                              </div>
+                              <div className="col-span-2 hidden md:block">
+                                <div className="text-xs text-gray-600 truncate">{p.pendientes || 'Sin pendientes'}</div>
+                              </div>
+                              <div className="col-span-2 hidden sm:block">
+                                <span className="text-xs text-gray-600">
+                                  {p.fecha_proxima_cita || 'Sin fecha'}
+                                </span>
+                              </div>
+                              <div className="col-span-2 flex justify-end">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    p.estado_pendiente === 'resuelto'
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : p.estado_pendiente === 'en_proceso'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  }`}
+                                >
+                                  {p.estado_pendiente || 'pendiente'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end space-x-1 w-16">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (p.id) {
+                                  removeOutpatient(p.id, p.nombre);
+                                }
+                              }}
+                              className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar ambulatorio"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                            isExpanded ? 'max-h-screen opacity-100 mb-3' : 'max-h-0 opacity-0'
+                          }`}
+                        >
+                          <div className="px-4 sm:px-6 pb-4 pt-2 border-t border-gray-200 bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              <div className="space-y-2">
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-1">Antecedentes</h4>
+                                  <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
+                                    {p.antecedentes || 'No especificado'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-1">Examen fisico / EF</h4>
+                                  <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
+                                    {p.examen_fisico || 'No especificado'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-1">Estudios</h4>
+                                  <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
+                                    {p.estudios || 'No especificado'}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-1">Diagnostico</h4>
+                                  <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
+                                    {p.diagnostico || 'No especificado'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-1">Plan</h4>
+                                  <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
+                                    {p.plan || 'No especificado'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-1">Pendientes</h4>
+                                  <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
+                                    {p.pendientes || 'Sin pendientes'}
+                                  </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <h4 className="font-medium text-gray-700 mb-1 text-xs uppercase">Proxima cita</h4>
+                                    <p className="text-gray-600 bg-white p-2 rounded border break-words overflow-wrap">
+                                      {p.fecha_proxima_cita || 'Sin fecha'}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium text-gray-700 mb-1 text-xs uppercase">Severidad</h4>
+                                    <span
+                                      className={`badge ${
+                                        p.severidad === 'I'
+                                          ? 'badge-severity-1'
+                                          : p.severidad === 'II'
+                                            ? 'badge-severity-2'
+                                            : p.severidad === 'III'
+                                              ? 'badge-severity-3'
+                                              : p.severidad === 'IV'
+                                                ? 'badge-severity-4'
+                                                : 'bg-gray-200 text-gray-700'
+                                      }`}
+                                    >
+                                      {p.severidad || '-'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
 
       {/* Formulario para agregar paciente */}
       {showAddForm && (
@@ -2923,9 +3173,7 @@ const WardRounds: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!patient.id) return;
-                            setEditingId(patient.id);
-                            setEditingPatient(patient);
+                            handlePatientSelection(patient, { editMode: 'detail' });
                           }}
                           className="p-2 text-blue-700 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Editar paciente completo"
@@ -3038,7 +3286,7 @@ const WardRounds: React.FC = () => {
                     key={patient.id}
                     patient={patient}
                     resident={resident}
-                    onClick={() => setSelectedPatient(patient)}
+                    onClick={() => handlePatientSelection(patient)}
                     onDragStart={(e) => {
                       setDraggedPatientId(patient.id || null);
                       e.dataTransfer.effectAllowed = 'move';
@@ -3183,8 +3431,8 @@ const WardRounds: React.FC = () => {
             <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
               <div className="flex-1">
                 {isHeaderEditMode ? (
-                  // HEADER EDIT MODE: Grid de 5 campos editables
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+                  // HEADER EDIT MODE: Grid de datos basicos editables
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
                     <input
                       type="text"
                       value={(inlineDetailValues.nombre as string) || ''}
@@ -3221,6 +3469,23 @@ const WardRounds: React.FC = () => {
                       placeholder="Fecha"
                     />
                     <select
+                      value={(inlineDetailValues.assigned_resident_id as string) || ''}
+                      onChange={(e) =>
+                        setInlineDetailValues((prev) => ({
+                          ...prev,
+                          assigned_resident_id: e.target.value || null
+                        }))
+                      }
+                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Sin residente asignado</option>
+                      {residents.map((resident) => (
+                        <option key={resident.id} value={resident.id}>
+                          {resident.full_name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
                       value={(inlineDetailValues.severidad as string) || ''}
                       onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, severidad: e.target.value }))}
                       className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -3233,12 +3498,12 @@ const WardRounds: React.FC = () => {
                     </select>
                   </div>
                 ) : isDetailEditMode ? (
-                  // FULL EDIT MODE: Layout original con 4 campos (agregado severidad)
+                  // FULL EDIT MODE: Layout original con 5 campos (agregado severidad y residente)
                   <>
                     <h2 className="text-lg font-semibold text-gray-900">
                       {selectedPatient.nombre || 'Paciente sin nombre'}
                     </h2>
-                    <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-gray-700">
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2 text-sm text-gray-700">
                       <input
                         type="text"
                         value={(inlineDetailValues.cama as string) || ''}
@@ -3260,6 +3525,23 @@ const WardRounds: React.FC = () => {
                         className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Fecha"
                       />
+                      <select
+                        value={(inlineDetailValues.assigned_resident_id as string) || ''}
+                        onChange={(e) =>
+                          setInlineDetailValues((prev) => ({
+                            ...prev,
+                            assigned_resident_id: e.target.value || null
+                          }))
+                        }
+                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Sin residente asignado</option>
+                        {residents.map((resident) => (
+                          <option key={resident.id} value={resident.id}>
+                            {resident.full_name}
+                          </option>
+                        ))}
+                      </select>
                       <select
                         value={(inlineDetailValues.severidad as string) || ''}
                         onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, severidad: e.target.value }))}
@@ -3295,6 +3577,10 @@ const WardRounds: React.FC = () => {
                 )}
               </div>
               <div className="flex items-center space-x-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs text-gray-700">
+                  <Users className="h-3 w-3 mr-1" />
+                  {assignedResident ? assignedResident.full_name : 'Sin residente asignado'}
+                </span>
                 <span className="badge badge-info text-xs uppercase">
                   Sev {selectedPatient.severidad || '-'}
                 </span>
@@ -3753,4 +4039,3 @@ const WardRounds: React.FC = () => {
 };
 
 export default WardRounds;
-

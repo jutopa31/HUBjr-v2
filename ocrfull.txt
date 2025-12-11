@@ -1,0 +1,794 @@
+✅ Instrucciones ejecutivas al inicio (orden de trabajo,
+  reglas críticas, tiempos estimados)
+  ✅ Arquitectura detallada (2 archivos nuevos + 2
+  modificados)
+  ✅ Flujos de usuario paso a paso para ambos módulos
+  ✅ Código de ejemplo para cada función/componente
+  ✅ Checklist de implementación con 40+ items
+  ✅ Testing y validación con casos de prueba específicos
+
+  Puntos clave del plan:
+  - Crear servicio ocrAutoService.ts para lógica de
+  procesamiento
+  - Crear modal OCRStudiesModal.tsx con preview editable
+  - Integrar botón OCR en sección "Estudios Complementarios"
+   de Ward Rounds
+  - Reutilizar modal existente en Evolucionador
+  - NO guardar imágenes (solo texto extraído)
+  - Procesamiento secuencial para mejor UX
+
+────────────────────────────────────────────────────────────────
+ Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Plan: Integración de OCR Automático para Estudios
+ Complementarios
+
+ 🚀 Instrucciones para el Agente Ejecutor
+
+ Antes de empezar:
+ 1. Lee completo las secciones 1-9 del plan (arquitectura y
+ decisiones clave)
+ 2. Usa npx tsc --noEmit antes de cada commit para validar
+ TypeScript
+ 3. Prueba cada componente aisladamente antes de integrar
+
+ Orden recomendado de trabajo:
+ 1. Primero: Crea ocrAutoService.ts (servicios/lógica) - 30 min
+ 2. Segundo: Crea OCRStudiesModal.tsx (UI/modal) - 1 hora
+ 3. Tercero: Integra en Ward Rounds (más complejo) - 2 horas
+ 4. Cuarto: Integra en Evolucionador (simple, reutiliza
+ componente) - 30 min
+ 5. Último: Testing exhaustivo en mobile + desktop - 1 hora
+
+ Reglas críticas:
+ - ⚠️ NO guardar imágenes en Supabase Storage - solo extraer y
+ descartar
+ - ⚠️ El botón OCR en Ward Rounds debe estar en sección
+ "Estudios Complementarios", NO en galería de imágenes
+ - ⚠️ Usar concatenación simple (texto1\n\ntexto2) para
+ múltiples archivos
+ - ⚠️ Modal debe permitir editar el texto antes de confirmar
+ - ⚠️ Procesamiento secuencial (uno por uno) para evitar colgar
+  el navegador
+
+ Si algo no está claro:
+ - Busca patrones similares en OCRProcessorModal.tsx y
+ ocrService.ts
+ - Sigue las convenciones de CLAUDE.md (dark mode, manejo de
+ errores, TypeScript estricto)
+
+ ---
+ Resumen Ejecutivo
+
+ Integrar procesamiento OCR automático de imágenes JPEG para
+ extraer texto de estudios complementarios (laboratorios, ECG,
+ etc.) en dos módulos principales:
+ - Ward Rounds (Pase de Sala): Botón dedicado en sección
+ "Estudios Complementarios"
+ - Evolucionador: Reemplazar botón OCR existente con
+ funcionalidad automática
+
+ Flujo: Usuario carga JPEG → OCR automático → Preview con texto
+  extraído → Usuario confirma/edita → Texto se agrega al campo
+ → Imagen se descarta (no se guarda en storage).
+
+ ---
+ Decisiones de Diseño Confirmadas
+
+ UX y Comportamiento
+
+ - ✅ Flujo: Automático con preview (modal de confirmación)
+ - ✅ Múltiples imágenes: Concatenación simple (texto tras
+ texto separado por saltos de línea)
+ - ✅ Almacenamiento: Solo guardar texto extraído, NO la imagen
+ - ✅ Formato: Texto libre sin estructura adicional
+ - ✅ Ubicación Ward Rounds: Botón separado en sección
+ "Estudios Complementarios" (NO en galería de imágenes)
+ - ✅ Ubicación Evolucionador: Reemplazar botón "OCR notas"
+ existente
+
+ Manejo de Errores
+
+ - Si OCR falla: Mostrar error, permitir ingreso manual, NO
+ guardar imagen
+ - Si no detecta texto: Advertir al usuario y permitir
+ reintento o cancelación
+
+ ---
+ Arquitectura de la Solución
+
+ 1. Nuevo Servicio: ocrAutoService.ts
+
+ Ubicación: src/services/ocrAutoService.ts
+
+ Responsabilidades:
+ - Wrapper sobre ocrService.ts existente
+ - Manejar procesamiento de múltiples archivos
+ - Formatear texto concatenado
+ - Validación de formatos soportados
+
+ Funciones principales:
+ // Procesar un solo archivo JPEG
+ async function processImageForStudies(
+   file: File,
+   onProgress?: (progress: number) => void
+ ): Promise<{ success: boolean; text: string; error?: string }>
+
+ // Procesar múltiples archivos
+ async function processMultipleImagesForStudies(
+   files: File[],
+   onProgress?: (current: number, total: number, text: string)
+ => void
+ ): Promise<{ success: boolean; concatenatedText: string;
+ errors: string[] }>
+
+ // Validar formato de archivo
+ function isValidStudyImage(file: File): boolean
+
+ Lógica de concatenación:
+ // Ejemplo: 3 archivos procesados
+ // Resultado: "texto1\n\ntexto2\n\ntexto3"
+ const concatenatedText = results
+   .filter(r => r.success)
+   .map(r => r.text.trim())
+   .join('\n\n');
+
+ ---
+ 2. Nuevo Componente: OCRStudiesModal.tsx
+
+ Ubicación: src/components/OCRStudiesModal.tsx
+
+ Funcionalidad:
+ - Modal de preview con texto extraído
+ - Permite edición antes de confirmar
+ - Muestra progreso durante procesamiento OCR
+ - Botones: "Agregar al campo", "Cancelar"
+
+ Props:
+ interface OCRStudiesModalProps {
+   isOpen: boolean;
+   onClose: () => void;
+   onConfirm: (extractedText: string) => void;
+   files: File[];
+ }
+
+ Estados internos:
+ const [isProcessing, setIsProcessing] = useState(false);
+ const [progress, setProgress] = useState({ current: 0, total:
+ 0 });
+ const [extractedText, setExtractedText] = useState('');
+ const [errors, setErrors] = useState<string[]>([]);
+
+ Flujo visual:
+ 1. Estado "Procesando": Spinner + "Procesando archivo 1 de
+ 3..." + barra de progreso
+ 2. Estado "Completado": Textarea con texto extraído (editable)
+  + botones de acción
+ 3. Estado "Error": Mensaje de error + opción de reintentar o
+ cancelar
+
+ ---
+ 3. Modificaciones en WardRounds.tsx
+
+ Archivos a modificar: src/WardRounds.tsx
+
+ 3.1. Nuevos Estados
+
+ // Agregar después de línea ~135 (donde están otros estados de
+  imagen)
+ const [showOcrStudiesModal, setShowOcrStudiesModal] =
+ useState(false);
+ const [ocrFiles, setOcrFiles] = useState<File[]>([]);
+ const [ocrProcessing, setOcrProcessing] = useState(false);
+
+ 3.2. Nueva Función: handleOcrStudiesUpload
+
+ // Agregar cerca de línea ~855 (junto a
+ handleMultipleFileUpload)
+ const handleOcrStudiesUpload = useCallback(async (files:
+ FileList | null) => {
+   if (!files || files.length === 0) return;
+
+   // Validar que todos sean imágenes válidas
+   const validFiles =
+ Array.from(files).filter(isValidStudyImage);
+
+   if (validFiles.length === 0) {
+     toast.error('Solo se aceptan imágenes JPEG, PNG, BMP o
+ TIFF');
+     return;
+   }
+
+   // Guardar archivos y abrir modal
+   setOcrFiles(validFiles);
+   setShowOcrStudiesModal(true);
+ }, []);
+
+ 3.3. Función: handleOcrTextConfirmed
+
+ const handleOcrTextConfirmed = useCallback((extractedText:
+ string) => {
+   if (editingPatient) {
+     // Modo edición: agregar al campo estudios existente
+     const currentStudies = editingPatient.estudios || '';
+     const updatedStudies = currentStudies.trim()
+       ? `${currentStudies.trim()}\n\n${extractedText.trim()}`
+       : extractedText.trim();
+
+     setEditingPatient({ ...editingPatient, estudios:
+ updatedStudies });
+   } else {
+     // Modo agregar nuevo: agregar al newPatient
+     const currentStudies = newPatient.estudios || '';
+     const updatedStudies = currentStudies.trim()
+       ? `${currentStudies.trim()}\n\n${extractedText.trim()}`
+       : extractedText.trim();
+
+     setNewPatient({ ...newPatient, estudios: updatedStudies
+ });
+   }
+
+   setShowOcrStudiesModal(false);
+   setOcrFiles([]);
+
+   toast.success('Texto agregado a estudios complementarios');
+ }, [editingPatient, newPatient]);
+
+ 3.4. Modificar UI - Sección de Estudios Complementarios
+
+ Ubicación: Línea ~2428-2444 (formulario de agregar) y línea
+ ~3431-3447 (formulario de edición)
+
+ Cambios:
+
+ {/* Campo Estudios Complementarios - AGREGAR */}
+ <div className="col-span-2">
+   <label className="flex items-center gap-2 text-sm
+ font-medium text-gray-700 dark:text-gray-300 mb-1">
+     <FlaskConical size={16} />
+     Estudios Complementarios
+   </label>
+
+   {/* NUEVO: Botón OCR para estudios */}
+   <div className="flex gap-2 mb-2">
+     <input
+       type="file"
+       ref={ocrStudiesInputRef}
+       onChange={(e) => handleOcrStudiesUpload(e.target.files)}
+
+ accept="image/jpeg,image/jpg,image/png,image/bmp,image/tiff"
+       multiple
+       className="hidden"
+     />
+     <button
+       type="button"
+       onClick={() => ocrStudiesInputRef.current?.click()}
+       disabled={ocrProcessing}
+       className="flex items-center gap-2 px-3 py-1.5 text-sm
+ bg-purple-600 text-white rounded hover:bg-purple-700
+ disabled:opacity-50"
+     >
+       <FileText size={16} />
+       {ocrProcessing ? 'Procesando...' : 'Extraer texto
+ (OCR)'}
+     </button>
+     <span className="text-xs text-gray-500 dark:text-gray-400
+ self-center">
+       Carga imágenes JPEG de estudios para extraer texto
+ automáticamente
+     </span>
+   </div>
+
+   {/* Campo textarea existente */}
+   <textarea
+     placeholder="TC sin contraste, laboratorio, ECG..."
+     value={newPatient.estudios}
+     onChange={(e) => setNewPatient({ ...newPatient, estudios:
+ e.target.value })}
+     className="w-full px-3 py-2 border border-gray-300
+ dark:border-gray-600 rounded-md..."
+     rows={3}
+   />
+ </div>
+
+ Mismo patrón para el formulario de edición (línea ~3431).
+
+ 3.5. Renderizar Modal OCR
+
+ {/* Agregar después de otros modales, cerca de línea ~3800 */}
+ {showOcrStudiesModal && (
+   <OCRStudiesModal
+     isOpen={showOcrStudiesModal}
+     onClose={() => {
+       setShowOcrStudiesModal(false);
+       setOcrFiles([]);
+     }}
+     onConfirm={handleOcrTextConfirmed}
+     files={ocrFiles}
+   />
+ )}
+
+ 3.6. Crear Ref para Input
+
+ // Agregar junto a otros refs, línea ~145
+ const ocrStudiesInputRef = useRef<HTMLInputElement>(null);
+
+ ---
+ 4. Modificaciones en DiagnosticAlgorithmContent.tsx
+
+ Archivo: src/DiagnosticAlgorithmContent.tsx
+
+ 4.1. Cambiar Comportamiento del Botón OCR Existente
+
+ Ubicación actual: Línea ~488-501 (botón "OCR notas")
+
+ Cambios:
+
+ {/* Reemplazar botón OCR actual */}
+ {isAdminMode && (
+   <>
+     <input
+       type="file"
+       ref={ocrFileInputRef}
+       onChange={(e) => handleOcrFileSelected(e.target.files)}
+       accept="image/jpeg,image/jpg,image/png,image/bmp,image/t
+ iff,application/pdf"
+       multiple
+       className="hidden"
+     />
+     <button
+       onClick={() => ocrFileInputRef.current?.click()}
+       disabled={ocrProcessing}
+       className="flex items-center gap-1 px-2 py-1 text-xs
+ font-medium text-white bg-purple-600 rounded
+ hover:bg-purple-700 transition-colors disabled:opacity-50"
+       title="Cargar y extraer texto de estudios médicos"
+     >
+       <FileText size={14} />
+       {ocrProcessing ? 'Procesando...' : 'Cargar Estudio
+ (OCR)'}
+     </button>
+   </>
+ )}
+
+ 4.2. Nuevos Estados y Refs
+
+ // Agregar cerca de línea ~80
+ const [ocrProcessing, setOcrProcessing] = useState(false);
+ const [ocrFilesSelected, setOcrFilesSelected] =
+ useState<File[]>([]);
+ const ocrFileInputRef = useRef<HTMLInputElement>(null);
+
+ 4.3. Nueva Función Handler
+
+ const handleOcrFileSelected = useCallback((files: FileList |
+ null) => {
+   if (!files || files.length === 0) return;
+
+   const validFiles = Array.from(files).filter(file =>
+     file.type.startsWith('image/') || file.type ===
+ 'application/pdf'
+   );
+
+   if (validFiles.length === 0) {
+     console.error('No se seleccionaron archivos válidos para
+ OCR');
+     return;
+   }
+
+   setOcrFilesSelected(validFiles);
+   setShowOcrModal(true); // Reutiliza el modal existente
+ OCRProcessorModal
+ }, []);
+
+ 4.4. Modificar handleInsertOcrText
+
+ // Modificar función existente, línea ~135
+ const handleInsertOcrText = useCallback((extractedText:
+ string) => {
+   const cleanedText = extractedText.trim();
+   const trimmedCurrentNotes = notes.trim().length === 0 ? '' :
+  notes.trimEnd();
+
+   // Concatenación simple con doble salto de línea
+   const mergedNotes = trimmedCurrentNotes.length > 0
+     ? `${trimmedCurrentNotes}\n\n${cleanedText}`
+     : cleanedText;
+
+   setNotes(mergedNotes);
+   setShowOcrModal(false);
+   setOcrFilesSelected([]);
+   setOcrProcessing(false);
+ }, [notes, setNotes]);
+
+ Nota: El Evolucionador puede reutilizar el componente
+ OCRProcessorModal.tsx existente ya que su comportamiento
+ (procesar → mostrar texto → insertar) coincide con el flujo
+ deseado. Solo se cambia el trigger (input file en vez de botón
+  directo).
+
+ ---
+ 5. Base de Datos
+
+ No se requieren cambios en la base de datos. Los campos
+ existentes son suficientes:
+ - ward_round_patients.estudios (TEXT) - ya existe
+ - outpatient_ward_rounds.estudios (TEXT) - ya existe
+ - Evolucionador usa el campo notes local (no persiste a
+ estudios separado)
+
+ ---
+ 6. Validaciones y Manejo de Errores
+
+ Validación de Archivos
+
+ // En ocrAutoService.ts
+ function isValidStudyImage(file: File): boolean {
+   const validTypes = [
+     'image/jpeg',
+     'image/jpg',
+     'image/png',
+     'image/bmp',
+     'image/tiff'
+   ];
+
+   return validTypes.includes(file.type.toLowerCase());
+ }
+
+ Errores Comunes a Manejar
+
+ 1. Archivo no soportado:
+   - Mensaje: "Solo se aceptan imágenes JPEG, PNG, BMP o TIFF"
+   - Acción: Ignorar archivo, continuar con los válidos
+ 2. OCR falla (Tesseract error):
+   - Mensaje: "Error al procesar imagen: [nombre]. Intente con
+ una imagen de mejor calidad"
+   - Acción: Agregar a lista de errores, permitir continuar
+ 3. No se detectó texto:
+   - Mensaje: "No se detectó texto legible en la imagen
+ [nombre]"
+   - Acción: Advertir al usuario, permitir ingreso manual
+ 4. Timeout (>30 segundos):
+   - Mensaje: "El procesamiento está tardando demasiado. Por
+ favor intente con imágenes más pequeñas"
+   - Acción: Cancelar OCR, mostrar error
+
+ Toast Notifications
+
+ Usar sistema de toast existente para feedback:
+
+ // Éxito
+ toast.success('Texto extraído correctamente de 3 archivos');
+
+ // Advertencia (texto parcial)
+ toast.warning('Se procesaron 2 de 3 archivos. 1 archivo no
+ contenía texto legible');
+
+ // Error
+ toast.error('Error al procesar OCR. Verifique que las imágenes
+  sean legibles');
+
+ ---
+ 7. UX y Flujo de Usuario
+
+ Ward Rounds - Flujo Completo
+
+ 1. Usuario abre formulario de agregar/editar paciente
+ 2. Va a sección "Estudios Complementarios"
+ 3. Click en botón "Extraer texto (OCR)" (nuevo botón morado
+ con ícono FileText)
+ 4. Selecciona 1-3 archivos JPEG de laboratorios/ECG
+ 5. Se abre OCRStudiesModal:
+   - Estado inicial: "Procesando archivo 1 de 3..." con spinner
+   - Barra de progreso visual
+ 6. Tesseract procesa cada imagen secuencialmente (5-10 seg
+ c/u)
+ 7. Modal muestra texto extraído en textarea editable:
+ Glucemia: 120 mg/dl
+ Hemoglobina: 14.5 g/dl
+
+ Ritmo sinusal
+ FC: 80 lpm
+
+ TC cerebro: sin lesiones agudas
+ 8. Usuario puede:
+   - Editar el texto extraído
+   - Click "Agregar al campo" → texto se inserta en el campo
+ "Estudios Complementarios"
+   - Click "Cancelar" → descarta todo
+ 9. Modal se cierra, texto aparece en el textarea de estudios
+ 10. Usuario completa otros campos y guarda el paciente
+ normalmente
+ 11. Imagen JPEG NO se guarda en Supabase Storage (solo el
+ texto)
+
+ Evolucionador - Flujo Completo
+
+ 1. Usuario abre Evolucionador (modo admin)
+ 2. Click en "Cargar Estudio (OCR)" (reemplaza botón "OCR
+ notas" actual)
+ 3. Selecciona archivo(s) PDF o JPEG
+ 4. Se abre OCRProcessorModal existente
+ 5. Procesa con OCR (mismo comportamiento que antes)
+ 6. Muestra texto en modal para revisión
+ 7. Usuario hace click en "Insertar"
+ 8. Texto se agrega al campo de notas con doble salto de línea
+ 9. Imagen NO se guarda (solo texto extraído)
+
+ ---
+ 8. Consideraciones de Performance
+
+ Procesamiento Secuencial vs Paralelo
+
+ Decisión: Procesamiento secuencial (uno por uno)
+
+ Razón:
+ - Tesseract.js es CPU-intensivo (puede colgar navegador si
+ procesa 3 en paralelo)
+ - Progreso visual más claro para el usuario
+ - Menos memoria consumida (mobile-friendly)
+
+ Implementación:
+ for (let i = 0; i < files.length; i++) {
+   const result = await processImageForStudies(files[i],
+     (progress) => onProgress(i + 1, files.length, progress)
+   );
+   results.push(result);
+ }
+
+ Optimización Mobile
+
+ - Limitar a 3 archivos máximo por vez
+ - Mostrar advertencia si archivo > 5 MB
+ - Comprimir imagen antes de OCR (opcional, para futuro)
+
+ Tiempo Estimado
+
+ - 1 imagen JPEG (buena calidad): ~5-8 segundos
+ - 1 imagen JPEG (mala calidad): ~10-15 segundos
+ - 3 imágenes: ~15-30 segundos total
+
+ UX: Mostrar tiempo estimado: "Procesando... ~15 segundos
+ restantes"
+
+ ---
+ 9. Testing y Validación
+
+ Casos de Prueba
+
+ 1. Caso feliz: 1 JPEG legible → texto extraído correctamente
+ 2. Múltiples archivos: 3 JPEGs → concatenación correcta
+ 3. Imagen borrosa: JPEG de mala calidad → advertencia de texto
+  incompleto
+ 4. Archivo inválido: PNG de 20 MB → error de formato/tamaño
+ 5. Sin texto: JPEG de foto (no documento) → advertencia "no se
+  detectó texto"
+ 6. Cancelación: Usuario cancela durante procesamiento → limpia
+  estado
+ 7. Edición de texto: Usuario edita texto extraído antes de
+ confirmar → guarda versión editada
+ 8. Concatenación con existente: Campo estudios tiene texto →
+ nuevo texto se agrega al final
+
+ Validación Manual
+
+ - Probar en Chrome Desktop
+ - Probar en Safari Mobile (iPhone)
+ - Probar en Chrome Mobile (Android)
+ - Verificar que imágenes NO se guardan en Supabase Storage
+ - Verificar que solo texto se guarda en campo estudios
+ - Probar con PDFs (en Evolucionador)
+ - Verificar dark mode en todos los modales
+ - Verificar responsiveness en tablet
+
+ ---
+ 10. Orden de Implementación (Paso a Paso)
+
+ Fase 1: Servicio Base (1-2 horas)
+
+ 1. ✅ Crear src/services/ocrAutoService.ts
+ 2. ✅ Implementar processImageForStudies()
+ 3. ✅ Implementar processMultipleImagesForStudies()
+ 4. ✅ Implementar validación isValidStudyImage()
+ 5. ✅ Testing unitario del servicio
+
+ Fase 2: Componente Modal (2-3 horas)
+
+ 1. ✅ Crear src/components/OCRStudiesModal.tsx
+ 2. ✅ Implementar UI de progreso
+ 3. ✅ Implementar UI de preview con textarea editable
+ 4. ✅ Implementar manejo de errores
+ 5. ✅ Testing del componente aislado
+ 6. ✅ Verificar dark mode
+
+ Fase 3: Integración Ward Rounds (2-3 horas)
+
+ 1. ✅ Agregar estados y refs en WardRounds.tsx
+ 2. ✅ Implementar handleOcrStudiesUpload()
+ 3. ✅ Implementar handleOcrTextConfirmed()
+ 4. ✅ Modificar UI de formulario agregar (botón OCR)
+ 5. ✅ Modificar UI de formulario editar (botón OCR)
+ 6. ✅ Renderizar OCRStudiesModal
+ 7. ✅ Testing en desarrollo
+
+ Fase 4: Integración Evolucionador (1-2 horas)
+
+ 1. ✅ Modificar botón OCR en DiagnosticAlgorithmContent.tsx
+ 2. ✅ Agregar input file y handler
+ 3. ✅ Reutilizar OCRProcessorModal existente
+ 4. ✅ Testing en desarrollo
+
+ Fase 5: Testing y Ajustes (1-2 horas)
+
+ 1. ✅ Testing completo en desktop
+ 2. ✅ Testing en mobile (Chrome + Safari)
+ 3. ✅ Ajustes de UX según feedback
+ 4. ✅ Verificar que NO se guardan imágenes
+ 5. ✅ Validar rendimiento con múltiples archivos
+
+ Tiempo total estimado: 7-12 horas de desarrollo
+
+ ---
+ 11. Archivos a Crear/Modificar
+
+ Nuevos Archivos
+
+ 1. src/services/ocrAutoService.ts - Servicio de OCR automático
+ 2. src/components/OCRStudiesModal.tsx - Modal de preview y
+ confirmación
+
+ Archivos a Modificar
+
+ 1. src/WardRounds.tsx:
+   - Agregar estados: showOcrStudiesModal, ocrFiles,
+ ocrProcessing
+   - Agregar ref: ocrStudiesInputRef
+   - Agregar funciones: handleOcrStudiesUpload,
+ handleOcrTextConfirmed
+   - Modificar UI: botón OCR en sección Estudios (formularios
+ agregar + editar)
+   - Renderizar modal: <OCRStudiesModal />
+ 2. src/DiagnosticAlgorithmContent.tsx:
+   - Modificar botón OCR existente (línea ~488)
+   - Agregar input file oculto
+   - Agregar estados: ocrProcessing, ocrFilesSelected
+   - Agregar ref: ocrFileInputRef
+   - Agregar handler: handleOcrFileSelected
+
+ Archivos a NO Modificar (reutilizar)
+
+ - src/services/ocrService.ts - Se reutiliza tal cual
+ - src/components/admin/OCRProcessorModal.tsx - Se reutiliza en
+  Evolucionador
+
+ ---
+ 12. Dependencias
+
+ Bibliotecas Existentes (ya instaladas)
+
+ - ✅ tesseract.js@^6.0.1 - OCR de imágenes
+ - ✅ pdfjs-dist@^5.4.149 - OCR de PDFs (solo Evolucionador)
+ - ✅ lucide-react - Iconos (FileText, FlaskConical)
+
+ No se requieren nuevas dependencias
+
+ ---
+ 13. Consideraciones de Seguridad
+
+ 1. Validación de archivos: Solo permitir tipos específicos
+ (JPEG, PNG, BMP, TIFF)
+ 2. Tamaño máximo: Advertir si archivo > 5 MB (opcional,
+ implementar si hay problemas)
+ 3. No persistir imágenes: Importante para privacidad y
+ compliance HIPAA
+ 4. Sanitización de texto: Limpiar el texto extraído antes de
+ guardarlo en BD
+ 5. RLS policies: Existentes en ward_round_patients ya cubren
+ acceso a campo estudios
+
+ ---
+ 14. Notas Importantes
+
+ Diferencias entre Ward Rounds y Evolucionador
+
+ | Aspecto             | Ward Rounds                      |
+ Evolucionador                 |
+ |---------------------|----------------------------------|----
+ ---------------------------|
+ | Componente modal    | OCRStudiesModal (nuevo)          |
+ OCRProcessorModal (existente) |
+ | Formatos soportados | Solo imágenes (JPEG, PNG, etc.)  |
+ Imágenes + PDF                |
+ | Campo destino       | estudios (separado)              |
+ notes (general)               |
+ | Ubicación botón     | Sección Estudios Complementarios |
+ Toolbar superior              |
+ | Usuarios            | Todos (según RLS)                |
+ Solo admin mode               |
+
+ Limitaciones Conocidas
+
+ 1. Calidad de OCR: Depende de calidad de imagen (Tesseract no
+ es perfecto)
+ 2. Idioma: Configurado para español + inglés (puede fallar con
+  otros idiomas)
+ 3. Texto manuscrito: OCR funciona mejor con texto
+ impreso/digital
+ 4. Performance mobile: Puede ser lento en dispositivos
+ antiguos
+ 5. No se guardan imágenes: Decisión de diseño, texto es
+ irrecuperable si se pierde
+
+ Mejoras Futuras (Fuera de Scope)
+
+ - Permitir guardar imagen como fallback opcional
+ - Compresión automática de imágenes grandes
+ - OCR en tiempo real (stream de cámara)
+ - Campos estructurados para tipos de estudios
+ - Integración con sistemas de laboratorio (HL7/FHIR)
+ - Machine learning para mejorar precisión
+
+ ---
+ 15. Checklist de Implementación
+
+ Pre-implementación
+
+ - Leer este plan completo
+ - Entender flujo de usuario deseado
+ - Revisar código de ocrService.ts y OCRProcessorModal.tsx
+ existentes
+ - Configurar entorno de desarrollo (Tesseract ya instalado)
+
+ Desarrollo
+
+ - Crear ocrAutoService.ts con funciones base
+ - Crear OCRStudiesModal.tsx con UI completa
+ - Integrar en Ward Rounds (agregar + editar)
+ - Integrar en Evolucionador (reemplazar botón)
+ - Probar localmente cada integración
+
+ Testing
+
+ - Probar con 1 imagen JPEG legible
+ - Probar con múltiples imágenes (2-3)
+ - Probar con imagen borrosa/ilegible
+ - Probar cancelación de modal
+ - Probar edición de texto antes de confirmar
+ - Verificar que NO se guardan imágenes en Storage
+ - Verificar concatenación con texto existente
+ - Probar en mobile (Chrome + Safari)
+ - Verificar dark mode
+
+ Pre-producción
+
+ - Verificar todos los mensajes de error son user-friendly
+ - Verificar performance con archivos grandes (3-5 MB)
+ - Code review de seguridad (validación de archivos)
+ - Verificar accesibilidad (teclado, screen readers)
+
+ Deploy
+
+ - Commit con mensaje descriptivo
+ - Push a repositorio
+ - Verificar build en Vercel (no debe romper)
+ - Testing en producción con datos reales
+ - Monitorear errores en Sentry/logs
+
+ ---
+ 16. Contacto y Soporte
+
+ Desarrollador: Dr. Julián Alonso
+ Repositorio: https://github.com/jutopa31/HUBjr-v2
+ Documentación: Ver CLAUDE.md para patrones de código
+
+ Recursos:
+ - https://tesseract.projectnaptha.com/
+ - ../CLAUDE.md - Guía de desarrollo del proyecto
+ - https://supabase.com/docs/guides/storage
+
+ ---
+ Fin del Plan de Implementación
+
+ Última actualización: 2025-12-09

@@ -18,8 +18,29 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
   onFiltersChange,
   statusCounts,
 }) => {
+  const getISODate = (offsetDays = 0) => {
+    const date = new Date();
+    date.setDate(date.getDate() + offsetDays);
+    return date.toISOString().split('T')[0];
+  };
+
+  const inferDatePreset = (dateFrom?: string, dateTo?: string) => {
+    const today = getISODate();
+    const yesterday = getISODate(-1);
+    const weekAgo = getISODate(-7);
+    const monthAgo = getISODate(-30);
+    if (dateFrom === today && dateTo === today) return 'today';
+    if (dateFrom === yesterday && dateTo === yesterday) return 'yesterday';
+    if (dateFrom === weekAgo && dateTo === today) return 'week';
+    if (dateFrom === monthAgo && dateTo === today) return 'month';
+    if (!dateFrom && !dateTo) return 'all';
+    return 'custom';
+  };
+
   const [searchText, setSearchText] = useState(filters.searchText || '');
-  const [datePreset, setDatePreset] = useState<'all' | 'week' | 'month' | 'custom'>('all');
+  const [datePreset, setDatePreset] = useState<'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom'>(
+    inferDatePreset(filters.dateFrom, filters.dateTo)
+  );
 
   // Debounced search
   useEffect(() => {
@@ -28,6 +49,15 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  useEffect(() => {
+    setSearchText(filters.searchText || '');
+  }, [filters.searchText]);
+
+  useEffect(() => {
+    const preset = inferDatePreset(filters.dateFrom, filters.dateTo);
+    setDatePreset(prev => (prev === preset ? prev : preset));
+  }, [filters.dateFrom, filters.dateTo]);
 
   const handleStatusToggle = (status: string) => {
     const currentStatuses = filters.status || [];
@@ -41,27 +71,54 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
     });
   };
 
-  const handleDatePreset = (preset: 'all' | 'week' | 'month' | 'custom') => {
+  const handleDatePreset = (preset: 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom') => {
     setDatePreset(preset);
+
+    if (preset === 'today') {
+      const today = getISODate();
+      onFiltersChange({
+        ...filters,
+        dateFrom: today,
+        dateTo: today,
+      });
+      return;
+    }
+
+    if (preset === 'yesterday') {
+      const yesterday = getISODate(-1);
+      onFiltersChange({
+        ...filters,
+        dateFrom: yesterday,
+        dateTo: yesterday,
+      });
+      return;
+    }
 
     if (preset === 'all') {
       onFiltersChange({ ...filters, dateFrom: undefined, dateTo: undefined });
-    } else if (preset === 'week') {
-      const today = new Date();
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return;
+    }
+
+    if (preset === 'week') {
       onFiltersChange({
         ...filters,
-        dateFrom: weekAgo.toISOString().split('T')[0],
-        dateTo: today.toISOString().split('T')[0],
+        dateFrom: getISODate(-7),
+        dateTo: getISODate(),
       });
-    } else if (preset === 'month') {
-      const today = new Date();
-      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return;
+    }
+
+    if (preset === 'month') {
       onFiltersChange({
         ...filters,
-        dateFrom: monthAgo.toISOString().split('T')[0],
-        dateTo: today.toISOString().split('T')[0],
+        dateFrom: getISODate(-30),
+        dateTo: getISODate(),
       });
+      return;
+    }
+
+    if (preset === 'custom') {
+      onFiltersChange({ ...filters });
     }
   };
 
@@ -140,10 +197,12 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
               borderColor: 'var(--border-primary)',
             }}
           >
-            <option value="all">📅 Todas</option>
-            <option value="week">📅 Última semana</option>
-            <option value="month">📅 Último mes</option>
-            <option value="custom">📅 Personalizado</option>
+            <option value="all">Todas</option>
+            <option value="today">Hoy</option>
+            <option value="yesterday">Ayer</option>
+            <option value="week">Última semana</option>
+            <option value="month">Último mes</option>
+            <option value="custom">Personalizado</option>
           </select>
           <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -52,6 +52,10 @@ export interface PatientAssessment {
   created_at?: string;
   created_by?: string;
   status?: string;
+
+  // Workflow integration fields
+  source_interconsulta_id?: string; // ID de interconsulta origen (si aplica)
+  response_sent?: boolean; // Si se envió respuesta a interconsulta
 }
 
 export interface SavedScaleResult {

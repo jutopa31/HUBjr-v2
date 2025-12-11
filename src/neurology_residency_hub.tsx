@@ -50,7 +50,15 @@ const NeurologyResidencyHub = () => {
     setActiveTab(tabId);
     setSidebarOpen(false); // Close sidebar on mobile after navigation
   };
-  
+
+  // Handler para ir al Evolucionador desde Interconsultas (workflow integration)
+  const handleGoToEvolucionador = (interconsulta: any) => {
+    console.log('[Hub] Ir al Evolucionador con interconsulta:', interconsulta.nombre);
+    setActiveInterconsulta(interconsulta);
+    setActiveTab('diagnostic'); // Cambiar al tab del Evolucionador
+    setSidebarOpen(false);
+  };
+
   // Initialize notes with localStorage persistence
   const [notes, setNotes] = useState(() => {
     const savedNotes = localStorage.getItem('hubjr-patient-notes');
@@ -72,7 +80,10 @@ const NeurologyResidencyHub = () => {
 
   // Estado para el contexto hospitalario global
   const [currentHospitalContext, setCurrentHospitalContext] = useState<HospitalContext>('Posadas');
-  
+
+  // Estado para interconsulta activa (workflow integration)
+  const [activeInterconsulta, setActiveInterconsulta] = useState<any | null>(null);
+
   // Estados para Google Calendar (removido - ahora usando Supabase)
   
   // Estados para gestión de eventos mejorada
@@ -5253,6 +5264,8 @@ const NeurologyResidencyHub = () => {
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
             currentHospitalContext={currentHospitalContext}
+            activeInterconsulta={activeInterconsulta}
+            onClearInterconsulta={() => setActiveInterconsulta(null)}
           />
         );
       case 'inicio':
@@ -5533,7 +5546,7 @@ const NeurologyResidencyHub = () => {
       case 'interconsultas':
         return (
           <ProtectedRoute>
-            <Interconsultas />
+            <Interconsultas onGoToEvolucionador={handleGoToEvolucionador} />
           </ProtectedRoute>
         );
       case 'pacientes-post-alta':

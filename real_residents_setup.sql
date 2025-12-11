@@ -50,7 +50,7 @@ VALUES
   (gen_random_uuid(), 'Julián Martín', 'Alonso', 'julian.martin.alonso@gmail.com', 'R4', 'Neurología General'),
   (gen_random_uuid(), 'Tatiana', 'Chamu', 'tatianachamu11@gmail.com', 'R2', 'Stroke Unit'),
   (gen_random_uuid(), 'Serena', 'Angulo', 'serena.angulo@gmail.com', 'R3', 'Neurofisiología'),
-  (gen_random_uuid(), 'Juan Elías', 'Loor', 'juan.elias.loor@gmail.com', 'R1', 'Neurología General'),
+  (gen_random_uuid(), 'Jorge Elias', 'Loor Vera', 'eliasloor98@gmail.com', 'R1', 'Neurología General'),
   (gen_random_uuid(), 'Jaqueline', 'Molina', 'jaqueline.molina@gmail.com', 'R5', 'Epilepsia')
 ON CONFLICT (email) DO NOTHING;
 
@@ -67,7 +67,7 @@ ON CONFLICT (email) DO NOTHING;
 --   'julian.martin.alonso@gmail.com',
 --   'tatianachamu11@gmail.com',
 --   'serena.angulo@gmail.com',
---   'juan.elias.loor@gmail.com',
+--   'eliasloor98@gmail.com',
 --   'jaqueline.molina@gmail.com'
 -- );
 

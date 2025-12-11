@@ -33,8 +33,8 @@ SET user_id = 'UUID_REAL_DE_SERENA_AQUI'
 WHERE email = 'serena.angulo@gmail.com';
 
 UPDATE resident_profiles
-SET user_id = 'UUID_REAL_DE_JUAN_AQUI'
-WHERE email = 'juan.elias.loor@gmail.com';
+SET user_id = 'UUID_REAL_DE_JORGE_AQUI'
+WHERE email = 'eliasloor98@gmail.com';
 
 UPDATE resident_profiles
 SET user_id = 'UUID_REAL_DE_JAQUELINE_AQUI'

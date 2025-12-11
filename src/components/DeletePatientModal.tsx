@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
-import { X, Trash2, Archive } from 'lucide-react';
+import { X, Trash2, Archive, Users } from 'lucide-react';
 
 interface DeletePatientModalProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface DeletePatientModalProps {
     nombre: string;
     dni: string;
   } | null;
-  onConfirmDelete: (action: 'delete' | 'archive') => Promise<void>;
+  onConfirmDelete: (action: 'delete' | 'archive' | 'outpatient') => Promise<void>;
   isProcessing: boolean;
 }
 
@@ -21,7 +21,13 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
   onConfirmDelete,
   isProcessing
 }) => {
-  const [selectedAction, setSelectedAction] = useState<'delete' | 'archive'>('archive');
+  const [selectedAction, setSelectedAction] = useState<'delete' | 'archive' | 'outpatient'>('outpatient');
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedAction('outpatient');
+    }
+  }, [isOpen]);
 
   useEscapeKey(onClose, isOpen);
 
@@ -57,6 +63,28 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
         <div className="p-6 space-y-4">
           {/* Action Options */}
           <div className="space-y-3">
+            {/* Move to outpatients */}
+            <label className="flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-colors" style={{
+              borderColor: selectedAction === 'outpatient' 
+                ? 'color-mix(in srgb, var(--state-success) 30%, transparent)'
+                : 'var(--border-secondary)',
+              backgroundColor: selectedAction === 'outpatient'
+                ? 'color-mix(in srgb, var(--state-success) 10%, var(--bg-primary) 90%)'
+                : 'transparent'
+            }}>
+              <input
+                type="radio"
+                name="deleteAction"
+                value="outpatient"
+                checked={selectedAction === 'outpatient'}
+                onChange={(e) => setSelectedAction(e.target.value as 'outpatient')}
+                style={{ accentColor: 'var(--state-success)' }}
+                disabled={isProcessing}
+              />
+              <Users className="h-5 w-5" style={{ color: 'var(--state-success)' }} />
+              <span className="font-medium text-[var(--text-primary)]">Mover a lista de ambulatorios</span>
+            </label>
+
             {/* Archive Option */}
             <label className="flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-colors" style={{
               borderColor: selectedAction === 'archive' 
@@ -76,7 +104,7 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
                 disabled={isProcessing}
               />
               <Archive className="h-5 w-5" style={{ color: 'var(--state-info)' }} />
-              <span className="font-medium text-[var(--text-primary)]">Guardar en "Pacientes ambulatorio"</span>
+              <span className="font-medium text-[var(--text-primary)]">Archivar en historial</span>
             </label>
 
             {/* Delete Option */}
@@ -116,9 +144,9 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
             onClick={handleConfirm}
             disabled={isProcessing}
             className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
-              selectedAction === 'archive'
-                ? 'btn-accent'
-                : 'btn-error'
+              selectedAction === 'delete'
+                ? 'btn-error'
+                : 'btn-accent'
             }`}
           >
             {isProcessing ? (
@@ -128,7 +156,12 @@ const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
               </>
             ) : (
               <>
-                {selectedAction === 'archive' ? (
+                {selectedAction === 'outpatient' ? (
+                  <>
+                    <Users className="h-4 w-4" />
+                    <span>Pasar a ambulatorios</span>
+                  </>
+                ) : selectedAction === 'archive' ? (
                   <>
                     <Archive className="h-4 w-4" />
                     <span>Archivar Paciente</span>

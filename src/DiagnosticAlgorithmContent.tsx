@@ -8,6 +8,7 @@ import HintsScaleModal, { HintsSavePayload } from './components/HintsScaleModal'
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
+import { generateEvolucionadorTemplate } from './services/workflowIntegrationService';
 
 const AI_SUGGESTIONS_GROUP = 'Sugerencias IA';
 const SEARCH_RESULTS_GROUP = 'Resultados de búsqueda';
@@ -21,6 +22,10 @@ interface DiagnosticAlgorithmContentProps {
   medicalScales: Scale[];
   clickedScale?: string | null;
   currentHospitalContext?: 'Posadas' | 'Julian';
+
+  // Workflow integration props
+  activeInterconsulta?: any | null;
+  onClearInterconsulta?: () => void;
 }
 
 const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
@@ -31,7 +36,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   openScaleModal,
   medicalScales,
   clickedScale,
-  currentHospitalContext = 'Posadas'
+  currentHospitalContext = 'Posadas',
+  activeInterconsulta,
+  onClearInterconsulta
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
@@ -58,6 +65,29 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Estado y ref para el dropdown de patologías rápidas
   const [showPathologyDropdown, setShowPathologyDropdown] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Estados para workflow integration (interconsulta → evolucionador → pase)
+  const [showSaveToWardModal, setShowSaveToWardModal] = useState(false);
+  const [selectedFinalStatus, setSelectedFinalStatus] = useState<string>('Resuelta');
+  const [lastSavedAssessmentId, setLastSavedAssessmentId] = useState<string | null>(null);
+
+  // useEffect para pre-cargar template desde interconsulta
+  useEffect(() => {
+    if (activeInterconsulta && activeInterconsulta.id) {
+      console.log('[DiagnosticAlgorithm] Pre-cargando template desde interconsulta:', activeInterconsulta.nombre);
+      const template = generateEvolucionadorTemplate(activeInterconsulta);
+      setNotes(template);
+
+      // Mostrar notificación al usuario
+      setSaveStatus({
+        success: true,
+        message: `📋 Datos de interconsulta cargados: ${activeInterconsulta.nombre}`
+      });
+
+      // Limpiar notificación después de 3 segundos
+      setTimeout(() => setSaveStatus(null), 3000);
+    }
+  }, [activeInterconsulta, setNotes]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -198,18 +228,38 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     try {
       console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
       console.log('[DiagnosticAlgorithm] Guardando con contexto:', patientData.hospital_context);
-      const result = await savePatientAssessment(patientData);
+
+      // Agregar source_interconsulta_id si viene de interconsulta
+      const enrichedData = {
+        ...patientData,
+        source_interconsulta_id: activeInterconsulta?.id || null,
+        response_sent: false
+      };
+
+      const result = await savePatientAssessment(enrichedData as any);
 
       if (result.success) {
         const contextLabel = patientData.hospital_context === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas';
+
+        // Guardar el ID del assessment para usar después
+        if (result.data?.id) {
+          setLastSavedAssessmentId(result.data.id);
+          console.log('[DiagnosticAlgorithm] Assessment guardado con ID:', result.data.id);
+        }
+
         setSaveStatus({
           success: true,
           message: `Paciente guardado exitosamente en ${contextLabel}.`
         });
         setShowSaveModal(false);
-        
-        // Limpiar mensaje después de 5 segundos
-        setTimeout(() => setSaveStatus(null), 5000);
+
+        // Si vino de interconsulta, mostrar modal de confirmación para Pase de Sala
+        if (activeInterconsulta) {
+          setShowSaveToWardModal(true);
+        } else {
+          // Limpiar mensaje después de 5 segundos si no hay interconsulta
+          setTimeout(() => setSaveStatus(null), 5000);
+        }
       } else {
         throw new Error(result.error || 'Error desconocido');
       }
@@ -220,6 +270,72 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         message: `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}`
       });
       // No cerrar el modal para que el usuario pueda intentar de nuevo
+    }
+  };
+
+  // Handlers para el modal de confirmación Pase de Sala
+  const handleSaveToWardConfirm = async () => {
+    if (!activeInterconsulta || !lastSavedAssessmentId) {
+      console.error('[DiagnosticAlgorithm] Faltan datos para crear paciente en Pase de Sala');
+      return;
+    }
+
+    try {
+      const { createWardPatientFromEvolution } = await import('./services/workflowIntegrationService');
+      const { updateInterconsultaResponse: updateResponse } = await import('./services/interconsultasService');
+
+      // Crear paciente en Pase de Sala
+      const result = await createWardPatientFromEvolution(activeInterconsulta.id, lastSavedAssessmentId);
+
+      if (result.success) {
+        // Actualizar respuesta e interconsulta
+        await updateResponse(activeInterconsulta.id, notes, selectedFinalStatus as any);
+
+        setSaveStatus({
+          success: true,
+          message: '✅ Paciente agregado al Pase de Sala exitosamente'
+        });
+
+        setShowSaveToWardModal(false);
+        onClearInterconsulta?.();
+
+        // Limpiar mensaje después de 5 segundos
+        setTimeout(() => setSaveStatus(null), 5000);
+      } else {
+        setSaveStatus({
+          success: false,
+          message: `Error: ${result.error}`
+        });
+      }
+    } catch (error) {
+      console.error('[DiagnosticAlgorithm] Error al crear paciente en Pase de Sala:', error);
+      setSaveStatus({
+        success: false,
+        message: 'Error al crear paciente en Pase de Sala'
+      });
+    }
+  };
+
+  const handleSaveToWardCancel = async () => {
+    if (!activeInterconsulta) return;
+
+    try {
+      const { updateInterconsultaResponse } = await import('./services/interconsultasService');
+
+      // Solo actualizar status, no agregar a pase
+      await updateInterconsultaResponse(activeInterconsulta.id, notes, selectedFinalStatus as any);
+
+      setShowSaveToWardModal(false);
+      onClearInterconsulta?.();
+
+      setSaveStatus({
+        success: true,
+        message: 'Interconsulta actualizada'
+      });
+
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (error) {
+      console.error('[DiagnosticAlgorithm] Error al actualizar interconsulta:', error);
     }
   };
 
@@ -357,6 +473,30 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           )}
         </div>
       </div>
+
+      {/* Indicador de interconsulta activa */}
+      {activeInterconsulta && (
+        <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-600 rounded">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-blue-900 dark:text-blue-100">📋 Evolucionando interconsulta:</p>
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                {activeInterconsulta.nombre} - DNI: {activeInterconsulta.dni} - Cama: {activeInterconsulta.cama}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (confirm('¿Descartar conexión con interconsulta? Los datos ya cargados permanecerán en el editor.')) {
+                  onClearInterconsulta?.();
+                }
+              }}
+              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+            >
+              Desconectar
+            </button>
+          </div>
+        </div>
+      )}
 
     <div className="flex h-full flex-col lg:flex-row">
       {/* Mobile Controls */}
@@ -676,6 +816,53 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             setShowHintsModal(false);
           }}
         />
+      )}
+
+      {/* Modal de confirmación: Agregar a Pase de Sala */}
+      {showSaveToWardModal && activeInterconsulta && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4 shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+              ¿Agregar a Pase de Sala?
+            </h3>
+
+            <p className="mb-4 text-gray-700 dark:text-gray-300">
+              La evolución se guardó correctamente. ¿Deseas agregar este paciente al Pase de Sala?
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-semibold mb-2 text-gray-900 dark:text-white">
+                Estado final de la interconsulta:
+              </label>
+              <select
+                value={selectedFinalStatus}
+                onChange={(e) => setSelectedFinalStatus(e.target.value)}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Resuelta">Resuelta</option>
+                <option value="En Proceso">En Proceso</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Cancelada">Cancelada</option>
+              </select>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleSaveToWardCancel}
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-medium transition"
+              >
+                No, solo actualizar interconsulta
+              </button>
+
+              <button
+                onClick={handleSaveToWardConfirm}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition shadow-md"
+              >
+                Sí, agregar a Pase de Sala
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {!isScalesVisible && (

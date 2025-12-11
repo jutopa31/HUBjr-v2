@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Copy, Check } from 'lucide-react';
+import { X, Save, Copy, Check, FileText, Upload } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { InterconsultaRow } from '../../services/interconsultasService';
-import { updateStatus, updateRespuestaWithStatus } from '../../services/interconsultasService';
+import { updateStatus, updateRespuestaWithStatus, uploadImageToInterconsulta, removeImageFromInterconsulta, appendOCRTextToInterconsulta } from '../../services/interconsultasService';
 import { saveToWardRounds, saveToSavedPatients } from '../../utils/interconsultasUtils';
 import { useAuthContext } from '../auth/AuthProvider';
 
@@ -10,12 +10,14 @@ interface InterconsultaDetailModalProps {
   interconsulta: InterconsultaRow;
   onClose: () => void;
   onUpdate: (updated: InterconsultaRow) => void;
+  onGoToEvolucionador?: (interconsulta: InterconsultaRow) => void;
 }
 
 const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
   interconsulta,
   onClose,
   onUpdate,
+  onGoToEvolucionador,
 }) => {
   const { user } = useAuthContext();
   const [currentStatus, setCurrentStatus] = useState(interconsulta.status);
@@ -28,6 +30,12 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Estados para manejo de imágenes y OCR
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showOCRModal, setShowOCRModal] = useState(false);
+  const [ocrText, setOcrText] = useState('');
+  const [processingOCR, setProcessingOCR] = useState(false);
 
   useEffect(() => {
     setCurrentStatus(interconsulta.status);
@@ -179,6 +187,72 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // ============ HANDLERS DE IMÁGENES Y OCR ============
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !interconsulta.id) return;
+
+    if (!user) {
+      setError('Debes iniciar sesión para subir imágenes');
+      return;
+    }
+
+    setUploadingImage(true);
+    setError(null);
+
+    try {
+      for (const file of Array.from(files)) {
+        const result = await uploadImageToInterconsulta(interconsulta.id, file);
+        if (!result) {
+          throw new Error('Error al subir imagen');
+        }
+      }
+
+      // Recargar interconsulta para obtener las nuevas URLs
+      await new Promise(resolve => setTimeout(resolve, 500)); // Pequeño delay para asegurar que la BD se actualizó
+      window.location.reload(); // Por ahora recargamos la página (ideal sería recargar solo el modal)
+      setSuccessMessage(`${files.length} imagen(es) subida(s) correctamente`);
+    } catch (error: any) {
+      console.error('Error al subir imágenes:', error);
+      setError('Error al subir imágenes');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    if (!interconsulta.id) return;
+    if (!confirm('¿Eliminar esta imagen?')) return;
+
+    const success = await removeImageFromInterconsulta(interconsulta.id, index);
+    if (success) {
+      window.location.reload(); // Recargar para mostrar cambios
+      setSuccessMessage('Imagen eliminada');
+    } else {
+      setError('Error al eliminar imagen');
+    }
+  };
+
+  const handleOCRComplete = async () => {
+    if (!interconsulta.id || !ocrText.trim()) return;
+
+    setProcessingOCR(true);
+    setError(null);
+
+    const success = await appendOCRTextToInterconsulta(interconsulta.id, ocrText);
+    setProcessingOCR(false);
+
+    if (success) {
+      window.location.reload(); // Recargar para mostrar cambios
+      setSuccessMessage('Texto OCR agregado correctamente');
+      setShowOCRModal(false);
+      setOcrText('');
+    } else {
+      setError('Error al guardar texto OCR');
+    }
   };
 
   return (
@@ -339,11 +413,142 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
             )}
           </div>
 
+          {/* Sección de Imágenes y Estudios */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Imágenes y Estudios
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowOCRModal(true)}
+                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs inline-flex items-center gap-1.5"
+                  title="Extraer texto de PDF/imagen"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  OCR
+                </button>
+                <input
+                  type="file"
+                  id="image-upload-interconsulta-detail"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+                <label
+                  htmlFor="image-upload-interconsulta-detail"
+                  className={`px-3 py-1.5 ${uploadingImage ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'} text-white rounded text-xs cursor-pointer inline-flex items-center gap-1.5`}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {uploadingImage ? 'Subiendo...' : 'Subir'}
+                </label>
+              </div>
+            </div>
+
+            {/* Grid de imágenes */}
+            {interconsulta.image_full_url && interconsulta.image_full_url.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {interconsulta.image_full_url.map((url, idx) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={interconsulta.image_thumbnail_url?.[idx] || url}
+                      alt={`Imagen ${idx + 1}`}
+                      className="w-full h-24 object-cover rounded cursor-pointer border border-gray-200 dark:border-gray-700"
+                      onClick={() => window.open(url, '_blank')}
+                    />
+                    <button
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                      title="Eliminar imagen"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Texto OCR */}
+            {interconsulta.estudios_ocr && (
+              <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <p className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Estudios (OCR):</p>
+                <pre className="text-sm whitespace-pre-wrap text-gray-600 dark:text-gray-400">{interconsulta.estudios_ocr}</pre>
+              </div>
+            )}
+
+            {/* Mensaje si no hay imágenes ni OCR */}
+            {(!interconsulta.image_full_url || interconsulta.image_full_url.length === 0) && !interconsulta.estudios_ocr && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                No hay imágenes o estudios cargados
+              </p>
+            )}
+          </div>
+
+          {/* Modal simple de OCR */}
+          {showOCRModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Agregar texto OCR</h3>
+                  <button onClick={() => setShowOCRModal(false)} className="text-gray-500 hover:text-gray-700">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <textarea
+                  value={ocrText}
+                  onChange={(e) => setOcrText(e.target.value)}
+                  placeholder="Pega aquí el texto extraído de estudios (TC, RMN, análisis de laboratorio, etc.)"
+                  rows={10}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setShowOCRModal(false);
+                      setOcrText('');
+                    }}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleOCRComplete}
+                    disabled={!ocrText.trim() || processingOCR}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {processingOCR ? 'Guardando...' : 'Agregar a Estudios'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Actions Section */}
           <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
               Acciones rápidas
             </label>
+
+            {/* Botón destacado para ir al Evolucionador */}
+            {onGoToEvolucionador && (
+              <div className="mb-4">
+                <button
+                  onClick={() => {
+                    onGoToEvolucionador(interconsulta);
+                    onClose();
+                  }}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-semibold inline-flex items-center justify-center gap-2 shadow-md transition-all"
+                >
+                  ➡️ Ir al Evolucionador
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
+                  Completa la evolución del paciente y genera la respuesta
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleSaveToPase}
