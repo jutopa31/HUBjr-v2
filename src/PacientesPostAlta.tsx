@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, Users, RefreshCw } from 'lucide-react';
 import { listPacientesPostAltaMonth, PacientePostAltaRow } from './services/pacientesPostAltaService';
 import { useAuthContext } from './components/auth/AuthProvider';
 import CalendarView from './components/postAlta/CalendarView';
@@ -128,34 +128,48 @@ const PacientesPostAlta: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Banner Header */}
-      <div className="flex items-center justify-between mb-6 banner rounded-lg p-4">
-        <div>
-          <h1 className="text-2xl font-bold">Post Alta + Ambulatorio</h1>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} para el {formattedSelectedDate}
-          </p>
+      {/* Header Principal - Estilo Ward Rounds */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700 mb-4">
+        <div className="flex items-center gap-3">
+          {/* Icono circular con sombra */}
+          <div className="rounded-full bg-white dark:bg-gray-800 p-1.5 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+            <Users className="h-5 w-5 text-blue-700 dark:text-blue-400" />
+          </div>
+
+          {/* Título y subtítulo */}
+          <div>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Post Alta + Ambulatorio</h1>
+            <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
+              {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} para el {formattedSelectedDate}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+
+        {/* Botones de acción */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             onClick={() => fetchMonthPatients(selectedDate)}
-            className="px-3 py-2 text-sm btn-soft rounded"
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Actualizar datos"
           >
-            Actualizar
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Actualizar</span>
           </button>
           <button
             onClick={exportCSV}
-            className="px-3 py-2 text-sm btn-soft rounded inline-flex items-center gap-2"
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Exportar CSV"
           >
-            <Download className="h-4 w-4" />
-            Exportar CSV
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">CSV</span>
           </button>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-3 py-2 text-sm btn-accent rounded inline-flex items-center gap-2"
+            className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+            title="Nuevo paciente"
           >
-            <Plus className="h-4 w-4" />
-            Nuevo Paciente
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Nuevo</span>
           </button>
         </div>
       </div>
