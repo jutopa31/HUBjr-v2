@@ -40,8 +40,8 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#1a1a1a]">
-      <div className="mx-auto mt-4 max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
-        {/* Header Principal - Estilo Ward Rounds */}
+      {/* Header Principal - Estilo Ward Rounds */}
+      <div className="max-w-6xl mx-auto mb-4 px-4 pt-4">
         <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-3">
             {/* Icono circular con sombra */}
@@ -97,8 +97,10 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Componente principal simplificado */}
+      {/* Componente principal simplificado */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <AcademiaSimplified activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
     </div>
