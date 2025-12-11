@@ -3,7 +3,6 @@ import { Plus, Stethoscope, Eye } from 'lucide-react';
 import LumbarPunctureForm from './LumbarPunctureForm';
 import LumbarPunctureResults from './LumbarPunctureResults';
 import { LumbarPuncture, LumbarPunctureFormData } from '../types/lumbarPuncture';
-import SectionHeader from '../components/layout/SectionHeader';
 
 type ViewMode = 'list' | 'create' | 'edit' | 'view' | 'analytics';
 
@@ -94,24 +93,37 @@ export default function LumbarPunctureDashboard({ className = '' }: LumbarPunctu
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header */}
+      {/* Header Principal - Estilo Ward Rounds */}
       {viewMode === 'list' && (
-        <div className="max-w-6xl mx-auto mb-6">
-          <SectionHeader
-            title={
-              <span className="flex items-center">
-                <Stethoscope className="h-6 w-6 text-accent mr-2" />
-                Gestión de Punciones Lumbares
-              </span>
-            }
-            subtitle={"Seguimiento y análisis integral de procedimientos de punción lumbar"}
-            actions={
-              <button onClick={handleCreateNew} className="px-3 py-2 text-sm btn-accent rounded inline-flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                <span>Nuevo Procedimiento</span>
+        <div className="max-w-6xl mx-auto mb-4">
+          <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              {/* Icono circular con sombra */}
+              <div className="rounded-full bg-white dark:bg-gray-800 p-1.5 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+                <Stethoscope className="h-5 w-5 text-blue-700 dark:text-blue-400" />
+              </div>
+
+              {/* Título y subtítulo */}
+              <div>
+                <h1 className="text-xl font-semibold text-[var(--text-primary)]">Punciones Lumbares</h1>
+                <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
+                  Seguimiento y análisis de procedimientos
+                </p>
+              </div>
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <button
+                onClick={handleCreateNew}
+                className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+                title="Nuevo procedimiento"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Nuevo</span>
               </button>
-            }
-          />
+            </div>
+          </div>
         </div>
       )}
 

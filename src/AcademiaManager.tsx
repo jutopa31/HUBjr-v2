@@ -39,56 +39,60 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#1a1a1a]">
       <div className="mx-auto mt-4 max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
-        {/* Header compacto con próxima clase */}
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+        {/* Header Principal - Estilo Ward Rounds */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold tracking-wide text-gray-900">CLASES</h1>
-            {isAdminMode && (
-              <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700">
-                Modo admin
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
-            <div className="flex min-w-[230px] items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">Próxima clase</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {nextClass ? nextClass.topic_name : 'Sin clases'}
-                </p>
-              </div>
-              <div className="rounded-lg bg-gray-900 px-3 py-1 text-[11px] font-semibold text-white">
-                {nextClass ? formatCompactDate(nextClass.class_date) : '--/--/----'}
-              </div>
+            {/* Icono circular con sombra */}
+            <div className="rounded-full bg-white dark:bg-gray-800 p-1.5 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+              <BookOpen className="h-5 w-5 text-blue-700 dark:text-blue-400" />
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 p-1">
+            {/* Título y subtítulo */}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-semibold text-[var(--text-primary)]">Academia</h1>
+                {isAdminMode && (
+                  <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+                    Admin
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
+                {nextClass ? `Próxima: ${nextClass.topic_name} - ${formatCompactDate(nextClass.class_date)}` : 'Sin clases programadas'}
+              </p>
+            </div>
+          </div>
+
+          {/* Tabs de navegación */}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 p-0.5">
               <button
                 onClick={() => setActiveTab('register')}
                 aria-current={activeTab === 'register' ? 'page' : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition ${
                   activeTab === 'register'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:bg-white'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
                 }`}
+                title="Nueva clase"
               >
-                <BookOpen className="h-4 w-4" />
-                Nueva clase
+                <BookOpen className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Nueva</span>
               </button>
               <button
                 onClick={() => setActiveTab('calendar')}
                 aria-current={activeTab === 'calendar' ? 'page' : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition ${
                   activeTab === 'calendar'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:bg-white'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
                 }`}
+                title="Ver cronograma"
               >
-                <List className="h-4 w-4" />
-                Cronograma
+                <List className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Lista</span>
               </button>
             </div>
           </div>
