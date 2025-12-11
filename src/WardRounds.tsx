@@ -2372,7 +2372,7 @@ const WardRounds: React.FC = () => {
                 <input
                   className="input"
                   placeholder="Proxima cita (YYYY-MM-DD)"
-                  value={newOutpatient.fecha_proxima_cita}
+                  value={newOutpatient.fecha_proxima_cita ?? ''}
                   onChange={(e) => setNewOutpatient((prev) => ({ ...prev, fecha_proxima_cita: e.target.value }))}
                 />
                 <button
