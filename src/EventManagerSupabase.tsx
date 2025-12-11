@@ -486,74 +486,84 @@ const EventManagerSupabase: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-3">
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] shadow-sm">
-        <div className="flex flex-wrap items-center gap-3 px-3 py-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-300">
-              <CalendarDays className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Cronograma</p>
-              <p className="text-base font-semibold leading-tight text-gray-900 dark:text-gray-100 truncate">
-                Neurologia | agenda mensual
-              </p>
-            </div>
+      {/* Header Principal - Estilo Ward Rounds */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          {/* Icono circular con sombra */}
+          <div className="rounded-full bg-white dark:bg-gray-800 p-1.5 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+            <CalendarDays className="h-5 w-5 text-blue-700 dark:text-blue-400" />
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="flex items-center h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#262626] shadow-inner">
-              <button
-                onClick={() => navigateMonth('prev')}
-                className="h-8 w-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full transition-colors"
-                title="Mes anterior"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div className="px-3 text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                {monthLabel}
-              </div>
-              <button
-                onClick={() => navigateMonth('next')}
-                className="h-8 w-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full transition-colors"
-                title="Mes siguiente"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <button
-              onClick={goToToday}
-              className="h-10 px-3 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
-            >
-              Hoy
-            </button>
-            <button
-              onClick={() => setFiltersOpen((open) => !open)}
-              className="h-10 px-3 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
-            >
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">{filtersOpen ? 'Ocultar' : 'Filtros'}</span>
-            </button>
-            <button
-              onClick={() => setShowForm(true)}
-              className="h-10 px-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold flex items-center gap-1.5"
-              disabled={loading}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nuevo</span>
-            </button>
-            <button
-              onClick={() => {
-                const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
-                if (pattern) deleteEventsByTitle(pattern);
-              }}
-              className="h-10 w-10 flex items-center justify-center rounded-full border border-red-200 dark:border-red-700 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-              disabled={loading}
-              title="Eliminar eventos por título"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+          {/* Título y subtítulo */}
+          <div>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Cronograma - Neurología</h1>
+            <p className="text-xs text-[var(--text-secondary)] hidden sm:block capitalize">
+              {monthLabel}
+            </p>
           </div>
         </div>
+
+        {/* Botones de acción */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex items-center h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#262626] shadow-inner">
+            <button
+              onClick={() => navigateMonth('prev')}
+              className="h-8 w-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full transition-colors"
+              title="Mes anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="px-3 text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+              {monthLabel}
+            </div>
+            <button
+              onClick={() => navigateMonth('next')}
+              className="h-8 w-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-full transition-colors"
+              title="Mes siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            onClick={goToToday}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center"
+            title="Ir a hoy"
+          >
+            Hoy
+          </button>
+          <button
+            onClick={() => setFiltersOpen((open) => !open)}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Filtros"
+          >
+            <Filter className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{filtersOpen ? 'Ocultar' : 'Filtros'}</span>
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+            disabled={loading}
+            title="Nuevo evento"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Nuevo</span>
+          </button>
+          <button
+            onClick={() => {
+              const pattern = window.prompt('Ingresa parte del título de los eventos a eliminar:');
+              if (pattern) deleteEventsByTitle(pattern);
+            }}
+            className="h-8 w-8 flex items-center justify-center rounded border border-red-200 dark:border-red-700 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-xs"
+            disabled={loading}
+            title="Eliminar eventos por título"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Contenedor del calendario */}
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] shadow-sm">
 
         {filtersOpen ? (
           <div className="flex flex-wrap items-center gap-2 px-3 pb-3">
