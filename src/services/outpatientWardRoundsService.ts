@@ -16,7 +16,7 @@ export interface OutpatientPatient {
   estado_pendiente: 'pendiente' | 'en_proceso' | 'resuelto';
   pendientes: string;
   fecha: string;
-  assigned_resident_id?: string;
+  assigned_resident_id?: string | null;
   display_order?: number;
   created_at?: string;
   updated_at?: string;
