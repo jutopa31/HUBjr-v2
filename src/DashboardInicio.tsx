@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { getTodayEvents } from './utils/dashboardQueries';
 import PendientesResumidos from './components/PendientesResumidos';
-import SectionHeader from './components/layout/SectionHeader';
 
 interface DashboardInicioProps {
   setActiveTab: (tab: string) => void;
@@ -108,36 +107,31 @@ const DashboardInicio: React.FC<DashboardInicioProps> = ({ setActiveTab }) => {
 
   return (
     <div className="h-full overflow-y-auto bg-white dark:bg-[#1a1a1a]">
-      {/* Header Principal */}
-      <div className="max-w-6xl mx-auto mb-6">
-      <SectionHeader
-        title={"¡Bienvenidos!"}
-        icon={<Home className="h-6 w-6 text-accent" />}
-        actions={
-          <div className="text-right">
-            <div className="text-lg font-semibold">{formatTime(currentTime)}</div>
-            <div className="text-xs capitalize" style={{ color: 'var(--text-secondary)' }}>{formatDate(currentTime)}</div>
-          </div>
-        }
-      />
-      </div>
-      {false && (
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white bg-opacity-10 rounded-lg">
-              <Home className="h-5 w-5" />
+      {/* Header Principal - Estilo Ward Rounds */}
+      <div className="max-w-6xl mx-auto mb-4 px-4 pt-4">
+        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            {/* Icono redondeado con sombra */}
+            <div className="rounded-full bg-white dark:bg-gray-800 p-1.5 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+              <Home className="h-5 w-5 text-blue-700 dark:text-blue-400" />
             </div>
+
+            {/* Título y subtítulo */}
             <div>
-              <h1 className="text-xl font-semibold">¡Bienvenidos!</h1>
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">¡Bienvenidos!</h1>
+              <p className="text-xs text-[var(--text-secondary)] hidden sm:block capitalize">
+                {formatDate(currentTime)}
+              </p>
             </div>
           </div>
+
+          {/* Hora actual */}
           <div className="text-right">
-            <div className="text-lg font-semibold">{formatTime(currentTime)}</div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs capitalize">{formatDate(currentTime)}</div>
+            <div className="text-lg font-semibold text-[var(--text-primary)]">{formatTime(currentTime)}</div>
+            <div className="text-xs text-[var(--text-secondary)] hidden sm:block">Hora actual</div>
           </div>
         </div>
-      </div>) }
+      </div>
 
       {/* Contenido Principal */}
       <div className="p-4 space-y-4">
