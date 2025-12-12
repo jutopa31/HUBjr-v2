@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertCircle, Calendar, Check, FileInput, Link as LinkIcon, Loader2, Upload, X } from 'lucide-react';
+import { AlertCircle, Calendar, Check, ChevronDown, ChevronUp, FileInput, Info, Link as LinkIcon, Loader2, Upload, X } from 'lucide-react';
 import useEscapeKey from '../../hooks/useEscapeKey';
 import ImportValidationResults from './ImportValidationResults';
 import {
@@ -45,6 +45,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
   const [importComplete, setImportComplete] = useState(false);
   const [importResult, setImportResult] = useState<ImportProcessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showGoogleSheetsHelp, setShowGoogleSheetsHelp] = useState(false);
 
   useEscapeKey(onClose, isOpen);
 
@@ -64,6 +65,41 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // Helper function to get user-friendly error messages
+  const getErrorMessage = (error: any): string => {
+    const errorMsg = error?.message || '';
+
+    // Google Sheets CORS/Auth errors
+    if (errorMsg.includes('CORS_AUTH_REQUIRED')) {
+      return '🔒 La hoja de Google Sheets no es pública. Por favor, compártela con "Cualquiera con el enlace puede ver".';
+    }
+    if (errorMsg.includes('CORS_FORBIDDEN')) {
+      return '🚫 Acceso denegado a la hoja de Google Sheets. Verifica que esté compartida públicamente.';
+    }
+    if (errorMsg.includes('SHEET_NOT_FOUND')) {
+      return '❌ No se encontró la hoja de Google Sheets. Verifica que la URL sea correcta.';
+    }
+    if (errorMsg.includes('NETWORK_ERROR')) {
+      return '🌐 Error de conexión. Verifica tu internet o usa un archivo CSV local.';
+    }
+
+    // DNI duplicate check errors
+    if (errorMsg.includes('verificar DNI duplicado')) {
+      return `⚠️ ${errorMsg}`;
+    }
+    if (errorMsg.includes('permisos de la base de datos')) {
+      return `🔐 ${errorMsg}`;
+    }
+
+    // Generic errors
+    if (errorMsg.includes('Failed to fetch')) {
+      return '🔒 No se pudo acceder a Google Sheets. Asegúrate de que la hoja sea pública.';
+    }
+
+    // Default error message
+    return errorMsg || 'Error desconocido al validar el CSV';
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -140,7 +176,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
       }
     } catch (err: any) {
       console.error('[CSVImportModal] Validacion fallida:', err);
-      setError(err?.message || 'No se pudo validar el CSV');
+      setError(getErrorMessage(err));
     } finally {
       setIsValidating(false);
     }
@@ -176,7 +212,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
       }
     } catch (err: any) {
       console.error('[CSVImportModal] Importacion fallida:', err);
-      setError(err?.message || 'No se pudo completar la importacion');
+      setError(getErrorMessage(err));
     } finally {
       setIsImporting(false);
     }
@@ -251,7 +287,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label className="text-sm font-medium text-[var(--text-primary)]">URL de Google Sheets</label>
                 <input
                   type="text"
@@ -263,6 +299,37 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
                 <p className="text-xs text-[var(--text-tertiary)]">
                   La URL se convertira automaticamente a formato CSV: {convertToCSVExportURL(googleSheetsURL || 'https://docs.google.com/spreadsheets/d/{ID}/edit#gid=0')}
                 </p>
+
+                {/* Google Sheets Help Section */}
+                <div className="border rounded-lg" style={{ borderColor: 'var(--border-secondary)', backgroundColor: 'var(--bg-secondary)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleSheetsHelp(!showGoogleSheetsHelp)}
+                    className="w-full px-3 py-2 flex items-center justify-between text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Info className="h-4 w-4 text-[var(--text-accent)]" />
+                      <span>¿Cómo hacer tu Google Sheet público?</span>
+                    </div>
+                    {showGoogleSheetsHelp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+                  {showGoogleSheetsHelp && (
+                    <div className="px-3 pb-3 pt-1 text-sm text-[var(--text-secondary)] space-y-2">
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Abre tu Google Sheet</li>
+                        <li>Haz clic en el botón <strong>"Compartir"</strong> (Share) en la esquina superior derecha</li>
+                        <li>En la sección "Acceso general", cambia <strong>"Restricted"</strong> a <strong>"Anyone with the link"</strong></li>
+                        <li>Asegúrate que el rol sea <strong>"Viewer"</strong> (Lector)</li>
+                        <li>Haz clic en <strong>"Copy link"</strong> y pégalo en el campo de arriba</li>
+                      </ol>
+                      <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'color-mix(in srgb, var(--state-info) 15%, var(--bg-primary) 85%)' }}>
+                        <p className="text-xs text-[var(--text-primary)]">
+                          <strong>Nota:</strong> Si la hoja no es pública, verás un error de CORS al intentar validar.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

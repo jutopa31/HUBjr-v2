@@ -61,7 +61,12 @@
       "Bash(xargs cat:*)",
       "mcp__playwright__browser_type",
       "Bash(git stash:*)",
-      "Bash(timeout 30 npx tsc:*)"
+      "Bash(timeout 30 npx tsc:*)",
+      "Bash(timeout 30 npx next dev:*)",
+      "Bash(pkill:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout 30 npm run build:*)",
+      "Bash(timeout 30 npm run dev:*)"
     ],
     "deny": []
   },

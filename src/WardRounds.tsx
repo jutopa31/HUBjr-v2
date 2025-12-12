@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
+import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
 import { readImageFromClipboard, isClipboardSupported } from './services/clipboardService';
+import { uploadMultipleImagesToStorage } from './services/storageService';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
@@ -20,6 +22,8 @@ import {
 } from './services/outpatientWardRoundsService';
 import { appendStudyText } from './services/ocrAutoService';
 import WardPatientCard from './components/wardRounds/WardPatientCard';
+import ScaleModal from './ScaleModal';
+import { Scale, ScaleResult } from './types';
 
 interface Patient {
   id?: string;
@@ -46,6 +50,342 @@ interface Patient {
 }
 
 const NORMAL_EF_TEXT = 'Vigil, OTEP, MOE, PIR, Motor:, Sensitivo:, ROT, Babinski, Hoffman, Sensibilidad, Taxia';
+
+// Clasificación TOAST para subtipos de ACV isquémico
+const TOAST_CATEGORIES = [
+  {
+    id: 'large-artery',
+    label: 'Ateroesclerosis de grandes arterias',
+    description: 'ACV aterotrombótico'
+  },
+  {
+    id: 'cardioembolism',
+    label: 'Cardioembólico',
+    description: 'ACV cardioembólico'
+  },
+  {
+    id: 'small-vessel',
+    label: 'Oclusión de pequeño vaso (Lacunar)',
+    description: 'ACV lacunar'
+  },
+  {
+    id: 'other',
+    label: 'Otra etiología determinada',
+    description: 'ACV de otra causa conocida'
+  },
+  {
+    id: 'undetermined',
+    label: 'Criptogénico (Indeterminado)',
+    description: 'ACV de causa indeterminada'
+  }
+];
+
+// Escalas neurológicas prioritarias para Ward Rounds
+const PRIORITY_SCALES = [
+  {
+    id: 'nihss',
+    name: 'NIHSS',
+    fullName: 'Escala NIHSS',
+  },
+  {
+    id: 'abcd2_score',
+    name: 'ABCD2',
+    fullName: 'ABCD2 Score',
+  },
+  {
+    id: 'mrs',
+    name: 'mRS',
+    fullName: 'Modified Rankin Scale',
+  },
+  {
+    id: 'glasgow',
+    name: 'Glasgow',
+    fullName: 'Escala de Glasgow',
+  },
+];
+
+// Definiciones completas de las escalas neurológicas
+const medicalScales: Scale[] = [
+  {
+    id: 'nihss',
+    name: 'Escala NIHSS (National Institutes of Health Stroke Scale)',
+    category: 'Evaluación Neurológica',
+    description: 'Escala de evaluación de accidente cerebrovascular agudo',
+    items: [
+      {
+        id: 'loc',
+        label: '1. Nivel de consciencia',
+        options: [
+          '0 - Alerta, respuestas normales',
+          '1 - No alerta, pero responde a mínimos estímulos verbales',
+          '2 - No alerta, requiere estímulos repetidos o dolorosos para responder',
+          '3 - Responde solo con reflejo motor o respuestas autonómicas, o totalmente irresponsivo'
+        ],
+        score: 0
+      },
+      {
+        id: 'loc-questions',
+        label: '2. Preguntas del nivel de consciencia',
+        options: [
+          '0 - Responde ambas preguntas correctamente (mes y edad)',
+          '1 - Responde una pregunta correctamente',
+          '2 - No responde ninguna pregunta correctamente'
+        ],
+        score: 0
+      },
+      {
+        id: 'loc-commands',
+        label: '3. Órdenes del nivel de consciencia',
+        options: [
+          '0 - Realiza ambas tareas correctamente (abrir/cerrar ojos, apretar/soltar mano)',
+          '1 - Realiza una tarea correctamente',
+          '2 - No realiza ninguna tarea correctamente'
+        ],
+        score: 0
+      },
+      {
+        id: 'gaze',
+        label: '4. Mejor mirada',
+        options: [
+          '0 - Normal',
+          '1 - Parálisis parcial de la mirada',
+          '2 - Desviación forzada o parálisis total de la mirada'
+        ],
+        score: 0
+      },
+      {
+        id: 'visual',
+        label: '5. Campos visuales',
+        options: [
+          '0 - Sin déficits campimétricos',
+          '1 - Hemianopsia parcial',
+          '2 - Hemianopsia completa',
+          '3 - Hemianopsia bilateral (ceguera cortical)'
+        ],
+        score: 0
+      },
+      {
+        id: 'facial',
+        label: '6. Parálisis facial',
+        options: [
+          '0 - Movimientos normales simétricos',
+          '1 - Paresia leve (asimetría al sonreír)',
+          '2 - Parálisis parcial (parálisis total de la parte inferior de la cara)',
+          '3 - Parálisis completa (ausencia de movimientos faciales en la parte superior e inferior)'
+        ],
+        score: 0
+      },
+      {
+        id: 'motor-left-arm',
+        label: '7a. Motor - Brazo izquierdo',
+        options: [
+          '0 - No hay caída, mantiene la posición 10 segundos',
+          '1 - Caída parcial antes de 10 segundos, no llega a tocar la cama',
+          '2 - Esfuerzo contra gravedad, no puede alcanzar o mantener 10 segundos',
+          '3 - No esfuerzo contra gravedad, el miembro cae',
+          '4 - No movimiento',
+          'UN - Amputación o fusión articular (explicar)'
+        ],
+        score: 0
+      },
+      {
+        id: 'motor-right-arm',
+        label: '7b. Motor - Brazo derecho',
+        options: [
+          '0 - No hay caída, mantiene la posición 10 segundos',
+          '1 - Caída parcial antes de 10 segundos, no llega a tocar la cama',
+          '2 - Esfuerzo contra gravedad, no puede alcanzar o mantener 10 segundos',
+          '3 - No esfuerzo contra gravedad, el miembro cae',
+          '4 - No movimiento',
+          'UN - Amputación o fusión articular (explicar)'
+        ],
+        score: 0
+      },
+      {
+        id: 'motor-left-leg',
+        label: '8a. Motor - Pierna izquierda',
+        options: [
+          '0 - No hay caída, mantiene la posición 5 segundos',
+          '1 - Caída parcial antes de 5 segundos, no llega a tocar la cama',
+          '2 - Esfuerzo contra gravedad, cae a la cama en menos de 5 segundos',
+          '3 - No esfuerzo contra gravedad, el miembro cae inmediatamente',
+          '4 - No movimiento',
+          'UN - Amputación o fusión articular (explicar)'
+        ],
+        score: 0
+      },
+      {
+        id: 'motor-right-leg',
+        label: '8b. Motor - Pierna derecha',
+        options: [
+          '0 - No hay caída, mantiene la posición 5 segundos',
+          '1 - Caída parcial antes de 5 segundos, no llega a tocar la cama',
+          '2 - Esfuerzo contra gravedad, cae a la cama en menos de 5 segundos',
+          '3 - No esfuerzo contra gravedad, el miembro cae inmediatamente',
+          '4 - No movimiento',
+          'UN - Amputación o fusión articular (explicar)'
+        ],
+        score: 0
+      },
+      {
+        id: 'ataxia',
+        label: '9. Ataxia de miembros',
+        options: [
+          '0 - Ausente',
+          '1 - Presente en un miembro',
+          '2 - Presente en dos miembros',
+          'UN - Amputación o fusión articular (explicar)'
+        ],
+        score: 0
+      },
+      {
+        id: 'sensory',
+        label: '10. Sensibilidad',
+        options: [
+          '0 - Normal, sin pérdida sensorial',
+          '1 - Pérdida sensorial leve a moderada',
+          '2 - Pérdida sensorial severa o total'
+        ],
+        score: 0
+      },
+      {
+        id: 'language',
+        label: '11. Mejor lenguaje',
+        options: [
+          '0 - Sin afasia, normal',
+          '1 - Afasia leve a moderada',
+          '2 - Afasia severa',
+          '3 - Mudo, afasia global'
+        ],
+        score: 0
+      },
+      {
+        id: 'dysarthria',
+        label: '12. Disartria',
+        options: [
+          '0 - Normal',
+          '1 - Disartria leve a moderada',
+          '2 - Disartria severa, habla ininteligible',
+          'UN - Intubado u otra barrera física (explicar)'
+        ],
+        score: 0
+      },
+      {
+        id: 'neglect',
+        label: '13. Extinción e inatención (negligencia)',
+        options: [
+          '0 - Sin anormalidad',
+          '1 - Inatención o extinción visual, táctil, auditiva, espacial o personal a la estimulación bilateral simultánea en una de las modalidades sensoriales',
+          '2 - Hemi-inatención severa o extinción en más de una modalidad'
+        ],
+        score: 0
+      }
+    ]
+  },
+  {
+    id: 'glasgow',
+    name: 'Escala de Coma de Glasgow',
+    category: 'Evaluación Neurológica',
+    description: 'Escala para evaluar el nivel de conciencia',
+    items: [
+      {
+        id: 'eye_opening',
+        label: 'Apertura ocular',
+        options: ['4 - Espontánea', '3 - Al habla', '2 - Al dolor', '1 - Ninguna'],
+        score: 4
+      },
+      {
+        id: 'verbal_response',
+        label: 'Respuesta verbal',
+        options: ['5 - Orientada', '4 - Confusa', '3 - Palabras inapropiadas', '2 - Sonidos incomprensibles', '1 - Ninguna'],
+        score: 5
+      },
+      {
+        id: 'motor_response',
+        label: 'Respuesta motora',
+        options: ['6 - Obedece órdenes', '5 - Localiza dolor', '4 - Retirada normal', '3 - Flexión anormal', '2 - Extensión', '1 - Ninguna'],
+        score: 6
+      }
+    ]
+  },
+  {
+    id: 'mrs',
+    name: 'Escala de Rankin Modificada (mRS)',
+    category: 'Stroke & Cerebrovascular',
+    description: 'Escala para evaluar el grado de discapacidad después de un ACV',
+    items: [
+      {
+        id: 'mrs_score',
+        label: 'Grado de discapacidad funcional',
+        options: [
+          '0 - Sin síntomas',
+          '1 - Sin discapacidad significativa: capaz de llevar a cabo todas las actividades y deberes habituales',
+          '2 - Discapacidad leve: incapaz de llevar a cabo todas las actividades previas, pero capaz de cuidar sus propios asuntos sin asistencia',
+          '3 - Discapacidad moderada: requiere algo de ayuda, pero capaz de caminar sin asistencia',
+          '4 - Discapacidad moderadamente severa: incapaz de caminar sin asistencia e incapaz de atender sus necesidades corporales sin asistencia',
+          '5 - Discapacidad severa: confinado a la cama, incontinente y requiere cuidado constante y atención de enfermería',
+          '6 - Muerte'
+        ],
+        score: 0
+      }
+    ]
+  },
+  {
+    id: 'abcd2_score',
+    name: 'ABCD2 Score (AIT - Ataque Isquémico Transitorio)',
+    category: 'Stroke & Cerebrovascular',
+    description: 'Escala de riesgo de ACV después de un AIT en las próximas 48 horas',
+    items: [
+      {
+        id: 'age',
+        label: 'A - Edad (Age)',
+        options: [
+          '0 - < 60 años',
+          '1 - ≥ 60 años'
+        ],
+        score: 0
+      },
+      {
+        id: 'blood_pressure',
+        label: 'B - Presión Arterial (Blood Pressure)',
+        options: [
+          '0 - < 140/90 mmHg',
+          '1 - ≥ 140/90 mmHg'
+        ],
+        score: 0
+      },
+      {
+        id: 'clinical_features',
+        label: 'C - Características Clínicas (Clinical Features)',
+        options: [
+          '0 - Otros síntomas',
+          '1 - Alteración del habla sin debilidad',
+          '2 - Debilidad unilateral'
+        ],
+        score: 0
+      },
+      {
+        id: 'duration',
+        label: 'D - Duración de síntomas (Duration)',
+        options: [
+          '0 - < 10 minutos',
+          '1 - 10-59 minutos',
+          '2 - ≥ 60 minutos'
+        ],
+        score: 0
+      },
+      {
+        id: 'diabetes',
+        label: 'D - Diabetes',
+        options: [
+          '0 - No',
+          '1 - Sí'
+        ],
+        score: 0
+      }
+    ]
+  },
+];
 
 interface ResidentProfile {
   id: string;
@@ -127,6 +467,8 @@ const WardRounds: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [outpatientLoading, setOutpatientLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
+  const [showToastDropdown, setShowToastDropdown] = useState(false);
   const [inlineDetailValues, setInlineDetailValues] = useState<Partial<Patient>>({});
   const [activeInlineField, setActiveInlineField] = useState<keyof Patient | null>(null);
   const [isDetailSaving, setIsDetailSaving] = useState(false);
@@ -936,6 +1278,103 @@ const WardRounds: React.FC = () => {
     }
   };
 
+  // ========== HANDLERS DE ESCALAS NEUROLÓGICAS ==========
+
+  /**
+   * Abre el modal de escala neurológica
+   */
+  const openScaleModal = useCallback((scaleId: string) => {
+    const scale = medicalScales.find(s => s.id === scaleId);
+    if (scale) {
+      console.log('🔍 Opening scale modal:', scale.name);
+      setSelectedScale(scale);
+    } else {
+      console.error('❌ Scale not found:', scaleId);
+      showToast('Escala no encontrada', 'error');
+    }
+  }, []);
+
+  /**
+   * Cierra el modal de escala
+   */
+  const handleScaleModalClose = useCallback(() => {
+    setSelectedScale(null);
+  }, []);
+
+  /**
+   * Maneja el resultado de la escala completada
+   * Anexa el resultado formateado al campo examen_fisico
+   */
+  const handleScaleModalSubmit = useCallback(async (result: ScaleResult) => {
+    if (!selectedPatient?.id) {
+      showToast('No hay paciente seleccionado', 'error');
+      return;
+    }
+
+    // Formatear el resultado
+    const resultText = `\n\n=== ${result.scaleName} ===\nPuntaje: ${result.totalScore}\n${result.details}${result.interpretation ? '\nInterpretación: ' + result.interpretation : ''}`;
+
+    // Actualizar el campo examen_fisico
+    const currentEF = inlineDetailValues.examen_fisico as string || selectedPatient.examen_fisico || '';
+    const updatedEF = currentEF + resultText;
+
+    // Actualizar estado local
+    setInlineDetailValues(prev => ({
+      ...prev,
+      examen_fisico: updatedEF
+    }));
+
+    // Persistir a Supabase
+    try {
+      await updatePatient(selectedPatient.id, {
+        ...selectedPatient,
+        examen_fisico: updatedEF,
+      });
+
+      // Actualizar lista de pacientes
+      setPatients(prev => prev.map(p =>
+        p.id === selectedPatient.id
+          ? { ...p, examen_fisico: updatedEF }
+          : p
+      ));
+
+      // Actualizar selectedPatient para reflejar cambios
+      setSelectedPatient(prev => prev ? { ...prev, examen_fisico: updatedEF } : null);
+
+      showToast(`${result.scaleName} guardada correctamente`, 'success');
+    } catch (error) {
+      console.error('Error saving scale result:', error);
+      showToast('Error al guardar la escala', 'error');
+    }
+
+    // Cerrar modal de escala
+    setSelectedScale(null);
+  }, [selectedPatient, inlineDetailValues]);
+
+  // ======================================================
+
+  // ========== CLASIFICACIÓN TOAST ==========
+
+  /**
+   * Inserta la categoría TOAST seleccionada en el campo diagnóstico
+   */
+  const insertToastCategory = useCallback((categoryId: string) => {
+    const category = TOAST_CATEGORIES.find(c => c.id === categoryId);
+    if (!category) return;
+
+    const currentDiagnostico = inlineDetailValues.diagnostico as string || '';
+    const toastText = `\nClasificación TOAST: ${category.label}`;
+
+    setInlineDetailValues(prev => ({
+      ...prev,
+      diagnostico: currentDiagnostico + toastText
+    }));
+
+    setShowToastDropdown(false);
+  }, [inlineDetailValues]);
+
+  // ==========================================
+
   // Asignar residente a paciente
   const assignResidentToPatient = async (patientId: string, residentId: string | null) => {
     try {
@@ -1139,19 +1578,83 @@ const WardRounds: React.FC = () => {
         {isEditing ? (
           <div className="space-y-2">
             {field === 'examen_fisico' && (
-              <div className="flex justify-end">
+              <div className="flex flex-wrap gap-2 justify-end mb-2">
+                {/* Botón EF normal existente */}
                 <button
                   type="button"
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
                   onClick={() => setInlineDetailValues((prev) => ({
                     ...prev,
                     examen_fisico: (prev.examen_fisico as string) && (prev.examen_fisico as string).trim()
                       ? `${prev.examen_fisico as string}\n${NORMAL_EF_TEXT}`
                       : NORMAL_EF_TEXT
                   }))}
+                  title="Insertar plantilla de examen físico normal"
                 >
                   EF normal
                 </button>
+
+                {/* Separador visual */}
+                <div className="border-l border-gray-300"></div>
+
+                {/* Botones de escalas neurológicas */}
+                {PRIORITY_SCALES.map((scale) => (
+                  <button
+                    key={scale.id}
+                    type="button"
+                    className="text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openScaleModal(scale.id);
+                    }}
+                    title={`Abrir ${scale.fullName}`}
+                  >
+                    📊 {scale.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {field === 'diagnostico' && (
+              <div className="flex flex-wrap gap-2 justify-end mb-2 relative">
+                {/* Botón ACV con dropdown TOAST */}
+                <button
+                  type="button"
+                  className="text-xs px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 font-medium transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowToastDropdown(!showToastDropdown);
+                  }}
+                  title="Clasificación TOAST para ACV isquémico"
+                >
+                  🧠 ACV
+                </button>
+
+                {/* Dropdown de categorías TOAST */}
+                {showToastDropdown && (
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-[280px]">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
+                      Clasificación TOAST
+                    </div>
+                    {TOAST_CATEGORIES.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertToastCategory(category.id);
+                        }}
+                      >
+                        <div className="text-sm font-medium text-gray-900">
+                          {category.label}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {category.description}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {multiline ? (
@@ -1284,7 +1787,7 @@ const WardRounds: React.FC = () => {
 
   /**
    * Handler para subir múltiples archivos
-   * Sube imágenes secuencialmente mostrando progreso
+   * Sube imágenes en paralelo usando uploadMultipleImagesToStorage
    */
   const handleMultipleFileUpload = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -1306,13 +1809,11 @@ const WardRounds: React.FC = () => {
     setImagePreviewError(null);
 
     try {
-      const { uploadImageToStorage } = await import('./services/storageService');
-      const results: any[] = [];
-      for (let i = 0; i < filesArray.length; i++) {
-        const result = await uploadImageToStorage(filesArray[i], patientIdForUpload);
-        results.push(result);
-        setUploadProgress({uploaded: i + 1, total: filesArray.length});
-      }
+      // Use parallel batch upload instead of sequential loop
+      const results = await uploadMultipleImagesToStorage(filesArray, patientIdForUpload);
+
+      // Update progress to show completion
+      setUploadProgress({uploaded: filesArray.length, total: filesArray.length});
 
       const updatedPatient = addImagesToPatient(basePatient, results);
       await updatePatient(patientIdForUpload, updatedPatient as Patient);
@@ -3591,6 +4092,26 @@ const WardRounds: React.FC = () => {
                 >
                   {isDetailEditMode ? 'Cerrar edicion' : 'Editar'}
                 </button>
+
+                {/* Dropdown de escalas neurológicas */}
+                <select
+                  className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      openScaleModal(e.target.value);
+                      e.target.value = ''; // Reset select
+                    }
+                  }}
+                  value=""
+                >
+                  <option value="">📊 Escalas</option>
+                  {PRIORITY_SCALES.map((scale) => (
+                    <option key={scale.id} value={scale.id}>
+                      {scale.fullName}
+                    </option>
+                  ))}
+                </select>
+
                 <button
                   type="button"
                   className="p-2 rounded hover:bg-gray-100 text-gray-500"
@@ -4032,6 +4553,16 @@ const WardRounds: React.FC = () => {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {/* Modal de Escalas Neurológicas - renderizado con portal */}
+      {selectedScale && ReactDOM.createPortal(
+        <ScaleModal
+          scale={selectedScale}
+          onClose={handleScaleModalClose}
+          onSubmit={handleScaleModalSubmit}
+        />,
+        document.getElementById('modal-root') || document.body
       )}
     </div>
     </LoadingWithRecovery>

@@ -189,6 +189,7 @@ export const checkDuplicateDNI = async (
   hospitalContext: HospitalContext
 ): Promise<DuplicateCheckResult> => {
   try {
+    // First attempt: Query with hospital_context filter
     const result: any = await robustQuery(
       () => supabase
         .from('ward_round_patients')
@@ -200,7 +201,54 @@ export const checkDuplicateDNI = async (
     );
 
     const { data, error } = result;
-    if (error) throw error;
+
+    // If we get a 400 error, it's likely RLS policy conflict
+    if (error) {
+      // Log detailed error information for debugging
+      console.error('[wardRoundsImportService] Error checking DNI duplicate:', {
+        errorCode: error.code,
+        errorMessage: error.message,
+        errorDetails: error.details,
+        errorHint: error.hint,
+        dni,
+        hospitalContext
+      });
+
+      // If it's a 400 or policy error, try a simpler query without hospital_context
+      if (error.code === '42501' || error.message?.includes('policy') || error.message?.includes('400')) {
+        console.warn('[wardRoundsImportService] Retrying DNI check without hospital_context filter due to RLS policy issue');
+
+        try {
+          const fallbackResult: any = await robustQuery(
+            () => supabase
+              .from('ward_round_patients')
+              .select('*')
+              .eq('dni', dni)
+              .limit(1),
+            { timeout: 5000, retries: 1, operationName: 'checkDuplicateDNI_fallback' }
+          );
+
+          const { data: fallbackData, error: fallbackError } = fallbackResult;
+          if (fallbackError) throw fallbackError;
+
+          if (fallbackData && fallbackData.length > 0) {
+            // Filter by hospital_context in memory since RLS doesn't allow it
+            const matchingPatient = fallbackData.find((p: any) => p.hospital_context === hospitalContext);
+            if (matchingPatient) {
+              return { exists: true, patientId: matchingPatient.id, patientData: matchingPatient as WardRoundPatientRecord };
+            }
+          }
+
+          return { exists: false };
+        } catch (fallbackError: any) {
+          console.error('[wardRoundsImportService] Fallback DNI check also failed:', fallbackError);
+          throw new Error(`Error al verificar DNI duplicado. Por favor, contacta al administrador para verificar los permisos de la base de datos. Detalles: ${fallbackError.message || 'Error desconocido'}`);
+        }
+      }
+
+      // For other errors, provide a helpful message
+      throw new Error(`Error al verificar DNI duplicado: ${error.message || 'Error desconocido'}. Código: ${error.code || 'N/A'}`);
+    }
 
     if (data && data.length > 0) {
       return { exists: true, patientId: data[0].id, patientData: data[0] as WardRoundPatientRecord };
@@ -208,8 +256,15 @@ export const checkDuplicateDNI = async (
 
     return { exists: false };
   } catch (error: any) {
-    console.error('[wardRoundsImportService] Error checking DNI duplicate:', error);
-    throw error;
+    // Log the full error for debugging
+    console.error('[wardRoundsImportService] Fatal error checking DNI duplicate:', error);
+
+    // Re-throw with user-friendly message if not already formatted
+    if (error.message?.includes('verificar DNI')) {
+      throw error;
+    }
+
+    throw new Error(`No se pudo verificar el DNI duplicado: ${error.message || 'Error de conexión'}`);
   }
 };
 

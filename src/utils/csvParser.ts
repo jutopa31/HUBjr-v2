@@ -67,14 +67,49 @@ export async function parseCSVFile(file: File): Promise<CSVParseResult> {
 
 export async function parseCSVFromURL(url: string): Promise<CSVParseResult> {
   const exportUrl = convertToCSVExportURL(url);
-  const response = await fetch(exportUrl);
 
-  if (!response.ok) {
-    throw new Error(`No se pudo obtener el CSV (${response.status})`);
+  try {
+    const response = await fetch(exportUrl);
+
+    // Check if response is a redirect to login page (indicates private sheet)
+    if (response.url && response.url.includes('accounts.google.com')) {
+      throw new Error('CORS_AUTH_REQUIRED');
+    }
+
+    if (!response.ok) {
+      // Provide specific error message based on status code
+      if (response.status === 403) {
+        throw new Error('CORS_FORBIDDEN');
+      } else if (response.status === 404) {
+        throw new Error('SHEET_NOT_FOUND');
+      } else {
+        throw new Error(`HTTP_ERROR_${response.status}`);
+      }
+    }
+
+    const content = await response.text();
+
+    // Check if content looks like an HTML error page instead of CSV
+    if (content.trim().startsWith('<!DOCTYPE') || content.trim().startsWith('<html')) {
+      throw new Error('CORS_AUTH_REQUIRED');
+    }
+
+    return parseCSVContent(content);
+  } catch (error: any) {
+    // Classify and enhance error messages
+    if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+      // This is the CORS error
+      throw new Error('CORS_AUTH_REQUIRED');
+    }
+
+    // Check for specific error types we've defined
+    if (error.message?.startsWith('CORS_') || error.message?.startsWith('SHEET_') || error.message?.startsWith('HTTP_')) {
+      throw error; // Re-throw our custom errors
+    }
+
+    // For other errors, wrap them
+    throw new Error(`NETWORK_ERROR: ${error.message || 'Error desconocido'}`);
   }
-
-  const content = await response.text();
-  return parseCSVContent(content);
 }
 
 function parseCSVContent(content: string): Promise<CSVParseResult> {
