@@ -25,6 +25,7 @@ export interface ScaleModalProps {
   scale: Scale;
   onClose: () => void;
   onSubmit: (result: ScaleResult) => void;
+  notesContext?: string;
 }
 
 // Tipos para sugerencias de IA

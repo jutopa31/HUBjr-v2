@@ -13,7 +13,24 @@ import type { PatientAssessment } from '../types';
  * @returns Template con secciones estructuradas pre-cargadas
  */
 export function generateEvolucionadorTemplate(interconsulta: InterconsultaRow): string {
-  const template = `PACIENTE: ${interconsulta.nombre}
+  const antecedentesPlaceholder = `- Antecedentes personales:
+- Medicación actual:
+- Alergias:`;
+
+  const efPlaceholder = `- Nivel de conciencia:
+- Pares craneales:
+- Motor:
+- Sensibilidad:
+- NIHSS (si aplica):`;
+
+  const diagnosticoPlaceholder = `- Diagnóstico presuntivo:
+- Diferenciales:`;
+
+  const planPlaceholder = `- Estudios solicitados:
+- Conducta / interconsultas:
+- Seguimiento:`;
+
+  return `PACIENTE: ${interconsulta.nombre}
 DNI: ${interconsulta.dni}
 EDAD: ${interconsulta.edad || 'No especificada'}
 CAMA: ${interconsulta.cama}
@@ -21,21 +38,21 @@ CAMA: ${interconsulta.cama}
 MOTIVO DE CONSULTA:
 ${interconsulta.relato_consulta || ''}
 
-${interconsulta.estudios_ocr ? `ESTUDIOS COMPLEMENTARIOS (OCR):\n${interconsulta.estudios_ocr}\n\n` : ''}ANTECEDENTES:
+${interconsulta.estudios_ocr ? `ESTUDIOS COMPLEMENTARIOS (OCR):
+${interconsulta.estudios_ocr}
 
+` : ''}ANTECEDENTES:
+${antecedentesPlaceholder}
 
 EXAMEN FÍSICO:
-
+${efPlaceholder}
 
 DIAGNÓSTICO:
-
+${diagnosticoPlaceholder}
 
 PLAN:
-
-
+${planPlaceholder}
 `;
-
-  return template;
 }
 
 /**
@@ -49,18 +66,21 @@ export function extractStructuredSections(clinicalNotes: string): {
   diagnostico: string;
   plan: string;
   motivoConsulta: string;
+  estudiosOCR: string;
 } {
   const sections = {
     antecedentes: '',
     examenFisico: '',
     diagnostico: '',
     plan: '',
-    motivoConsulta: ''
+    motivoConsulta: '',
+    estudiosOCR: ''
   };
 
   // Regex patterns para extraer secciones
   const patterns = {
-    motivoConsulta: /MOTIVO DE CONSULTA:\s*\n([\s\S]*?)(?=\n\n[A-Z]|$)/i,
+    motivoConsulta: /MOTIVO DE CONSULTA:\s*\n([\s\S]*?)(?=\n\n(?:ESTUDIOS COMPLEMENTARIOS|ANTECEDENTES)|$)/i,
+    estudiosOCR: /ESTUDIOS COMPLEMENTARIOS \(OCR\):\s*\n([\s\S]*?)(?=\n\nANTECEDENTES|$)/i,
     antecedentes: /ANTECEDENTES:\s*\n([\s\S]*?)(?=\n\nEXAMEN|$)/i,
     examenFisico: /EXAMEN F[ÍI]SICO:\s*\n([\s\S]*?)(?=\n\nDIAGN[ÓO]STICO|$)/i,
     diagnostico: /DIAGN[ÓO]STICO:\s*\n([\s\S]*?)(?=\n\nPLAN|$)/i,
@@ -98,7 +118,7 @@ export function mapToWardRoundPatient(
 
     // Datos de interconsulta
     motivo_consulta: sections.motivoConsulta || interconsulta.relato_consulta || '',
-    estudios: interconsulta.estudios_ocr || '',
+    estudios: sections.estudiosOCR || interconsulta.estudios_ocr || '',
 
     // Datos del Evolucionador (secciones extraídas)
     antecedentes: sections.antecedentes,

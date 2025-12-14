@@ -437,3 +437,53 @@ export async function updateInterconsultaResponse(
     return false;
   }
 }
+
+/**
+ * Actualiza los datos básicos de una interconsulta
+ * @param id - ID de la interconsulta
+ * @param updates - Datos a actualizar (nombre, DNI, cama, relato, edad)
+ * @returns Objeto con success y data actualizado
+ */
+export async function updateInterconsultaData(
+  id: string,
+  updates: {
+    nombre?: string;
+    dni?: string;
+    cama?: string;
+    relato_consulta?: string;
+    edad?: string;
+  }
+): Promise<{ success: boolean; data?: InterconsultaRow; error?: string }> {
+  try {
+    console.log('[InterconsultasService] updateInterconsultaData -> id:', id, 'updates:', updates);
+
+    const result: any = await robustQuery(
+      () => supabase
+        .from('interconsultas')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single(),
+      {
+        timeout: 8000,
+        retries: 2,
+        operationName: 'updateInterconsultaData'
+      }
+    );
+
+    const { error, data } = result || {};
+    if (error) {
+      console.error('[InterconsultasService] updateInterconsultaData error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[InterconsultasService] updateInterconsultaData -> success');
+    return { success: true, data: data as InterconsultaRow };
+  } catch (error: any) {
+    console.error('[InterconsultasService] updateInterconsultaData unexpected error:', error);
+    return { success: false, error: error?.message || 'Unknown error' };
+  }
+}

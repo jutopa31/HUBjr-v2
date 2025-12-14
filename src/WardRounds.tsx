@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Download, Upload, Edit, Edit2, Save, X, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
+import { Plus, Download, Upload, Edit, Edit2, Save, X, XCircle, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
 import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
@@ -463,6 +463,9 @@ const WardRounds: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
   const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
+
+  // Ref para autofocus en campo Cama del formulario de agregar paciente
+  const camaInputRef = useRef<HTMLInputElement>(null);
   const [newOutpatient, setNewOutpatient] = useState<OutpatientPatient>(emptyOutpatient);
   const [loading, setLoading] = useState(true);
   const [outpatientLoading, setOutpatientLoading] = useState(false);
@@ -675,6 +678,14 @@ const WardRounds: React.FC = () => {
   }, [showCameraModal, stopCameraStream]);
 
   useEffect(() => () => stopCameraStream(), [stopCameraStream]);
+
+  // AutoFocus en campo Cama cuando se abre el modal de agregar paciente
+  useEffect(() => {
+    if (showAddForm && camaInputRef.current) {
+      // Delay para asegurar que el modal esté renderizado
+      setTimeout(() => camaInputRef.current?.focus(), 100);
+    }
+  }, [showAddForm]);
 
   useEffect(() => {
     setImageOverrides({});
@@ -3076,8 +3087,15 @@ const WardRounds: React.FC = () => {
 
       {/* Formulario para agregar paciente */}
       {showAddForm && (
-        <div className="modal-overlay">
-          <div className="modal-content max-w-2xl w-full h-[85vh] flex flex-col">
+        <div
+          className="modal-overlay"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              closeAddForm();
+            }
+          }}
+        >
+          <div className="modal-content max-w-4xl w-full h-[85vh] flex flex-col">
             <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}>
               <h2 className="text-lg font-semibold">Agregar Nuevo Paciente</h2>
               <button
@@ -3087,7 +3105,11 @@ const WardRounds: React.FC = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-secondary)]">
+
+            {/* Container para dos columnas: formulario y preview */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+              {/* Columna izquierda: Formulario (2/3) */}
+              <div className="flex-1 md:w-2/3 overflow-y-auto p-4 space-y-4 bg-[var(--bg-secondary)]">
 
               {/* Sección 1: Datos Básicos */}
               <section className="medical-card p-4">
@@ -3099,6 +3121,7 @@ const WardRounds: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Cama</label>
                     <input
+                      ref={camaInputRef}
                       type="text"
                       value={newPatient.cama}
                       onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
@@ -3141,38 +3164,44 @@ const WardRounds: React.FC = () => {
                       )}
                     </div>
                     {dniError && (
-                      <p className="mt-1 text-sm text-gray-800 font-medium">{dniError}</p>
+                      <div className="mt-2 flex items-start gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-800 dark:text-red-300">{dniError}</p>
+                      </div>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Nombre Completo</label>
                     <input
                       type="text"
                       value={newPatient.nombre}
                       onChange={(e) => setNewPatient({...newPatient, nombre: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="Apellido, Nombre"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Edad</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Edad</label>
                     <input
                       type="text"
                       value={newPatient.edad}
                       onChange={(e) => setNewPatient({...newPatient, edad: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="52 años"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                       <Users className="h-4 w-4 inline mr-1" />
                       Residente Asignado
                     </label>
                     <select
                       value={newPatient.assigned_resident_id || ''}
                       onChange={(e) => setNewPatient({...newPatient, assigned_resident_id: e.target.value || undefined})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                     >
                       <option value="">Sin asignar</option>
                       {residents.map(resident => (
@@ -3190,25 +3219,27 @@ const WardRounds: React.FC = () => {
               <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historia Clínica</h3>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Antecedentes</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Antecedentes</label>
                     <textarea
                       value={newPatient.antecedentes}
                       onChange={(e) => setNewPatient({...newPatient, antecedentes: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="HTA, DBT, dislipidemia..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de Consulta</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Motivo de Consulta</label>
                     <textarea
                       value={newPatient.motivo_consulta}
                       onChange={(e) => setNewPatient({...newPatient, motivo_consulta: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="Cuadro de inicio súbito caracterizado por..."
                     />
@@ -3217,10 +3248,10 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 3: Examen Físico */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Examen Físico</h3>
                 </div>
                 <div>
                 <div className="flex items-center justify-between mb-2">
@@ -3239,8 +3270,10 @@ const WardRounds: React.FC = () => {
                   </button>
                   </div>
                   <textarea
+                    value={newPatient.examen_fisico}
                     onChange={(e) => setNewPatient({...newPatient, examen_fisico: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    style={{ borderColor: 'var(--border-primary)' }}
                     rows={3}
                     placeholder="Paciente consciente, orientado. NIHSS: 0..."
                   />
@@ -3248,10 +3281,10 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 4: Estudios */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Estudios Complementarios</h3>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -3276,29 +3309,31 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 4b: Imágenes y links */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <ImageIcon className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Imágenes / Multimedia</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Imágenes / Multimedia</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de miniatura (opcional)</label>
                     <input
                       type="url"
                       value={(newPatient.image_thumbnail_url && newPatient.image_thumbnail_url[0]) || ''}
                       onChange={(e) => setNewPatient({ ...newPatient, image_thumbnail_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="https://.../thumbnail.jpg"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de imagen completa</label>
                     <input
                       type="url"
                       value={(newPatient.image_full_url && newPatient.image_full_url[0]) || ''}
                       onChange={(e) => setNewPatient({ ...newPatient, image_full_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="https://.../imagen.jpg"
                     />
                   </div>
@@ -3307,28 +3342,30 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 5: Diagnóstico y Plan */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Target className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Diagnóstico y Tratamiento</h3>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Diagnóstico</label>
                     <textarea
                       value={newPatient.diagnostico}
                       onChange={(e) => setNewPatient({...newPatient, diagnostico: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="ACV isquémico en territorio de ACM derecha..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Plan de Tratamiento</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Plan de Tratamiento</label>
                     <textarea
                       value={newPatient.plan}
                       onChange={(e) => setNewPatient({...newPatient, plan: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={3}
                       placeholder="Antiagregación, control de factores de riesgo..."
                     />
@@ -3337,43 +3374,64 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 6: Seguimiento */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Seguimiento</h3>
                 </div>
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
-                      <select
-                        value={newPatient.severidad}
-                        onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="I">I - Estable</option>
-                        <option value="II">II - Moderado</option>
-                        <option value="III">III - Severo</option>
-                        <option value="IV">IV - Crítico</option>
-                      </select>
+                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        Severidad
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={newPatient.severidad}
+                          onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
+                          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          style={{ borderColor: 'var(--border-primary)' }}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="I">I - Estable</option>
+                          <option value="II">II - Moderado</option>
+                          <option value="III">III - Severo</option>
+                          <option value="IV">IV - Crítico</option>
+                        </select>
+
+                        {/* Badge visual de severidad */}
+                        {newPatient.severidad && (
+                          <span
+                            className={`px-2 py-0.5 text-xs font-semibold rounded whitespace-nowrap ${
+                              newPatient.severidad === 'I' ? 'badge-severity-1' :
+                              newPatient.severidad === 'II' ? 'badge-severity-2' :
+                              newPatient.severidad === 'III' ? 'badge-severity-3' :
+                              newPatient.severidad === 'IV' ? 'badge-severity-4' : ''
+                            }`}
+                          >
+                            {newPatient.severidad}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Fecha</label>
                       <input
                         type="date"
                         value={newPatient.fecha}
                         onChange={(e) => setNewPatient({...newPatient, fecha: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Pendientes</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Pendientes</label>
                     <textarea
                       value={newPatient.pendientes}
                       onChange={(e) => setNewPatient({...newPatient, pendientes: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="Interconsulta neuropsicología, control en 48hs..."
                     />
@@ -3381,7 +3439,30 @@ const WardRounds: React.FC = () => {
                 </div>
               </section>
 
+              </div>
+
+              {/* Columna derecha: Vista previa en vivo (1/3, solo visible en md+) */}
+              <div className="hidden md:block md:w-1/3 border-l bg-[var(--bg-primary)] p-4 overflow-y-auto" style={{ borderColor: 'var(--border-primary)' }}>
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                    Vista Previa
+                  </h3>
+                  <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    Así se verá la card del paciente
+                  </p>
+                </div>
+
+                <WardPatientCard
+                  patient={newPatient}
+                  resident={residents.find(r => r.id === newPatient.assigned_resident_id)}
+                  onClick={() => {}}
+                  isDragging={false}
+                  isDragOver={false}
+                />
+              </div>
+
             </div>
+
             <div className="p-4 border-t bg-white flex justify-end space-x-3 sticky bottom-0">
               <button
                 onClick={() => {
@@ -3395,6 +3476,11 @@ const WardRounds: React.FC = () => {
               </button>
               <button
                 onClick={addPatient}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !dniError && !isDniChecking && !isSavingNewPatient) {
+                    addPatient();
+                  }
+                }}
                 disabled={!!dniError || (ENABLE_DNI_CHECK && isDniChecking) || isSavingNewPatient}
                 className={`px-4 py-2 rounded-lg text-sm ${
                   dniError || (ENABLE_DNI_CHECK && isDniChecking) || isSavingNewPatient
@@ -3403,7 +3489,7 @@ const WardRounds: React.FC = () => {
                 }`}
                 title={dniError ? 'Resuelva el error de DNI para continuar' : ''}
               >
-                {isSavingNewPatient ? 'Guardando...' : ((ENABLE_DNI_CHECK && isDniChecking) ? 'Verificando DNI...' : 'Guardar Paciente')}
+                {isSavingNewPatient ? 'Guardando...' : ((ENABLE_DNI_CHECK && isDniChecking) ? 'Verificando DNI...' : 'Agregar paciente')}
               </button>
             </div>
           </div>
@@ -4184,24 +4270,25 @@ const WardRounds: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-secondary)]">
 
               {/* Sección 1: Datos Básicos */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <User className="h-5 w-5 text-blue-600 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Datos del Paciente</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Datos del Paciente</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Cama</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Cama</label>
                     <input
                       type="text"
                       value={editingPatient.cama}
                       onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">DNI</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>DNI</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -4228,26 +4315,31 @@ const WardRounds: React.FC = () => {
                       )}
                     </div>
                     {dniError && (
-                      <p className="mt-1 text-sm text-gray-800 font-medium">{dniError}</p>
+                      <div className="mt-2 flex items-start gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-800 dark:text-red-300">{dniError}</p>
+                      </div>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Nombre Completo</label>
                     <input
                       type="text"
                       value={editingPatient.nombre}
                       onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="Apellido, Nombre"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Edad</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Edad</label>
                     <input
                       type="text"
                       value={editingPatient.edad}
                       onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="52 años"
                     />
                   </div>
@@ -4255,28 +4347,30 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 2: Historia Clínica */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Historia Clínica</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historia Clínica</h3>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Antecedentes</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Antecedentes</label>
                     <textarea
                       value={editingPatient.antecedentes}
                       onChange={(e) => setEditingPatient({...editingPatient, antecedentes: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="HTA, DBT, dislipidemia..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de Consulta</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Motivo de Consulta</label>
                     <textarea
                       value={editingPatient.motivo_consulta}
                       onChange={(e) => setEditingPatient({...editingPatient, motivo_consulta: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="Cuadro de inicio súbito caracterizado por..."
                     />
@@ -4285,10 +4379,10 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 3: Examen Físico */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Examen Físico</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Examen Físico</h3>
                 </div>
                 <div>
                 <div className="flex items-center justify-between mb-2">
@@ -4317,10 +4411,10 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 4: Estudios */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Estudios Complementarios</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Estudios Complementarios</h3>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -4344,29 +4438,31 @@ const WardRounds: React.FC = () => {
                 </div>
               </section>
               {/* Sección 4b: Imágenes y links */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <ImageIcon className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Imágenes / Multimedia</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Imágenes / Multimedia</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de miniatura (opcional)</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de miniatura (opcional)</label>
                     <input
                       type="url"
                       value={(editingPatient.image_thumbnail_url && editingPatient.image_thumbnail_url[0]) || ''}
                       onChange={(e) => setEditingPatient({ ...editingPatient, image_thumbnail_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="https://.../thumbnail.jpg"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">URL de imagen completa</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de imagen completa</label>
                     <input
                       type="url"
                       value={(editingPatient.image_full_url && editingPatient.image_full_url[0]) || ''}
                       onChange={(e) => setEditingPatient({ ...editingPatient, image_full_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       placeholder="https://.../imagen.jpg"
                     />
                   </div>
@@ -4375,28 +4471,30 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 5: Diagnóstico y Plan */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <Target className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Diagnóstico y Tratamiento</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Diagnóstico y Tratamiento</h3>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Diagnóstico</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Diagnóstico</label>
                     <textarea
                       value={editingPatient.diagnostico}
                       onChange={(e) => setEditingPatient({...editingPatient, diagnostico: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="ACV isquémico en territorio de ACM derecha..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Plan de Tratamiento</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Plan de Tratamiento</label>
                     <textarea
                       value={editingPatient.plan}
                       onChange={(e) => setEditingPatient({...editingPatient, plan: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={3}
                       placeholder="Antiagregación, control de factores de riesgo..."
                     />
@@ -4405,19 +4503,20 @@ const WardRounds: React.FC = () => {
               </section>
 
               {/* Sección 6: Seguimiento */}
-              <section className="rounded-xl border border-[var(--border-primary)] bg-white/90 p-3 shadow-sm">
+              <section className="medical-card p-4">
                 <div className="flex items-center mb-4">
                   <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-900">Seguimiento</h3>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Seguimiento</h3>
                 </div>
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Severidad</label>
+                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Severidad</label>
                       <select
                         value={editingPatient.severidad}
                         onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       >
                         <option value="">Seleccionar...</option>
                         <option value="I">I - Estable</option>
@@ -4427,21 +4526,23 @@ const WardRounds: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Fecha</label>
                       <input
                         type="date"
                         value={editingPatient.fecha}
                         onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Pendientes</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Pendientes</label>
                     <textarea
                       value={editingPatient.pendientes}
                       onChange={(e) => setEditingPatient({...editingPatient, pendientes: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      style={{ borderColor: 'var(--border-primary)' }}
                       rows={2}
                       placeholder="Interconsulta neuropsicología, control en 48hs..."
                     />

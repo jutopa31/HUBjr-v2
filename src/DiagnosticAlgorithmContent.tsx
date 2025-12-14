@@ -1,5 +1,5 @@
 ﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList } from 'lucide-react';
+import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -461,6 +461,14 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">EF normal</span>
           </button>
+          <button
+            onClick={() => setShowOcrModal(true)}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Procesar OCR de PDF o imagen"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">OCR</span>
+          </button>
           {clearNotes && (
             <button
               onClick={clearNotes}
@@ -476,24 +484,26 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 
       {/* Indicador de interconsulta activa */}
       {activeInterconsulta && (
-        <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-600 rounded">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-blue-900 dark:text-blue-100">📋 Evolucionando interconsulta:</p>
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                {activeInterconsulta.nombre} - DNI: {activeInterconsulta.dni} - Cama: {activeInterconsulta.cama}
-              </p>
+        <div className="mb-4 space-y-3">
+          <div className="p-3 bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-600 rounded">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-blue-900 dark:text-blue-100">📋 Evolucionando interconsulta:</p>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  {activeInterconsulta.nombre} - DNI: {activeInterconsulta.dni} - Cama: {activeInterconsulta.cama}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (confirm('¿Descartar conexión con interconsulta? Los datos ya cargados permanecerán en el editor.')) {
+                    onClearInterconsulta?.();
+                  }
+                }}
+                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+              >
+                Desconectar
+              </button>
             </div>
-            <button
-              onClick={() => {
-                if (confirm('¿Descartar conexión con interconsulta? Los datos ya cargados permanecerán en el editor.')) {
-                  onClearInterconsulta?.();
-                }
-              }}
-              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
-            >
-              Desconectar
-            </button>
           </div>
         </div>
       )}
@@ -775,6 +785,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           extractedData={extractPatientData(notes)}
           fullNotes={notes}
           currentHospitalContext={currentHospitalContext}
+          interconsultaContext={activeInterconsulta}
         />
       )}
 
@@ -880,4 +891,3 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
-

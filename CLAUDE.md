@@ -230,6 +230,22 @@ hospital_context IN (SELECT accessible_context FROM user_contexts WHERE user_id 
 - Default state: filters collapsed or minimal
 - Empty states should be compact and actionable
 
+**Action Buttons & Auto-save Behavior**:
+- **Rapid Actionability Principle**: All data management interfaces MUST include clearly visible action buttons:
+  - **Edit button**: Always accessible for modifying existing records
+  - **Delete button**: Always accessible for removing records (with confirmation when appropriate)
+  - **Save button**: Always visible as a manual save option
+  - Buttons should be positioned consistently across features (e.g., top-right of cards, inline with records)
+  - Actions should be immediately responsive with visual feedback
+
+- **Auto-save by Default**: Implement automatic saving in all major sections of the application:
+  - **Primary behavior**: Auto-save changes automatically after user input (debounced)
+  - **Manual fallback**: Maintain a visible save button as backup for user control
+  - **Implementation pattern**: Use debounced auto-save (e.g., 2-3 seconds after last keystroke)
+  - **Visual feedback**: Show saving status indicators (e.g., "Guardando...", "Guardado ✓")
+  - **Error handling**: If auto-save fails, prominently display manual save button and error message
+  - **Apply to**: Evolucionador, Interconsultas, Pendientes, Ward Rounds, Post-Alta, and all data entry forms
+
 ### Dark Theme Implementation
 The application supports comprehensive dark theme:
 - **Context**: `src/contexts/ThemeContext.tsx` provides theme state

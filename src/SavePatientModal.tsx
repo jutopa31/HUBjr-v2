@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import useEscapeKey from './hooks/useEscapeKey';
-import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2 } from 'lucide-react';
+import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2, Sparkles } from 'lucide-react';
 import { ExtractedPatientData, cleanPatientName } from './utils/patientDataExtractor';
 import { SavePatientData, HospitalContext } from './types';
+import { InterconsultaRow } from './services/interconsultasService';
 
 interface SavePatientModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface SavePatientModalProps {
   extractedData: ExtractedPatientData;
   fullNotes: string;
   currentHospitalContext?: HospitalContext;
+  interconsultaContext?: InterconsultaRow | null;
 }
 
 const SavePatientModal: React.FC<SavePatientModalProps> = ({
@@ -19,7 +21,8 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   onSave,
   extractedData,
   fullNotes,
-  currentHospitalContext = 'Posadas'
+  currentHospitalContext = 'Posadas',
+  interconsultaContext
 }) => {
   const [patientName, setPatientName] = useState(extractedData.name || '');
   const [patientAge, setPatientAge] = useState(extractedData.age || '');
@@ -34,13 +37,30 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
     setHospitalContext(currentHospitalContext);
   }, [currentHospitalContext]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const resolvedName = extractedData.name || interconsultaContext?.nombre || '';
+    const resolvedAge = extractedData.age || interconsultaContext?.edad || '';
+    const resolvedDni = extractedData.dni || interconsultaContext?.dni || '';
+
+    setPatientName(resolvedName);
+    setPatientAge(resolvedAge);
+    setPatientDni(resolvedDni);
+  }, [extractedData, interconsultaContext, isOpen]);
+
   useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
-    if (!patientName.trim()) {
-      setSaveResult({ success: false, message: 'El nombre del paciente es requerido' });
+    const resolvedName = cleanPatientName(
+      patientName.trim() || interconsultaContext?.nombre || 'Paciente pendiente de completar'
+    );
+    const resolvedDni = patientDni.trim() || interconsultaContext?.dni || '';
+
+    if (!resolvedDni) {
+      setSaveResult({ success: false, message: 'Falta DNI; agrega DNI o usa datos de la interconsulta' });
       return;
     }
 
@@ -49,12 +69,12 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
 
     try {
       console.log('[SavePatientModal] handleSave -> start');
-      console.log('[SavePatientModal] 🏥 Contexto hospitalario seleccionado:', hospitalContext);
-      console.log('[SavePatientModal] 📋 Contexto desde prop:', currentHospitalContext);
+      console.log('[SavePatientModal] Contexto hospitalario seleccionado:', hospitalContext);
+      console.log('[SavePatientModal] Contexto desde prop:', currentHospitalContext);
       const saveData: SavePatientData = {
-        patient_name: cleanPatientName(patientName),
-        patient_age: patientAge,
-        patient_dni: patientDni,
+        patient_name: resolvedName,
+        patient_age: patientAge || interconsultaContext?.edad || '',
+        patient_dni: resolvedDni,
         clinical_notes: fullNotes,
         hospital_context: hospitalContext,
         scale_results: extractedData.extractedScales.map(scale => ({
@@ -66,22 +86,20 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
       };
 
       console.log('[SavePatientModal] handleSave -> payload completo:', saveData);
-      console.log('[SavePatientModal] ✅ Guardando en contexto:', saveData.hospital_context);
+      console.log('[SavePatientModal] Guardando en contexto:', saveData.hospital_context);
       await onSave(saveData);
       const contextLabel = hospitalContext === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas';
-      setSaveResult({ success: true, message: `Paciente guardado exitosamente en ${contextLabel}` });
-      
-      // Cerrar modal después de 2 segundos
+      setSaveResult({ success: true, message: 'Paciente guardado exitosamente en ' + contextLabel });
+
       setTimeout(() => {
         onClose();
         setSaveResult(null);
       }, 2000);
-
     } catch (error) {
       console.error('[SavePatientModal] handleSave error:', error);
-      setSaveResult({ 
-        success: false, 
-        message: `Error al guardar: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      setSaveResult({
+        success: false,
+        message: 'Error al guardar: ' + (error instanceof Error ? error.message : 'Error desconocido')
       });
     } finally {
       setIsSaving(false);
@@ -93,6 +111,14 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
       onClose();
       setSaveResult(null);
     }
+  };
+
+  const handleAutofillFromInterconsulta = () => {
+    if (!interconsultaContext) return;
+    setPatientName(interconsultaContext.nombre || '');
+    setPatientAge(interconsultaContext.edad || '');
+    setPatientDni(interconsultaContext.dni || '');
+    setSaveResult(null);
   };
 
   return (
@@ -130,14 +156,30 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
           <div className="flex items-center justify-center space-x-2">
             <Building2 className="h-4 w-4" style={{ color: 'var(--state-info)' }} />
             <span className="text-sm font-semibold" style={{ color: 'var(--state-info)' }}>
-              Guardando en: {hospitalContext === 'Julian' ? '🏥 Consultorios Julian' : '🏥 Hospital Posadas'}
+              Guardando en: {hospitalContext === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas'}
             </span>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          {/* Datos Extraídos - Resumen */}
+          {interconsultaContext && (
+            <div className="mb-4 p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-secondary)] flex items-center justify-between gap-3">
+              <div className="text-sm text-[var(--text-secondary)]">
+                Datos recibidos desde interconsulta: <span className="font-semibold text-[var(--text-primary)]">{interconsultaContext.nombre}</span> - DNI {interconsultaContext.dni || 'N/D'} - Cama {interconsultaContext.cama || 'N/D'}
+              </div>
+              <button
+                type="button"
+                onClick={handleAutofillFromInterconsulta}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg btn-soft text-sm"
+              >
+                <Sparkles className="h-4 w-4" />
+                Autocompletar
+              </button>
+            </div>
+          )}
+
+          {/* Datos extraídos - Resumen */}
           <div className="mb-6 p-4 rounded-lg bg-[var(--bg-secondary)]">
             <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2 flex items-center">
               <Calendar className="h-4 w-4 mr-2" />
@@ -151,7 +193,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
                   </div>
                   {extractedData.extractedScales.map((scale, index) => (
                     <div key={index} className="ml-4 text-xs">
-                      • {scale.name}: {scale.score} puntos
+                      - {scale.name}: {scale.score} puntos
                     </div>
                   ))}
                 </>

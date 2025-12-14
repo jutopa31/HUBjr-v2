@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Plus } from 'lucide-react';
 import { InterconsultaFilters } from '../../services/interconsultasService';
 
 interface InterconsultaFiltersProps {
@@ -11,12 +11,14 @@ interface InterconsultaFiltersProps {
     Resuelta: number;
     Cancelada: number;
   };
+  onNewClick?: () => void;
 }
 
 const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
   filters,
   onFiltersChange,
   statusCounts,
+  onNewClick,
 }) => {
   const getISODate = (offsetDays = 0) => {
     const date = new Date();
@@ -148,6 +150,17 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
         backgroundColor: 'var(--bg-secondary)',
         borderColor: 'var(--border-primary)',
       }}>
+        {/* Botón Nueva Interconsulta - A la izquierda */}
+        {onNewClick && (
+          <button
+            onClick={onNewClick}
+            className="px-4 py-1.5 text-sm btn-accent rounded-lg inline-flex items-center gap-2 font-semibold shadow-sm hover:shadow-md transition-all flex-shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva Interconsulta
+          </button>
+        )}
+
         {/* Search Input - Compact */}
         <div className="relative flex-shrink-0" style={{ minWidth: '200px', maxWidth: '240px' }}>
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />

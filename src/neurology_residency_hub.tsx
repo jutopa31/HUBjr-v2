@@ -5648,6 +5648,7 @@ const NeurologyResidencyHub = () => {
         scale={selectedScale}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
+        notesContext={notes}
       />
     )
   ) : null;

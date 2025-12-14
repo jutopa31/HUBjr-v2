@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Copy, Check, FileText, Upload } from 'lucide-react';
+import { X, Save, Copy, Check, FileText, Upload, MessageSquare, Edit2, XCircle } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { InterconsultaRow } from '../../services/interconsultasService';
-import { updateStatus, updateRespuestaWithStatus, uploadImageToInterconsulta, removeImageFromInterconsulta, appendOCRTextToInterconsulta } from '../../services/interconsultasService';
+import { updateStatus, updateRespuestaWithStatus, uploadImageToInterconsulta, removeImageFromInterconsulta, appendOCRTextToInterconsulta, updateInterconsultaData } from '../../services/interconsultasService';
 import { saveToWardRounds, saveToSavedPatients } from '../../utils/interconsultasUtils';
 import { useAuthContext } from '../auth/AuthProvider';
+import ConfirmacionEvolucionadorModal from './ConfirmacionEvolucionadorModal';
 
 interface InterconsultaDetailModalProps {
   interconsulta: InterconsultaRow;
@@ -37,10 +38,28 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
   const [ocrText, setOcrText] = useState('');
   const [processingOCR, setProcessingOCR] = useState(false);
 
+  // Estado para modal de confirmación de ir al Evolucionador
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Estados para edición de datos básicos
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedNombre, setEditedNombre] = useState(interconsulta.nombre);
+  const [editedDni, setEditedDni] = useState(interconsulta.dni);
+  const [editedCama, setEditedCama] = useState(interconsulta.cama);
+  const [editedRelato, setEditedRelato] = useState(interconsulta.relato_consulta || '');
+  const [editedEdad, setEditedEdad] = useState(interconsulta.edad || '');
+  const [savingEdit, setSavingEdit] = useState(false);
+
   useEffect(() => {
     setCurrentStatus(interconsulta.status);
     setRespuesta(interconsulta.respuesta || '');
     setRespuestaDirty(false);
+    setEditedNombre(interconsulta.nombre);
+    setEditedDni(interconsulta.dni);
+    setEditedCama(interconsulta.cama);
+    setEditedRelato(interconsulta.relato_consulta || '');
+    setEditedEdad(interconsulta.edad || '');
+    setIsEditMode(false);
   }, [interconsulta]);
 
   useEffect(() => {
@@ -255,6 +274,53 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
     }
   };
 
+  const handleEditToggle = () => {
+    if (isEditMode) {
+      // Cancelar edición - revertir cambios
+      setEditedNombre(interconsulta.nombre);
+      setEditedDni(interconsulta.dni);
+      setEditedCama(interconsulta.cama);
+      setEditedRelato(interconsulta.relato_consulta || '');
+      setEditedEdad(interconsulta.edad || '');
+    }
+    setIsEditMode(!isEditMode);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!interconsulta.id) return;
+
+    // Validación básica
+    if (!editedNombre.trim() || !editedDni.trim() || !editedCama.trim()) {
+      setError('Nombre, DNI y Cama son campos requeridos');
+      return;
+    }
+
+    setSavingEdit(true);
+    setError(null);
+
+    const updates = {
+      nombre: editedNombre.trim(),
+      dni: editedDni.trim(),
+      cama: editedCama.trim(),
+      relato_consulta: editedRelato.trim(),
+      edad: editedEdad.trim()
+    };
+
+    const { success, data, error: updateError } = await updateInterconsultaData(interconsulta.id, updates);
+    setSavingEdit(false);
+
+    if (!success) {
+      setError(updateError || 'Error al guardar cambios');
+      return;
+    }
+
+    if (data) {
+      onUpdate(data);
+      setIsEditMode(false);
+      setSuccessMessage('Interconsulta actualizada correctamente');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
       <div
@@ -272,7 +338,7 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
               <select
                 value={currentStatus}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                disabled={updatingStatus || !user}
+                disabled={updatingStatus || !user || isEditMode}
                 className="px-3 py-1 text-sm border rounded-lg"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -288,12 +354,44 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
               <StatusBadge status={currentStatus} />
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="ml-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2 ml-4">
+            {isEditMode ? (
+              <>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={savingEdit}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-colors"
+                >
+                  <Save className="h-4 w-4" />
+                  {savingEdit ? 'Guardando...' : 'Guardar'}
+                </button>
+                <button
+                  onClick={handleEditToggle}
+                  disabled={savingEdit}
+                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleEditToggle}
+                disabled={!user}
+                className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-colors"
+                title="Editar datos de la interconsulta"
+              >
+                <Edit2 className="h-4 w-4" />
+                Editar
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -309,65 +407,133 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
         )}
 
         <div className="p-6 space-y-6">
-          {/* Patient Info Section */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                DNI
-              </label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">{interconsulta.dni}</p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Cama
-              </label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">{interconsulta.cama}</p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Fecha de Interconsulta
-              </label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">
-                {formatDate(interconsulta.fecha_interconsulta)}
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Creado
-              </label>
-              <p className="text-sm text-gray-900 dark:text-gray-100">
-                {formatTimestamp(interconsulta.created_at)}
-              </p>
-            </div>
-          </div>
-
-          {/* Relato Section */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Relato o motivo de la consulta
-              </label>
-              <button
-                onClick={handleCopyRelato}
-                className="text-xs btn-soft px-2 py-1 rounded inline-flex items-center gap-1"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-3 w-3" />
-                    Copiado
-                  </>
+          {/* Grid horizontal: Datos del paciente (izquierda) + Relato (derecha) */}
+          <div className="grid md:grid-cols-5 gap-4">
+            {/* Columna izquierda: 2/5 (40%) - Datos del paciente */}
+            <div className="md:col-span-2 space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Nombre {isEditMode && <span className="text-red-500">*</span>}
+                </label>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={editedNombre}
+                    onChange={(e) => setEditedNombre(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    placeholder="Nombre del paciente"
+                  />
                 ) : (
-                  <>
-                    <Copy className="h-3 w-3" />
-                    Copiar
-                  </>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 font-semibold">
+                    {interconsulta.nombre}
+                  </p>
                 )}
-              </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  DNI {isEditMode && <span className="text-red-500">*</span>}
+                </label>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={editedDni}
+                    onChange={(e) => setEditedDni(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    placeholder="DNI"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{interconsulta.dni}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Cama {isEditMode && <span className="text-red-500">*</span>}
+                </label>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={editedCama}
+                    onChange={(e) => setEditedCama(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    placeholder="Cama"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{interconsulta.cama}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Edad
+                </label>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={editedEdad}
+                    onChange={(e) => setEditedEdad(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    placeholder="Edad (opcional)"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{interconsulta.edad || 'No especificada'}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Fecha de Interconsulta
+                </label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">
+                  {formatDate(interconsulta.fecha_interconsulta)}
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Creado
+                </label>
+                <p className="text-sm text-gray-900 dark:text-gray-100">
+                  {formatTimestamp(interconsulta.created_at)}
+                </p>
+              </div>
             </div>
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-64 overflow-y-auto">
-              <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">
-                {interconsulta.relato_consulta || 'Sin relato'}
-              </p>
+
+            {/* Columna derecha: 3/5 (60%) - Relato */}
+            <div className="md:col-span-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Relato o motivo de la consulta
+                </label>
+                {!isEditMode && (
+                  <button
+                    onClick={handleCopyRelato}
+                    className="text-xs btn-soft px-2 py-1 rounded inline-flex items-center gap-1"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3 w-3" />
+                        Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        Copiar
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              {isEditMode ? (
+                <textarea
+                  value={editedRelato}
+                  onChange={(e) => setEditedRelato(e.target.value)}
+                  className="w-full h-[200px] px-4 py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none"
+                  placeholder="Relato o motivo de la consulta"
+                />
+              ) : (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[200px] overflow-y-auto">
+                  <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">
+                    {interconsulta.relato_consulta || 'Sin relato'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -531,17 +697,15 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
               Acciones rápidas
             </label>
 
-            {/* Botón destacado para ir al Evolucionador */}
+            {/* Botón destacado para Responder en Evolucionador */}
             {onGoToEvolucionador && (
               <div className="mb-4">
                 <button
-                  onClick={() => {
-                    onGoToEvolucionador(interconsulta);
-                    onClose();
-                  }}
+                  onClick={() => setShowConfirmModal(true)}
                   className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-semibold inline-flex items-center justify-center gap-2 shadow-md transition-all"
                 >
-                  ➡️ Ir al Evolucionador
+                  <MessageSquare className="h-5 w-5" />
+                  Responder en Evolucionador
                 </button>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
                   Completa la evolución del paciente y genera la respuesta
@@ -572,6 +736,19 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación para ir al Evolucionador */}
+      {showConfirmModal && onGoToEvolucionador && (
+        <ConfirmacionEvolucionadorModal
+          interconsulta={interconsulta}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={() => {
+            onGoToEvolucionador(interconsulta);
+            onClose(); // Cerrar modal de detalles
+            setShowConfirmModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };

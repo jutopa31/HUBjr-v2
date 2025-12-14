@@ -4,7 +4,61 @@ import { X, Copy } from 'lucide-react';
 import calculateScaleScore from './calculateScaleScore';
 import { ScaleModalProps, ScaleItem } from './types';
 
-const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => {
+const NIHSS_PRESETS: Record<string, Record<string, number | string>> = {
+  normal: {
+    loc: 0,
+    'loc-questions': 0,
+    'loc-commands': 0,
+    gaze: 0,
+    visual: 0,
+    facial: 0,
+    'motor-left-arm': 0,
+    'motor-right-arm': 0,
+    'motor-left-leg': 0,
+    'motor-right-leg': 0,
+    ataxia: 0,
+    sensory: 0,
+    language: 0,
+    dysarthria: 0,
+    neglect: 0
+  },
+  left_deficit: {
+    loc: 0,
+    'loc-questions': 0,
+    'loc-commands': 0,
+    gaze: 1,
+    visual: 1,
+    facial: 2,
+    'motor-left-arm': 3,
+    'motor-right-arm': 0,
+    'motor-left-leg': 3,
+    'motor-right-leg': 0,
+    ataxia: 1,
+    sensory: 2,
+    language: 0,
+    dysarthria: 1,
+    neglect: 1
+  },
+  right_deficit: {
+    loc: 0,
+    'loc-questions': 0,
+    'loc-commands': 0,
+    gaze: 1,
+    visual: 1,
+    facial: 2,
+    'motor-left-arm': 0,
+    'motor-right-arm': 3,
+    'motor-left-leg': 0,
+    'motor-right-leg': 3,
+    ataxia: 1,
+    sensory: 2,
+    language: 1,
+    dysarthria: 1,
+    neglect: 0
+  }
+};
+
+const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notesContext }) => {
   const [scores, setScores] = useState<{ [key: string]: number | string }>({});
 
   useEscapeKey(onClose, Boolean(scale));
@@ -28,6 +82,23 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
     const result = calculateScaleScore(scale, scores);
     onSubmit(result);
   }, [scale, scores, onSubmit]);
+
+  const applyPreset = useCallback((presetKey: 'normal' | 'left_deficit' | 'right_deficit') => {
+    const preset = NIHSS_PRESETS[presetKey];
+    if (!preset) return;
+    setScores(prev => ({ ...prev, ...preset }));
+  }, []);
+
+  const suggestedPreset = useMemo(() => {
+    if (!notesContext) return null;
+    const text = notesContext.toLowerCase();
+    if (/nihss\s*:?\s*0|sin d[ée]ficit|sin focalidad/.test(text)) return 'normal';
+    const mentionsLeft = /izq|izquierda|hemiparesia izquierda|brazo izquierdo|pierna izquierda/.test(text);
+    const mentionsRight = /der|derecha|hemiparesia derecha|brazo derecho|pierna derecha/.test(text);
+    if (mentionsLeft && !mentionsRight) return 'left_deficit';
+    if (mentionsRight && !mentionsLeft) return 'right_deficit';
+    return null;
+  }, [notesContext]);
 
   const currentTotal = useMemo(() => {
     // Para escalas cualitativas o de ítem único, no mostrar puntaje total
@@ -82,16 +153,45 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   return (
     <div className="modal-overlay">
       <div className="modal-content max-w-2xl w-full">
-        <div className="p-6 border-b border-[var(--border-secondary)] flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">{scale.name}</h3>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">{scale.description}</p>
+          <div className="p-6 border-b border-[var(--border-secondary)] flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">{scale.name}</h3>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">{scale.description}</p>
+            </div>
+            <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+              <X className="h-6 w-6" />
+            </button>
           </div>
-          <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
-            <X className="h-6 w-6" />
-          </button>
-        </div>
         <div className="p-6">
+          {scale.id === 'nihss' && (
+            <div className="mb-4 rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-secondary)] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">Atajos NIHSS</p>
+                  <p className="text-xs text-[var(--text-secondary)]">Aplica un preset y ajusta ítems puntuales</p>
+                  {suggestedPreset && (
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">
+                      Sugerencia desde notas: <span className="font-semibold text-[var(--text-primary)]">{suggestedPreset === 'normal' ? 'Todo normal' : suggestedPreset === 'left_deficit' ? 'Déficit izquierdo' : 'Déficit derecho'}</span>
+                    </p>
+                  )}
+                </div>
+                {suggestedPreset && (
+                  <button
+                    className="px-3 py-1.5 text-xs btn-soft rounded"
+                    onClick={() => applyPreset(suggestedPreset as 'normal' | 'left_deficit' | 'right_deficit')}
+                  >
+                    Aplicar sugerencia
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('normal')}>Todo normal</button>
+                <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('left_deficit')}>Déficit izquierdo</button>
+                <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('right_deficit')}>Déficit derecho</button>
+                <button className="px-3 py-1.5 text-xs btn-soft rounded text-[var(--text-secondary)]" onClick={() => setScores({})}>Limpiar selección</button>
+              </div>
+            </div>
+          )}
           <div className="space-y-4">
             {scale.items && scale.items.length > 0 ? scale.items.map((item: ScaleItem) => (
               <div key={item.id} className="border border-[var(--border-secondary)] rounded-lg p-4 bg-[var(--bg-secondary)]">

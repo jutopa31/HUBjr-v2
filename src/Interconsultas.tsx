@@ -319,6 +319,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
             </div>
           </div>
 
+          {/* Botones secundarios a la derecha */}
           <div className="flex gap-2">
             <button onClick={fetchAll} className="px-2.5 py-1.5 text-xs btn-soft rounded">
               Actualizar
@@ -352,14 +353,6 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
                 Eliminar ({selectedIds.size})
               </button>
             )}
-
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Nueva Interconsulta</span>
-            </button>
           </div>
         </div>
 
@@ -381,7 +374,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
           </div>
         )}
 
-        {/* Create Form (Collapsible) */}
+        {/* Create Form (Collapsible) - Layout horizontal */}
         {showCreateForm && (
           <div className="medical-card p-3 mb-3">
             <div className="flex items-center justify-between mb-3">
@@ -393,61 +386,85 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
                 <ChevronUp className="h-5 w-5" />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input
-                className="border rounded px-3 py-2 text-sm"
-                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                placeholder="Nombre"
-                value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              />
-              <input
-                className="border rounded px-3 py-2 text-sm"
-                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                placeholder="DNI"
-                value={form.dni}
-                onChange={(e) => setForm({ ...form, dni: e.target.value })}
-              />
-              <input
-                className="border rounded px-3 py-2 text-sm"
-                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                placeholder="Cama"
-                value={form.cama}
-                onChange={(e) => setForm({ ...form, cama: e.target.value })}
-              />
-              <input
-                type="date"
-                className="border rounded px-3 py-2 text-sm"
-                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                value={form.fecha_interconsulta}
-                onChange={(e) => setForm({ ...form, fecha_interconsulta: e.target.value })}
-              />
+
+            {/* Grid horizontal: Datos (izquierda) + Relato (derecha) */}
+            <div className="grid md:grid-cols-5 gap-4">
+              {/* Columna izquierda: 2/5 (40%) - Inputs apilados verticalmente */}
+              <div className="md:col-span-2 space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Nombre *
+                  </label>
+                  <input
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    placeholder="Nombre del paciente"
+                    value={form.nombre}
+                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    DNI *
+                  </label>
+                  <input
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    placeholder="DNI"
+                    value={form.dni}
+                    onChange={(e) => setForm({ ...form, dni: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Cama *
+                  </label>
+                  <input
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    placeholder="Cama"
+                    value={form.cama}
+                    onChange={(e) => setForm({ ...form, cama: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Fecha *
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    value={form.fecha_interconsulta}
+                    onChange={(e) => setForm({ ...form, fecha_interconsulta: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Columna derecha: 3/5 (60%) - Textarea del relato */}
+              <div className="md:col-span-3">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Relato o motivo de la consulta *
+                </label>
+                <textarea
+                  className="w-full border rounded px-3 py-2 text-sm resize-none"
+                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                  placeholder="Relato o motivo de la consulta"
+                  rows={8}
+                  value={form.relato_consulta ?? ''}
+                  onChange={(e) => setForm({ ...form, relato_consulta: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-              <textarea
-                className="w-full border rounded px-3 py-2 text-sm"
-                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                placeholder="Relato o motivo de la consulta"
-                rows={4}
-                value={form.relato_consulta ?? ''}
-                onChange={(e) => setForm({ ...form, relato_consulta: e.target.value })}
-              />
-              <textarea
-                className="w-full border rounded px-3 py-2 text-sm"
-                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                placeholder="Respuesta inicial (opcional)"
-                rows={4}
-                value={form.respuesta ?? ''}
-                onChange={(e) => setForm({ ...form, respuesta: e.target.value })}
-              />
-            </div>
+
+            {/* Botones debajo del grid */}
             <div className="mt-3 flex gap-2">
               <button
                 onClick={handleCreate}
                 disabled={!isValid || loading || creating || !user}
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded ${(isValid && !creating) ? 'btn-accent' : 'btn-soft'} disabled:cursor-not-allowed`}
               >
-                <Plus className="h-4 w-4" />{creating ? 'Guardando...' : 'Agregar'}
+                <Plus className="h-4 w-4" />{creating ? 'Guardando...' : 'Guardar'}
               </button>
               <button
                 onClick={() => setShowCreateForm(false)}
@@ -464,6 +481,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
           filters={filters}
           onFiltersChange={setFilters}
           statusCounts={statusCounts}
+          onNewClick={() => setShowCreateForm(!showCreateForm)}
         />
 
         {/* Card Grid */}
@@ -477,6 +495,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
                 isSelected={selectedIds.has(row.id!)}
                 onToggleSelection={handleToggleSelection}
                 onDelete={handleDeleteSingle}
+                onGoToEvolucionador={onGoToEvolucionador}
               />
             ))}
           </div>
