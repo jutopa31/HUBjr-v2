@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MessageCircle, MessageCircleOff, Trash2, ArrowRight } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { InterconsultaRow } from '../../services/interconsultasService';

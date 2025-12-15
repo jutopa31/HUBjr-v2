@@ -54,3 +54,8 @@ Context for agents to reproduce and iteratively improve daily workflows (neurolo
 3. Presets for NIHSS (normal/hemiparesia izq/der) + live total.
 4. Remove extra modal hop in Interconsultas (direct-to-evolucionador).
 5. Trim/scroll after inserting examen físico.
+## Progress 2025-12-14
+- Save modal now pulls nombre/DNI/edad/contexto desde interconsulta cuando existe y permite guardar si el DNI viene de cualquiera de las fuentes (cubre quick win #1).
+- NIHSS aplica el preset sugerido auto al abrir cuando las notas indican normal/izq/der y no hay selecciones previas (quick win #3).
+- Boton "Responder en Evolucionador" en InterconsultaDetail ahora va directo sin modal de confirmacion (quick win #4).
+- Pase de sala: boton de "Agregar Paciente" crea registro vacio y abre edicion inmediata, reduciendo pasos para capturar datos rapidos.

@@ -63,7 +63,7 @@ const NeurologyResidencyHub = () => {
   const [notes, setNotes] = useState(() => {
     const savedNotes = localStorage.getItem('hubjr-patient-notes');
     if (savedNotes) {
-      console.log('💾 Restored notes from localStorage');
+      console.log('[Hub] Restored notes from localStorage');
       return savedNotes;
     }
     return '';
@@ -210,20 +210,19 @@ const NeurologyResidencyHub = () => {
           ], 
           score: 0 
         },
-        { 
-          id: 'facial', 
-          label: '6. Parálisis facial', 
+        {
+          id: 'facial',
+          label: '6. Parálisis facial',
           options: [
             '0 - Movimientos normales simétricos',
             '1 - Paresia leve (asimetría al sonreír)',
             '2 - Parálisis parcial (parálisis total de la parte inferior de la cara)',
             '3 - Parálisis completa (ausencia de movimientos faciales en la parte superior e inferior)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-left-arm', 
-          label: '7a. Motor - Brazo izquierdo', 
+        {
+          id: 'motor-left-arm',
+          label: '7a. Motor - Brazo izquierdo',
           options: [
             '0 - No hay caída, mantiene la posición 10 segundos',
             '1 - Caída parcial antes de 10 segundos, no llega a tocar la cama',
@@ -231,12 +230,11 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-right-arm', 
-          label: '7b. Motor - Brazo derecho', 
+        {
+          id: 'motor-right-arm',
+          label: '7b. Motor - Brazo derecho',
           options: [
             '0 - No hay caída, mantiene la posición 10 segundos',
             '1 - Caída parcial antes de 10 segundos, no llega a tocar la cama',
@@ -244,12 +242,11 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-left-leg', 
-          label: '8a. Motor - Pierna izquierda', 
+        {
+          id: 'motor-left-leg',
+          label: '8a. Motor - Pierna izquierda',
           options: [
             '0 - No hay caída, mantiene la posición 5 segundos',
             '1 - Caída parcial antes de 5 segundos, no llega a tocar la cama',
@@ -257,12 +254,11 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae inmediatamente',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-right-leg', 
-          label: '8b. Motor - Pierna derecha', 
+        {
+          id: 'motor-right-leg',
+          label: '8b. Motor - Pierna derecha',
           options: [
             '0 - No hay caída, mantiene la posición 5 segundos',
             '1 - Caída parcial antes de 5 segundos, no llega a tocar la cama',
@@ -270,61 +266,55 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae inmediatamente',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'ataxia', 
-          label: '9. Ataxia de miembros', 
+        {
+          id: 'ataxia',
+          label: '9. Ataxia de miembros',
           options: [
             '0 - Ausente',
             '1 - Presente en un miembro',
             '2 - Presente en dos miembros',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'sensory', 
-          label: '10. Sensibilidad', 
+        {
+          id: 'sensory',
+          label: '10. Sensibilidad',
           options: [
             '0 - Normal, sin pérdida sensorial',
             '1 - Pérdida sensorial leve a moderada',
             '2 - Pérdida sensorial severa o total'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'language', 
-          label: '11. Mejor lenguaje', 
+        {
+          id: 'language',
+          label: '11. Mejor lenguaje',
           options: [
             '0 - Sin afasia, normal',
             '1 - Afasia leve a moderada',
             '2 - Afasia severa',
             '3 - Mudo, afasia global'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'dysarthria', 
-          label: '12. Disartria', 
+        {
+          id: 'dysarthria',
+          label: '12. Disartria',
           options: [
             '0 - Normal',
             '1 - Disartria leve a moderada',
             '2 - Disartria severa, habla ininteligible',
             'UN - Intubado u otra barrera física (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'neglect', 
-          label: '13. Extinción e inatención (negligencia)', 
+        {
+          id: 'neglect',
+          label: '13. Extinción e inatención (negligencia)',
           options: [
             '0 - Sin anormalidad',
             '1 - Inatención o extinción visual, táctil, auditiva, espacial o personal a la estimulación bilateral simultánea en una de las modalidades sensoriales',
             '2 - Hemi-inatención severa o extinción en más de una modalidad'
-          ], 
-          score: 0 
+          ]
         }
       ]
     },
@@ -3030,20 +3020,19 @@ const NeurologyResidencyHub = () => {
           ], 
           score: 0 
         },
-        { 
-          id: 'facial', 
-          label: '6. Parálisis facial', 
+        {
+          id: 'facial',
+          label: '6. Parálisis facial',
           options: [
             '0 - Movimientos normales simétricos',
             '1 - Paresia leve (asimetría al sonreír)',
             '2 - Parálisis parcial (parálisis total de la parte inferior de la cara)',
             '3 - Parálisis completa (ausencia de movimientos faciales en la parte superior e inferior)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-left-arm', 
-          label: '7a. Motor - Brazo izquierdo', 
+        {
+          id: 'motor-left-arm',
+          label: '7a. Motor - Brazo izquierdo',
           options: [
             '0 - No hay caída, mantiene la posición 10 segundos',
             '1 - Caída parcial antes de 10 segundos, no llega a tocar la cama',
@@ -3051,12 +3040,11 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-right-arm', 
-          label: '7b. Motor - Brazo derecho', 
+        {
+          id: 'motor-right-arm',
+          label: '7b. Motor - Brazo derecho',
           options: [
             '0 - No hay caída, mantiene la posición 10 segundos',
             '1 - Caída parcial antes de 10 segundos, no llega a tocar la cama',
@@ -3064,12 +3052,11 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-left-leg', 
-          label: '8a. Motor - Pierna izquierda', 
+        {
+          id: 'motor-left-leg',
+          label: '8a. Motor - Pierna izquierda',
           options: [
             '0 - No hay caída, mantiene la posición 5 segundos',
             '1 - Caída parcial antes de 5 segundos, no llega a tocar la cama',
@@ -3077,12 +3064,11 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae inmediatamente',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'motor-right-leg', 
-          label: '8b. Motor - Pierna derecha', 
+        {
+          id: 'motor-right-leg',
+          label: '8b. Motor - Pierna derecha',
           options: [
             '0 - No hay caída, mantiene la posición 5 segundos',
             '1 - Caída parcial antes de 5 segundos, no llega a tocar la cama',
@@ -3090,61 +3076,55 @@ const NeurologyResidencyHub = () => {
             '3 - No esfuerzo contra gravedad, el miembro cae inmediatamente',
             '4 - No movimiento',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'ataxia', 
-          label: '9. Ataxia de miembros', 
+        {
+          id: 'ataxia',
+          label: '9. Ataxia de miembros',
           options: [
             '0 - Ausente',
             '1 - Presente en un miembro',
             '2 - Presente en dos miembros',
             'UN - Amputación o fusión articular (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'sensory', 
-          label: '10. Sensibilidad', 
+        {
+          id: 'sensory',
+          label: '10. Sensibilidad',
           options: [
             '0 - Normal, sin pérdida sensorial',
             '1 - Pérdida sensorial leve a moderada',
             '2 - Pérdida sensorial severa o total'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'language', 
-          label: '11. Mejor lenguaje', 
+        {
+          id: 'language',
+          label: '11. Mejor lenguaje',
           options: [
             '0 - Sin afasia, normal',
             '1 - Afasia leve a moderada',
             '2 - Afasia severa',
             '3 - Mudo, afasia global'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'dysarthria', 
-          label: '12. Disartria', 
+        {
+          id: 'dysarthria',
+          label: '12. Disartria',
           options: [
             '0 - Normal',
             '1 - Disartria leve a moderada',
             '2 - Disartria severa, habla ininteligible',
             'UN - Intubado u otra barrera física (explicar)'
-          ], 
-          score: 0 
+          ]
         },
-        { 
-          id: 'neglect', 
-          label: '13. Extinción e inatención (negligencia)', 
+        {
+          id: 'neglect',
+          label: '13. Extinción e inatención (negligencia)',
           options: [
             '0 - Sin anormalidad',
             '1 - Inatención o extinción visual, táctil, auditiva, espacial o personal a la estimulación bilateral simultánea en una de las modalidades sensoriales',
             '2 - Hemi-inatención severa o extinción en más de una modalidad'
-          ], 
-          score: 0 
+          ]
         }
       ]
     },
@@ -5723,3 +5703,4 @@ const NeurologyResidencyHub = () => {
 };
 
 export default NeurologyResidencyHub;
+

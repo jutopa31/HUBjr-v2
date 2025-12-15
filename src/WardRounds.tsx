@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Download, Upload, Edit, Edit2, Save, X, XCircle, ChevronUp, ChevronDown, ChevronRight, Check, User, Clipboard, Stethoscope, FlaskConical, Target, CheckCircle, Trash2, Users, Image as ImageIcon, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
+import { Plus, Download, Upload, Edit, Edit2, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
 import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
@@ -9,7 +9,6 @@ import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
 import DeletePatientModal from './components/DeletePatientModal';
 import CSVImportModal from './components/wardRounds/CSVImportModal';
-import OCRStudiesModal from './components/wardRounds/OCRStudiesModal';
 import { useAuthContext } from './components/auth/AuthProvider';
 import { robustQuery, formatQueryError } from './utils/queryHelpers';
 import { LoadingWithRecovery } from './components/LoadingWithRecovery';
@@ -20,7 +19,6 @@ import {
   deleteOutpatientPatient,
   type OutpatientPatient
 } from './services/outpatientWardRoundsService';
-import { appendStudyText } from './services/ocrAutoService';
 import WardPatientCard from './components/wardRounds/WardPatientCard';
 import ScaleModal from './ScaleModal';
 import { Scale, ScaleResult } from './types';
@@ -457,15 +455,8 @@ const WardRounds: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [outpatients, setOutpatients] = useState<OutpatientPatient[]>([]);
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
   const [showOutpatientModal, setShowOutpatientModal] = useState(false);
   const [showCSVImportModal, setShowCSVImportModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingPatient, setEditingPatient] = useState<Patient>(emptyPatient);
-  const [newPatient, setNewPatient] = useState<Patient>(emptyPatient);
-
-  // Ref para autofocus en campo Cama del formulario de agregar paciente
-  const camaInputRef = useRef<HTMLInputElement>(null);
   const [newOutpatient, setNewOutpatient] = useState<OutpatientPatient>(emptyOutpatient);
   const [loading, setLoading] = useState(true);
   const [outpatientLoading, setOutpatientLoading] = useState(false);
@@ -492,9 +483,6 @@ const WardRounds: React.FC = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraStarting, setIsCameraStarting] = useState(false);
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
-  const [isStudiesOcrOpen, setIsStudiesOcrOpen] = useState(false);
-  const [ocrTarget, setOcrTarget] = useState<'new' | 'edit'>('new');
-  const [ocrSeedText, setOcrSeedText] = useState<string>('');
 
   // Estados para el sorting
   const [sortField, setSortField] = useState<keyof Patient | null>(null);
@@ -508,15 +496,9 @@ const WardRounds: React.FC = () => {
   const [editingPendientesId, setEditingPendientesId] = useState<string | null>(null);
   const [tempPendientes, setTempPendientes] = useState<string>('');
 
-  // Estados para validación de DNI duplicado
-  const [dniError, setDniError] = useState<string>('');
-  const [isDniChecking, setIsDniChecking] = useState(false);
-  // Debounce handler para validar DNI sin bucles de "procesando"
-  const dniValidationTimeout = React.useRef<number | null>(null);
-
   // Estado de guardado para evitar dobles envíos y loops de UI
-  const [isSavingNewPatient, setIsSavingNewPatient] = useState(false);
   const [isUpdatingPatient, setIsUpdatingPatient] = useState(false);
+  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
 
   // Estados para el modal de eliminar/archivar paciente
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -527,6 +509,10 @@ const WardRounds: React.FC = () => {
   const [draggedPatientId, setDraggedPatientId] = useState<string | null>(null);
   const [dragOverPatientId, setDragOverPatientId] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+
+  // Estado para edición inline en cards
+  const [inlineEditingPatientId, setInlineEditingPatientId] = useState<string | null>(null);
+  const [inlineEditValues, setInlineEditValues] = useState<Patient | null>(null);
 
   // Estado para vista dual (tabla vs cards)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -548,50 +534,18 @@ const WardRounds: React.FC = () => {
 
   const closeOutpatientModal = () => setShowOutpatientModal(false);
 
-  const closeAddForm = () => {
-    setShowAddForm(false);
-    setNewPatient(emptyPatient);
-    setDniError('');
-    setIsStudiesOcrOpen(false);
-  };
-
-  const closeEditingModal = () => {
-    setEditingId(null);
-    setEditingPatient(emptyPatient);
-    setDniError('');
-    setIsStudiesOcrOpen(false);
-  };
-
   const closeSelectedPatientModal = () => {
     setSelectedPatient(null);
     setActiveInlineField(null);
     setIsDetailEditMode(false);
     setIsHeaderEditMode(false);
     setImageLightboxUrl(null);
-    setIsStudiesOcrOpen(false);
     closeCameraModal();
   };
 
   const closeImageLightbox = () => setImageLightboxUrl(null);
-  const closeStudiesOcrModal = () => setIsStudiesOcrOpen(false);
 
-  const openStudiesOcrModal = (target: 'new' | 'edit') => {
-    const baseText = target === 'edit' ? editingPatient.estudios : newPatient.estudios;
-    setOcrTarget(target);
-    setOcrSeedText(baseText || '');
-    setIsStudiesOcrOpen(true);
-  };
-
-  const handleApplyOcrStudies = (text: string) => {
-    if (ocrTarget === 'edit') {
-      setEditingPatient((prev) => ({ ...prev, estudios: appendStudyText(prev.estudios || '', text) }));
-    } else {
-      setNewPatient((prev) => ({ ...prev, estudios: appendStudyText(prev.estudios || '', text) }));
-    }
-    setIsStudiesOcrOpen(false);
-  };
-
-  const isAnyModalOpen = showOutpatientModal || showAddForm || showCSVImportModal || showCameraModal || isStudiesOcrOpen || Boolean(editingId) || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
+  const isAnyModalOpen = showOutpatientModal || showCSVImportModal || showCameraModal || Boolean(selectedPatient) || Boolean(imageLightboxUrl);
 
   useEscapeKey(() => {
     if (imageLightboxUrl) {
@@ -602,20 +556,8 @@ const WardRounds: React.FC = () => {
       closeCameraModal();
       return;
     }
-    if (isStudiesOcrOpen) {
-      closeStudiesOcrModal();
-      return;
-    }
     if (selectedPatient) {
       closeSelectedPatientModal();
-      return;
-    }
-    if (editingId) {
-      closeEditingModal();
-      return;
-    }
-    if (showAddForm) {
-      closeAddForm();
       return;
     }
     if (showCSVImportModal) {
@@ -678,14 +620,6 @@ const WardRounds: React.FC = () => {
   }, [showCameraModal, stopCameraStream]);
 
   useEffect(() => () => stopCameraStream(), [stopCameraStream]);
-
-  // AutoFocus en campo Cama cuando se abre el modal de agregar paciente
-  useEffect(() => {
-    if (showAddForm && camaInputRef.current) {
-      // Delay para asegurar que el modal esté renderizado
-      setTimeout(() => camaInputRef.current?.focus(), 100);
-    }
-  }, [showAddForm]);
 
   useEffect(() => {
     setImageOverrides({});
@@ -968,16 +902,11 @@ const WardRounds: React.FC = () => {
   // Función para validar DNI duplicado
   const validateDNI = async (dni: string, excludeId?: string) => {
     if (!ENABLE_DNI_CHECK) {
-      setDniError('');
       return true;
     }
     if (!dni.trim()) {
-      setDniError('');
       return true;
     }
-
-    setIsDniChecking(true);
-    setDniError('');
 
     try {
       let query = supabase
@@ -996,17 +925,52 @@ const WardRounds: React.FC = () => {
 
       if (data && data.length > 0) {
         const existingPatient = data[0];
-        setDniError(`⚠️ DNI ya existe: ${existingPatient.nombre} (${existingPatient.dni})`);
+        console.warn(`⚠️ DNI ya existe: ${existingPatient.nombre} (${existingPatient.dni})`);
+        alert(`⚠️ DNI duplicado: ${existingPatient.nombre} (${existingPatient.dni})`);
         return false;
       }
 
       return true;
     } catch (error) {
       console.error('Error validating DNI:', error);
-      setDniError('Error al validar DNI');
       return false;
+    }
+  };
+
+  const createEmptyPatient = async () => {
+    // Prevenir clics múltiples
+    if (isCreatingPatient) {
+      console.log('[WardRounds] createEmptyPatient -> already creating, ignoring');
+      return;
+    }
+
+    try {
+      setIsCreatingPatient(true);
+      console.log('[WardRounds] createEmptyPatient -> creating empty patient');
+
+      const payload = {
+        ...emptyPatient,
+        display_order: getNextDisplayOrder()
+      };
+
+      const { data, error } = await supabase
+        .from('ward_round_patients')
+        .insert([payload])
+        .select();
+
+      if (error) throw error;
+      console.log('[WardRounds] createEmptyPatient -> inserted:', data);
+
+      if (data && data[0]) {
+        // Abrir inmediatamente el paciente recién creado en vista de detalle
+        setSelectedPatient(data[0]);
+        await loadPatients();
+      }
+    } catch (error) {
+      console.error('[WardRounds] Error creating empty patient:', error);
+      alert('Error al crear paciente');
     } finally {
-      setIsDniChecking(false);
+      setIsCreatingPatient(false);
     }
   };
 
@@ -1165,43 +1129,6 @@ const WardRounds: React.FC = () => {
     await persistNewOrder(withOrder);
   };
 
-  // Agregar nuevo paciente
-  const addPatient = async () => {
-    // Validar DNI antes de agregar
-    const isValidDNI = await validateDNI(newPatient.dni);
-    if (!isValidDNI) {
-      return; // No agregar si hay duplicado
-    }
-
-    try {
-      setIsSavingNewPatient(true);
-      console.log('[WardRounds] addPatient -> payload:', newPatient);
-
-      const payload = {
-        ...newPatient,
-        display_order: getNextDisplayOrder()
-      };
-
-      const { data, error } = await supabase
-        .from('ward_round_patients')
-        .insert([payload])
-        .select();
-
-      if (error) throw error;
-      console.log('[WardRounds] addPatient -> inserted:', data);
-
-      setNewPatient(emptyPatient);
-      setShowAddForm(false);
-      setDniError(''); // Limpiar error al cerrar
-      await loadPatients();
-    } catch (error) {
-      console.error('[WardRounds] Error adding patient:', error);
-      alert('Error al agregar paciente');
-    } finally {
-      setIsSavingNewPatient(false);
-    }
-  };
-
   // Actualizar paciente existente
   const updatePatient = async (id: string, updatedPatient: Patient) => {
     // Prevent multiple simultaneous updates
@@ -1259,8 +1186,6 @@ const WardRounds: React.FC = () => {
         console.warn('No se pudo sincronizar con el sistema de tareas');
       }
 
-      setEditingId(null);
-      setDniError(''); // Limpiar error al cerrar
       loadPatients();
     } catch (error) {
       console.error('[WardRounds] Error updating patient:', error);
@@ -1426,8 +1351,11 @@ const WardRounds: React.FC = () => {
   };
 
 
-  const startInlineFieldEdit = (field: keyof Patient) => {
-    setActiveInlineField(field);
+  const startInlineFieldEdit = (_field: keyof Patient) => {
+    // Cuando se hace click en "Editar" de cualquier sección individual,
+    // activar el modo de edición COMPLETO (todas las secciones)
+    // en lugar de solo editar esa sección específica
+    startDetailEditMode();
   };
 
   const cancelInlineFieldEdit = () => {
@@ -1529,6 +1457,36 @@ const WardRounds: React.FC = () => {
       console.error('Error saving header edits:', error);
     } finally {
       setIsDetailSaving(false);
+    }
+  };
+
+  // ==========================================
+  // Inline Card Editing Handlers
+  // ==========================================
+
+  const startInlineCardEdit = (patient: Patient) => {
+    setInlineEditingPatientId(patient.id || null);
+    setInlineEditValues(patient);
+  };
+
+  const cancelInlineCardEdit = () => {
+    setInlineEditingPatientId(null);
+    setInlineEditValues(null);
+  };
+
+  const saveInlineCardEdit = async () => {
+    if (!inlineEditingPatientId || !inlineEditValues) return;
+
+    setIsUpdatingPatient(true);
+    try {
+      await updatePatient(inlineEditingPatientId, inlineEditValues);
+      setInlineEditingPatientId(null);
+      setInlineEditValues(null);
+    } catch (error) {
+      console.error('Error saving inline card edit:', error);
+      alert('Error al guardar los cambios del paciente');
+    } finally {
+      setIsUpdatingPatient(false);
     }
   };
 
@@ -2822,12 +2780,13 @@ const WardRounds: React.FC = () => {
               <span className="hidden md:inline">PDF</span>
             </button>
             <button
-              onClick={() => setShowAddForm(true)}
-              className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+              onClick={createEmptyPatient}
+              disabled={isCreatingPatient}
+              className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Agregar Paciente"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Agregar</span>
+              <span className="hidden sm:inline">{isCreatingPatient ? 'Creando...' : 'Agregar'}</span>
             </button>
           </div>
         </div>
@@ -3079,418 +3038,6 @@ const WardRounds: React.FC = () => {
                   })}
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Formulario para agregar paciente */}
-      {showAddForm && (
-        <div
-          className="modal-overlay"
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              closeAddForm();
-            }
-          }}
-        >
-          <div className="modal-content max-w-4xl w-full h-[85vh] flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}>
-              <h2 className="text-lg font-semibold">Agregar Nuevo Paciente</h2>
-              <button
-                onClick={closeAddForm}
-                className="p-1 rounded-md btn-soft"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Container para dos columnas: formulario y preview */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-              {/* Columna izquierda: Formulario (2/3) */}
-              <div className="flex-1 md:w-2/3 overflow-y-auto p-4 space-y-4 bg-[var(--bg-secondary)]">
-
-              {/* Sección 1: Datos Básicos */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <User className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold">Datos del Paciente</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Cama</label>
-                    <input
-                      ref={camaInputRef}
-                      type="text"
-                      value={newPatient.cama}
-                      onChange={(e) => setNewPatient({...newPatient, cama: e.target.value})}
-                      className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none ring-accent"
-                      placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>DNI</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={newPatient.dni}
-                        onChange={(e) => {
-                          const dni = e.target.value;
-                          setNewPatient({...newPatient, dni});
-                          // Validar DNI después de un breve delay
-                          // Limpiar timeout previo para evitar múltiples validaciones simultáneas
-                          if (dniValidationTimeout.current) {
-                            clearTimeout(dniValidationTimeout.current as unknown as number);
-                          }
-                          if (ENABLE_DNI_CHECK) {
-                            if (dni.trim()) {
-                              dniValidationTimeout.current = window.setTimeout(() => validateDNI(dni), 500);
-                            } else {
-                              setDniError('');
-                            }
-                          } else {
-                            // Checker disabled
-                            setDniError('');
-                          }
-                        }}
-                        className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none ring-accent`}
-                        placeholder="12345678"
-                      />
-                      {ENABLE_DNI_CHECK && isDniChecking && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                        </div>
-                      )}
-                    </div>
-                    {dniError && (
-                      <div className="mt-2 flex items-start gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
-                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-red-800 dark:text-red-300">{dniError}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Nombre Completo</label>
-                    <input
-                      type="text"
-                      value={newPatient.nombre}
-                      onChange={(e) => setNewPatient({...newPatient, nombre: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="Apellido, Nombre"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Edad</label>
-                    <input
-                      type="text"
-                      value={newPatient.edad}
-                      onChange={(e) => setNewPatient({...newPatient, edad: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="52 años"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                      <Users className="h-4 w-4 inline mr-1" />
-                      Residente Asignado
-                    </label>
-                    <select
-                      value={newPatient.assigned_resident_id || ''}
-                      onChange={(e) => setNewPatient({...newPatient, assigned_resident_id: e.target.value || undefined})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                    >
-                      <option value="">Sin asignar</option>
-                      {residents.map(resident => (
-                        <option key={resident.id} value={resident.id}>
-                          {resident.full_name} ({resident.role === 'resident' ? 'Residente' :
-                           resident.role === 'attending' ? 'Staff' : 'Interno'})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </section>
-
-              {/* Sección 2: Historia Clínica */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historia Clínica</h3>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Antecedentes</label>
-                    <textarea
-                      value={newPatient.antecedentes}
-                      onChange={(e) => setNewPatient({...newPatient, antecedentes: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="HTA, DBT, dislipidemia..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Motivo de Consulta</label>
-                    <textarea
-                      value={newPatient.motivo_consulta}
-                      onChange={(e) => setNewPatient({...newPatient, motivo_consulta: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="Cuadro de inicio súbito caracterizado por..."
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Sección 3: Examen Físico */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Examen Físico</h3>
-                </div>
-                <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
-                  <button
-                    type="button"
-                    onClick={() => setNewPatient((prev) => ({
-                      ...prev,
-                      examen_fisico: prev.examen_fisico && prev.examen_fisico.trim()
-                        ? `${prev.examen_fisico}\n${NORMAL_EF_TEXT}`
-                        : NORMAL_EF_TEXT
-                    }))}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    EF normal
-                  </button>
-                  </div>
-                  <textarea
-                    value={newPatient.examen_fisico}
-                    onChange={(e) => setNewPatient({...newPatient, examen_fisico: e.target.value})}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    style={{ borderColor: 'var(--border-primary)' }}
-                    rows={3}
-                    placeholder="Paciente consciente, orientado. NIHSS: 0..."
-                  />
-                </div>
-              </section>
-
-              {/* Sección 4: Estudios */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Estudios Complementarios</h3>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Laboratorio e Imagenes</label>
-                    <button
-                      type="button"
-                      onClick={() => openStudiesOcrModal('new')}
-                      className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
-                    >
-                      <Upload className="h-3.5 w-3.5" /> OCR
-                    </button>
-                  </div>
-                  <textarea
-                    value={newPatient.estudios}
-                    onChange={(e) => setNewPatient({...newPatient, estudios: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                    placeholder="TC sin contraste, laboratorio, ECG..."
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Convierte PDF o imagen en texto editable sin guardar la imagen.</p>
-                </div>
-              </section>
-
-              {/* Sección 4b: Imágenes y links */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <ImageIcon className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Imágenes / Multimedia</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de miniatura (opcional)</label>
-                    <input
-                      type="url"
-                      value={(newPatient.image_thumbnail_url && newPatient.image_thumbnail_url[0]) || ''}
-                      onChange={(e) => setNewPatient({ ...newPatient, image_thumbnail_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="https://.../thumbnail.jpg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de imagen completa</label>
-                    <input
-                      type="url"
-                      value={(newPatient.image_full_url && newPatient.image_full_url[0]) || ''}
-                      onChange={(e) => setNewPatient({ ...newPatient, image_full_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="https://.../imagen.jpg"
-                    />
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">Usa enlaces directos (Supabase Storage o Google Drive con link de vista) para permitir la previsualización y ampliación.</p>
-              </section>
-
-              {/* Sección 5: Diagnóstico y Plan */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <Target className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Diagnóstico y Tratamiento</h3>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Diagnóstico</label>
-                    <textarea
-                      value={newPatient.diagnostico}
-                      onChange={(e) => setNewPatient({...newPatient, diagnostico: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="ACV isquémico en territorio de ACM derecha..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Plan de Tratamiento</label>
-                    <textarea
-                      value={newPatient.plan}
-                      onChange={(e) => setNewPatient({...newPatient, plan: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={3}
-                      placeholder="Antiagregación, control de factores de riesgo..."
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Sección 6: Seguimiento */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Seguimiento</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                        Severidad
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={newPatient.severidad}
-                          onChange={(e) => setNewPatient({...newPatient, severidad: e.target.value})}
-                          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          style={{ borderColor: 'var(--border-primary)' }}
-                        >
-                          <option value="">Seleccionar...</option>
-                          <option value="I">I - Estable</option>
-                          <option value="II">II - Moderado</option>
-                          <option value="III">III - Severo</option>
-                          <option value="IV">IV - Crítico</option>
-                        </select>
-
-                        {/* Badge visual de severidad */}
-                        {newPatient.severidad && (
-                          <span
-                            className={`px-2 py-0.5 text-xs font-semibold rounded whitespace-nowrap ${
-                              newPatient.severidad === 'I' ? 'badge-severity-1' :
-                              newPatient.severidad === 'II' ? 'badge-severity-2' :
-                              newPatient.severidad === 'III' ? 'badge-severity-3' :
-                              newPatient.severidad === 'IV' ? 'badge-severity-4' : ''
-                            }`}
-                          >
-                            {newPatient.severidad}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Fecha</label>
-                      <input
-                        type="date"
-                        value={newPatient.fecha}
-                        onChange={(e) => setNewPatient({...newPatient, fecha: e.target.value})}
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Pendientes</label>
-                    <textarea
-                      value={newPatient.pendientes}
-                      onChange={(e) => setNewPatient({...newPatient, pendientes: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="Interconsulta neuropsicología, control en 48hs..."
-                    />
-                  </div>
-                </div>
-              </section>
-
-              </div>
-
-              {/* Columna derecha: Vista previa en vivo (1/3, solo visible en md+) */}
-              <div className="hidden md:block md:w-1/3 border-l bg-[var(--bg-primary)] p-4 overflow-y-auto" style={{ borderColor: 'var(--border-primary)' }}>
-                <div className="mb-3">
-                  <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Vista Previa
-                  </h3>
-                  <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Así se verá la card del paciente
-                  </p>
-                </div>
-
-                <WardPatientCard
-                  patient={newPatient}
-                  resident={residents.find(r => r.id === newPatient.assigned_resident_id)}
-                  onClick={() => {}}
-                  isDragging={false}
-                  isDragOver={false}
-                />
-              </div>
-
-            </div>
-
-            <div className="p-4 border-t bg-white flex justify-end space-x-3 sticky bottom-0">
-              <button
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewPatient(emptyPatient);
-                  setDniError(''); // Clear DNI error when closing
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={addPatient}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !dniError && !isDniChecking && !isSavingNewPatient) {
-                    addPatient();
-                  }
-                }}
-                disabled={!!dniError || (ENABLE_DNI_CHECK && isDniChecking) || isSavingNewPatient}
-                className={`px-4 py-2 rounded-lg text-sm ${
-                  dniError || (ENABLE_DNI_CHECK && isDniChecking) || isSavingNewPatient
-                    ? 'bg-gray-400 cursor-not-allowed text-white'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-                title={dniError ? 'Resuelva el error de DNI para continuar' : ''}
-              >
-                {isSavingNewPatient ? 'Guardando...' : ((ENABLE_DNI_CHECK && isDniChecking) ? 'Verificando DNI...' : 'Agregar paciente')}
-              </button>
             </div>
           </div>
         </div>
@@ -3854,10 +3401,11 @@ const WardRounds: React.FC = () => {
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
               <button
-                onClick={() => setShowAddForm(true)}
-                className="mt-4 text-blue-600 hover:text-blue-800"
+                onClick={createEmptyPatient}
+                disabled={isCreatingPatient}
+                className="mt-4 text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Agregar el primer paciente
+                {isCreatingPatient ? 'Creando...' : 'Agregar el primer paciente'}
               </button>
             </div>
           )}
@@ -3868,12 +3416,23 @@ const WardRounds: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedPatients.map((patient) => {
                 const resident = residents.find((r) => r.id === patient.assigned_resident_id);
+                const isEditingThis = inlineEditingPatientId === patient.id;
                 return (
                   <WardPatientCard
                     key={patient.id}
                     patient={patient}
                     resident={resident}
                     onClick={() => handlePatientSelection(patient)}
+                    onEdit={() => startInlineCardEdit(patient)}
+                    onDelete={() => {
+                      if (!patient.id) return;
+                      openDeleteModal(patient.id, patient.nombre, patient.dni);
+                    }}
+                    isEditing={isEditingThis}
+                    editValues={isEditingThis ? inlineEditValues || patient : patient}
+                    onEditValuesChange={setInlineEditValues}
+                    onSave={saveInlineCardEdit}
+                    onCancelEdit={cancelInlineCardEdit}
                     onDragStart={(e) => {
                       setDraggedPatientId(patient.id || null);
                       e.dataTransfer.effectAllowed = 'move';
@@ -3928,11 +3487,12 @@ const WardRounds: React.FC = () => {
               <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
               <p className="text-gray-500 text-lg mb-4">No hay pacientes registrados en el pase de sala</p>
               <button
-                onClick={() => setShowAddForm(true)}
-                className="btn-accent px-4 py-2 rounded inline-flex items-center gap-2"
+                onClick={createEmptyPatient}
+                disabled={isCreatingPatient}
+                className="btn-accent px-4 py-2 rounded inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="h-4 w-4" />
-                Agregar primer paciente
+                {isCreatingPatient ? 'Creando...' : 'Agregar primer paciente'}
               </button>
             </div>
           )}
@@ -4253,343 +3813,6 @@ const WardRounds: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Formulario de Edición Modal */}
-      {editingId && (
-        <div className="modal-overlay">
-          <div className="modal-content max-w-3xl w-full h-[80vh] flex flex-col rounded-2xl shadow-2xl">
-            <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10 rounded-t-2xl">
-              <h2 className="text-lg font-semibold text-gray-900">Editar Paciente</h2>
-              <button
-                onClick={closeEditingModal}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--bg-secondary)]">
-
-              {/* Sección 1: Datos Básicos */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <User className="h-5 w-5 text-blue-600 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Datos del Paciente</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Cama</label>
-                    <input
-                      type="text"
-                      value={editingPatient.cama}
-                      onChange={(e) => setEditingPatient({...editingPatient, cama: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="EMA CAMILLA 3, UTI 1, 3C7..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>DNI</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={editingPatient.dni}
-                        onChange={(e) => {
-                          const dni = e.target.value;
-                          setEditingPatient({...editingPatient, dni});
-                          // Validar DNI después de un breve delay, excluyendo el paciente actual
-                          if (dni.trim()) {
-                            setTimeout(() => validateDNI(dni, editingId || undefined), 500);
-                          } else {
-                            setDniError('');
-                          }
-                        }}
-                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          dniError ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                        }`}
-                        placeholder="12345678"
-                      />
-                      {isDniChecking && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                        </div>
-                      )}
-                    </div>
-                    {dniError && (
-                      <div className="mt-2 flex items-start gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
-                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-red-800 dark:text-red-300">{dniError}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Nombre Completo</label>
-                    <input
-                      type="text"
-                      value={editingPatient.nombre}
-                      onChange={(e) => setEditingPatient({...editingPatient, nombre: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="Apellido, Nombre"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Edad</label>
-                    <input
-                      type="text"
-                      value={editingPatient.edad}
-                      onChange={(e) => setEditingPatient({...editingPatient, edad: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="52 años"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Sección 2: Historia Clínica */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <Clipboard className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Historia Clínica</h3>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Antecedentes</label>
-                    <textarea
-                      value={editingPatient.antecedentes}
-                      onChange={(e) => setEditingPatient({...editingPatient, antecedentes: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="HTA, DBT, dislipidemia..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Motivo de Consulta</label>
-                    <textarea
-                      value={editingPatient.motivo_consulta}
-                      onChange={(e) => setEditingPatient({...editingPatient, motivo_consulta: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="Cuadro de inicio súbito caracterizado por..."
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Sección 3: Examen Físico */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <Stethoscope className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Examen Físico</h3>
-                </div>
-                <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">EF/NIHSS/ABCD2</label>
-                  <button
-                    type="button"
-                    onClick={() => setEditingPatient((prev) => ({
-                      ...prev,
-                      examen_fisico: prev.examen_fisico && prev.examen_fisico.trim()
-                        ? `${prev.examen_fisico}\n${NORMAL_EF_TEXT}`
-                        : NORMAL_EF_TEXT
-                    }))}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    EF normal
-                  </button>
-                  </div>
-                  <textarea
-                    value={editingPatient.examen_fisico}
-                    onChange={(e) => setEditingPatient({...editingPatient, examen_fisico: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                    placeholder="Paciente consciente, orientado. NIHSS: 0..."
-                  />
-                </div>
-              </section>
-
-              {/* Sección 4: Estudios */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <FlaskConical className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Estudios Complementarios</h3>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Laboratorio e Imagenes</label>
-                    <button
-                      type="button"
-                      onClick={() => openStudiesOcrModal('edit')}
-                      className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
-                    >
-                      <Upload className="h-3.5 w-3.5" /> OCR
-                    </button>
-                  </div>
-                  <textarea
-                    value={editingPatient.estudios}
-                    onChange={(e) => setEditingPatient({...editingPatient, estudios: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                    placeholder="TC sin contraste, laboratorio, ECG..."
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Convierte PDF o imagen en texto editable sin guardar la imagen.</p>
-                </div>
-              </section>
-              {/* Sección 4b: Imágenes y links */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <ImageIcon className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Imágenes / Multimedia</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de miniatura (opcional)</label>
-                    <input
-                      type="url"
-                      value={(editingPatient.image_thumbnail_url && editingPatient.image_thumbnail_url[0]) || ''}
-                      onChange={(e) => setEditingPatient({ ...editingPatient, image_thumbnail_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="https://.../thumbnail.jpg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>URL de imagen completa</label>
-                    <input
-                      type="url"
-                      value={(editingPatient.image_full_url && editingPatient.image_full_url[0]) || ''}
-                      onChange={(e) => setEditingPatient({ ...editingPatient, image_full_url: e.target.value ? [e.target.value] : [] })}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      placeholder="https://.../imagen.jpg"
-                    />
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">Enlaces directos permiten previsualizar y abrir la imagen ampliada desde el modal.</p>
-              </section>
-
-              {/* Sección 5: Diagnóstico y Plan */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <Target className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Diagnóstico y Tratamiento</h3>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Diagnóstico</label>
-                    <textarea
-                      value={editingPatient.diagnostico}
-                      onChange={(e) => setEditingPatient({...editingPatient, diagnostico: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="ACV isquémico en territorio de ACM derecha..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Plan de Tratamiento</label>
-                    <textarea
-                      value={editingPatient.plan}
-                      onChange={(e) => setEditingPatient({...editingPatient, plan: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={3}
-                      placeholder="Antiagregación, control de factores de riesgo..."
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Sección 6: Seguimiento */}
-              <section className="medical-card p-4">
-                <div className="flex items-center mb-4">
-                  <CheckCircle className="h-5 w-5 text-blue-700 mr-2" />
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Seguimiento</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Severidad</label>
-                      <select
-                        value={editingPatient.severidad}
-                        onChange={(e) => setEditingPatient({...editingPatient, severidad: e.target.value})}
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="I">I - Estable</option>
-                        <option value="II">II - Moderado</option>
-                        <option value="III">III - Severo</option>
-                        <option value="IV">IV - Crítico</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Fecha</label>
-                      <input
-                        type="date"
-                        value={editingPatient.fecha}
-                        onChange={(e) => setEditingPatient({...editingPatient, fecha: e.target.value})}
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Pendientes</label>
-                    <textarea
-                      value={editingPatient.pendientes}
-                      onChange={(e) => setEditingPatient({...editingPatient, pendientes: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{ borderColor: 'var(--border-primary)' }}
-                      rows={2}
-                      placeholder="Interconsulta neuropsicología, control en 48hs..."
-                    />
-                  </div>
-                </div>
-              </section>
-
-            </div>
-            <div className="p-4 border-t bg-white flex justify-end space-x-3 sticky bottom-0">
-              <button
-                onClick={() => {
-                  setEditingId(null);
-                  setEditingPatient(emptyPatient);
-                  setDniError(''); // Clear DNI error when closing
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (editingId) {
-                    updatePatient(editingId, editingPatient);
-                  }
-                }}
-                disabled={!!dniError || isDniChecking || isUpdatingPatient}
-                className={`px-4 py-2 rounded-lg flex items-center space-x-2 text-sm ${
-                  dniError || isDniChecking || isUpdatingPatient
-                    ? 'bg-gray-400 cursor-not-allowed text-white'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-                title={dniError ? 'Resuelva el error de DNI para continuar' : isUpdatingPatient ? 'Guardando...' : ''}
-              >
-                <Save className="h-4 w-4" />
-                <span>{isDniChecking ? 'Verificando DNI...' : isUpdatingPatient ? 'Guardando...' : 'Guardar Cambios'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <OCRStudiesModal
-        isOpen={isStudiesOcrOpen}
-        onClose={closeStudiesOcrModal}
-        onApply={handleApplyOcrStudies}
-        initialValue={ocrSeedText}
-      />
 
       {showCSVImportModal && (
         <CSVImportModal

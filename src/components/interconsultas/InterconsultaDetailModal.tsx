@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Save, Copy, Check, FileText, Upload, MessageSquare, Edit2, XCircle } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { InterconsultaRow } from '../../services/interconsultasService';
 import { updateStatus, updateRespuestaWithStatus, uploadImageToInterconsulta, removeImageFromInterconsulta, appendOCRTextToInterconsulta, updateInterconsultaData } from '../../services/interconsultasService';
 import { saveToWardRounds, saveToSavedPatients } from '../../utils/interconsultasUtils';
 import { useAuthContext } from '../auth/AuthProvider';
-import ConfirmacionEvolucionadorModal from './ConfirmacionEvolucionadorModal';
 
 interface InterconsultaDetailModalProps {
   interconsulta: InterconsultaRow;
@@ -37,9 +36,6 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [ocrText, setOcrText] = useState('');
   const [processingOCR, setProcessingOCR] = useState(false);
-
-  // Estado para modal de confirmación de ir al Evolucionador
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Estados para edición de datos básicos
   const [isEditMode, setIsEditMode] = useState(false);
@@ -701,7 +697,7 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
             {onGoToEvolucionador && (
               <div className="mb-4">
                 <button
-                  onClick={() => setShowConfirmModal(true)}
+                  onClick={() => { onGoToEvolucionador && onGoToEvolucionador(interconsulta); onClose(); }}
                   className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-semibold inline-flex items-center justify-center gap-2 shadow-md transition-all"
                 >
                   <MessageSquare className="h-5 w-5" />
@@ -737,20 +733,14 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
         </div>
       </div>
 
-      {/* Modal de confirmación para ir al Evolucionador */}
-      {showConfirmModal && onGoToEvolucionador && (
-        <ConfirmacionEvolucionadorModal
-          interconsulta={interconsulta}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={() => {
-            onGoToEvolucionador(interconsulta);
-            onClose(); // Cerrar modal de detalles
-            setShowConfirmModal(false);
-          }}
-        />
-      )}
     </div>
   );
 };
 
 export default InterconsultaDetailModal;
+
+
+
+
+
+

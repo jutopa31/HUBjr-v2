@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, User, AlertCircle, GripVertical, ChevronRight } from 'lucide-react';
+import { Camera, User, AlertCircle, GripVertical, ChevronRight, Edit, Trash2 } from 'lucide-react';
 
 interface Patient {
   id?: string;
@@ -36,22 +36,37 @@ interface WardPatientCardProps {
   patient: Patient;
   resident?: ResidentProfile;
   onClick: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onDragStart?: (e: React.DragEvent, patientId: string) => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent, targetPatientId: string) => void;
   isDragging?: boolean;
   isDragOver?: boolean;
+  // Inline editing props
+  isEditing?: boolean;
+  editValues?: Patient;
+  onEditValuesChange?: (values: Patient) => void;
+  onSave?: () => void;
+  onCancelEdit?: () => void;
 }
 
 const WardPatientCard: React.FC<WardPatientCardProps> = ({
   patient,
   resident,
   onClick,
+  onEdit,
+  onDelete,
   onDragStart,
   onDragOver,
   onDrop,
   isDragging = false,
   isDragOver = false,
+  isEditing = false,
+  editValues,
+  onEditValuesChange,
+  onSave,
+  onCancelEdit,
 }) => {
   // Helper function to truncate text
   const truncate = (text: string, maxLength: number): string => {
@@ -91,9 +106,10 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     border-2 border-gray-200 dark:border-gray-700
     hover:border-blue-300 dark:hover:border-blue-400
     hover:shadow-lg
-    transition-all
+    transition-all duration-200
     cursor-pointer
     relative
+    group
     ${isDragging ? 'opacity-50 cursor-move' : ''}
     ${isDragOver ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' : ''}
   `.trim();
@@ -117,22 +133,180 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     }
   };
 
+  // Action button handlers
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) onEdit();
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) onDelete();
+  };
+
+  // Data to display (either edit values or original patient data)
+  const displayData = isEditing && editValues ? editValues : patient;
+
+  // Handle field change during inline editing
+  const handleFieldChange = (field: keyof Patient, value: string) => {
+    if (onEditValuesChange && editValues) {
+      onEditValuesChange({ ...editValues, [field]: value });
+    }
+  };
+
   return (
     <div
       className={cardClasses}
-      onClick={onClick}
-      draggable={!!onDragStart}
+      onClick={isEditing ? undefined : onClick}
+      draggable={!!onDragStart && !isEditing}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Drag handle (visible on hover) */}
-      {onDragStart && (
+      {/* Drag handle (visible on hover) - only in read mode */}
+      {onDragStart && !isEditing && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
           <GripVertical className="h-5 w-5 text-gray-400 dark:text-gray-500" />
         </div>
       )}
 
+      {isEditing ? (
+        /* ==================== EDIT MODE ==================== */
+        <div className="space-y-3">
+          {/* Header with Save/Cancel buttons */}
+          <div className="flex items-center justify-between pb-2 border-b-2 border-blue-200 dark:border-blue-800">
+            <h3 className="font-bold text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
+              <Edit className="h-4 w-4" />
+              Editando Paciente
+            </h3>
+            <div className="flex gap-1">
+              <button
+                onClick={onCancelEdit}
+                className="px-3 py-1 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title="Cancelar edición"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={onSave}
+                className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
+                title="Guardar cambios"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+
+          {/* Basic Info Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+              <input
+                type="text"
+                value={displayData.nombre || ''}
+                onChange={(e) => handleFieldChange('nombre', e.target.value)}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">DNI</label>
+              <input
+                type="text"
+                value={displayData.dni || ''}
+                onChange={(e) => handleFieldChange('dni', e.target.value)}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Edad</label>
+              <input
+                type="text"
+                value={displayData.edad || ''}
+                onChange={(e) => handleFieldChange('edad', e.target.value)}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Cama</label>
+              <input
+                type="text"
+                value={displayData.cama || ''}
+                onChange={(e) => handleFieldChange('cama', e.target.value)}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Medical Fields - Full width */}
+          <div className="space-y-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Antecedentes</label>
+              <textarea
+                value={displayData.antecedentes || ''}
+                onChange={(e) => handleFieldChange('antecedentes', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo de Consulta</label>
+              <textarea
+                value={displayData.motivo_consulta || ''}
+                onChange={(e) => handleFieldChange('motivo_consulta', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">EF/NIHSS/ABCD2</label>
+              <textarea
+                value={displayData.examen_fisico || ''}
+                onChange={(e) => handleFieldChange('examen_fisico', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Estudios</label>
+              <textarea
+                value={displayData.estudios || ''}
+                onChange={(e) => handleFieldChange('estudios', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Diagnóstico</label>
+              <textarea
+                value={displayData.diagnostico || ''}
+                onChange={(e) => handleFieldChange('diagnostico', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Plan</label>
+              <textarea
+                value={displayData.plan || ''}
+                onChange={(e) => handleFieldChange('plan', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pendientes</label>
+              <textarea
+                value={displayData.pendientes || ''}
+                onChange={(e) => handleFieldChange('pendientes', e.target.value)}
+                rows={2}
+                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ==================== READ MODE ==================== */
+        <>
       {/* Top row: Severity badge + Bed location */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -205,11 +379,60 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
         </div>
       </div>
 
-      {/* Action footer */}
-      <div className="flex items-center justify-end gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
-        <span>Ver detalles</span>
-        <ChevronRight className="h-4 w-4" />
+      {/* Action footer - Clinical Precision Design */}
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
+        {/* Left side: View details indicator */}
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+          <span>Detalles</span>
+          <ChevronRight className="h-3 w-3" />
+        </div>
+
+        {/* Right side: Action buttons (medical interface style) */}
+        {(onEdit || onDelete) && (
+          <div className="flex items-center gap-1">
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="
+                  p-1.5 rounded-md
+                  text-blue-700 dark:text-blue-400
+                  hover:text-white hover:bg-blue-600 dark:hover:bg-blue-500
+                  border border-blue-200 dark:border-blue-800
+                  hover:border-blue-600 dark:hover:border-blue-500
+                  transition-all duration-150
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
+                  transform hover:scale-105 active:scale-95
+                "
+                title="Editar paciente completo"
+                aria-label="Editar paciente"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                className="
+                  p-1.5 rounded-md
+                  text-red-600 dark:text-red-400
+                  hover:text-white hover:bg-red-600 dark:hover:bg-red-500
+                  border border-red-200 dark:border-red-800
+                  hover:border-red-600 dark:hover:border-red-500
+                  transition-all duration-150
+                  focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1
+                  transform hover:scale-105 active:scale-95
+                "
+                title="Eliminar o archivar paciente"
+                aria-label="Eliminar paciente"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
+        </>
+      )}
     </div>
   );
 };

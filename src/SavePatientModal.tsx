@@ -34,8 +34,9 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   // Actualizar el contexto hospitalario cuando cambia el prop
   useEffect(() => {
     console.log('[SavePatientModal] Contexto hospitalario actualizado:', currentHospitalContext);
-    setHospitalContext(currentHospitalContext);
-  }, [currentHospitalContext]);
+    const resolvedContext = (interconsultaContext?.hospital_context as HospitalContext) || currentHospitalContext;
+    setHospitalContext(resolvedContext);
+  }, [currentHospitalContext, interconsultaContext]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -296,7 +297,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving || !patientName.trim()}
+            disabled={isSaving || !(patientDni.trim() || interconsultaContext?.dni)}
             className="btn-accent px-4 py-2 rounded-lg flex items-center space-x-2"
           >
             <Save className="h-4 w-4" />

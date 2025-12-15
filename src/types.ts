@@ -3,7 +3,7 @@ export interface ScaleItem {
   id: string;
   label: string;
   options: string[];
-  score: number;
+  score?: number;
 }
 
 export interface Scale {

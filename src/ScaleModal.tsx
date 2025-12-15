@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useMemo } from 'react';
+﻿import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import useEscapeKey from './hooks/useEscapeKey';
 import { X, Copy } from 'lucide-react';
 import calculateScaleScore from './calculateScaleScore';
 import { ScaleModalProps, ScaleItem } from './types';
+import { NIHSSMotorItem } from './components/scales/NIHSSMotorItem';
 
 const NIHSS_PRESETS: Record<string, Record<string, number | string>> = {
   normal: {
@@ -60,6 +61,7 @@ const NIHSS_PRESETS: Record<string, Record<string, number | string>> = {
 
 const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notesContext }) => {
   const [scores, setScores] = useState<{ [key: string]: number | string }>({});
+  const [pareticSide, setPareticSide] = useState<'left' | 'right' | null>(null);
 
   useEscapeKey(onClose, Boolean(scale));
   
@@ -88,17 +90,6 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notes
     if (!preset) return;
     setScores(prev => ({ ...prev, ...preset }));
   }, []);
-
-  const suggestedPreset = useMemo(() => {
-    if (!notesContext) return null;
-    const text = notesContext.toLowerCase();
-    if (/nihss\s*:?\s*0|sin d[ée]ficit|sin focalidad/.test(text)) return 'normal';
-    const mentionsLeft = /izq|izquierda|hemiparesia izquierda|brazo izquierdo|pierna izquierda/.test(text);
-    const mentionsRight = /der|derecha|hemiparesia derecha|brazo derecho|pierna derecha/.test(text);
-    if (mentionsLeft && !mentionsRight) return 'left_deficit';
-    if (mentionsRight && !mentionsLeft) return 'right_deficit';
-    return null;
-  }, [notesContext]);
 
   const currentTotal = useMemo(() => {
     // Para escalas cualitativas o de ítem único, no mostrar puntaje total
@@ -164,68 +155,155 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notes
           </div>
         <div className="p-6">
           {scale.id === 'nihss' && (
-            <div className="mb-4 rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-secondary)] p-4">
-              <div className="flex items-center justify-between gap-3">
+            <>
+              <div className="mb-4 rounded-lg border-2 border-[var(--border-primary)] p-4 bg-[var(--bg-primary)]">
+                <p className="text-sm font-semibold text-[var(--text-primary)] mb-3">¿Cuál es el lado parético?</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPareticSide('left')}
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                      pareticSide === 'left'
+                        ? 'bg-red-500 text-white border-2 border-red-600 shadow-md'
+                        : 'border-2 border-gray-300 dark:border-gray-600 text-[var(--text-primary)] hover:border-red-400 dark:hover:border-red-500'
+                    }`}
+                  >
+                    Parético Izquierdo
+                  </button>
+                  <button
+                    onClick={() => setPareticSide('right')}
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                      pareticSide === 'right'
+                        ? 'bg-red-500 text-white border-2 border-red-600 shadow-md'
+                        : 'border-2 border-gray-300 dark:border-gray-600 text-[var(--text-primary)] hover:border-red-400 dark:hover:border-red-500'
+                    }`}
+                  >
+                    Parético Derecho
+                  </button>
+                </div>
+              </div>
+              <div className="mb-4 rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-secondary)] p-4">
                 <div>
                   <p className="text-sm font-semibold text-[var(--text-primary)]">Atajos NIHSS</p>
                   <p className="text-xs text-[var(--text-secondary)]">Aplica un preset y ajusta ítems puntuales</p>
-                  {suggestedPreset && (
-                    <p className="text-xs text-[var(--text-secondary)] mt-1">
-                      Sugerencia desde notas: <span className="font-semibold text-[var(--text-primary)]">{suggestedPreset === 'normal' ? 'Todo normal' : suggestedPreset === 'left_deficit' ? 'Déficit izquierdo' : 'Déficit derecho'}</span>
-                    </p>
-                  )}
                 </div>
-                {suggestedPreset && (
-                  <button
-                    className="px-3 py-1.5 text-xs btn-soft rounded"
-                    onClick={() => applyPreset(suggestedPreset as 'normal' | 'left_deficit' | 'right_deficit')}
-                  >
-                    Aplicar sugerencia
-                  </button>
-                )}
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('normal')}>Todo normal</button>
+                  <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('left_deficit')}>Déficit izquierdo</button>
+                  <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('right_deficit')}>Déficit derecho</button>
+                  <button className="px-3 py-1.5 text-xs btn-soft rounded text-[var(--text-secondary)]" onClick={() => setScores({})}>Limpiar selección</button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('normal')}>Todo normal</button>
-                <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('left_deficit')}>Déficit izquierdo</button>
-                <button className="px-3 py-1.5 text-xs btn-soft rounded" onClick={() => applyPreset('right_deficit')}>Déficit derecho</button>
-                <button className="px-3 py-1.5 text-xs btn-soft rounded text-[var(--text-secondary)]" onClick={() => setScores({})}>Limpiar selección</button>
-              </div>
-            </div>
+            </>
           )}
           <div className="space-y-4">
-            {scale.items && scale.items.length > 0 ? scale.items.map((item: ScaleItem) => (
-              <div key={item.id} className="border border-[var(--border-secondary)] rounded-lg p-4 bg-[var(--bg-secondary)]">
-                <h4 className="font-medium mb-3 text-[var(--text-primary)]">{item.label}</h4>
-                <div className="space-y-2">
-                  {item.options && item.options.length > 0 ? item.options.map((option: string, index: number) => {
-                    const optionPrefix = option.split(' - ')[0];
-                    let optionValue: string | number;
-                    
-                    if (optionPrefix === 'UN') {
-                      optionValue = 'UN';
-                    } else if (optionPrefix.includes('+')) {
-                      optionValue = optionPrefix; // Mantener valores like '1+'
-                    } else {
-                      optionValue = parseInt(optionPrefix);
-                    }
-                    
-                    const isSelected = scores[item.id] === optionValue || (scores[item.id] === undefined && optionValue === (item.score || 0));
+            {scale.items && scale.items.length > 0 ? (
+              scale.id === 'nihss' ? (
+                <>
+                  {/* Items no motores - render normal */}
+                  {scale.items.filter(item => !item.id.startsWith('motor')).map((item: ScaleItem) => {
+                    const isIncomplete = scores[item.id] === undefined;
                     return (
-                      <label key={index} className="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-[var(--bg-primary)]">
-                        <input
-                          type="radio"
-                          name={item.id}
-                          value={optionValue}
-                          checked={isSelected}
-                          onChange={(e) => handleScoreChange(item.id, e.target.value)}
-                        />
-                        <span className="text-sm text-[var(--text-primary)]">{option}</span>
-                      </label>
+                      <div key={item.id} className={`border rounded-lg p-4 bg-[var(--bg-secondary)] ${
+                        isIncomplete
+                          ? 'border-yellow-400 dark:border-yellow-500 border-2 bg-yellow-50/50 dark:bg-yellow-900/10'
+                          : 'border-[var(--border-secondary)]'
+                      }`}>
+                        <h4 className="font-medium mb-3 text-[var(--text-primary)]">{item.label}</h4>
+                        <div className="space-y-2">
+                          {item.options && item.options.length > 0 ? item.options.map((option: string, index: number) => {
+                            const optionPrefix = option.split(' - ')[0];
+                            let optionValue: string | number;
+
+                            if (optionPrefix === 'UN') {
+                              optionValue = 'UN';
+                            } else if (optionPrefix.includes('+')) {
+                              optionValue = optionPrefix;
+                            } else {
+                              optionValue = parseInt(optionPrefix);
+                            }
+
+                            const isSelected = scores[item.id] === optionValue || (scores[item.id] === undefined && optionValue === (item.score || 0));
+                            return (
+                              <label key={index} className="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-[var(--bg-primary)]">
+                                <input
+                                  type="radio"
+                                  name={item.id}
+                                  value={optionValue}
+                                  checked={isSelected}
+                                  onChange={(e) => handleScoreChange(item.id, e.target.value)}
+                                />
+                                <span className="text-sm text-[var(--text-primary)]">{option}</span>
+                              </label>
+                            );
+                          }) : <div className="text-[var(--text-primary)]">No options available for this item</div>}
+                        </div>
+                      </div>
                     );
-                  }) : <div className="text-[var(--text-primary)]">No options available for this item</div>}
-                </div>
-              </div>
-            )) : <div className="text-[var(--text-primary)]">No items available for this scale</div>}
+                  })}
+
+                  {/* Items motores - layout lado a lado */}
+                  <NIHSSMotorItem
+                    itemLeft={scale.items.find(i => i.id === 'motor-left-arm')!}
+                    itemRight={scale.items.find(i => i.id === 'motor-right-arm')!}
+                    pareticSide={pareticSide}
+                    scores={scores}
+                    onScoreChange={handleScoreChange}
+                    isIncomplete={scores['motor-left-arm'] === undefined || scores['motor-right-arm'] === undefined}
+                  />
+
+                  <NIHSSMotorItem
+                    itemLeft={scale.items.find(i => i.id === 'motor-left-leg')!}
+                    itemRight={scale.items.find(i => i.id === 'motor-right-leg')!}
+                    pareticSide={pareticSide}
+                    scores={scores}
+                    onScoreChange={handleScoreChange}
+                    isIncomplete={scores['motor-left-leg'] === undefined || scores['motor-right-leg'] === undefined}
+                  />
+                </>
+              ) : (
+                // Render normal para otras escalas
+                scale.items.map((item: ScaleItem) => {
+                  const isIncomplete = scores[item.id] === undefined;
+                  return (
+                    <div key={item.id} className={`border rounded-lg p-4 bg-[var(--bg-secondary)] ${
+                      isIncomplete
+                        ? 'border-yellow-400 dark:border-yellow-500 border-2 bg-yellow-50/50 dark:bg-yellow-900/10'
+                        : 'border-[var(--border-secondary)]'
+                    }`}>
+                      <h4 className="font-medium mb-3 text-[var(--text-primary)]">{item.label}</h4>
+                      <div className="space-y-2">
+                        {item.options && item.options.length > 0 ? item.options.map((option: string, index: number) => {
+                          const optionPrefix = option.split(' - ')[0];
+                          let optionValue: string | number;
+
+                          if (optionPrefix === 'UN') {
+                            optionValue = 'UN';
+                          } else if (optionPrefix.includes('+')) {
+                            optionValue = optionPrefix;
+                          } else {
+                            optionValue = parseInt(optionPrefix);
+                          }
+
+                          const isSelected = scores[item.id] === optionValue || (scores[item.id] === undefined && optionValue === (item.score || 0));
+                          return (
+                            <label key={index} className="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-[var(--bg-primary)]">
+                              <input
+                                type="radio"
+                                name={item.id}
+                                value={optionValue}
+                                checked={isSelected}
+                                onChange={(e) => handleScoreChange(item.id, e.target.value)}
+                              />
+                              <span className="text-sm text-[var(--text-primary)]">{option}</span>
+                            </label>
+                          );
+                        }) : <div className="text-[var(--text-primary)]">No options available for this item</div>}
+                      </div>
+                    </div>
+                  );
+                })
+              )
+            ) : <div className="text-[var(--text-primary)]">No items available for this scale</div>}
           </div>
           {currentTotal !== null && (
             <div className="mt-6 p-4 rounded-lg border" style={{
@@ -355,7 +433,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notes
                   borderColor: 'color-mix(in srgb, var(--state-info) 30%, transparent)'
                 }}>
                   <div className="text-xs text-[var(--text-primary)]">
-                    <p className="font-medium mb-2">📋 Características de Alto Riesgo en TCSC:</p>
+                    <p className="font-medium mb-2">📋 características de Alto Riesgo en TCSC:</p>
                     <p className="mb-1">
                       <strong>"El estudio de TCSC muestra (1) vasos ingurgitados o calcificaciones
                       en los márgenes del hematoma intraparenquimal o (2)
@@ -425,3 +503,10 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notes
 };
 
 export default React.memo(ScaleModal); 
+
+
+
+
+
+
+
