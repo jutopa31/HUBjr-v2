@@ -69,9 +69,14 @@
       "Bash(timeout 30 npm run dev:*)",
       "Bash(claude:*)",
       "Bash(timeout 10 npm run dev:*)",
-      "Skill(frontend-design:frontend-design)"
+      "Skill(frontend-design:frontend-design)",
+      "Bash(mcp__playwright__browser_navigate)"
     ],
     "deny": []
   },
-  "outputStyle": "default"
+  "outputStyle": "default",
+  "enabledMcpjsonServers": [
+    "shadcn",
+    "supabase"
+  ]
 }

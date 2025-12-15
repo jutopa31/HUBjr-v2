@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useMemo, useEffect } from 'react';
+﻿import React, { useState, useCallback, useMemo } from 'react';
 import useEscapeKey from './hooks/useEscapeKey';
 import { X, Copy } from 'lucide-react';
 import calculateScaleScore from './calculateScaleScore';
@@ -59,7 +59,7 @@ const NIHSS_PRESETS: Record<string, Record<string, number | string>> = {
   }
 };
 
-const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit, notesContext }) => {
+const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => {
   const [scores, setScores] = useState<{ [key: string]: number | string }>({});
   const [pareticSide, setPareticSide] = useState<'left' | 'right' | null>(null);
 
