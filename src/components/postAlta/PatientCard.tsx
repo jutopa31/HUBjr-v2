@@ -1,6 +1,77 @@
 import React from 'react';
-import { Calendar, Phone, FileText, AlertCircle } from 'lucide-react';
+import { Calendar, Phone, FileText, AlertCircle, MessageCircle } from 'lucide-react';
 import { PacientePostAltaRow } from '../../services/pacientesPostAltaService';
+
+// Utility: Format phone for WhatsApp
+const formatPhoneForWhatsApp = (phone: string): string => {
+  // Remove all non-numeric characters
+  const cleaned = phone.replace(/\D/g, '');
+
+  // Add Argentina country code (+54) and mobile prefix (9)
+  // Format: +54 9 [area code] [number] → +5491112345678
+  return `+549${cleaned}`;
+};
+
+// Utility: Format phone for tel: protocol
+const formatPhoneForTel = (phone: string): string => {
+  // Remove all non-numeric characters
+  const cleaned = phone.replace(/\D/g, '');
+
+  // Add Argentina country code
+  return `+54${cleaned}`;
+};
+
+// Utility: Detect if user is on mobile device
+const isMobileDevice = (): boolean => {
+  // Use matchMedia for responsive detection
+  return window.matchMedia('(max-width: 768px)').matches;
+};
+
+interface ContactButtonProps {
+  phone: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  // Detect device type on mount and window resize
+  React.useEffect(() => {
+    const checkDevice = () => setIsMobile(isMobileDevice());
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent card onClick from firing
+    e.stopPropagation();
+
+    // Open appropriate link based on device
+    const url = isMobile
+      ? `tel:${formatPhoneForTel(phone)}`
+      : `https://wa.me/${formatPhoneForWhatsApp(phone).replace('+', '')}`;
+
+    window.location.href = url;
+  };
+
+  // Dynamic icon based on device
+  const Icon = isMobile ? Phone : MessageCircle;
+  const iconColor = isMobile ? 'text-green-500' : 'text-green-600';
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded px-2 py-1 hover:bg-green-50 dark:hover:bg-green-900/20"
+      title={isMobile ? 'Llamar' : 'Abrir en WhatsApp'}
+    >
+      <Icon className={`h-4 w-4 ${iconColor}`} />
+      <span className="font-medium">{phone}</span>
+    </button>
+  );
+};
 
 interface PatientCardProps {
   patient: PacientePostAltaRow;
@@ -51,12 +122,7 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
           <Calendar className="h-4 w-4 text-blue-500" />
           <span>{formatDate(patient.fecha_visita)}</span>
         </div>
-        {patient.telefono && (
-          <div className="flex items-center gap-1.5">
-            <Phone className="h-4 w-4 text-green-500" />
-            <span>{patient.telefono}</span>
-          </div>
-        )}
+        {patient.telefono && <ContactButton phone={patient.telefono} />}
       </div>
 
       {/* Indicators: Notes + Pending */}

@@ -138,7 +138,7 @@ const PacientesPostAlta: React.FC = () => {
 
           {/* Título y subtítulo */}
           <div>
-            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Post Alta + Ambulatorio</h1>
+            <h1 className="text-xl font-semibold text-[var(--text-primary)]">Post alta</h1>
             <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
               {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} para el {formattedSelectedDate}
             </p>

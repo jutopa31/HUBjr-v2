@@ -61,7 +61,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   },
   'pacientes-post-alta': {
     id: 'pacientes-post-alta',
-    label: 'Post alta + Ambulatorio',
+    label: 'Post alta',
     audience: 'core',
     corePath: '/post-alta'
   },
