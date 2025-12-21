@@ -2469,13 +2469,13 @@ const WardRounds: React.FC = () => {
             <td class="severity-cell col-severity" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
               <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
             </td>
-            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 80)}</td>
-            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 80)}</td>
-            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 60)}</td>
-            <td class="text-cell small col-studies">${truncateText(patient.estudios, 80)}</td>
-            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 80)}</td>
-            <td class="text-cell small col-plan">${truncateText(patient.plan, 80)}</td>
-            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 60)}</td>
+            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 250)}</td>
+            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 180)}</td>
+            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 150)}</td>
+            <td class="text-cell small col-studies">${truncateText(patient.estudios, 250)}</td>
+            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 180)}</td>
+            <td class="text-cell small col-plan">${truncateText(patient.plan, 180)}</td>
+            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 150)}</td>
           </tr>
         `;
       }).join('');
@@ -2490,18 +2490,18 @@ const WardRounds: React.FC = () => {
           <style>
             @media print {
               body { -webkit-print-color-adjust: exact; }
-              @page { 
-                margin: 0.5cm; 
+              @page {
+                margin: 0.3cm;
                 size: A4 landscape;
               }
             }
             
-            body { 
-              font-family: 'Arial', sans-serif; 
+            body {
+              font-family: 'Arial', sans-serif;
               margin: 0;
               padding: 8px;
-              font-size: 8px;
-              line-height: 1.2;
+              font-size: 10px;
+              line-height: 1.4;
               color: #333;
             }
             
@@ -2512,9 +2512,9 @@ const WardRounds: React.FC = () => {
               border-bottom: 2px solid #2563eb;
             }
             
-            .header h1 { 
+            .header h1 {
               color: #2563eb;
-              font-size: 16px;
+              font-size: 18px;
               margin: 0 0 3px 0;
               font-weight: bold;
             }
@@ -2532,7 +2532,7 @@ const WardRounds: React.FC = () => {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              font-size: 8px;
+              font-size: 9px;
               border-left: 3px solid #2563eb;
             }
             
@@ -2556,26 +2556,27 @@ const WardRounds: React.FC = () => {
               width: 100%;
               border-collapse: collapse;
               border: 1px solid #d1d5db;
-              font-size: 7px;
+              font-size: 9px;
             }
             
             th {
               background: #f9fafb;
               font-weight: bold;
-              padding: 4px 2px;
+              padding: 5px 3px;
               text-align: center;
               border: 1px solid #d1d5db;
-              font-size: 7px;
+              font-size: 9px;
               color: #374151;
               white-space: nowrap;
             }
             
             td {
-              padding: 3px 2px;
+              padding: 4px 3px;
               border: 1px solid #e5e7eb;
               vertical-align: top;
               word-wrap: break-word;
               overflow-wrap: break-word;
+              line-height: 1.5;
             }
             
             .number-cell {
@@ -2586,7 +2587,6 @@ const WardRounds: React.FC = () => {
             }
             
             .text-cell {
-              max-width: 80px;
               word-break: break-word;
             }
             
@@ -2596,8 +2596,8 @@ const WardRounds: React.FC = () => {
             }
             
             .text-cell.small {
-              font-size: 6px;
-              line-height: 1.3;
+              font-size: 8px;
+              line-height: 1.5;
             }
             
             .severity-cell {
@@ -2621,16 +2621,16 @@ const WardRounds: React.FC = () => {
             
             /* Optimización de columnas */
             .col-num { width: 3%; }
-            .col-bed { width: 4%; }
-            .col-name { width: 11%; }
-            .col-dni { width: 7%; }
-            .col-age { width: 4%; }
-            .col-severity { width: 4%; }
-            .col-history { width: 13%; }
+            .col-bed { width: 3%; }
+            .col-name { width: 10%; }
+            .col-dni { width: 5%; }
+            .col-age { width: 3%; }
+            .col-severity { width: 3%; }
+            .col-history { width: 17%; }
             .col-reason { width: 13%; }
             .col-exam { width: 11%; }
-            .col-studies { width: 13%; }
-            .col-diagnosis { width: 13%; }
+            .col-studies { width: 17%; }
+            .col-diagnosis { width: 14%; }
             .col-plan { width: 13%; }
             .col-pending { width: 11%; }
             
@@ -2638,7 +2638,7 @@ const WardRounds: React.FC = () => {
               margin-top: 8px;
               text-align: center;
               color: #6b7280;
-              font-size: 7px;
+              font-size: 8px;
               border-top: 1px solid #e5e7eb;
               padding-top: 4px;
             }
