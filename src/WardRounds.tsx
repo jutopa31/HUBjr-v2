@@ -2469,13 +2469,13 @@ const WardRounds: React.FC = () => {
             <td class="severity-cell col-severity" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
               <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
             </td>
-            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 250)}</td>
-            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 180)}</td>
-            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 150)}</td>
-            <td class="text-cell small col-studies">${truncateText(patient.estudios, 250)}</td>
-            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 180)}</td>
-            <td class="text-cell small col-plan">${truncateText(patient.plan, 180)}</td>
-            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 150)}</td>
+            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 180)}</td>
+            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 150)}</td>
+            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 120)}</td>
+            <td class="text-cell small col-studies">${truncateText(patient.estudios, 180)}</td>
+            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 140)}</td>
+            <td class="text-cell small col-plan">${truncateText(patient.plan, 160)}</td>
+            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 120)}</td>
           </tr>
         `;
       }).join('');
@@ -2630,8 +2630,8 @@ const WardRounds: React.FC = () => {
             .col-reason { width: 13%; }
             .col-exam { width: 11%; }
             .col-studies { width: 17%; }
-            .col-diagnosis { width: 14%; }
-            .col-plan { width: 13%; }
+            .col-diagnosis { width: 12%; }
+            .col-plan { width: 15%; }
             .col-pending { width: 11%; }
             
             .footer {
