@@ -74,6 +74,36 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  // Responsive truncation based on viewport - UPDATED LIMITS
+  const getTruncateLength = (field: 'diagnosis' | 'pendientes'): number => {
+    if (typeof window === 'undefined') return field === 'diagnosis' ? 120 : 80;
+    if (window.innerWidth < 768) {
+      // Mobile: increased from 60 → 80 for diagnosis
+      return field === 'diagnosis' ? 80 : 35;
+    }
+    if (window.innerWidth < 1024) {
+      return field === 'diagnosis' ? 100 : 60;
+    }
+    return field === 'diagnosis' ? 120 : 80;
+  };
+
+  const [truncateLengths, setTruncateLengths] = React.useState({
+    diagnosis: getTruncateLength('diagnosis'),
+    pendientes: getTruncateLength('pendientes')
+  });
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setTruncateLengths({
+        diagnosis: getTruncateLength('diagnosis'),
+        pendientes: getTruncateLength('pendientes')
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Calculate image count
   const getImageCount = (patient: Patient): number => {
     const thumbs = patient.image_thumbnail_url || [];
@@ -102,7 +132,8 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
 
   // Determine drag and drop styles
   const cardClasses = `
-    medical-card p-4 rounded-lg
+    medical-card rounded-lg
+    p-3 md:p-3.5 lg:p-4
     border-2 border-gray-200 dark:border-gray-700
     hover:border-blue-300 dark:hover:border-blue-400
     hover:shadow-lg
@@ -163,9 +194,9 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Drag handle (visible on hover) - only in read mode */}
+      {/* Drag handle (visible on hover) - only in read mode, hidden on mobile */}
       {onDragStart && !isEditing && (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
+        <div className="hidden md:block absolute top-2 right-2 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
           <GripVertical className="h-5 w-5 text-gray-400 dark:text-gray-500" />
         </div>
       )}
@@ -307,94 +338,31 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
       ) : (
         /* ==================== READ MODE ==================== */
         <>
-      {/* Top row: Severity badge + Bed location */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+      {/* Top row: Severity, Bed, and Actions */}
+      <div className="flex items-start justify-between mb-2 md:mb-3">
+        <div className="flex items-center gap-1.5 md:gap-2">
           {patient.severidad && (
             <span
-              className={`px-2 py-0.5 text-xs font-semibold rounded ${getSeverityBadgeClass(
+              className={`px-1.5 md:px-2 py-0.5 text-xs font-semibold rounded ${getSeverityBadgeClass(
                 patient.severidad
               )}`}
             >
               {patient.severidad}
             </span>
           )}
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
             Cama: {patient.cama || 'N/A'}
           </span>
         </div>
-      </div>
 
-      {/* Name + DNI */}
-      <div className="mb-2">
-        <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
-          {patient.nombre}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          DNI: {patient.dni || 'N/A'}
-        </p>
-      </div>
-
-      {/* Age */}
-      <div className="mb-3">
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          Edad: {patient.edad || 'N/A'}
-        </p>
-      </div>
-
-      {/* Diagnosis (truncated) */}
-      <div className="mb-3">
-        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-          {truncate(patient.diagnostico || 'Sin diagnóstico', 80)}
-        </p>
-      </div>
-
-      {/* Pendientes preview (if exists) */}
-      {hasPendientes && (
-        <div className="mb-3 flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
-          <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-orange-800 dark:text-orange-300">
-            {truncate(patient.pendientes, 40)}
-          </p>
-        </div>
-      )}
-
-      {/* Bottom info: Image count + Resident */}
-      <div className="flex items-center justify-between mb-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          {imageCount > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
-              <Camera className="h-4 w-4" />
-              <span>{imageCount}</span>
-            </div>
-          )}
-          {resident && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-              <User className="h-4 w-4" />
-              <span className="truncate max-w-[120px]" title={resident.full_name}>
-                {resident.full_name}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Action footer - Clinical Precision Design */}
-      <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
-        {/* Left side: View details indicator */}
-        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-          <span>Detalles</span>
-          <ChevronRight className="h-3 w-3" />
-        </div>
-
-        {/* Right side: Action buttons (medical interface style) */}
+        {/* Action buttons - Accessible touch targets, flexbox layout on all breakpoints */}
         {(onEdit || onDelete) && (
           <div className="flex items-center gap-1">
             {onEdit && (
               <button
                 onClick={handleEdit}
                 className="
-                  p-1.5 rounded-md
+                  p-2.5 md:p-1.5 rounded-md
                   text-blue-700 dark:text-blue-400
                   hover:text-white hover:bg-blue-600 dark:hover:bg-blue-500
                   border border-blue-200 dark:border-blue-800
@@ -406,14 +374,14 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
                 title="Editar paciente completo"
                 aria-label="Editar paciente"
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-5 w-5 md:h-4 md:w-4" />
               </button>
             )}
             {onDelete && (
               <button
                 onClick={handleDelete}
                 className="
-                  p-1.5 rounded-md
+                  p-2.5 md:p-1.5 rounded-md
                   text-red-600 dark:text-red-400
                   hover:text-white hover:bg-red-600 dark:hover:bg-red-500
                   border border-red-200 dark:border-red-800
@@ -425,12 +393,76 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
                 title="Eliminar o archivar paciente"
                 aria-label="Eliminar paciente"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-5 w-5 md:h-4 md:w-4" />
               </button>
             )}
           </div>
         )}
       </div>
+
+      {/* Patient identity: Name, DNI, Age */}
+      <div className="mb-2 md:mb-3">
+        <h3 className="font-bold text-base md:text-lg text-gray-900 dark:text-gray-100 line-clamp-1">
+          {patient.nombre}
+        </h3>
+        <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <span>DNI: {patient.dni || 'N/A'}</span>
+          <span className="text-gray-400 dark:text-gray-600">|</span>
+          <span>Edad: {patient.edad || 'N/A'}</span>
+        </div>
+      </div>
+
+      {/* Diagnosis - Prominent display with responsive truncation */}
+      <div className="mb-2 md:mb-3">
+        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3 md:line-clamp-2">
+          {truncate(patient.diagnostico || 'Sin diagnóstico', truncateLengths.diagnosis)}
+        </p>
+      </div>
+
+      {/* Pendientes alert - Enhanced mobile visibility */}
+      {hasPendientes && (
+        <div className="mb-2 md:mb-3 flex items-start gap-2 p-2.5 md:p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md border-2 md:border border-orange-300 md:border-orange-200 dark:border-orange-700">
+          <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-orange-900 dark:text-orange-200 font-medium">
+            {truncate(patient.pendientes, truncateLengths.pendientes)}
+          </p>
+        </div>
+      )}
+
+      {/* Mobile: Prominent tap indicator */}
+      <div className="md:hidden mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-center">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+          <span>Toca para ver detalles</span>
+          <ChevronRight className="h-4 w-4" />
+        </div>
+      </div>
+
+      {/* Desktop: Subtle indicator with metadata */}
+      <div className="hidden md:flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          {imageCount > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
+              <Camera className="h-4 w-4" />
+              <span>{imageCount}</span>
+            </div>
+          )}
+          {resident && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+              <User className="h-4 w-4" />
+              <span className="truncate max-w-[100px] md:max-w-[120px]" title={resident.full_name}>
+                {resident.full_name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* "Detalles" indicator */}
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+          <span>Detalles</span>
+          <ChevronRight className="h-3 w-3" />
+        </div>
+      </div>
+
         </>
       )}
     </div>
