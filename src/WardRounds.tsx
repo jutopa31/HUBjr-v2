@@ -489,7 +489,6 @@ const WardRounds: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Estado para el control de expansión de filas
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [expandedOutpatientRows, setExpandedOutpatientRows] = useState<Set<string>>(new Set());
 
   // Estados para edición inline de pendientes
@@ -515,7 +514,31 @@ const WardRounds: React.FC = () => {
   const [inlineEditValues, setInlineEditValues] = useState<Patient | null>(null);
 
   // Estado para vista dual (tabla vs cards)
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
+    if (typeof window === 'undefined') return 'table';
+    return window.matchMedia('(max-width: 768px)').matches ? 'cards' : 'table';
+  });
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleChange = () => {
+      setViewMode(mediaQuery.matches ? 'cards' : 'table');
+    };
+
+    handleChange();
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, []);
 
   const stopCameraStream = React.useCallback(() => {
     setCameraStream((currentStream) => {
@@ -656,6 +679,16 @@ const WardRounds: React.FC = () => {
     }, -1);
     return maxOrder + 1;
   };
+
+  const detailCardConfigs: Array<{ label: string; field: keyof Patient; placeholder: string }> = [
+    { label: 'Antecedentes', field: 'antecedentes', placeholder: 'Sin antecedentes' },
+    { label: 'Motivo de Consulta', field: 'motivo_consulta', placeholder: 'Sin motivo' },
+    { label: 'EF/NIHSS/ABCD2', field: 'examen_fisico', placeholder: 'Sin examen' },
+    { label: 'Estudios Complementarios', field: 'estudios', placeholder: 'Sin estudios' },
+    { label: 'Diagnostico', field: 'diagnostico', placeholder: 'Sin diagnostico' },
+    { label: 'Plan', field: 'plan', placeholder: 'Sin plan' },
+    { label: 'Pendientes', field: 'pendientes', placeholder: 'Sin pendientes' }
+  ];
 
   /**
    * Show toast notification
@@ -982,16 +1015,6 @@ const WardRounds: React.FC = () => {
   };
 
   // Función para alternar la expansión de una fila
-  const toggleRowExpansion = (patientId: string) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (newExpandedRows.has(patientId)) {
-      newExpandedRows.delete(patientId);
-    } else {
-      newExpandedRows.add(patientId);
-    }
-    setExpandedRows(newExpandedRows);
-  };
-
   const toggleOutpatientRow = (patientId: string) => {
     const newExpandedRows = new Set(expandedOutpatientRows);
     if (newExpandedRows.has(patientId)) {
@@ -1500,11 +1523,15 @@ const WardRounds: React.FC = () => {
     const isActive = activeInlineField === field;
     const isEditing = isDetailEditMode || isActive;
     const value = (inlineDetailValues[field] as string) || '';
-    const displayValue = value && value.trim() ? value : placeholder;
+    // Colapsar múltiples saltos de línea consecutivos (3+ → 2)
+    const processedValue = value && value.trim()
+      ? value.replace(/\n{3,}/g, '\n\n')
+      : '';
+    const displayValue = processedValue || placeholder;
 
     return (
       <div
-        className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm transition-all duration-200"
+        className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm transition-all duration-200 h-full flex flex-col"
         tabIndex={0}
         onKeyDown={(e) => {
           if (isDetailEditMode) return;
@@ -1669,9 +1696,11 @@ const WardRounds: React.FC = () => {
             )}
           </div>
         ) : (
-          <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-5">
-            {displayValue}
-          </p>
+          <div className="max-h-[500px] overflow-y-auto">
+            <p className="text-xs text-[var(--text-secondary)] whitespace-pre-wrap leading-normal break-words">
+              {displayValue}
+            </p>
+          </div>
         )}
       </div>
     );
@@ -3134,7 +3163,6 @@ const WardRounds: React.FC = () => {
 
             {/* Lista de pacientes */}
             {sortedPatients.map((patient) => {
-              const isExpanded = expandedRows.has(patient.id || '');
               const isDragTarget = dragOverPatientId === (patient.id || '');
               return (
                 <div
@@ -3145,11 +3173,11 @@ const WardRounds: React.FC = () => {
                       : patient.severidad === 'II'
                         ? 'bg-yellow-50 border-l-4 border-l-yellow-400'
                         : patient.severidad === 'III'
-                          ? 'bg-orange-50 border-l-4 border-l-orange-400'
-                          : patient.severidad === 'IV'
-                            ? 'bg-red-50 border-l-4 border-l-red-400'
-                            : 'bg-white border-l-4 border-l-gray-300'
-                  } ${isExpanded ? 'shadow-md mb-6' : 'hover:bg-gray-50'} ${isDragTarget ? 'ring-2 ring-blue-200 ring-inset' : ''}`}
+                        ? 'bg-orange-50 border-l-4 border-l-orange-400'
+                        : patient.severidad === 'IV'
+                          ? 'bg-red-50 border-l-4 border-l-red-400'
+                          : 'bg-white border-l-4 border-l-gray-300'
+                  } hover:bg-gray-50 ${isDragTarget ? 'ring-2 ring-blue-200 ring-inset' : ''}`}
                   onDragOver={(e) => handleDragOverRow(e, patient.id || '')}
                   onDrop={(e) => handleDropRow(e, patient.id || '')}
                   onDragEnd={resetDragState}
@@ -3171,24 +3199,8 @@ const WardRounds: React.FC = () => {
                       >
                         <GripVertical className="h-4 w-4 text-gray-400" />
                       </div>
-                      {/* Icono de expansión */}
-                      <div className="flex-shrink-0">
-                        <button
-                          type="button"
-                          className="p-1 rounded hover:bg-gray-100 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleRowExpansion(patient.id || '');
-                          }}
-                          title={isExpanded ? 'Contraer' : 'Expandir'}
-                        >
-                          <ChevronRight
-                            className={`expand-icon h-4 w-4 text-gray-500 ${isExpanded ? 'expanded' : ''}`}
-                          />
-                        </button>
-                      </div>
 
-                      {/* Información principal */}
+                      {/* InformaciA3n principal */}
                       <div className="flex-1 grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1 sm:gap-2 items-center min-w-0">
                         <div className="col-span-2">
                           <div className="text-sm font-medium text-gray-900">{patient.cama}</div>
@@ -3329,70 +3341,6 @@ const WardRounds: React.FC = () => {
                         >
                           <Trash2 className="h-4 w-4 sm:h-4 sm:w-4" />
                         </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contenido expandible */}
-                  <div
-                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                      isExpanded ? 'max-h-screen opacity-100 mb-4' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div className="px-6 pb-6 pt-4 border-t border-gray-200 bg-gray-50 medical-details">
-                      <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">Antecedentes</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.antecedentes || 'No especificado'}
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">Motivo de Consulta</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.motivo_consulta || 'No especificado'}
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">EF/NIHSS/ABCD2</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.examen_fisico || 'No especificado'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">Estudios Complementarios</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.estudios || 'No especificado'}
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">Diagnóstico</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.diagnostico || 'No especificado'}
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">Plan</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.plan || 'No especificado'}
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium text-gray-700 mb-1">Pendientes</h4>
-                            <p className="text-gray-600 bg-white p-3 rounded border break-words overflow-wrap">
-                              {patient.pendientes || 'Sin pendientes'}
-                            </p>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -3783,20 +3731,47 @@ const WardRounds: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[var(--bg-secondary)]">
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)] gap-4 items-start">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {renderDetailCard('Antecedentes', 'antecedentes', 'Sin antecedentes', { multiline: true })}
-                  {renderDetailCard('Motivo de Consulta', 'motivo_consulta', 'Sin motivo', { multiline: true })}
-                  {renderDetailCard('EF/NIHSS/ABCD2', 'examen_fisico', 'Sin examen', { multiline: true })}
-                  {renderDetailCard('Estudios Complementarios', 'estudios', 'Sin estudios', { multiline: true })}
-                  {renderDetailCard('Diagnostico', 'diagnostico', 'Sin diagnostico', { multiline: true })}
-                  {renderDetailCard('Plan', 'plan', 'Sin plan', { multiline: true })}
-                  {renderDetailCard('Pendientes', 'pendientes', 'Sin pendientes', { multiline: true })}
+
+              {/* DESKTOP: Layout auto-balanceado LG+ (1024px+) */}
+              <div className="hidden lg:grid lg:grid-cols-[1fr_1fr_minmax(240px,300px)] gap-3 items-start">
+
+                {/* Contenedor de 2 columnas auto-flow para cards */}
+                <div className="lg:col-span-2 grid grid-cols-2 gap-3 auto-rows-max">
+                  {detailCardConfigs.map((card) =>
+                    renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })
+                  )}
                 </div>
-                <div className="flex justify-end items-start">
-                  <div className="w-full max-w-xs lg:max-w-sm">{renderImagePreviewCard()}</div>
+
+                {/* Columna fija de imágenes */}
+                <div className="flex flex-col">
+                  {renderImagePreviewCard()}
                 </div>
               </div>
+
+              {/* TABLET: Grid 2 columnas MD-LG (768px-1023px) */}
+              <div className="hidden md:grid lg:hidden md:grid-cols-2 gap-3 auto-rows-max">
+                {detailCardConfigs.map((card) =>
+                  renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })
+                )}
+                <div className="flex justify-end items-start">
+                  <div className="w-full max-w-xs">{renderImagePreviewCard()}</div>
+                </div>
+              </div>
+
+              {/* MOBILE: Carrusel horizontal */}
+              <div className="md:hidden -mx-4 px-4">
+                <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
+                  {detailCardConfigs.map((card) => (
+                    <div key={card.field} className="snap-start shrink-0 w-[calc(100vw-2rem)] min-h-[60vh]">
+                      {renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })}
+                    </div>
+                  ))}
+                  <div className="snap-start shrink-0 w-[calc(100vw-2rem)] min-h-[60vh]">
+                    {renderImagePreviewCard()}
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {(isDetailEditMode || isHeaderEditMode) && (
@@ -3907,3 +3882,8 @@ const WardRounds: React.FC = () => {
 };
 
 export default WardRounds;
+
+
+
+
+

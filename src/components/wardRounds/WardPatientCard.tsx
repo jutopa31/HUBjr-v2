@@ -402,10 +402,10 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
 
       {/* Patient identity: Name, DNI, Age */}
       <div className="mb-2 md:mb-3">
-        <h3 className="font-bold text-base md:text-lg text-gray-900 dark:text-gray-100 line-clamp-1">
+        <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
           {patient.nombre}
         </h3>
-        <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <div className="flex items-center gap-2 md:gap-3 text-xs text-gray-600 dark:text-gray-400 mt-1">
           <span>DNI: {patient.dni || 'N/A'}</span>
           <span className="text-gray-400 dark:text-gray-600">|</span>
           <span>Edad: {patient.edad || 'N/A'}</span>
@@ -414,7 +414,7 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
 
       {/* Diagnosis - Prominent display with responsive truncation */}
       <div className="mb-2 md:mb-3">
-        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3 md:line-clamp-2">
+        <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-3 md:line-clamp-2">
           {truncate(patient.diagnostico || 'Sin diagnóstico', truncateLengths.diagnosis)}
         </p>
       </div>

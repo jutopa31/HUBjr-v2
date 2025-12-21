@@ -16,6 +16,7 @@
     "audit:responsive": "node scripts/responsive-audit.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.31.0",
     "@supabase/supabase-js": "^2.56.1",
     "cors": "^2.8.5",
     "file-type": "^21.0.0",
