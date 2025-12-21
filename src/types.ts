@@ -73,6 +73,8 @@ export interface SavePatientData {
   clinical_notes: string;
   scale_results: SavedScaleResult[];
   hospital_context?: 'Posadas' | 'Julian';
+  source_interconsulta_id?: string;
+  response_sent?: boolean;
 }
 
 // Tipos para contexto de hospital

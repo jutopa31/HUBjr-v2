@@ -25,6 +25,7 @@ import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
 import AcademiaManager from './AcademiaManager';
 import { ProtectedRoute } from './components/auth';
+import { useAuthContext } from './components/auth/AuthProvider';
 import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
@@ -32,6 +33,7 @@ import ResidentManagement from './components/ResidentManagement';
 import Interconsultas from './Interconsultas';
 import PacientesPostAlta from './PacientesPostAlta';
 import Sidebar from './components/layout/Sidebar';
+import { EvolucionadorApp } from './evolucionador';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -44,6 +46,8 @@ const NeurologyResidencyHub = () => {
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { hasPrivilege } = useAuthContext();
+  const useNewEvolucionador = hasPrivilege('use_new_evolucionador') || hasPrivilege('full_admin');
 
   // Function to handle tab changes and close sidebar on mobile
   const handleTabChange = (tabId: string) => {
@@ -5235,7 +5239,20 @@ const NeurologyResidencyHub = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'diagnostic':
-        return (
+        return useNewEvolucionador ? (
+          <EvolucionadorApp
+            interconsultaData={activeInterconsulta}
+            hospitalContext={currentHospitalContext}
+            onCancel={() => {
+              setActiveInterconsulta(null);
+              setActiveTab(activeInterconsulta ? 'interconsultas' : 'inicio');
+            }}
+            onComplete={() => {
+              setActiveInterconsulta(null);
+              setActiveTab('interconsultas');
+            }}
+          />
+        ) : (
           <DiagnosticAlgorithmContent
             notes={notes}
             setNotes={setNotes}
@@ -5598,7 +5615,20 @@ const NeurologyResidencyHub = () => {
           </div>
         ); */
       default:
-        return (
+        return useNewEvolucionador ? (
+          <EvolucionadorApp
+            interconsultaData={activeInterconsulta}
+            hospitalContext={currentHospitalContext}
+            onCancel={() => {
+              setActiveInterconsulta(null);
+              setActiveTab(activeInterconsulta ? 'interconsultas' : 'inicio');
+            }}
+            onComplete={() => {
+              setActiveInterconsulta(null);
+              setActiveTab('interconsultas');
+            }}
+          />
+        ) : (
           <DiagnosticAlgorithmContent
             notes={notes}
             setNotes={setNotes}

@@ -9,7 +9,8 @@ export type AdminPrivilegeType =
   | 'full_admin'
   | 'lumbar_puncture_admin'
   | 'scale_management'
-  | 'user_management';
+  | 'user_management'
+  | 'use_new_evolucionador';
 
 // Interface for admin privileges
 interface AdminPrivilege {
@@ -51,18 +52,22 @@ export async function savePatientAssessment(patientData: SavePatientData): Promi
   try {
     console.log('💾 Guardando evaluación diagnóstica:', patientData);
 
+    const payload = {
+      patient_name: patientData.patient_name,
+      patient_age: patientData.patient_age,
+      patient_dni: patientData.patient_dni,
+      clinical_notes: patientData.clinical_notes,
+      scale_results: patientData.scale_results,
+      hospital_context: patientData.hospital_context || 'Posadas',
+      created_by: 'neurologist',
+      status: 'active',
+      ...(patientData.source_interconsulta_id ? { source_interconsulta_id: patientData.source_interconsulta_id } : {}),
+      ...(typeof patientData.response_sent === 'boolean' ? { response_sent: patientData.response_sent } : {})
+    };
+
     const { data, error } = await supabase
       .from('diagnostic_assessments')
-      .insert([{
-        patient_name: patientData.patient_name,
-        patient_age: patientData.patient_age,
-        patient_dni: patientData.patient_dni,
-        clinical_notes: patientData.clinical_notes,
-        scale_results: patientData.scale_results,
-        hospital_context: patientData.hospital_context || 'Posadas',
-        created_by: 'neurologist',
-        status: 'active'
-      }])
+      .insert([payload])
       .select()
       .single();
 

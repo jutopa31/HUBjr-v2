@@ -2432,8 +2432,8 @@ const WardRounds: React.FC = () => {
     setTempPendientes('');
   };
 
-  // Exportar a PDF estilo tabla Excel compacta
-  const exportToPDF = () => {
+  // Exportar a PDF estilo tabla Excel compacta (auto-scale)
+  const exportTablePDF = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -2469,13 +2469,13 @@ const WardRounds: React.FC = () => {
             <td class="severity-cell col-severity" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
               <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
             </td>
-            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 180)}</td>
-            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 150)}</td>
-            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 120)}</td>
-            <td class="text-cell small col-studies">${truncateText(patient.estudios, 180)}</td>
-            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 140)}</td>
-            <td class="text-cell small col-plan">${truncateText(patient.plan, 160)}</td>
-            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 120)}</td>
+            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 500)}</td>
+            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 400)}</td>
+            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 300)}</td>
+            <td class="text-cell small col-studies">${truncateText(patient.estudios, 500)}</td>
+            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 400)}</td>
+            <td class="text-cell small col-plan">${truncateText(patient.plan, 450)}</td>
+            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 350)}</td>
           </tr>
         `;
       }).join('');
@@ -2489,10 +2489,20 @@ const WardRounds: React.FC = () => {
           <meta charset="UTF-8">
           <style>
             @media print {
-              body { -webkit-print-color-adjust: exact; }
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
               @page {
-                margin: 0.3cm;
+                margin: 10mm;
                 size: A4 landscape;
+              }
+              thead {
+                display: table-header-group;
+              }
+              tr, .patient-row {
+                break-inside: avoid;
+                page-break-inside: avoid;
               }
             }
             
@@ -2500,7 +2510,7 @@ const WardRounds: React.FC = () => {
               font-family: 'Arial', sans-serif;
               margin: 0;
               padding: 8px;
-              font-size: 10px;
+              font-size: 10pt;
               line-height: 1.4;
               color: #333;
             }
@@ -2514,14 +2524,14 @@ const WardRounds: React.FC = () => {
             
             .header h1 {
               color: #2563eb;
-              font-size: 18px;
+              font-size: 18pt;
               margin: 0 0 3px 0;
               font-weight: bold;
             }
             
             .header .info {
               color: #666;
-              font-size: 9px;
+              font-size: 9pt;
             }
             
             .summary-bar {
@@ -2532,7 +2542,7 @@ const WardRounds: React.FC = () => {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              font-size: 9px;
+              font-size: 9pt;
               border-left: 3px solid #2563eb;
             }
             
@@ -2556,31 +2566,34 @@ const WardRounds: React.FC = () => {
               width: 100%;
               border-collapse: collapse;
               border: 1px solid #d1d5db;
-              font-size: 9px;
+              font-size: 10pt;
+              table-layout: fixed;
             }
             
             th {
               background: #f9fafb;
               font-weight: bold;
-              padding: 5px 3px;
+              padding: 6px 4px;
               text-align: center;
               border: 1px solid #d1d5db;
-              font-size: 9px;
+              font-size: 10pt;
               color: #374151;
               white-space: nowrap;
             }
             
             td {
-              padding: 4px 3px;
+              padding: 5px 4px;
               border: 1px solid #e5e7eb;
               vertical-align: top;
               word-wrap: break-word;
-              overflow-wrap: break-word;
-              line-height: 1.5;
+              overflow-wrap: anywhere;
+              word-break: break-word;
+              white-space: normal;
+              line-height: 1.4;
             }
             
             .number-cell {
-              width: 25px;
+              width: 2%;
               text-align: center;
               font-weight: bold;
               background: #f9fafb;
@@ -2596,12 +2609,12 @@ const WardRounds: React.FC = () => {
             }
             
             .text-cell.small {
-              font-size: 8px;
-              line-height: 1.5;
+              font-size: 9pt;
+              line-height: 1.4;
             }
             
             .severity-cell {
-              width: 35px;
+              width: 3%;
               text-align: center;
               font-weight: bold;
             }
@@ -2620,29 +2633,45 @@ const WardRounds: React.FC = () => {
             }
             
             /* Optimización de columnas */
-            .col-num { width: 3%; }
-            .col-bed { width: 3%; }
-            .col-name { width: 10%; }
-            .col-dni { width: 5%; }
+            .col-num { width: 2%; }
+            .col-bed { width: 4%; }
+            .col-name { width: 9%; }
+            .col-dni { width: 6%; }
             .col-age { width: 3%; }
             .col-severity { width: 3%; }
-            .col-history { width: 17%; }
-            .col-reason { width: 13%; }
-            .col-exam { width: 11%; }
-            .col-studies { width: 17%; }
-            .col-diagnosis { width: 12%; }
-            .col-plan { width: 15%; }
-            .col-pending { width: 11%; }
+            .col-history { width: 14%; }
+            .col-reason { width: 12%; }
+            .col-exam { width: 10%; }
+            .col-studies { width: 15%; }
+            .col-diagnosis { width: 11%; }
+            .col-plan { width: 13%; }
+            .col-pending { width: 10%; }
             
             .footer {
               margin-top: 8px;
               text-align: center;
               color: #6b7280;
-              font-size: 8px;
+              font-size: 8pt;
               border-top: 1px solid #e5e7eb;
               padding-top: 4px;
             }
           </style>
+          <script>
+            window.addEventListener('load', function() {
+              const table = document.querySelector('table');
+              const wrapper = document.querySelector('.table-wrapper');
+              if (!table || !wrapper) return;
+
+              const pageWidth = wrapper.clientWidth;
+              const contentWidth = table.scrollWidth;
+              if (contentWidth <= pageWidth) return;
+
+              const scale = Math.max(0.65, Math.min(1, pageWidth / contentWidth));
+              table.style.transform = 'scale(' + scale + ')';
+              table.style.transformOrigin = 'top left';
+              wrapper.style.height = (table.offsetHeight * scale) + 'px';
+            });
+          </script>
         </head>
         <body>
           <div class="header">
@@ -2677,8 +2706,9 @@ const WardRounds: React.FC = () => {
             })}</div>
           </div>
 
-          <table>
-            <thead>
+          <div class="table-wrapper">
+            <table>
+              <thead>
               <tr>
                 <th class="col-num">#</th>
                 <th class="col-bed">Ubicación</th>
@@ -2694,14 +2724,15 @@ const WardRounds: React.FC = () => {
                 <th class="col-plan">Plan</th>
                 <th class="col-pending">Pendientes</th>
               </tr>
-            </thead>
-            <tbody>
+              </thead>
+              <tbody>
               ${generateTableRows()}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
           
           <div class="footer">
-            Pase de Sala Neurología - Hospital Nacional Posadas - Servicio de Neurología
+            Pase de Sala Neurología - Hospital Nacional Posadas - Formato Tabla Completa
           </div>
         </body>
       </html>
@@ -2709,12 +2740,9 @@ const WardRounds: React.FC = () => {
     
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-    
-    // Esperar un momento para que se cargue el contenido antes de imprimir
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
+
+    // La ventana permanece abierta para que el usuario pueda revisar el PDF
+    // El usuario puede imprimir manualmente con Ctrl+P cuando esté listo
   };
 
   return (
@@ -2801,7 +2829,7 @@ const WardRounds: React.FC = () => {
               <span className="hidden md:inline">CSV</span>
             </button>
             <button
-              onClick={exportToPDF}
+              onClick={exportTablePDF}
               className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
               title="Exportar PDF"
             >

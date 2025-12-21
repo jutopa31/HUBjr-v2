@@ -39,6 +39,7 @@ const WardRoundsWorking: React.FC = () => {
 
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Exportar a PDF
   const exportToPDF = () => {
     const printContent = document.getElementById('ward-round-table');
     if (!printContent) return;
@@ -47,52 +48,118 @@ const WardRoundsWorking: React.FC = () => {
     if (!printWindow) return;
 
     const today = new Date().toLocaleDateString('es-AR');
-    
+    const table = printContent.querySelector('table');
+    const clonedTable = table ? (table.cloneNode(true) as HTMLTableElement) : null;
+
+    if (clonedTable) {
+      const headerRow = clonedTable.querySelector('thead tr');
+      if (headerRow?.lastElementChild) {
+        headerRow.lastElementChild.remove();
+      }
+      clonedTable.querySelectorAll('tbody tr').forEach((row) => {
+        const lastCell = row.lastElementChild;
+        if (lastCell) {
+          lastCell.remove();
+        }
+      });
+
+      const colgroup = document.createElement('colgroup');
+      const widths = ['6%', '8%', '13%', '5%', '8%', '14%', '14%', '7%', '5%', '8%', '12%'];
+      widths.forEach((width) => {
+        const col = document.createElement('col');
+        col.style.width = width;
+        colgroup.appendChild(col);
+      });
+      clonedTable.prepend(colgroup);
+    }
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>Pase de Sala Neurología - ${today}</title>
+          <title>Pase de Sala NeurologA-a - ${today}</title>
           <style>
+            @page {
+              size: A4 landscape;
+              margin: 10mm;
+            }
             body { 
               font-family: Arial, sans-serif; 
-              margin: 20px; 
-              font-size: 12px;
+              margin: 0; 
+              font-size: 8px;
             }
             h1 { 
               text-align: center; 
               color: #2563eb;
-              margin-bottom: 20px;
+              margin-bottom: 12px;
+              font-size: 12px;
             }
             table { 
               width: 100%; 
               border-collapse: collapse; 
               margin-top: 10px;
+              table-layout: fixed;
             }
             th, td { 
               border: 1px solid #ccc; 
-              padding: 8px; 
+              padding: 4px; 
               text-align: left;
               vertical-align: top;
-              word-wrap: break-word;
+              word-break: break-word;
+              overflow: hidden;
             }
             th { 
               background-color: #f3f4f6; 
               font-weight: bold;
+              font-size: 8px;
             }
+            thead { 
+              display: table-header-group; 
+            }
+            tr { 
+              page-break-inside: avoid; 
+            }
+            td:nth-child(1),
+            td:nth-child(2),
+            td:nth-child(4),
+            td:nth-child(9) {
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+            }
+            td:nth-child(3),
+            td:nth-child(5),
+            td:nth-child(8),
+            td:nth-child(10),
+            td:nth-child(11) {
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
+            td:nth-child(6),
+            td:nth-child(7) {
+              display: -webkit-box;
+              -webkit-line-clamp: 6;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
+            .severity-I { background-color: #dcfce7; }
+            .severity-II { background-color: #fef3c7; }
+            .severity-III { background-color: #fed7aa; }
+            .severity-IV { background-color: #fecaca; }
           </style>
         </head>
         <body>
-          <h1>PASE DE SALA NEUROLOGÍA - ${today}</h1>
-          ${printContent.outerHTML}
+          <h1>PASE DE SALA NEUROLOGA?A - ${today}</h1>
+          ${clonedTable ? clonedTable.outerHTML : printContent.outerHTML}
         </body>
       </html>
     `);
-    
+
     printWindow.document.close();
     printWindow.print();
     printWindow.close();
   };
-
   return (
     <div className="p-6">
       {/* Header */}
