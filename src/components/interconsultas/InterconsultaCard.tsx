@@ -27,10 +27,29 @@ const InterconsultaCard: React.FC<InterconsultaCardProps> = ({
 
   const hasResponse = interconsulta.respuesta && interconsulta.respuesta.trim() !== '';
 
-  const truncateText = (text: string | null | undefined, maxLength: number = 150) => {
-    if (!text) return 'Sin relato';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+  const truncateTextByWords = (text: string | null | undefined, maxLength: number = 200) => {
+    // Manejar casos vacíos/null
+    if (!text || text.trim() === '') return 'Sin relato';
+
+    // Limpiar texto: múltiples espacios/saltos de línea → espacio simple
+    const cleanedText = text.replace(/\s+/g, ' ').trim();
+
+    // Si es corto, retornar completo
+    if (cleanedText.length <= maxLength) return cleanedText;
+
+    // Truncar a maxLength
+    const truncated = cleanedText.substring(0, maxLength);
+
+    // Buscar último espacio (última palabra completa)
+    const lastSpaceIndex = truncated.lastIndexOf(' ');
+
+    // Si no hay espacios (palabra muy larga), truncar con ellipsis
+    if (lastSpaceIndex === -1) {
+      return truncated + '...';
+    }
+
+    // Retornar hasta última palabra completa + ellipsis
+    return truncated.substring(0, lastSpaceIndex) + '...';
   };
 
   return (
@@ -86,8 +105,11 @@ const InterconsultaCard: React.FC<InterconsultaCardProps> = ({
 
           {/* Columna derecha: Relato */}
           <div className="min-h-[80px] pr-8 overflow-hidden">
-            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-4 break-words">
-              {truncateText(interconsulta.relato_consulta)}
+            <p
+              className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 overflow-hidden"
+              title={interconsulta.relato_consulta || 'Sin relato'}
+            >
+              {truncateTextByWords(interconsulta.relato_consulta, 200)}
             </p>
           </div>
         </div>

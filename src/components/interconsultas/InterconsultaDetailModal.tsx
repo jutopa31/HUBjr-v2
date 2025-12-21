@@ -65,6 +65,20 @@ const InterconsultaDetailModal: React.FC<InterconsultaDetailModalProps> = ({
     }
   }, [successMessage]);
 
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [onClose]);
+
   const handleStatusChange = async (newStatus: string) => {
     if (!interconsulta.id) return;
 

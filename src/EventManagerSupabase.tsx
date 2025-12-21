@@ -706,8 +706,8 @@ const EventManagerSupabase: React.FC = () => {
         </div>
       )}
 
-      <div className="grid gap-3 xl:grid-cols-[1.15fr,0.85fr]">
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] p-3 shadow-sm">
+      <div className="grid gap-3 lg:grid-cols-[1.15fr,0.85fr]">
+        <div className="hidden lg:block rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f1f1f] p-3 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200">Vista mensual compacta</h3>
             <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
@@ -831,7 +831,7 @@ const EventManagerSupabase: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[70vh] lg:max-h-[60vh] overflow-y-auto pr-1">
               {filteredEvents.map((event) => {
                 const Icon = getEventTypeIcon();
                 const isExpanded = expandedEvent === event.id;
