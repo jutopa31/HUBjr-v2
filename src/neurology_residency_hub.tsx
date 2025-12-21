@@ -47,7 +47,7 @@ const NeurologyResidencyHub = () => {
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { hasPrivilege } = useAuthContext();
-  const useNewEvolucionador = hasPrivilege('use_new_evolucionador') || hasPrivilege('full_admin');
+  const useNewEvolucionador = false;
 
   // Function to handle tab changes and close sidebar on mobile
   const handleTabChange = (tabId: string) => {
