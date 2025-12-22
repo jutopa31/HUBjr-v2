@@ -25,7 +25,6 @@ import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
 import AcademiaManager from './AcademiaManager';
 import { ProtectedRoute } from './components/auth';
-import { useAuthContext } from './components/auth/AuthProvider';
 import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
 import LumbarPunctureDashboard from './components/LumbarPunctureDashboard';
@@ -46,7 +45,6 @@ const NeurologyResidencyHub = () => {
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { hasPrivilege } = useAuthContext();
   const useNewEvolucionador = false;
 
   // Function to handle tab changes and close sidebar on mobile
