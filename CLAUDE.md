@@ -146,7 +146,12 @@ SUPABASE_ANON_KEY=your-supabase-anon-key
 # Client-side Supabase config (NEXT_PUBLIC prefix required)
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Anthropic API for Claude Vision OCR (server-side only, secure)
+ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
+
+**Security Note**: The `ANTHROPIC_API_KEY` is kept server-side only (no `NEXT_PUBLIC_` prefix) to prevent exposing your API key in the browser. The OCR functionality uses a secure API route at `/api/ocr` that handles Claude Vision requests server-side.
 
 ## Database Setup
 

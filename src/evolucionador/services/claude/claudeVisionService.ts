@@ -1,46 +1,19 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { loadAIConfig } from '../../../aiConfig';
 import {
   CLAUDE_COST_RATES,
-  CLAUDE_OCR_CACHE_TTL_SECONDS,
-  CLAUDE_VISION_MAX_TOKENS,
-  CLAUDE_VISION_MODEL
+  CLAUDE_OCR_CACHE_TTL_SECONDS
 } from '../../config/claude.config';
 import type {
   ClaudeVisionDocumentType,
-  ClaudeVisionModel,
   ClaudeVisionResponse,
   ClaudeVisionUsage
 } from '../../types/claude.types';
 import { ClaudeCacheService } from './claudeCacheService';
 
-interface ClaudeVisionServiceOptions {
-  apiKey?: string;
-  model?: ClaudeVisionModel;
-}
-
 export class ClaudeVisionService {
-  private client: Anthropic;
   private cacheService: ClaudeCacheService;
-  private model: ClaudeVisionModel;
 
-  constructor(options?: ClaudeVisionServiceOptions) {
-    const config = typeof window !== 'undefined' ? loadAIConfig() : null;
-    const apiKey =
-      options?.apiKey ||
-      (config?.provider === 'claude' && config.enabled ? config.apiKey : '') ||
-      process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY ||
-      '';
-    if (!apiKey) {
-      throw new Error('Anthropic API key missing. Set NEXT_PUBLIC_ANTHROPIC_API_KEY or configure it in AI settings.');
-    }
-
-    this.client = new Anthropic({
-      apiKey,
-      dangerouslyAllowBrowser: true
-    });
+  constructor() {
     this.cacheService = new ClaudeCacheService();
-    this.model = options?.model || CLAUDE_VISION_MODEL;
   }
 
   async processImage(params: {
@@ -64,32 +37,30 @@ export class ClaudeVisionService {
     const startTime = Date.now();
 
     try {
-      const message = await this.client.messages.create(
-        {
-          model: this.model,
-          max_tokens: CLAUDE_VISION_MAX_TOKENS,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'image',
-                  source: {
-                    type: 'base64',
-                    media_type: imageType,
-                    data: imageBase64
-                  }
-                },
-                {
-                  type: 'text',
-                  text: prompt
-                }
-              ]
-            }
-          ]
+      // Call our secure API route instead of Anthropic directly
+      const response = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        { signal }
-      );
+        body: JSON.stringify({
+          imageBase64,
+          imageType,
+          prompt
+        }),
+        signal
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw {
+          status: response.status,
+          message: errorData.error || `HTTP ${response.status}`,
+          type: errorData.type
+        };
+      }
+
+      const message = await response.json();
 
       const processingTimeMs = Date.now() - startTime;
       const extractedText = this.extractTextFromMessage(message.content);
@@ -110,20 +81,20 @@ export class ClaudeVisionService {
       return result;
     } catch (error: any) {
       // Enhanced error handling with descriptive messages
+      if (error?.name === 'AbortError') {
+        throw new Error('Procesamiento cancelado por el usuario.');
+      }
       if (error?.status === 401) {
-        throw new Error('API key inválida o expirada. Verifica NEXT_PUBLIC_ANTHROPIC_API_KEY en .env.local');
+        throw new Error('API key inválida o expirada. Verifica la configuración del servidor.');
       }
       if (error?.status === 404) {
-        throw new Error(`Modelo "${this.model}" no encontrado. Verifica que el modelo exista en la API de Anthropic.`);
+        throw new Error('Modelo no encontrado. Verifica la configuración del servidor.');
       }
       if (error?.status === 429) {
         throw new Error('Límite de uso de API alcanzado. Espera unos minutos e intenta nuevamente.');
       }
       if (error?.status === 500 || error?.status === 503) {
-        throw new Error('Error del servidor de Anthropic. Intenta nuevamente más tarde.');
-      }
-      if (error?.name === 'AbortError') {
-        throw new Error('Procesamiento cancelado por el usuario.');
+        throw new Error('Error del servidor. Intenta nuevamente más tarde.');
       }
 
       // Generic error with original message
@@ -192,7 +163,7 @@ Devuelve SOLO JSON valido:
     return 0.6;
   }
 
-  private extractTextFromMessage(content: Anthropic.Messages.ContentBlock[]): string {
+  private extractTextFromMessage(content: any[]): string {
     return content
       .filter((block) => block.type === 'text')
       .map((block) => (block.type === 'text' ? block.text : ''))
@@ -200,7 +171,7 @@ Devuelve SOLO JSON valido:
       .trim();
   }
 
-  private normalizeUsage(usage?: Anthropic.Messages.Message['usage']): ClaudeVisionUsage {
+  private normalizeUsage(usage?: any): ClaudeVisionUsage {
     return {
       inputTokens: usage?.input_tokens ?? 0,
       outputTokens: usage?.output_tokens ?? 0
