@@ -59,6 +59,28 @@ export interface PatientAssessment {
   response_sent?: boolean; // Si se envió respuesta a interconsulta
 }
 
+export interface EvolucionadorDraft {
+  id: string;
+  user_id: string;
+  notes: string;
+  patient_name?: string;
+  patient_dni?: string;
+  patient_age?: string;
+  patient_bed?: string;
+  source_interconsulta_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EvolucionadorDraftPayload {
+  notes: string;
+  patient_name?: string;
+  patient_dni?: string;
+  patient_age?: string;
+  patient_bed?: string;
+  source_interconsulta_id?: string | null;
+}
+
 export interface SavedScaleResult {
   scale_name: string;
   score: string;

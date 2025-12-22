@@ -1,4 +1,4 @@
-// Utilidad para extraer datos de paciente desde las notas clínicas
+﻿// Utility to extract patient data from clinical notes
 export interface ExtractedPatientData {
   name: string;
   age: string;
@@ -13,9 +13,9 @@ export interface ExtractedScale {
 }
 
 /**
- * Extrae información del paciente desde las notas clínicas
- * @param notes - Notas clínicas del paciente
- * @returns Datos extraídos del paciente
+ * Extract patient data from clinical notes.
+ * @param notes - Clinical notes text
+ * @returns Extracted patient data
  */
 export function extractPatientData(notes: string): ExtractedPatientData {
   const extractedData: ExtractedPatientData = {
@@ -25,31 +25,26 @@ export function extractPatientData(notes: string): ExtractedPatientData {
     extractedScales: []
   };
 
-  // Patrones de regex para extraer información
+  const normalizeDni = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 7 && digits.length <= 8 ? digits : '';
+  };
+
+  // Regex patterns for common headers
   const patterns = {
-    // Buscar nombres después de "Nombre:", "Paciente:", etc.
     name: [
-      /Nombre:\s*([A-ZÁÉÍÓÚ][a-záéíóú\s]+)/i,
-      /Paciente:\s*([A-ZÁÉÍÓÚ][a-záéíóú\s]+)/i,
-      /Datos\s+paciente:\s*([A-ZÁÉÍÓÚ][a-záéíóú\s]+)/i
+      /(?:^|\n)\s*(?:PACIENTE|Paciente|Nombre|Apellido\s*y\s*Nombre|Nombre\s*y\s*Apellido|Datos\s+paciente)\s*[:\-]\s*([^\n]+?)(?=\s+(?:DNI|EDAD|CAMA)\b|$)/i
     ],
-    
-    // Buscar edad
     age: [
-      /Edad:\s*(\d{1,3})\s*(?:años?)?/i,
-      /(\d{1,3})\s*años/i,
-      /Edad:\s*(\d{1,3})/i
+      /(?:^|\n)\s*Edad\s*[:\-]\s*(\d{1,3})/i,
+      /(?:^|\n)\s*(\d{1,3})\s*a(?:n|\u00f1)os?/i
     ],
-    
-    // Buscar DNI
     dni: [
-      /DNI:\s*(\d{7,8})/i,
-      /D\.?N\.?I\.?:\s*(\d{7,8})/i,
-      /Documento:\s*(\d{7,8})/i
+      /(?:^|\n)\s*(?:DNI|D\.?N\.?I\.?|Documento(?:\s+Nacional)?|Doc\.?)\s*[:\-]?\s*([0-9.\-\s]{6,12})/i
     ]
   };
 
-  // Extraer nombre
+  // Extract name
   for (const pattern of patterns.name) {
     const match = notes.match(pattern);
     if (match && match[1]) {
@@ -58,7 +53,7 @@ export function extractPatientData(notes: string): ExtractedPatientData {
     }
   }
 
-  // Extraer edad
+  // Extract age
   for (const pattern of patterns.age) {
     const match = notes.match(pattern);
     if (match && match[1]) {
@@ -67,30 +62,33 @@ export function extractPatientData(notes: string): ExtractedPatientData {
     }
   }
 
-  // Extraer DNI
+  // Extract DNI
   for (const pattern of patterns.dni) {
     const match = notes.match(pattern);
     if (match && match[1]) {
-      extractedData.dni = match[1].trim();
+      const normalized = normalizeDni(match[1].trim());
+      if (normalized) {
+        extractedData.dni = normalized;
+      }
       break;
     }
   }
 
-  // Extraer resultados de escalas
+  // Extract scale results
   extractedData.extractedScales = extractScaleResults(notes);
 
   return extractedData;
 }
 
 /**
- * Extrae los resultados de escalas desde las notas
- * @param notes - Notas clínicas
- * @returns Array de escalas extraídas
+ * Extract scale results from notes.
+ * @param notes - Clinical notes
+ * @returns Extracted scales array
  */
 function extractScaleResults(notes: string): ExtractedScale[] {
   const scales: ExtractedScale[] = [];
-  
-  // Patrones para diferentes escalas
+
+  // Patterns for different scales
   const scalePatterns = [
     {
       name: 'NIHSS',
@@ -129,43 +127,43 @@ function extractScaleResults(notes: string): ExtractedScale[] {
 }
 
 /**
- * Valida si los datos extraídos son suficientes para guardar
- * @param data - Datos extraídos
- * @returns true si los datos son válidos
+ * Validate if extracted data is enough to save.
+ * @param data - Extracted data
+ * @returns true if valid
  */
 export function validatePatientData(data: ExtractedPatientData): boolean {
-  // Al menos debe tener nombre o alguna escala completada
+  // At least a name or one completed scale
   return data.name.length > 0 || data.extractedScales.length > 0;
 }
 
 /**
- * Limpia y formatea el nombre del paciente
- * @param name - Nombre a limpiar
- * @returns Nombre formateado
+ * Clean and format patient name.
+ * @param name - Name to clean
+ * @returns Formatted name
  */
 export function cleanPatientName(name: string): string {
   return name
     .trim()
-    .replace(/\s+/g, ' ') // Múltiples espacios a uno solo
-    .replace(/^[^a-zA-ZÀ-ÿ]+|[^a-zA-ZÀ-ÿ\s]+$/g, '') // Remover caracteres especiales al inicio/final
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase()); // Primera letra de cada palabra en mayúscula
+    .replace(/\s+/g, ' ')
+    .replace(/^[^\p{L}]+|[^\p{L}\s.'-]+$/gu, '')
+    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase());
 }
 
 /**
- * Genera un resumen de los datos extraídos para mostrar al usuario
- * @param data - Datos extraídos
- * @returns Resumen en texto
+ * Build a text summary of extracted data.
+ * @param data - Extracted data
+ * @returns Summary text
  */
 export function generateDataSummary(data: ExtractedPatientData): string {
   const parts = [];
-  
+
   if (data.name) parts.push(`Nombre: ${data.name}`);
-  if (data.age) parts.push(`Edad: ${data.age} años`);
+  if (data.age) parts.push(`Edad: ${data.age} anos`);
   if (data.dni) parts.push(`DNI: ${data.dni}`);
-  
+
   if (data.extractedScales.length > 0) {
     parts.push(`Escalas completadas: ${data.extractedScales.length}`);
-    data.extractedScales.forEach(scale => {
+    data.extractedScales.forEach((scale) => {
       parts.push(`- ${scale.name}: ${scale.score} puntos`);
     });
   }

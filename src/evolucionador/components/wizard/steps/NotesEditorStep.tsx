@@ -4,6 +4,7 @@ import OCRProcessor from '../../ocr/OCRProcessor';
 interface NotesEditorStepProps {
   notes: string;
   onNotesChange: (value: string) => void;
+  onInsertOcrText?: (text: string) => Promise<void> | void;
   onNext?: () => void;
   onBack?: () => void;
   autoSaveLabel?: string;
@@ -20,6 +21,7 @@ const appendText = (current: string, incoming: string): string => {
 const NotesEditorStep: React.FC<NotesEditorStepProps> = ({
   notes,
   onNotesChange,
+  onInsertOcrText,
   onNext,
   onBack,
   autoSaveLabel
@@ -27,8 +29,9 @@ const NotesEditorStep: React.FC<NotesEditorStepProps> = ({
   const handleInsert = useCallback(
     (text: string) => {
       onNotesChange(appendText(notes, text));
+      void onInsertOcrText?.(text);
     },
-    [notes, onNotesChange]
+    [notes, onNotesChange, onInsertOcrText]
   );
 
   return (
