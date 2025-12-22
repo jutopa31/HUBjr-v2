@@ -9,14 +9,19 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log('🔵 OCR API called');
+
   if (req.method !== 'POST') {
+    console.log('🔴 Wrong method:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // Get API key from server-side environment variable (not exposed to client)
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log('🔑 API Key present:', !!apiKey);
 
   if (!apiKey) {
+    console.error('🔴 ANTHROPIC_API_KEY not configured');
     return res.status(500).json({
       error: 'ANTHROPIC_API_KEY not configured on server'
     });
