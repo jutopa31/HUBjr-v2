@@ -511,7 +511,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
     <div className="flex h-full flex-col lg:flex-row">
       {/* Mobile Controls */}
       <div className="border-b bg-white dark:bg-[#1a1a1a] px-4 py-3 shadow-sm lg:hidden">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--text-tertiary)]">Evolucionador</p>
             <h2 className="text-base font-semibold text-[var(--text-primary)]">Notas y escalas neurológicas</h2>
@@ -522,8 +522,60 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             className="inline-flex items-center rounded-full btn-accent px-3 py-1.5 text-xs font-semibold"
           >
             <LayoutList className="mr-1.5 h-3.5 w-3.5" />
-            {isScalesVisible ? 'Ocultar escalas' : 'Mostrar escalas'}
+            {isScalesVisible ? 'Ocultar' : 'Escalas'}
           </button>
+        </div>
+
+        {/* Botones de acción para móviles */}
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={handleSavePatient}
+            className="px-2.5 py-1.5 text-xs btn-accent rounded inline-flex items-center gap-1.5"
+            title="Guardar paciente"
+          >
+            <Database className="h-3.5 w-3.5" />
+            <span>Guardar</span>
+          </button>
+          <button
+            onClick={copyNotes}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Copiar notas"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span>Copiar</span>
+          </button>
+          <button
+            onClick={() => setShowOcrModal(true)}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Procesar OCR de PDF o imagen"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span>OCR</span>
+          </button>
+          <button
+            onClick={() => {
+              const normalExamText = `Examen neurológico:
+Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
+
+`;
+              setNotes(notes + normalExamText);
+            }}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Insertar examen físico normal"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>EF normal</span>
+          </button>
+          {clearNotes && (
+            <button
+              onClick={clearNotes}
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Limpiar notas"
+            >
+              <X className="h-3.5 w-3.5" />
+              <span>Limpiar</span>
+            </button>
+          )}
         </div>
       </div>
 

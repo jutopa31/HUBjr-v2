@@ -3,8 +3,11 @@ import useEscapeKey from '../../hooks/useEscapeKey';
 import { X, Upload, FileText, Loader2, Copy, Check, AlertTriangle, Camera, Clipboard } from 'lucide-react';
 import {
   isSupportedOCRFile,
+  renderPdfFirstPageToDataUrl
 } from '../../services/ocrService';
 import { runSequentialOcr, type OCRAutoProgress, type OCRAutoResult } from '../../services/ocrAutoService';
+import { processOcrDataUrl as processClaudeOcrDataUrl, processOcrFile as processClaudeOcrFile } from '../../evolucionador/services/ocr/ocrOrchestrator';
+import type { OCRProgress as ClaudeOCRProgress } from '../../evolucionador/types/ocr.types';
 
 interface OCRProcessorModalProps {
   isOpen: boolean;
@@ -12,10 +15,33 @@ interface OCRProcessorModalProps {
   onInsert: (text: string) => void;
 }
 
+const isImageFile = (file: File): boolean =>
+  file.type.startsWith('image/') || /\.(png|jpe?g|bmp|tiff)$/i.test(file.name);
+const isPdfFile = (file: File): boolean =>
+  file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+const mapClaudeStage = (stage: ClaudeOCRProgress['stage']): OCRAutoProgress['stage'] => {
+  switch (stage) {
+    case 'validating':
+    case 'preprocessing':
+      return 'loading';
+    case 'processing':
+    case 'parsing':
+      return 'image-ocr';
+    case 'complete':
+      return 'complete';
+    default:
+      return 'loading';
+  }
+};
+
 const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, onInsert }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [result, setResult] = useState<OCRAutoResult | null>(null);
   const [progress, setProgress] = useState<OCRAutoProgress | null>(null);
+  const [resultSource, setResultSource] = useState<'local' | 'claude' | null>(null);
+  const [claudeDetails, setClaudeDetails] = useState<{ tokensUsed: number; cost: number; confidence: number } | null>(null);
+  const [ocrMode, setOcrMode] = useState<'local' | 'claude'>('local');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -25,6 +51,8 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
     setSelectedFile(null);
     setResult(null);
     setProgress(null);
+    setResultSource(null);
+    setClaudeDetails(null);
     setIsProcessing(false);
     setError(null);
     setCopied(false);
@@ -42,28 +70,104 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
     setIsProcessing(true);
     setError(null);
     setResult(null);
+    setResultSource(null);
+    setClaudeDetails(null);
     setCopied(false);
 
     try {
-      const { results } = await runSequentialOcr([file], {
-        onProgress: setProgress,
-        minChars: 60
-      });
-      setResult(results[0] || null);
-      setProgress((prev) => ({
-        stage: 'complete',
-        message: 'Procesamiento finalizado',
-        fileName: prev?.fileName || file.name,
-        fileIndex: prev?.fileIndex || 1,
-        totalFiles: prev?.totalFiles || 1
-      }));
+      if (ocrMode === 'claude') {
+        let claudeResult;
+        let pageCount: number | null = null;
+
+        if (isPdfFile(file)) {
+          setProgress({
+            stage: 'loading',
+            message: 'Convirtiendo PDF a imagen',
+            fileName: file.name,
+            fileIndex: 1,
+            totalFiles: 1,
+            stageLabel: 'Convirtiendo PDF a imagen'
+          });
+          const rendered = await renderPdfFirstPageToDataUrl(file);
+          pageCount = rendered.pageCount;
+          claudeResult = await processClaudeOcrDataUrl(rendered.dataUrl, {
+            documentType: 'generic',
+            onProgress: (next: ClaudeOCRProgress) =>
+              setProgress({
+                stage: mapClaudeStage(next.stage),
+                message: next.message || 'Procesando con Claude Vision',
+                progress: next.progress,
+                fileName: file.name,
+                fileIndex: 1,
+                totalFiles: 1,
+                stageLabel: next.message
+              })
+          });
+        } else if (isImageFile(file)) {
+          claudeResult = await processClaudeOcrFile(file, {
+            documentType: 'generic',
+            onProgress: (next: ClaudeOCRProgress) =>
+              setProgress({
+                stage: mapClaudeStage(next.stage),
+                message: next.message || 'Procesando con Claude Vision',
+                progress: next.progress,
+                fileName: file.name,
+                fileIndex: 1,
+                totalFiles: 1,
+                stageLabel: next.message
+              })
+          });
+        } else {
+          setError('Claude Vision solo admite imagenes o PDF.');
+          return;
+        }
+
+        const warnings: string[] = [];
+        if (!claudeResult.text) {
+          warnings.push('Claude Vision no detecto texto legible en la imagen.');
+        }
+        if (pageCount && pageCount > 1) {
+          warnings.push('PDF con multiples paginas; se proceso solo la primera.');
+        }
+        setResultSource('claude');
+        setClaudeDetails({
+          tokensUsed: claudeResult.tokensUsed,
+          cost: claudeResult.cost,
+          confidence: claudeResult.confidence
+        });
+        setResult({
+          fileName: file.name,
+          text: claudeResult.text,
+          method: 'image-ocr',
+          warnings: warnings.length ? warnings : undefined
+        });
+      } else {
+        const { results } = await runSequentialOcr([file], {
+          onProgress: setProgress,
+          minChars: 60
+        });
+        setResultSource('local');
+        setResult(results[0] || null);
+        setProgress((prev) => ({
+          stage: 'complete',
+          message: 'Procesamiento finalizado',
+          fileName: prev?.fileName || file.name,
+          fileIndex: prev?.fileIndex || 1,
+          totalFiles: prev?.totalFiles || 1
+        }));
+      }
     } catch (ex) {
       console.error('OCR processing error', ex);
-      setError(ex instanceof Error ? ex.message : 'No se pudo procesar el archivo.');
+      const message = ex instanceof Error ? ex.message : 'No se pudo procesar el archivo.';
+      if (message.includes('Anthropic API key missing')) {
+        setError('Falta API key de Anthropic. Configura la key en Configuracion de IA (admin) o NEXT_PUBLIC_ANTHROPIC_API_KEY.');
+      } else {
+        setError(message);
+      }
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [ocrMode]);
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,11 +266,16 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
   const renderProgress = useMemo(() => {
     if (!progress) return null;
     const percentage = progress.progress ? Math.round(progress.progress * 100) : undefined;
+    const isComplete = progress.stage === 'complete';
 
     return (
       <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-700">
         <div className="flex items-center space-x-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          {isComplete ? (
+            <Check className="h-4 w-4 text-green-600" />
+          ) : (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          )}
           <span>{progress.message || 'Procesando archivo...'}</span>
           {percentage !== undefined && <span className="ml-auto font-medium">{percentage}%</span>}
         </div>
@@ -214,6 +323,31 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
               onChange={handleFileChange}
             />
           </label>
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600">
+            <span className="font-semibold text-gray-700">Modo OCR:</span>
+            <button
+              type="button"
+              onClick={() => setOcrMode('local')}
+              className={`rounded-full border px-3 py-1 font-semibold ${
+                ocrMode === 'local'
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Local (PDF/Tesseract)
+            </button>
+            <button
+              type="button"
+              onClick={() => setOcrMode('claude')}
+              className={`rounded-full border px-3 py-1 font-semibold ${
+                ocrMode === 'claude'
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Claude Vision (imagen o PDF)
+            </button>
+          </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
             <button
               type="button"
@@ -268,9 +402,16 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Resultado ({result.method === 'pdf-text' ? 'Texto PDF' : 'OCR'}):</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    Resultado ({resultSource === 'claude' ? 'Claude Vision' : result.method === 'pdf-text' ? 'Texto PDF' : 'OCR'}):
+                  </p>
                   {result.meta?.pageCount && (
                     <p className="text-xs text-gray-500">Paginas procesadas: {result.meta.pageCount}</p>
+                  )}
+                  {resultSource === 'claude' && claudeDetails && (
+                    <p className="text-xs text-gray-500">
+                      Tokens: {claudeDetails.tokensUsed} · Costo: ${claudeDetails.cost.toFixed(4)} · Confianza {Math.round(claudeDetails.confidence * 100)}%
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center space-x-2">

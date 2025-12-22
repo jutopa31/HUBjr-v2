@@ -63,50 +63,73 @@ export class ClaudeVisionService {
     const prompt = this.buildPromptForType(documentType);
     const startTime = Date.now();
 
-    const message = await this.client.messages.create(
-      {
-        model: this.model,
-        max_tokens: CLAUDE_VISION_MAX_TOKENS,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: imageType,
-                  data: imageBase64
+    try {
+      const message = await this.client.messages.create(
+        {
+          model: this.model,
+          max_tokens: CLAUDE_VISION_MAX_TOKENS,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: imageType,
+                    data: imageBase64
+                  }
+                },
+                {
+                  type: 'text',
+                  text: prompt
                 }
-              },
-              {
-                type: 'text',
-                text: prompt
-              }
-            ]
-          }
-        ]
-      },
-      { signal }
-    );
+              ]
+            }
+          ]
+        },
+        { signal }
+      );
 
-    const processingTimeMs = Date.now() - startTime;
-    const extractedText = this.extractTextFromMessage(message.content);
-    const usage = this.normalizeUsage(message.usage);
-    const tokensUsed = usage.inputTokens + usage.outputTokens;
-    const cost = this.calculateCost(usage);
+      const processingTimeMs = Date.now() - startTime;
+      const extractedText = this.extractTextFromMessage(message.content);
+      const usage = this.normalizeUsage(message.usage);
+      const tokensUsed = usage.inputTokens + usage.outputTokens;
+      const cost = this.calculateCost(usage);
 
-    const result: ClaudeVisionResponse = {
-      extractedText,
-      confidence: this.estimateConfidence(extractedText),
-      processingTimeMs,
-      tokensUsed,
-      cost
-    };
+      const result: ClaudeVisionResponse = {
+        extractedText,
+        confidence: this.estimateConfidence(extractedText),
+        processingTimeMs,
+        tokensUsed,
+        cost
+      };
 
-    await this.cacheService.set(cacheKey, result, CLAUDE_OCR_CACHE_TTL_SECONDS);
+      await this.cacheService.set(cacheKey, result, CLAUDE_OCR_CACHE_TTL_SECONDS);
 
-    return result;
+      return result;
+    } catch (error: any) {
+      // Enhanced error handling with descriptive messages
+      if (error?.status === 401) {
+        throw new Error('API key inválida o expirada. Verifica NEXT_PUBLIC_ANTHROPIC_API_KEY en .env.local');
+      }
+      if (error?.status === 404) {
+        throw new Error(`Modelo "${this.model}" no encontrado. Verifica que el modelo exista en la API de Anthropic.`);
+      }
+      if (error?.status === 429) {
+        throw new Error('Límite de uso de API alcanzado. Espera unos minutos e intenta nuevamente.');
+      }
+      if (error?.status === 500 || error?.status === 503) {
+        throw new Error('Error del servidor de Anthropic. Intenta nuevamente más tarde.');
+      }
+      if (error?.name === 'AbortError') {
+        throw new Error('Procesamiento cancelado por el usuario.');
+      }
+
+      // Generic error with original message
+      const errorMessage = error?.message || 'Error desconocido al procesar la imagen';
+      throw new Error(`Error de Claude Vision: ${errorMessage}`);
+    }
   }
 
   private buildPromptForType(type: ClaudeVisionDocumentType): string {

@@ -21,17 +21,22 @@ export interface OCRResult {
   };
 }
 
-const PDF_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
+const PDF_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+const PDF_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs';
 let pdfjsPromise: Promise<any> | null = null;
 
 const loadPdfJs = async () => {
   if (!pdfjsPromise) {
-    pdfjsPromise = import('pdfjs-dist');
+    if (typeof window === 'undefined') {
+      pdfjsPromise = import('pdfjs-dist/build/pdf.mjs');
+    } else {
+      pdfjsPromise = import(/* webpackIgnore: true */ PDF_JS_CDN);
+    }
   }
   const module = await pdfjsPromise;
   const pdfjsLib = (module as any).getDocument ? module : (module as any).default;
   const globalOptions = (pdfjsLib as any)?.GlobalWorkerOptions;
-  if (globalOptions && !globalOptions.workerSrc) {
+  if (globalOptions) {
     globalOptions.workerSrc = PDF_WORKER_SRC;
   }
   return pdfjsLib;
@@ -90,6 +95,37 @@ export const extractTextFromPdf = async (
     },
     warnings: cleanedText ? undefined : ['No se detectó texto en el PDF, considere usar OCR'],
   };
+};
+
+export const renderPdfFirstPageToDataUrl = async (
+  file: File,
+  scale: number = 2
+): Promise<{ dataUrl: string; pageCount: number }> => {
+  if (typeof window === 'undefined') {
+    throw new Error('PDF rendering is only supported in the browser.');
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfjsLib = await loadPdfJs();
+  const loadingTask = (pdfjsLib as any).getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('No se pudo crear el canvas para renderizar el PDF.');
+  }
+
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+
+  const renderTask = page.render({ canvasContext: context, viewport });
+  await renderTask.promise;
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  return { dataUrl, pageCount: pdf.numPages };
 };
 
 export const extractTextFromImage = async (
