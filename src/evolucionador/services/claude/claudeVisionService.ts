@@ -144,7 +144,7 @@ Devuelve SOLO JSON valido:
   "findings": "",
   "conclusion": ""
 }`,
-      generic: `Extrae el texto completo del documento medico y, si es posible, organiza en secciones clinicas.`
+      generic: `Realiza OCR (reconocimiento óptico de caracteres) en esta imagen y devuelve ÚNICAMENTE el texto que se ve en el documento, palabra por palabra, tal como aparece. No agregues explicaciones, no resumas, no interpretes. Solo transcribe exactamente todo el texto visible.`
     };
 
     return prompts[type] || prompts.generic;
@@ -183,8 +183,8 @@ Devuelve SOLO JSON valido:
     imageType: string,
     documentType: ClaudeVisionDocumentType
   ): Promise<string> {
-    const prefix = imageBase64.slice(0, 64);
-    const hash = await this.hashString(prefix + imageType + documentType);
+    // Use entire image data for hash to avoid cache collisions
+    const hash = await this.hashString(imageBase64 + imageType + documentType);
     return `ocr_${documentType}_${hash}`;
   }
 
