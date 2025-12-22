@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
@@ -9,6 +9,8 @@ import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
 import { generateEvolucionadorTemplate } from './services/workflowIntegrationService';
+import { useAuth } from './hooks/useAuth';
+import { listEvolucionadorDrafts, saveEvolucionadorDraft } from './services/evolucionadorDraftsService';
 
 const AI_SUGGESTIONS_GROUP = 'Sugerencias IA';
 const SEARCH_RESULTS_GROUP = 'Resultados de búsqueda';
@@ -61,12 +63,20 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   });
   const [isScalesVisible, setIsScalesVisible] = useState(false);
   const [userCollapsed, setUserCollapsed] = useState(true);
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [draftSyncLabel, setDraftSyncLabel] = useState<string | null>(null);
+  const [draftListStatus, setDraftListStatus] = useState<string | null>(null);
+  const isHydratingDraft = useRef(false);
+  const saveTimerRef = useRef<number | null>(null);
+  const hasLoadedDraft = useRef(false);
+  const { user } = useAuth();
+  const userId = user?.id || null;
 
   // Estado y ref para el dropdown de patologías rápidas
   const [showPathologyDropdown, setShowPathologyDropdown] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Estados para workflow integration (interconsulta → evolucionador → pase)
+  // Estados para workflow integration (interconsulta ? evolucionador ? pase)
   const [showSaveToWardModal, setShowSaveToWardModal] = useState(false);
   const [selectedFinalStatus, setSelectedFinalStatus] = useState<string>('Resuelta');
   const [lastSavedAssessmentId, setLastSavedAssessmentId] = useState<string | null>(null);
@@ -81,13 +91,21 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       // Mostrar notificación al usuario
       setSaveStatus({
         success: true,
-        message: `📋 Datos de interconsulta cargados: ${activeInterconsulta.nombre}`
+        message: `?? Datos de interconsulta cargados: ${activeInterconsulta.nombre}`
       });
 
       // Limpiar notificación después de 3 segundos
       setTimeout(() => setSaveStatus(null), 3000);
     }
   }, [activeInterconsulta, setNotes]);
+
+  useEffect(() => {
+    if (!userId) return;
+    hasLoadedDraft.current = false;
+    setDraftListStatus(null);
+    setDraftSyncLabel(null);
+    setActiveDraftId(null);
+  }, [activeInterconsulta?.id, userId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -127,6 +145,80 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     // Aplicar nueva altura
     textarea.style.height = `${newHeight}px`;
   }, [notes]);
+
+  useEffect(() => {
+    if (!userId || hasLoadedDraft.current) return;
+    let isMounted = true;
+    const loadDrafts = async () => {
+      setDraftListStatus('Cargando borrador...');
+      const result = await listEvolucionadorDrafts(userId);
+      if (!isMounted) return;
+      if (!result.success) {
+        setDraftListStatus(result.error || 'No se pudo cargar el borrador');
+        return;
+      }
+      const drafts = result.data || [];
+      const matchingDraft = activeInterconsulta?.id
+        ? drafts.find((draft) => draft.source_interconsulta_id === activeInterconsulta.id)
+        : drafts[0];
+      if (matchingDraft) {
+        setActiveDraftId(matchingDraft.id);
+        if (notes !== (matchingDraft.notes || '')) {
+          isHydratingDraft.current = true;
+          setNotes(matchingDraft.notes || '');
+          setDraftSyncLabel('Borrador restaurado');
+          setTimeout(() => {
+            isHydratingDraft.current = false;
+          }, 0);
+        }
+      }
+      setDraftListStatus(null);
+      hasLoadedDraft.current = true;
+    };
+    void loadDrafts();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeInterconsulta?.id, notes, setNotes, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    if (isHydratingDraft.current) return;
+    if (!notes.trim()) return;
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+
+    setDraftSyncLabel('Guardando borrador...');
+    saveTimerRef.current = window.setTimeout(async () => {
+      const extracted = extractPatientData(notes);
+      const payload = {
+        notes,
+        patient_name: extracted.name || undefined,
+        patient_dni: extracted.dni || undefined,
+        patient_age: extracted.age || undefined,
+        source_interconsulta_id: activeInterconsulta?.id || null
+      };
+      const result = await saveEvolucionadorDraft(userId, activeDraftId, payload);
+      if (result.success && result.data) {
+        const timestamp = new Date(result.data.updated_at || Date.now()).toLocaleTimeString('es-AR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        setActiveDraftId(result.data.id);
+        setDraftSyncLabel(`Borrador guardado ${timestamp}`);
+        return;
+      }
+      setDraftSyncLabel(result.error || 'No se pudo guardar borrador');
+    }, 900);
+
+    return () => {
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, [activeDraftId, activeInterconsulta?.id, notes, userId]);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -293,7 +385,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
         setSaveStatus({
           success: true,
-          message: '✅ Paciente agregado al Pase de Sala exitosamente'
+          message: '? Paciente agregado al Pase de Sala exitosamente'
         });
 
         setShowSaveToWardModal(false);
@@ -422,7 +514,12 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         </div>
 
         {/* Botones de acción - solo en desktop, en mobile están en Mobile Controls */}
-        <div className="hidden lg:flex gap-2 flex-wrap">
+        <div className="hidden lg:flex items-center gap-3 flex-wrap">
+          {userId && (draftListStatus || draftSyncLabel) && (
+            <p className="text-xs text-gray-500">
+              {draftListStatus || draftSyncLabel}
+            </p>
+          )}
           <button
             onClick={handleToggleScales}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
@@ -488,7 +585,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           <div className="p-3 bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-600 rounded">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-blue-900 dark:text-blue-100">📋 Evolucionando interconsulta:</p>
+                <p className="font-semibold text-blue-900 dark:text-blue-100">?? Evolucionando interconsulta:</p>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
                   {activeInterconsulta.nombre} - DNI: {activeInterconsulta.dni} - Cama: {activeInterconsulta.cama}
                 </p>
@@ -515,6 +612,9 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--text-tertiary)]">Evolucionador</p>
             <h2 className="text-base font-semibold text-[var(--text-primary)]">Notas y escalas neurológicas</h2>
+            {userId && (draftListStatus || draftSyncLabel) && (
+              <p className="text-xs text-gray-500">{draftListStatus || draftSyncLabel}</p>
+            )}
           </div>
           <button
             type="button"
@@ -757,6 +857,13 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               </div>
             )}
 
+            {userId && (draftListStatus || draftSyncLabel) && (
+              <div className="mb-2 flex items-center space-x-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-blue-800">
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-sm">{draftListStatus || draftSyncLabel}</span>
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={notes}
@@ -943,3 +1050,8 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
+
+
+
+
+
