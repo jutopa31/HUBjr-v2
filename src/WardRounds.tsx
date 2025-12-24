@@ -995,8 +995,8 @@ const WardRounds: React.FC = () => {
       console.log('[WardRounds] createEmptyPatient -> inserted:', data);
 
       if (data && data[0]) {
-        // Abrir inmediatamente el paciente recién creado en vista de detalle
-        setSelectedPatient(data[0]);
+        // Abrir inmediatamente el paciente recién creado en vista de detalle EN MODO DE EDICIÓN
+        handlePatientSelection(data[0], { editMode: 'detail' });
         await loadPatients();
       }
     } catch (error) {
