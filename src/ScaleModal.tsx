@@ -61,7 +61,8 @@ const NIHSS_PRESETS: Record<string, Record<string, number | string>> = {
 
 const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => {
   // Initialize scores with default values from scale items
-  const initialScores = useMemo(() => {
+  // Using a function initializer to compute initial state only once
+  const [scores, setScores] = useState<{ [key: string]: number | string }>(() => {
     if (!scale?.items) return {};
     const defaultScores: { [key: string]: number | string } = {};
     scale.items.forEach((item) => {
@@ -70,16 +71,10 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
       }
     });
     return defaultScores;
-  }, [scale]);
-
-  const [scores, setScores] = useState<{ [key: string]: number | string }>(initialScores);
+  });
   const [pareticSide, setPareticSide] = useState<'left' | 'right' | null>(null);
 
   useEscapeKey(onClose, Boolean(scale));
-
-  // Debug modal rendering
-  console.log('🔍 ScaleModal rendering for scale:', scale?.name || 'undefined');
-  console.log('🔍 ScaleModal scale data:', scale ? { id: scale.id, itemsCount: scale.items?.length || 0 } : 'null');
 
   const handleScoreChange = useCallback((itemId: string, score: string) => {
     if (score === 'UN') {
@@ -514,7 +509,7 @@ const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => 
   );
 };
 
-export default React.memo(ScaleModal); 
+export default ScaleModal; 
 
 
 
