@@ -25,8 +25,6 @@ interface EpicrisisAssistantModalProps {
   onInsert: (text: string) => void;
 }
 
-type ProcessingStep = 'epicrisis' | 'studies' | 'generating' | 'complete' | null;
-
 const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
   isOpen,
   onClose,
@@ -60,7 +58,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
 
   // UI state
   const [error, setError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<ProcessingStep>(null);
 
   const epicrisisInputRef = useRef<HTMLInputElement>(null);
   const studyInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +74,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
     setGenerationCost(0);
     setGenerationTokens(0);
     setError(null);
-    setCurrentStep(null);
     setIsProcessingEpicrisis(false);
     setIsProcessingStudies(false);
     setIsGenerating(false);
@@ -100,7 +96,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
     setEpicrisisFile(file);
     setIsProcessingEpicrisis(true);
     setError(null);
-    setCurrentStep('epicrisis');
 
     try {
       let result;
@@ -121,7 +116,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
       }
 
       setEpicrisisText(result.text);
-      setCurrentStep(null);
     } catch (err) {
       console.error('Error processing epicrisis:', err);
       setError(err instanceof Error ? err.message : 'Error procesando epicrisis');
@@ -142,7 +136,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
     setStudyFiles((prev) => [...prev, ...supported]);
     setIsProcessingStudies(true);
     setError(null);
-    setCurrentStep('studies');
 
     try {
       const extractedTexts: string[] = [];
@@ -171,7 +164,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
 
       const consolidated = extractedTexts.join('\n\n');
       setStudiesText((prev) => (prev ? `${prev}\n\n${consolidated}` : consolidated));
-      setCurrentStep(null);
     } catch (err) {
       console.error('Error processing studies:', err);
       setError(err instanceof Error ? err.message : 'Error procesando estudios');
@@ -196,7 +188,6 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
 
     setIsGenerating(true);
     setError(null);
-    setCurrentStep('generating');
 
     try {
       const result = await evolutionService.generateEvolutionNote(
@@ -209,11 +200,9 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
       setGeneratedNote(result.fullNote);
       setGenerationCost(result.cost);
       setGenerationTokens(result.tokensUsed);
-      setCurrentStep('complete');
     } catch (err) {
       console.error('Error generating evolution:', err);
       setError(err instanceof Error ? err.message : 'Error generando evolución');
-      setCurrentStep(null);
     } finally {
       setIsGenerating(false);
     }
