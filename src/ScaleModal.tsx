@@ -60,11 +60,29 @@ const NIHSS_PRESETS: Record<string, Record<string, number | string>> = {
 };
 
 const ScaleModal: React.FC<ScaleModalProps> = ({ scale, onClose, onSubmit }) => {
-  const [scores, setScores] = useState<{ [key: string]: number | string }>({});
+  // Initialize scores with default values from scale items to prevent re-renders
+  const initialScores = useMemo(() => {
+    if (!scale?.items) return {};
+    const defaultScores: { [key: string]: number | string } = {};
+    scale.items.forEach((item) => {
+      if (item.score !== undefined) {
+        defaultScores[item.id] = item.score;
+      }
+    });
+    return defaultScores;
+  }, [scale?.id]); // Only depend on scale.id to prevent unnecessary recalculations
+
+  const [scores, setScores] = useState<{ [key: string]: number | string }>(initialScores);
   const [pareticSide, setPareticSide] = useState<'left' | 'right' | null>(null);
 
+  // Reset scores when scale changes to prevent glitches
+  React.useEffect(() => {
+    setScores(initialScores);
+    setPareticSide(null);
+  }, [scale?.id, initialScores]);
+
   useEscapeKey(onClose, Boolean(scale));
-  
+
   // Debug modal rendering
   console.log('🔍 ScaleModal rendering for scale:', scale?.name || 'undefined');
   console.log('🔍 ScaleModal scale data:', scale ? { id: scale.id, itemsCount: scale.items?.length || 0 } : 'null');
