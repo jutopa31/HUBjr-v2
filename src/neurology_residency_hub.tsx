@@ -5647,12 +5647,14 @@ const NeurologyResidencyHub = () => {
   const modalContent = selectedScale ? (
     selectedScale.id.startsWith('updrs') ? (
       <UpdrsModal
+        key={selectedScale.id}
         scale={selectedScale}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
       />
     ) : (
       <ScaleModal
+        key={selectedScale.id}
         scale={selectedScale}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
