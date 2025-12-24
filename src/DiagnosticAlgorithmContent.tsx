@@ -61,6 +61,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 1024;
   });
+  const previousMobileView = useRef(isMobileView);
   const [isScalesVisible, setIsScalesVisible] = useState(false);
   const [userCollapsed, setUserCollapsed] = useState(true);
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
@@ -115,12 +116,13 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobileView(mobile);
-      setIsScalesVisible(() => {
-        if (mobile) {
-          return false;
+      setIsScalesVisible((prev) => {
+        if (previousMobileView.current === mobile) {
+          return prev;
         }
-        return userCollapsed ? false : true;
+        return mobile ? false : !userCollapsed;
       });
+      previousMobileView.current = mobile;
     };
 
     handleResize();
@@ -286,10 +288,12 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const handleToggleScales = useCallback(() => {
     setIsScalesVisible((prev) => {
       const next = !prev;
-      setUserCollapsed(!next);
+      if (!isMobileView) {
+        setUserCollapsed(!next);
+      }
       return next;
     });
-  }, []);
+  }, [isMobileView]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -1050,8 +1054,6 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 };
 
 export default React.memo(DiagnosticAlgorithmContent); 
-
-
 
 
 
