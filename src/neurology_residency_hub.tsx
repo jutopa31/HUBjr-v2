@@ -5644,28 +5644,29 @@ const NeurologyResidencyHub = () => {
   
   
   // Create modal content (usar modal especializado para UPDRS)
+  // Using key at Fragment level to ensure complete remount when scale changes
   const modalContent = selectedScale ? (
-    selectedScale.id.startsWith('updrs') ? (
-      <UpdrsModal
-        key={selectedScale.id}
-        scale={selectedScale}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-      />
-    ) : (
-      <ScaleModal
-        key={selectedScale.id}
-        scale={selectedScale}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-        notesContext={notes}
-      />
-    )
+    <React.Fragment key={selectedScale.id}>
+      {selectedScale.id.startsWith('updrs') ? (
+        <UpdrsModal
+          scale={selectedScale}
+          onClose={handleModalClose}
+          onSubmit={handleModalSubmit}
+        />
+      ) : (
+        <ScaleModal
+          scale={selectedScale}
+          onClose={handleModalClose}
+          onSubmit={handleModalSubmit}
+          notesContext={notes}
+        />
+      )}
+    </React.Fragment>
   ) : null;
-  
+
   // Try portal first, fallback to regular rendering
   const modalPortal = selectedScale
-    ? (modalRoot 
+    ? (modalRoot
         ? ReactDOM.createPortal(modalContent!, modalRoot)
         : modalContent // Fallback: render directly in component tree
       )
