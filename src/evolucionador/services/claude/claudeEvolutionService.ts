@@ -74,10 +74,10 @@ export class ClaudeEvolutionService {
 ${patientInfo}
 
 EPICRISIS PREVIA (Antecedentes del paciente e internación reciente):
-${epicrisisContext}
+${epicrisis}
 
 ESTUDIOS Y DATOS ACTUALES (Nueva información disponible):
-${currentStudies}
+${studies}
 
 INSTRUCCIONES:
 Genera una nota de evolución médica bien estructurada usando formato SOAP:
