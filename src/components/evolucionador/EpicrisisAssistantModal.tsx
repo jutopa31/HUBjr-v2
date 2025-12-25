@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import useEscapeKey from '../../hooks/useEscapeKey';
 import { isSupportedOCRFile, renderPdfFirstPageToDataUrl } from '../../services/ocrService';
+import { runSequentialOcr } from '../../services/ocrAutoService';
 import { processOcrDataUrl, processOcrFile } from '../../evolucionador/services/ocr/ocrOrchestrator';
 import type { OCRProgress } from '../../evolucionador/types/ocr.types';
 import type { EvolutionOptions } from '../../evolucionador/types/evolution.types';
@@ -58,6 +59,7 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
 
   // UI state
   const [error, setError] = useState<string | null>(null);
+  const [ocrMode, setOcrMode] = useState<'local' | 'claude'>('local');
 
   const epicrisisInputRef = useRef<HTMLInputElement>(null);
   const studyInputRef = useRef<HTMLInputElement>(null);
@@ -98,24 +100,41 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
     setError(null);
 
     try {
-      let result;
+      let extractedText = '';
 
-      // If PDF, render first page to image then OCR
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        setEpicrisisProgress({ stage: 'preprocessing', message: 'Convirtiendo PDF a imagen' });
-        const { dataUrl } = await renderPdfFirstPageToDataUrl(file);
-        result = await processOcrDataUrl(dataUrl, {
-          documentType: 'generic',
-          onProgress: setEpicrisisProgress
-        });
+      if (ocrMode === 'claude') {
+        // Claude Vision mode
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          setEpicrisisProgress({ stage: 'preprocessing', message: 'Convirtiendo PDF a imagen' });
+          const { dataUrl } = await renderPdfFirstPageToDataUrl(file);
+          const result = await processOcrDataUrl(dataUrl, {
+            documentType: 'generic',
+            onProgress: setEpicrisisProgress
+          });
+          extractedText = result.text;
+        } else {
+          const result = await processOcrFile(file, {
+            documentType: 'generic',
+            onProgress: setEpicrisisProgress
+          });
+          extractedText = result.text;
+        }
       } else {
-        result = await processOcrFile(file, {
-          documentType: 'generic',
-          onProgress: setEpicrisisProgress
+        // Local mode (free)
+        const { results } = await runSequentialOcr([file], {
+          onProgress: (progress) => {
+            setEpicrisisProgress({
+              stage: progress.stage,
+              message: progress.message,
+              progress: progress.progress
+            });
+          },
+          minChars: 60
         });
+        extractedText = results[0]?.text || '';
       }
 
-      setEpicrisisText(result.text);
+      setEpicrisisText(extractedText);
     } catch (err) {
       console.error('Error processing epicrisis:', err);
       setError(err instanceof Error ? err.message : 'Error procesando epicrisis');
@@ -123,7 +142,7 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
       setIsProcessingEpicrisis(false);
       setEpicrisisProgress(null);
     }
-  }, []);
+  }, [ocrMode]);
 
   // Process study files
   const handleStudyFiles = useCallback(async (files: File[]) => {
@@ -140,26 +159,46 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
     try {
       const extractedTexts: string[] = [];
 
-      for (let i = 0; i < supported.length; i++) {
-        const file = supported[i];
-        setCurrentStudyIndex(i);
+      if (ocrMode === 'claude') {
+        // Claude Vision mode - process each file individually
+        for (let i = 0; i < supported.length; i++) {
+          const file = supported[i];
+          setCurrentStudyIndex(i);
 
-        let result;
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          setStudiesProgress({ stage: 'preprocessing', message: `Convirtiendo ${file.name}` });
-          const { dataUrl } = await renderPdfFirstPageToDataUrl(file);
-          result = await processOcrDataUrl(dataUrl, {
-            documentType: 'generic',
-            onProgress: setStudiesProgress
-          });
-        } else {
-          result = await processOcrFile(file, {
-            documentType: 'generic',
-            onProgress: setStudiesProgress
-          });
+          let result;
+          if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+            setStudiesProgress({ stage: 'preprocessing', message: `Convirtiendo ${file.name}` });
+            const { dataUrl } = await renderPdfFirstPageToDataUrl(file);
+            result = await processOcrDataUrl(dataUrl, {
+              documentType: 'generic',
+              onProgress: setStudiesProgress
+            });
+          } else {
+            result = await processOcrFile(file, {
+              documentType: 'generic',
+              onProgress: setStudiesProgress
+            });
+          }
+
+          extractedTexts.push(`--- ${file.name} ---\n${result.text}`);
         }
+      } else {
+        // Local mode (free) - process all files together
+        const { results } = await runSequentialOcr(supported, {
+          onProgress: (progress) => {
+            setCurrentStudyIndex(progress.fileIndex - 1);
+            setStudiesProgress({
+              stage: progress.stage,
+              message: progress.message,
+              progress: progress.progress
+            });
+          },
+          minChars: 60
+        });
 
-        extractedTexts.push(`--- ${file.name} ---\n${result.text}`);
+        results.forEach((result) => {
+          extractedTexts.push(`--- ${result.fileName} ---\n${result.text}`);
+        });
       }
 
       const consolidated = extractedTexts.join('\n\n');
@@ -172,7 +211,7 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
       setStudiesProgress(null);
       setCurrentStudyIndex(0);
     }
-  }, []);
+  }, [ocrMode]);
 
   // Generate evolution note
   const handleGenerate = useCallback(async () => {
@@ -309,6 +348,35 @@ const EpicrisisAssistantModal: React.FC<EpicrisisAssistantModalProps> = ({
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Sube o fotografía la epicrisis del paciente para extraer antecedentes de internación reciente
             </p>
+
+            {/* OCR Mode Selector */}
+            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Modo OCR:</span>
+              <button
+                type="button"
+                onClick={() => setOcrMode('local')}
+                disabled={isProcessingEpicrisis || isProcessingStudies}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  ocrMode === 'local'
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                    : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                }`}
+              >
+                Local (Gratis - Tesseract/PDF.js)
+              </button>
+              <button
+                type="button"
+                onClick={() => setOcrMode('claude')}
+                disabled={isProcessingEpicrisis || isProcessingStudies}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  ocrMode === 'claude'
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+                    : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                }`}
+              >
+                Claude Vision (IA - ~$0.01-0.02)
+              </button>
+            </div>
 
             <div className="flex gap-3 mb-4">
               <button
