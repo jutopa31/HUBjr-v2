@@ -1531,7 +1531,7 @@ const WardRounds: React.FC = () => {
 
     return (
       <div
-        className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm transition-all duration-200 h-full flex flex-col"
+        className="p-2 md:p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm transition-all duration-200 h-full flex flex-col"
         tabIndex={0}
         onKeyDown={(e) => {
           if (isDetailEditMode) return;
@@ -1549,12 +1549,12 @@ const WardRounds: React.FC = () => {
           }
         }}
       >
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+        <div className="flex items-center justify-between mb-1.5 md:mb-2">
+          <div className="flex items-center space-x-1.5 md:space-x-2">
+            <span className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-[10px] md:text-xs font-semibold">
               {label.slice(0, 2).toUpperCase()}
             </span>
-            <h4 className="text-sm font-semibold text-[var(--text-primary)]">{label}</h4>
+            <h4 className="text-xs md:text-sm font-semibold text-[var(--text-primary)]">{label}</h4>
           </div>
           {!isDetailEditMode && (
             <button
@@ -1657,7 +1657,8 @@ const WardRounds: React.FC = () => {
               <textarea
                 value={value}
                 onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, [field]: e.target.value }))}
-                className="w-full min-h-[120px] rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={4}
+                className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
                 placeholder={placeholder}
               />
             ) : (
@@ -3758,7 +3759,7 @@ const WardRounds: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[var(--bg-secondary)]">
+            <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-2 bg-[var(--bg-secondary)]">
 
               {/* DESKTOP: Layout auto-balanceado LG+ (1024px+) */}
               <div className="hidden lg:grid lg:grid-cols-[1fr_1fr_minmax(240px,300px)] gap-3 items-start">
@@ -3786,18 +3787,14 @@ const WardRounds: React.FC = () => {
                 </div>
               </div>
 
-              {/* MOBILE: Carrusel horizontal */}
-              <div className="md:hidden -mx-4 px-4">
-                <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
-                  {detailCardConfigs.map((card) => (
-                    <div key={card.field} className="snap-start shrink-0 w-[calc(100vw-2rem)] min-h-[60vh]">
-                      {renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })}
-                    </div>
-                  ))}
-                  <div className="snap-start shrink-0 w-[calc(100vw-2rem)] min-h-[60vh]">
-                    {renderImagePreviewCard()}
+              {/* MOBILE: Formulario vertical compacto - eliminado carrusel horizontal */}
+              <div className="md:hidden space-y-3">
+                {detailCardConfigs.map((card) => (
+                  <div key={card.field}>
+                    {renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })}
                   </div>
-                </div>
+                ))}
+                {renderImagePreviewCard()}
               </div>
 
             </div>
