@@ -21,18 +21,8 @@ const isPdfFile = (file: File): boolean =>
   file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
 const mapClaudeStage = (stage: ClaudeOCRProgress['stage']): OCRAutoProgress['stage'] => {
-  switch (stage) {
-    case 'validating':
-    case 'preprocessing':
-      return 'loading';
-    case 'processing':
-    case 'parsing':
-      return 'image-ocr';
-    case 'complete':
-      return 'complete';
-    default:
-      return 'loading';
-  }
+  // Both types now use the same OCRStage values, so just pass through
+  return stage;
 };
 
 const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, onInsert }) => {
@@ -81,7 +71,7 @@ const OCRProcessorModal: React.FC<OCRProcessorModalProps> = ({ isOpen, onClose, 
 
         if (isPdfFile(file)) {
           setProgress({
-            stage: 'loading',
+            stage: 'preprocessing',
             message: 'Convirtiendo PDF a imagen',
             fileName: file.name,
             fileIndex: 1,
