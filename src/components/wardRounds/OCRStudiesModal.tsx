@@ -157,8 +157,9 @@ const OCRStudiesModal: React.FC<OCRStudiesModalProps> = ({ isOpen, onClose, onAp
   const progressLabel = useMemo(() => {
     if (!progress) return '';
     if (progress.stageLabel) return progress.stageLabel;
-    if (progress.stage === 'image-ocr') return 'Aplicando OCR';
-    if (progress.stage === 'pdf-text-extraction') return 'Extrayendo texto';
+    if (progress.stage === 'processing') return 'Procesando OCR';
+    if (progress.stage === 'preprocessing') return 'Preparando archivo';
+    if (progress.stage === 'validating') return 'Validando archivo';
     return 'Procesando';
   }, [progress]);
 

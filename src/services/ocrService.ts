@@ -1,14 +1,7 @@
 ﻿import Tesseract from 'tesseract.js';
+import type { OCRProgress } from '../evolucionador/types/ocr.types';
 
 export type OCRMethod = 'pdf-text' | 'image-ocr';
-
-export interface OCRProgress {
-  stage: 'initial' | 'loading' | 'pdf-text-extraction' | 'image-ocr' | 'complete';
-  progress?: number;
-  processedPages?: number;
-  totalPages?: number;
-  message?: string;
-}
 
 export interface OCRResult {
   text: string;
@@ -60,7 +53,7 @@ export const extractTextFromPdf = async (
   onProgress?: (progress: OCRProgress) => void
 ): Promise<OCRResult> => {
   const start = performance.now();
-  onProgress?.({ stage: 'loading', progress: 0 });
+  onProgress?.({ stage: 'preprocessing', message: 'Cargando PDF' });
 
   const arrayBuffer = await file.arrayBuffer();
   const pdfjsLib = await loadPdfJs();
@@ -77,9 +70,8 @@ export const extractTextFromPdf = async (
 
     combinedText += `${pageText}\n\n`;
     onProgress?.({
-      stage: 'pdf-text-extraction',
-      processedPages: pageNumber,
-      totalPages: pdf.numPages,
+      stage: 'processing',
+      message: `Extrayendo texto (página ${pageNumber}/${pdf.numPages})`,
       progress: pageNumber / pdf.numPages,
     });
   }
@@ -133,11 +125,11 @@ export const extractTextFromImage = async (
   onProgress?: (progress: OCRProgress) => void
 ): Promise<OCRResult> => {
   const start = performance.now();
-  onProgress?.({ stage: 'loading', progress: 0 });
+  onProgress?.({ stage: 'preprocessing', message: 'Preparando imagen' });
 
   const { data } = await Tesseract.recognize(file, 'spa+eng', {
     logger: ({ progress, status }) => {
-      onProgress?.({ stage: 'image-ocr', progress, message: status });
+      onProgress?.({ stage: 'processing', progress, message: status });
     },
   });
 

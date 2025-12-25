@@ -2,15 +2,17 @@ import {
   extractTextFromPdf,
   extractTextFromImage,
   isSupportedOCRFile,
-  type OCRResult,
-  type OCRProgress
+  type OCRResult
 } from './ocrService';
+import type { OCRProgress } from '../evolucionador/types/ocr.types';
 
 export interface OCRAutoProgress extends OCRProgress {
   fileName: string;
   fileIndex: number;
   totalFiles: number;
   stageLabel?: string;
+  processedPages?: number;
+  totalPages?: number;
 }
 
 export interface OCRAutoResult extends OCRResult {
@@ -64,7 +66,7 @@ const processFileSequentially = async (
 ): Promise<OCRAutoResult> => {
   emitProgress(
     options,
-    { stage: 'initial', message: 'Validando archivo' },
+    { stage: 'validating', message: 'Validando archivo' },
     file.name,
     fileIndex,
     totalFiles,
@@ -88,7 +90,7 @@ const processFileSequentially = async (
           file.name,
           fileIndex,
           totalFiles,
-          progress.stage === 'pdf-text-extraction' ? 'Extrayendo texto de PDF' : 'Cargando PDF'
+          progress.stage === 'processing' ? 'Extrayendo texto de PDF' : 'Preparando PDF'
         )
       );
     } catch (pdfError) {
