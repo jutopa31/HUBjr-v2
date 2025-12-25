@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText, Sparkles } from 'lucide-react';
+import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText, Sparkles, MessageSquare } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -7,6 +7,7 @@ import SavePatientModal from './SavePatientModal';
 import HintsScaleModal, { HintsSavePayload } from './components/HintsScaleModal';
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import EpicrisisAssistantModal from './components/evolucionador/EpicrisisAssistantModal';
+import AIPromptChat from './components/evolucionador/AIPromptChat';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
 import { generateEvolucionadorTemplate } from './services/workflowIntegrationService';
@@ -59,6 +60,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [showOcrModal, setShowOcrModal] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
   const [showEpicrisisAssistant, setShowEpicrisisAssistant] = useState(false);
+  const [showAIPromptChat, setShowAIPromptChat] = useState(false);
   const [isMobileView, setIsMobileView] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 1024;
@@ -580,6 +582,14 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             <Sparkles className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">IA Epicrisis</span>
           </button>
+          <button
+            onClick={() => setShowAIPromptChat(true)}
+            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium shadow-sm"
+            title="Consultar IA - Hacer preguntas sobre el contenido desarrollado"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Consultar IA</span>
+          </button>
           {clearNotes && (
             <button
               onClick={clearNotes}
@@ -673,6 +683,14 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span>IA</span>
+          </button>
+          <button
+            onClick={() => setShowAIPromptChat(true)}
+            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium shadow-sm"
+            title="Consultar IA"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span>Consultar</span>
           </button>
           <button
             onClick={() => {
@@ -970,6 +988,15 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               : text;
             setNotes(mergedNotes);
           }}
+        />
+      )}
+
+      {/* Modal de Chat con IA */}
+      {showAIPromptChat && (
+        <AIPromptChat
+          isOpen={showAIPromptChat}
+          onClose={() => setShowAIPromptChat(false)}
+          evolucionadorContent={notes}
         />
       )}
 
