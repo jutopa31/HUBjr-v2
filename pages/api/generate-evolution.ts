@@ -7,8 +7,8 @@ import type {
   EvolutionSections
 } from '../../src/evolucionador/types/evolution.types';
 
-// Use Claude Sonnet for evolution generation (better cost/performance balance)
-const EVOLUTION_MODEL = 'claude-3-5-sonnet-20241022';
+// Use Claude Sonnet (latest) for evolution generation (better cost/performance balance)
+const EVOLUTION_MODEL = 'claude-3-5-sonnet-latest';
 const EVOLUTION_MAX_TOKENS = 4096;
 
 export default async function handler(
@@ -123,9 +123,29 @@ ${studies}
 INSTRUCCIONES:
 Genera una nota de evolución médica bien estructurada usando formato SOAP:
 
-1. SUBJETIVO (S): Motivo de consulta actual, síntomas referidos por el paciente
-2. OBJETIVO (O): Hallazgos del examen físico, signos vitales, resultados de estudios
-3. EVALUACIÓN (A): Impresión diagnóstica integrando antecedentes de la epicrisis con datos actuales
+1. SUBJETIVO (S): Debe incluir DOS subsecciones claramente diferenciadas:
+
+   a) ANTECEDENTES:
+      - Analiza la EPICRISIS PREVIA y extrae SOLO los episodios/internaciones PREVIAS
+      - Identifica eventos históricos (internaciones anteriores, diagnósticos previos, tratamientos pasados)
+      - Criterios para identificar antecedentes:
+        * Menciones de fechas pasadas (hace meses, hace años, "en 2023", "el año pasado")
+        * Frases como "internación previa", "previamente", "antecedente de"
+        * Eventos que NO son la internación actual/reciente
+      - Presenta en formato cronológico (del más antiguo al más reciente)
+      - Incluye SOLO lo clínicamente relevante para el contexto actual
+
+   b) ENFERMEDAD ACTUAL:
+      - Extrae de la EPICRISIS PREVIA la información sobre la internación/evento RECIENTE que motivó esa epicrisis
+      - Identifica el motivo de consulta actual/reciente
+      - Integra con los ESTUDIOS Y DATOS ACTUALES
+      - Describe la evolución del cuadro actual
+      - Síntomas actuales y su progresión
+
+2. OBJETIVO (O): Hallazgos del examen físico, signos vitales, resultados de estudios actuales
+
+3. EVALUACIÓN (A): Impresión diagnóstica integrando cronológicamente los antecedentes históricos con la enfermedad actual
+
 4. PLAN (P): Conducta terapéutica y seguimiento
 
 ${formatInstruction}
@@ -138,6 +158,13 @@ IMPORTANTE:
 - Sé profesional y conciso
 - NO inventes datos que no están en el contexto proporcionado
 - Si falta información, indícalo como "No especificado" o "A evaluar"
+
+ANÁLISIS TEMPORAL CRÍTICO:
+- SEPARA claramente los antecedentes históricos de la enfermedad actual
+- Los ANTECEDENTES son eventos PREVIOS a la internación que motivó la epicrisis
+- La ENFERMEDAD ACTUAL es el cuadro reciente/actual (la internación de la epicrisis + datos actuales)
+- Si no puedes distinguir claramente, indica "No se puede determinar cronología precisa"
+- Usa marcadores temporales explícitos cuando estén disponibles en el texto
 
 NOTA DE EVOLUCIÓN:`;
 }

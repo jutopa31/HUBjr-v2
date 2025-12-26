@@ -1,10 +1,10 @@
 export type ClaudeVisionDocumentType = 'form' | 'lab_report' | 'imaging_report' | 'generic';
 
 export type ClaudeVisionModel =
-  | 'claude-3-5-sonnet-20241022'
   | 'claude-3-5-sonnet-latest'
   | 'claude-3-opus-20240229'
-  | 'claude-3-haiku-20240307';
+  | 'claude-3-haiku-20240307'
+  | 'claude-3-5-sonnet-20241022'; // Deprecated - kept for backwards compatibility
 
 export interface ClaudeVisionRequest {
   imageBase64: string;
