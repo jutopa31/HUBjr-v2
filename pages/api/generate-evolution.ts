@@ -7,8 +7,8 @@ import type {
   EvolutionSections
 } from '../../src/evolucionador/types/evolution.types';
 
-// Use Claude Sonnet (latest) for evolution generation (better cost/performance balance)
-const EVOLUTION_MODEL = 'claude-3-5-sonnet-latest';
+// Use Claude Sonnet 4.5 for evolution generation (better cost/performance balance)
+const EVOLUTION_MODEL = 'claude-sonnet-4-5-20250929';
 const EVOLUTION_MAX_TOKENS = 4096;
 
 export default async function handler(

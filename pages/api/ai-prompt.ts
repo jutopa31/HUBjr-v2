@@ -1,14 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// Claude 3.5 Sonnet (latest) for better cost efficiency and automatic updates
-const CLAUDE_CHAT_MODEL = 'claude-3-5-sonnet-latest';
+// Claude Sonnet 4.5 for better cost efficiency and performance
+const CLAUDE_CHAT_MODEL = 'claude-sonnet-4-5-20250929';
 
 // Token limits to stay under $0.10 USD per session
 const MAX_INPUT_TOKENS = 8000;  // Per message (includes context + history)
 const MAX_OUTPUT_TOKENS = 2000; // Per response
 
-// Claude 3.5 Sonnet pricing (latest version)
+// Claude Sonnet 4.5 pricing
 // Input: $3 per million tokens ($0.003 per 1k tokens)
 // Output: $15 per million tokens ($0.015 per 1k tokens)
 // Estimated cost per message: ~$0.024 (input) + ~$0.030 (output) = ~$0.054
