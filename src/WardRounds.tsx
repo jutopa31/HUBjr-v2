@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Download, Upload, Edit, Edit2, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw } from 'lucide-react';
+import { Plus, Download, Upload, Edit, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw, Save } from 'lucide-react';
 import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
@@ -22,6 +22,7 @@ import {
 import WardPatientCard from './components/wardRounds/WardPatientCard';
 import ScaleModal from './ScaleModal';
 import { Scale, ScaleResult } from './types';
+import { AccordionSection } from './components/shared/AccordionModal';
 
 interface Patient {
   id?: string;
@@ -464,10 +465,12 @@ const WardRounds: React.FC = () => {
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
   const [showToastDropdown, setShowToastDropdown] = useState(false);
   const [inlineDetailValues, setInlineDetailValues] = useState<Partial<Patient>>({});
-  const [activeInlineField, setActiveInlineField] = useState<keyof Patient | null>(null);
-  const [isDetailSaving, setIsDetailSaving] = useState(false);
-  const [isDetailEditMode, setIsDetailEditMode] = useState(false);
-  const [isHeaderEditMode, setIsHeaderEditMode] = useState(false);
+
+  // Estado de edición por sección (solo una sección puede editarse a la vez)
+  const [editingSection, setEditingSection] = useState<keyof Patient | null>(null);
+
+  // Estado de guardado por sección
+  const [savingSections, setSavingSections] = useState<Set<keyof Patient>>(new Set());
   const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
@@ -518,6 +521,15 @@ const WardRounds: React.FC = () => {
     if (typeof window === 'undefined') return 'table';
     return window.matchMedia('(max-width: 768px)').matches ? 'cards' : 'table';
   });
+
+  // Estados para acordeón
+  const [expandedSections, setExpandedSections] = useState<string[]>([
+    'motivo_consulta',
+    'diagnostico'
+  ]);
+
+  // Timer para debounce de auto-save
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   React.useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)');
     const handleChange = () => {
@@ -557,11 +569,94 @@ const WardRounds: React.FC = () => {
 
   const closeOutpatientModal = () => setShowOutpatientModal(false);
 
+  /**
+   * Guarda un solo campo del paciente
+   */
+  const saveSingleField = async (field: keyof Patient, value: any) => {
+    if (!selectedPatient?.id) return;
+
+    try {
+      const { error } = await robustQuery(
+        () => supabase
+          .from('ward_round_patients')
+          .update({ [field]: value })
+          .eq('id', selectedPatient.id)
+      );
+
+      if (error) throw error;
+
+      // Actualizar paciente seleccionado y lista local
+      const updatedPatient = { ...selectedPatient, [field]: value };
+      setSelectedPatient(updatedPatient);
+      setPatients(prev => prev.map(p => p.id === selectedPatient.id ? updatedPatient : p));
+    } catch (error) {
+      console.error(`Error guardando ${field}:`, error);
+      throw error;
+    }
+  };
+
+  /**
+   * Activa modo edición para una sección específica
+   */
+  const startEditingSection = (section: keyof Patient) => {
+    // Si ya hay otra sección editándose, guardarla primero
+    if (editingSection && editingSection !== section) {
+      saveAndCloseSection(editingSection);
+    }
+
+    setEditingSection(section);
+
+    // Expandir automáticamente la sección al editarla
+    if (!expandedSections.includes(section)) {
+      setExpandedSections(prev => [...prev, section]);
+    }
+  };
+
+  /**
+   * Guarda y cierra una sección
+   */
+  const saveAndCloseSection = async (section: keyof Patient) => {
+    const value = inlineDetailValues[section];
+    const originalValue = selectedPatient?.[section];
+
+    // Solo guardar si cambió
+    if (value !== originalValue && selectedPatient?.id) {
+      setSavingSections(prev => new Set(prev).add(section));
+
+      try {
+        await saveSingleField(section, value);
+      } catch (error) {
+        // Error ya manejado en saveSingleField
+      } finally {
+        setSavingSections(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(section);
+          return newSet;
+        });
+      }
+    }
+
+    setEditingSection(null);
+  };
+
+  /**
+   * Cancela edición de una sección
+   */
+  const cancelEditingSection = (section: keyof Patient) => {
+    // Restaurar valor original
+    if (selectedPatient) {
+      setInlineDetailValues(prev => ({
+        ...prev,
+        [section]: selectedPatient[section]
+      }));
+    }
+
+    setEditingSection(null);
+  };
+
   const closeSelectedPatientModal = () => {
     setSelectedPatient(null);
-    setActiveInlineField(null);
-    setIsDetailEditMode(false);
-    setIsHeaderEditMode(false);
+    setEditingSection(null); // Cerrar cualquier sección que esté editándose
     setImageLightboxUrl(null);
     closeCameraModal();
   };
@@ -649,6 +744,60 @@ const WardRounds: React.FC = () => {
     setImagePreviewError(null);
   }, [selectedPatient?.id]);
 
+  /**
+   * Auto-save individual por sección
+   * Se activa cuando se edita una sección específica
+   */
+  useEffect(() => {
+    if (!editingSection || !selectedPatient) return;
+
+    // Verificar si el campo específico cambió
+    const fieldValue = inlineDetailValues[editingSection];
+    const originalValue = selectedPatient[editingSection];
+
+    if (fieldValue === originalValue) return;
+
+    // Cancelar timer anterior
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Indicar que está guardando (agrega la sección al set)
+    setSavingSections(prev => new Set(prev).add(editingSection));
+
+    // Debounce de 2 segundos
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        // Guardar solo este campo
+        await saveSingleField(editingSection, fieldValue);
+
+        // Mantener el indicador de "guardado" por 1 segundo
+        setTimeout(() => {
+          setSavingSections(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(editingSection);
+            return newSet;
+          });
+        }, 1000);
+      } catch (error) {
+        console.error('Error en auto-save:', error);
+        setSavingSections(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(editingSection);
+          return newSet;
+        });
+        showToast('Error al guardar automáticamente', 'error');
+      }
+    }, 2000);
+
+    // Cleanup
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [inlineDetailValues[editingSection as keyof Patient], editingSection, selectedPatient]);
+
   const sortPatientsByDisplayOrder = (list: Patient[]) => {
     return [...list].sort((a, b) => {
       const orderA = typeof a.display_order === 'number' ? a.display_order : Number.MAX_SAFE_INTEGER;
@@ -695,6 +844,17 @@ const WardRounds: React.FC = () => {
    */
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
+  };
+
+  /**
+   * Toggle expandir/colapsar sección de acordeón
+   */
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev =>
+      prev.includes(section)
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
   };
 
   /**
@@ -996,7 +1156,7 @@ const WardRounds: React.FC = () => {
 
       if (data && data[0]) {
         // Abrir inmediatamente el paciente recién creado en vista de detalle EN MODO DE EDICIÓN
-        handlePatientSelection(data[0], { editMode: 'detail' });
+        handlePatientSelection(data[0]);
         await loadPatients();
       }
     } catch (error) {
@@ -1362,125 +1522,13 @@ const WardRounds: React.FC = () => {
   };
 
   // Abrir modal + ventana detallada al seleccionar paciente
-  const handlePatientSelection = (patient: Patient, options?: { editMode?: 'detail' | 'header' }) => {
+  const handlePatientSelection = (patient: Patient) => {
     const patientWithDefaults = { ...emptyPatient, ...patient };
     setSelectedPatient(patientWithDefaults);
     setInlineDetailValues(patientWithDefaults);
-    setActiveInlineField(null);
-    setIsDetailEditMode(options?.editMode === 'detail');
-    setIsHeaderEditMode(options?.editMode === 'header');
+    setEditingSection(null); // Resetear sección editándose
     setImagePreviewError(null);
     setImageUploadError(null);
-  };
-
-
-  const startInlineFieldEdit = (_field: keyof Patient) => {
-    // Cuando se hace click en "Editar" de cualquier sección individual,
-    // activar el modo de edición COMPLETO (todas las secciones)
-    // en lugar de solo editar esa sección específica
-    startDetailEditMode();
-  };
-
-  const cancelInlineFieldEdit = () => {
-    setActiveInlineField(null);
-  };
-
-  const saveInlineFieldEdit = async (_field: keyof Patient) => {
-    if (!selectedPatient?.id) return;
-
-    const updatedPatient: Patient = { ...selectedPatient, ...(inlineDetailValues as Patient) };
-    setIsDetailSaving(true);
-    try {
-      await updatePatient(selectedPatient.id, updatedPatient);
-      setSelectedPatient(updatedPatient);
-      setInlineDetailValues(updatedPatient);
-      setActiveInlineField(null);
-    } catch (error) {
-      console.error('Error saving inline field:', error);
-    } finally {
-      setIsDetailSaving(false);
-    }
-  };
-
-  const startDetailEditMode = () => {
-    if (!selectedPatient) return;
-    if (isHeaderEditMode) {
-      cancelHeaderEditMode();
-    }
-    setInlineDetailValues(selectedPatient);
-    setActiveInlineField(null);
-    setIsDetailEditMode(true);
-  };
-
-  const cancelDetailEditMode = () => {
-    setInlineDetailValues(selectedPatient || {});
-    setActiveInlineField(null);
-    setIsDetailEditMode(false);
-  };
-
-  const saveAllDetailEdits = async () => {
-    if (!selectedPatient?.id) return;
-
-    const updatedPatient: Patient = { ...selectedPatient, ...(inlineDetailValues as Patient) };
-    setIsDetailSaving(true);
-    try {
-      await updatePatient(selectedPatient.id, updatedPatient);
-      setSelectedPatient(updatedPatient);
-      setInlineDetailValues(updatedPatient);
-      setIsDetailEditMode(false);
-    } catch (error) {
-      console.error('Error saving all detail edits:', error);
-    } finally {
-      setIsDetailSaving(false);
-    }
-  };
-
-  const startHeaderEditMode = () => {
-    if (!selectedPatient) return;
-    if (isDetailEditMode) {
-      cancelDetailEditMode();
-    }
-    setInlineDetailValues(selectedPatient);
-    setActiveInlineField(null);
-    setIsHeaderEditMode(true);
-  };
-
-  const cancelHeaderEditMode = () => {
-    setInlineDetailValues(selectedPatient || {});
-    setActiveInlineField(null);
-    setIsHeaderEditMode(false);
-  };
-
-  const saveHeaderEdits = async () => {
-    if (!selectedPatient?.id) return;
-
-    const assignedResidentId =
-      inlineDetailValues.assigned_resident_id === ''
-        ? null
-        : inlineDetailValues.assigned_resident_id ?? selectedPatient.assigned_resident_id ?? null;
-
-    const headerUpdates = {
-      nombre: inlineDetailValues.nombre || selectedPatient.nombre,
-      dni: inlineDetailValues.dni || selectedPatient.dni,
-      edad: inlineDetailValues.edad || selectedPatient.edad,
-      cama: inlineDetailValues.cama || selectedPatient.cama,
-      fecha: inlineDetailValues.fecha || selectedPatient.fecha,
-      severidad: inlineDetailValues.severidad || selectedPatient.severidad,
-      assigned_resident_id: assignedResidentId
-    };
-
-    const updatedPatient: Patient = { ...selectedPatient, ...headerUpdates };
-    setIsDetailSaving(true);
-    try {
-      await updatePatient(selectedPatient.id, updatedPatient);
-      setSelectedPatient(updatedPatient);
-      setInlineDetailValues(updatedPatient);
-      setIsHeaderEditMode(false);
-    } catch (error) {
-      console.error('Error saving header edits:', error);
-    } finally {
-      setIsDetailSaving(false);
-    }
   };
 
   // ==========================================
@@ -1513,72 +1561,50 @@ const WardRounds: React.FC = () => {
     }
   };
 
-  const renderDetailCard = (
+  const renderAccordionCard = (
     label: string,
     field: keyof Patient,
     placeholder: string,
-    options: { multiline?: boolean } = {}
+    _options: { multiline?: boolean } = {} // Prefix with _ to indicate intentionally unused
   ) => {
-    const { multiline = false } = options;
-    const isActive = activeInlineField === field;
-    const isEditing = isDetailEditMode || isActive;
     const value = (inlineDetailValues[field] as string) || '';
-    // Colapsar múltiples saltos de línea consecutivos (3+ → 2)
+    const isExpanded = expandedSections.includes(field);
+    const isEditing = editingSection === field;
+    const isSaving = savingSections.has(field);
+
+    // Procesar valor (colapsar saltos de línea)
     const processedValue = value && value.trim()
       ? value.replace(/\n{3,}/g, '\n\n')
       : '';
     const displayValue = processedValue || placeholder;
 
     return (
-      <div
-        className="p-2 md:p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm transition-all duration-200 h-full flex flex-col"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (isDetailEditMode) return;
-          const target = e.target as HTMLElement;
-          if (['INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) return;
-          if (target.closest && target.closest('button')) return;
-
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            isActive ? cancelInlineFieldEdit() : startInlineFieldEdit(field);
-          }
-          if (e.key === 'Escape' && isActive) {
-            e.preventDefault();
-            cancelInlineFieldEdit();
+      <AccordionSection
+        title={label}
+        isExpanded={isExpanded}
+        onToggle={() => toggleSection(field)}
+        contentLength={processedValue.length}
+        isEditing={isEditing}
+        isSaving={isSaving}
+        showEditButton={true}
+        onEditToggle={() => {
+          if (isEditing) {
+            saveAndCloseSection(field);
+          } else {
+            startEditingSection(field);
           }
         }}
       >
-        <div className="flex items-center justify-between mb-1.5 md:mb-2">
-          <div className="flex items-center space-x-1.5 md:space-x-2">
-            <span className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-[10px] md:text-xs font-semibold">
-              {label.slice(0, 2).toUpperCase()}
-            </span>
-            <h4 className="text-xs md:text-sm font-semibold text-[var(--text-primary)]">{label}</h4>
-          </div>
-          {!isDetailEditMode && (
-            <button
-              type="button"
-              className="flex items-center space-x-1 text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                isActive ? cancelInlineFieldEdit() : startInlineFieldEdit(field);
-              }}
-              title={isActive ? 'Cancelar edicion' : 'Editar seccion'}
-            >
-              <Edit className="h-4 w-4" />
-              <span>{isActive ? 'Cerrar' : 'Editar'}</span>
-            </button>
-          )}
-        </div>
+        {/* MODO EDICIÓN */}
         {isEditing ? (
           <div className="space-y-2">
+            {/* Botones especiales según el campo */}
             {field === 'examen_fisico' && (
               <div className="flex flex-wrap gap-2 justify-end mb-2">
-                {/* Botón EF normal existente */}
+                {/* Botón EF normal */}
                 <button
                   type="button"
-                  className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200"
                   onClick={() => setInlineDetailValues((prev) => ({
                     ...prev,
                     examen_fisico: (prev.examen_fisico as string) && (prev.examen_fisico as string).trim()
@@ -1590,61 +1616,58 @@ const WardRounds: React.FC = () => {
                   EF normal
                 </button>
 
-                {/* Separador visual */}
-                <div className="border-l border-gray-300"></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
 
-                {/* Botones de escalas neurológicas */}
+                {/* Botones de escalas neurológicas (4 botones) */}
                 {PRIORITY_SCALES.map((scale) => (
                   <button
                     key={scale.id}
                     type="button"
-                    className="text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors flex items-center gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openScaleModal(scale.id);
-                    }}
-                    title={`Abrir ${scale.fullName}`}
+                    className="text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-200"
+                    onClick={() => openScaleModal(scale.id)}
+                    title={`Calcular ${scale.fullName}`}
                   >
-                    📊 {scale.name}
+                    {scale.id.toUpperCase()}
                   </button>
                 ))}
               </div>
             )}
+
             {field === 'diagnostico' && (
-              <div className="flex flex-wrap gap-2 justify-end mb-2 relative">
+              <div className="flex justify-end mb-2 relative">
                 {/* Botón ACV con dropdown TOAST */}
                 <button
                   type="button"
-                  className="text-xs px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 font-medium transition-colors"
+                  className="text-xs px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 font-medium transition-colors dark:bg-red-900 dark:hover:bg-red-800 dark:text-red-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowToastDropdown(!showToastDropdown);
                   }}
                   title="Clasificación TOAST para ACV isquémico"
                 >
-                  🧠 ACV
+                  🧠 ACV - Clasificación TOAST
                 </button>
 
                 {/* Dropdown de categorías TOAST */}
                 {showToastDropdown && (
-                  <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-[280px]">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-[280px]">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
                       Clasificación TOAST
                     </div>
                     {TOAST_CATEGORIES.map((category) => (
                       <button
                         key={category.id}
                         type="button"
-                        className="w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors"
+                        className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           insertToastCategory(category.id);
                         }}
                       >
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {category.label}
                         </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {category.description}
                         </div>
                       </button>
@@ -1653,57 +1676,38 @@ const WardRounds: React.FC = () => {
                 )}
               </div>
             )}
-            {multiline ? (
-              <textarea
-                value={value}
-                onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, [field]: e.target.value }))}
-                rows={4}
-                className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
-                placeholder={placeholder}
-              />
-            ) : (
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, [field]: e.target.value }))}
-                className="w-full rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={placeholder}
-              />
-            )}
-            {!isDetailEditMode && (
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  className="btn-soft px-3 py-1.5 text-sm rounded"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    cancelInlineFieldEdit();
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-accent px-3 py-1.5 text-sm rounded"
-                  disabled={isDetailSaving || isUpdatingPatient}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    saveInlineFieldEdit(field);
-                  }}
-                >
-                  {isDetailSaving || isUpdatingPatient ? 'Guardando...' : 'Guardar'}
-                </button>
-              </div>
-            )}
+
+            {/* Textarea editable */}
+            <textarea
+              value={value}
+              onChange={(e) => setInlineDetailValues(prev => ({
+                ...prev,
+                [field]: e.target.value
+              }))}
+              placeholder={placeholder}
+              rows={6}
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
+              autoFocus
+            />
+
+            {/* Botón cancelar inline */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => cancelEditingSection(field)}
+                className="text-xs px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="max-h-[500px] overflow-y-auto">
-            <p className="text-xs text-[var(--text-secondary)] whitespace-pre-wrap leading-normal break-words">
-              {displayValue}
-            </p>
+          /* MODO LECTURA */
+          <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            {displayValue}
           </div>
         )}
-      </div>
+      </AccordionSection>
     );
   };
 
@@ -1985,7 +1989,7 @@ const WardRounds: React.FC = () => {
                 {imageCount} {imageCount === 1 ? 'foto' : 'fotos'}
               </span>
             )}
-            {!isDetailEditMode && (
+            {true && (
               <>
                 <button
                   type="button"
@@ -2024,7 +2028,7 @@ const WardRounds: React.FC = () => {
           </div>
         </div>
 
-        {isDetailEditMode ? (
+        {editingSection !== null ? (
           <div className="space-y-3">
             {/* URL inputs para cada imagen */}
             <div className="space-y-2">
@@ -3350,7 +3354,7 @@ const WardRounds: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handlePatientSelection(patient, { editMode: 'detail' });
+                            handlePatientSelection(patient);
                           }}
                           className="p-1.5 sm:p-2 text-blue-700 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors touch-manipulation"
                           title="Editar paciente completo"
@@ -3557,171 +3561,45 @@ const WardRounds: React.FC = () => {
         <div className="modal-overlay">
           <div className="modal-content max-w-4xl w-full h-[90vh] flex flex-col">
             <div className="p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
-              {/* Header responsive: fila simple en móvil, compleja en desktop */}
+              {/* Header simplificado - Solo lectura */}
               <div className="flex items-start justify-between gap-2 mb-2 sm:mb-0">
                 <div className="flex-1 min-w-0">
-                {isHeaderEditMode ? (
-                  // HEADER EDIT MODE: Grid de datos basicos editables
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
-                    <input
-                      type="text"
-                      value={(inlineDetailValues.nombre as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, nombre: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Nombre del paciente"
-                    />
-                    <input
-                      type="text"
-                      value={(inlineDetailValues.dni as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, dni: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="DNI"
-                    />
-                    <input
-                      type="text"
-                      value={(inlineDetailValues.edad as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, edad: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Edad"
-                    />
-                    <input
-                      type="text"
-                      value={(inlineDetailValues.cama as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, cama: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Cama / ubicación"
-                    />
-                    <input
-                      type="date"
-                      value={(inlineDetailValues.fecha as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, fecha: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Fecha"
-                    />
-                    <select
-                      value={(inlineDetailValues.assigned_resident_id as string) || ''}
-                      onChange={(e) =>
-                        setInlineDetailValues((prev) => ({
-                          ...prev,
-                          assigned_resident_id: e.target.value || null
-                        }))
-                      }
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Sin residente asignado</option>
-                      {residents.map((resident) => (
-                        <option key={resident.id} value={resident.id}>
-                          {resident.full_name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={(inlineDetailValues.severidad as string) || ''}
-                      onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, severidad: e.target.value }))}
-                      className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Severidad</option>
-                      <option value="I">I - Estable</option>
-                      <option value="II">II - Moderado</option>
-                      <option value="III">III - Severo</option>
-                      <option value="IV">IV - Crítico</option>
-                    </select>
-                  </div>
-                ) : isDetailEditMode ? (
-                  // FULL EDIT MODE: Layout original con 5 campos (agregado severidad y residente)
-                  <>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      {selectedPatient.nombre || 'Paciente sin nombre'}
-                    </h2>
-                    <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2 text-sm text-gray-700">
-                      <input
-                        type="text"
-                        value={(inlineDetailValues.cama as string) || ''}
-                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, cama: e.target.value }))}
-                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Cama / ubicacion"
-                      />
-                      <input
-                        type="text"
-                        value={(inlineDetailValues.edad as string) || ''}
-                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, edad: e.target.value }))}
-                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Edad"
-                      />
-                      <input
-                        type="date"
-                        value={(inlineDetailValues.fecha as string) || ''}
-                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, fecha: e.target.value }))}
-                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Fecha"
-                      />
-                      <select
-                        value={(inlineDetailValues.assigned_resident_id as string) || ''}
-                        onChange={(e) =>
-                          setInlineDetailValues((prev) => ({
-                            ...prev,
-                            assigned_resident_id: e.target.value || null
-                          }))
-                        }
-                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Sin residente asignado</option>
-                        {residents.map((resident) => (
-                          <option key={resident.id} value={resident.id}>
-                            {resident.full_name}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={(inlineDetailValues.severidad as string) || ''}
-                        onChange={(e) => setInlineDetailValues((prev) => ({ ...prev, severidad: e.target.value }))}
-                        className="rounded-lg border border-[var(--border-primary)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Severidad</option>
-                        <option value="I">I - Estable</option>
-                        <option value="II">II - Moderado</option>
-                        <option value="III">III - Severo</option>
-                        <option value="IV">IV - Crítico</option>
-                      </select>
-                    </div>
-                  </>
-                ) : (
-                  // READ-ONLY MODE: Vista normal con botón Edit2
-                  <>
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <span>{selectedPatient.nombre || 'Paciente sin nombre'}</span>
-                      <span className="text-xs text-gray-500 font-normal">DNI {selectedPatient.dni || 'Sin DNI'}</span>
-                      <button
-                        type="button"
-                        className="ml-2 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
-                        onClick={startHeaderEditMode}
-                        title="Editar datos básicos"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Cama {selectedPatient.cama || 'Sin cama'} | {selectedPatient.edad ? `${selectedPatient.edad} anos` : 'Edad sin registrar'} | {selectedPatient.fecha || 'Sin fecha'}
-                    </p>
-                  </>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {selectedPatient.nombre || 'Paciente sin nombre'}
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    DNI: {selectedPatient.dni || 'Sin DNI'} |
+                    Cama: {selectedPatient.cama || 'Sin cama'} |
+                    {selectedPatient.edad ? `${selectedPatient.edad} años` : 'Edad sin registrar'} |
+                    {selectedPatient.fecha || 'Sin fecha'}
+                  </p>
+                </div>
+
+              {/* Indicador de Auto-save por sección + Botón cerrar */}
+              <div className="flex items-center gap-2">
+                {Array.from(savingSections).length > 0 && (
+                  <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                    <Save className="h-3 w-3 animate-pulse" />
+                    Guardando {detailCardConfigs.find(c => c.field === Array.from(savingSections)[0])?.label}...
+                  </span>
                 )}
+
+                {/* Botón cerrar siempre visible - fixed en móvil */}
+                <button
+                  type="button"
+                  className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors touch-manipulation"
+                  onClick={closeSelectedPatientModal}
+                  title="Cerrar"
+                  aria-label="Cerrar modal"
+                >
+                  <X className="h-5 w-5 sm:h-5 sm:w-5" />
+                </button>
+              </div>
               </div>
 
-              {/* Botón cerrar siempre visible - fixed en móvil */}
-              <button
-                type="button"
-                className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors touch-manipulation"
-                onClick={closeSelectedPatientModal}
-                title="Cerrar"
-                aria-label="Cerrar modal"
-              >
-                <X className="h-5 w-5 sm:h-5 sm:w-5" />
-              </button>
-              </div>
-
-              {/* Segunda fila: acciones y metadatos - responsiva */}
-              <div className="px-3 sm:px-4 pb-3 border-b bg-white flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs text-gray-700">
+              {/* Segunda fila: metadatos - responsiva */}
+              <div className="px-3 sm:px-4 pb-3 border-b bg-white dark:bg-gray-900 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300">
                 <Users className="h-3 w-3 mr-1" />
                 <span className="hidden sm:inline">{assignedResident ? assignedResident.full_name : 'Sin residente asignado'}</span>
                 <span className="sm:hidden">{assignedResident ? assignedResident.full_name.split(' ')[0] : 'Sin residente'}</span>
@@ -3729,14 +3607,6 @@ const WardRounds: React.FC = () => {
               <span className="badge badge-info text-xs uppercase">
                 Sev {selectedPatient.severidad || '-'}
               </span>
-              <button
-                type="button"
-                className="btn-soft px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded"
-                onClick={() => (isDetailEditMode ? cancelDetailEditMode() : startDetailEditMode())}
-              >
-                <span className="hidden sm:inline">{isDetailEditMode ? 'Cerrar edición' : 'Editar'}</span>
-                <Edit className="h-3.5 w-3.5 sm:hidden" />
-              </button>
 
               {/* Dropdown de escalas neurológicas */}
               <select
@@ -3767,7 +3637,7 @@ const WardRounds: React.FC = () => {
                 {/* Contenedor de 2 columnas auto-flow para cards */}
                 <div className="lg:col-span-2 grid grid-cols-2 gap-3 auto-rows-max">
                   {detailCardConfigs.map((card) =>
-                    renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })
+                    renderAccordionCard(card.label, card.field, card.placeholder, { multiline: true })
                   )}
                 </div>
 
@@ -3780,7 +3650,7 @@ const WardRounds: React.FC = () => {
               {/* TABLET: Grid 2 columnas MD-LG (768px-1023px) */}
               <div className="hidden md:grid lg:hidden md:grid-cols-2 gap-3 auto-rows-max">
                 {detailCardConfigs.map((card) =>
-                  renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })
+                  renderAccordionCard(card.label, card.field, card.placeholder, { multiline: true })
                 )}
                 <div className="flex justify-end items-start">
                   <div className="w-full max-w-xs">{renderImagePreviewCard()}</div>
@@ -3791,7 +3661,7 @@ const WardRounds: React.FC = () => {
               <div className="md:hidden space-y-3">
                 {detailCardConfigs.map((card) => (
                   <div key={card.field}>
-                    {renderDetailCard(card.label, card.field, card.placeholder, { multiline: true })}
+                    {renderAccordionCard(card.label, card.field, card.placeholder, { multiline: true })}
                   </div>
                 ))}
                 {renderImagePreviewCard()}
@@ -3799,30 +3669,6 @@ const WardRounds: React.FC = () => {
 
             </div>
 
-            {(isDetailEditMode || isHeaderEditMode) && (
-              <div className="p-3 border-t bg-white flex items-center justify-between sticky bottom-0">
-                <div className="text-xs text-gray-500">
-                  {isHeaderEditMode ? 'Editando datos básicos' : 'Editando todas las secciones'}
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
-                    onClick={isHeaderEditMode ? cancelHeaderEditMode : cancelDetailEditMode}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm"
-                    disabled={isDetailSaving || isUpdatingPatient}
-                    onClick={isHeaderEditMode ? saveHeaderEdits : saveAllDetailEdits}
-                  >
-                    {isDetailSaving || isUpdatingPatient ? 'Guardando...' : (isHeaderEditMode ? 'Guardar cambios' : 'Guardar todo')}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

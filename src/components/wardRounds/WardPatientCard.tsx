@@ -1,5 +1,6 @@
 import React from 'react';
 import { Camera, User, AlertCircle, GripVertical, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { AccordionSection } from '../shared/AccordionModal';
 
 interface Patient {
   id?: string;
@@ -91,6 +92,20 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     diagnosis: getTruncateLength('diagnosis'),
     pendientes: getTruncateLength('pendientes')
   });
+
+  // Estado de acordeón para la card
+  const [expandedCardSections, setExpandedCardSections] = React.useState<string[]>([
+    'motivo_consulta',
+    'diagnostico'
+  ]);
+
+  const toggleCardSection = (section: string) => {
+    setExpandedCardSections(prev =>
+      prev.includes(section)
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -268,71 +283,119 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
             </div>
           </div>
 
-          {/* Medical Fields - Full width */}
+          {/* Medical Fields CON ACORDEÓN */}
           <div className="space-y-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Antecedentes</label>
+            {/* Antecedentes */}
+            <AccordionSection
+              title="Antecedentes"
+              isExpanded={expandedCardSections.includes('antecedentes')}
+              onToggle={() => toggleCardSection('antecedentes')}
+              contentLength={displayData.antecedentes?.length || 0}
+            >
               <textarea
                 value={displayData.antecedentes || ''}
                 onChange={(e) => handleFieldChange('antecedentes', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Antecedentes del paciente"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo de Consulta</label>
+            </AccordionSection>
+
+            {/* Motivo de Consulta */}
+            <AccordionSection
+              title="Motivo de Consulta"
+              isExpanded={expandedCardSections.includes('motivo_consulta')}
+              onToggle={() => toggleCardSection('motivo_consulta')}
+              contentLength={displayData.motivo_consulta?.length || 0}
+            >
               <textarea
                 value={displayData.motivo_consulta || ''}
                 onChange={(e) => handleFieldChange('motivo_consulta', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Motivo de consulta"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">EF/NIHSS/ABCD2</label>
+            </AccordionSection>
+
+            {/* EF/NIHSS/ABCD2 */}
+            <AccordionSection
+              title="EF/NIHSS/ABCD2"
+              isExpanded={expandedCardSections.includes('examen_fisico')}
+              onToggle={() => toggleCardSection('examen_fisico')}
+              contentLength={displayData.examen_fisico?.length || 0}
+            >
               <textarea
                 value={displayData.examen_fisico || ''}
                 onChange={(e) => handleFieldChange('examen_fisico', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Examen físico"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Estudios</label>
+            </AccordionSection>
+
+            {/* Estudios Complementarios */}
+            <AccordionSection
+              title="Estudios"
+              isExpanded={expandedCardSections.includes('estudios')}
+              onToggle={() => toggleCardSection('estudios')}
+              contentLength={displayData.estudios?.length || 0}
+            >
               <textarea
                 value={displayData.estudios || ''}
                 onChange={(e) => handleFieldChange('estudios', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Estudios complementarios"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Diagnóstico</label>
+            </AccordionSection>
+
+            {/* Diagnóstico */}
+            <AccordionSection
+              title="Diagnóstico"
+              isExpanded={expandedCardSections.includes('diagnostico')}
+              onToggle={() => toggleCardSection('diagnostico')}
+              contentLength={displayData.diagnostico?.length || 0}
+            >
               <textarea
                 value={displayData.diagnostico || ''}
                 onChange={(e) => handleFieldChange('diagnostico', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Diagnóstico"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Plan</label>
+            </AccordionSection>
+
+            {/* Plan */}
+            <AccordionSection
+              title="Plan"
+              isExpanded={expandedCardSections.includes('plan')}
+              onToggle={() => toggleCardSection('plan')}
+              contentLength={displayData.plan?.length || 0}
+            >
               <textarea
                 value={displayData.plan || ''}
                 onChange={(e) => handleFieldChange('plan', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Plan de tratamiento"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pendientes</label>
+            </AccordionSection>
+
+            {/* Pendientes */}
+            <AccordionSection
+              title="Pendientes"
+              isExpanded={expandedCardSections.includes('pendientes')}
+              onToggle={() => toggleCardSection('pendientes')}
+              contentLength={displayData.pendientes?.length || 0}
+            >
               <textarea
                 value={displayData.pendientes || ''}
                 onChange={(e) => handleFieldChange('pendientes', e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                placeholder="Tareas pendientes"
               />
-            </div>
+            </AccordionSection>
           </div>
         </div>
       ) : (
