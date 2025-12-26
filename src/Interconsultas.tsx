@@ -14,6 +14,7 @@ const buildDefaultForm = (): Omit<Row, 'status'> & { status?: string } => ({
   nombre: '',
   dni: '',
   cama: '',
+  edad: '',
   relato_consulta: '',
   fecha_interconsulta: new Date().toISOString().slice(0, 10),
   respuesta: '',
@@ -50,6 +51,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
     required(form.nombre)
     && required(form.dni)
     && required(form.cama)
+    && required(form.edad || '')
     && required(form.fecha_interconsulta)
     && required(form.relato_consulta || '')
   ), [form]);
@@ -139,7 +141,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
       return;
     }
     if (!isValid) {
-      setError('Completa los campos requeridos: nombre, DNI, cama, fecha y relato');
+      setError('Completa los campos requeridos: nombre, DNI, edad, cama, fecha y relato');
       return;
     }
     if (creating) {
@@ -413,6 +415,21 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
                     placeholder="DNI"
                     value={form.dni}
                     onChange={(e) => setForm({ ...form, dni: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Edad *
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    placeholder="Edad en años"
+                    min="0"
+                    max="150"
+                    value={form.edad}
+                    onChange={(e) => setForm({ ...form, edad: e.target.value })}
                   />
                 </div>
                 <div>

@@ -242,13 +242,26 @@ const WardRoundsComplete: React.FC = () => {
             }
             td:nth-child(3),
             td:nth-child(5),
-            td:nth-child(8),
             td:nth-child(10),
             td:nth-child(11) {
               display: -webkit-box;
               -webkit-line-clamp: 2;
               -webkit-box-orient: vertical;
               overflow: hidden;
+            }
+            /* Estilos específicos para EC (Estudios Complementarios) */
+            td:nth-child(8) {
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              font-size: 6px !important;
+              padding: 2px !important;
+            }
+            /* Header de EC también reducido */
+            th:nth-child(8) {
+              font-size: 6px !important;
+              padding: 2px !important;
             }
             td:nth-child(6),
             td:nth-child(7) {

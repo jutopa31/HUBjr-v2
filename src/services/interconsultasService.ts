@@ -69,6 +69,7 @@ export async function createInterconsulta(payload: InterconsultaRow): Promise<{ 
           {
             nombre: payload.nombre,
             dni: payload.dni,
+            edad: payload.edad || null,
             cama: payload.cama,
             fecha_interconsulta: payload.fecha_interconsulta,
             relato_consulta: payload.relato_consulta || null,

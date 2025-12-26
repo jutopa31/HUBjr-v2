@@ -558,7 +558,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
 
 `;
-              setNotes(notes + normalExamText);
+              insertAtCursor(normalExamText);
             }}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
             title="Insertar examen físico normal"
@@ -698,7 +698,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
 Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
 
 `;
-              setNotes(notes + normalExamText);
+              insertAtCursor(normalExamText);
             }}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
             title="Insertar examen físico normal"

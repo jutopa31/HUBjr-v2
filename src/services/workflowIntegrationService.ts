@@ -13,45 +13,36 @@ import type { PatientAssessment } from '../types';
  * @returns Template con secciones estructuradas pre-cargadas
  */
 export function generateEvolucionadorTemplate(interconsulta: InterconsultaRow): string {
-  const antecedentesPlaceholder = `- Antecedentes personales:
-- Medicación actual:
-- Alergias:`;
-
-  const efPlaceholder = `- Nivel de conciencia:
-- Pares craneales:
-- Motor:
-- Sensibilidad:
-- NIHSS (si aplica):`;
-
-  const diagnosticoPlaceholder = `- Diagnóstico presuntivo:
-- Diferenciales:`;
-
-  const planPlaceholder = `- Estudios solicitados:
-- Conducta / interconsultas:
-- Seguimiento:`;
-
-  return `PACIENTE: ${interconsulta.nombre}
+  return `DATOS:
+PACIENTE: ${interconsulta.nombre}
 DNI: ${interconsulta.dni}
 EDAD: ${interconsulta.edad || 'No especificada'}
 CAMA: ${interconsulta.cama}
 
-MOTIVO DE CONSULTA:
+ANTECEDENTES:
+- Antecedentes personales:
+- Medicación actual:
+- Alergias:
+
+ENFERMEDAD ACTUAL:
 ${interconsulta.relato_consulta || ''}
 
-${interconsulta.estudios_ocr ? `ESTUDIOS COMPLEMENTARIOS (OCR):
+${interconsulta.estudios_ocr ? `ESTUDIOS COMPLEMENTARIOS:
 ${interconsulta.estudios_ocr}
 
-` : ''}ANTECEDENTES:
-${antecedentesPlaceholder}
+` : 'ESTUDIOS COMPLEMENTARIOS:\n\n'}EXAMEN FÍSICO:
+- Signos vitales:
+- Nivel de conciencia:
+- Examen neurológico:
 
-EXAMEN FÍSICO:
-${efPlaceholder}
+CONDUCTA:
+- Diagnóstico presuntivo:
+- Plan terapéutico:
+- Interconsultas:
 
-DIAGNÓSTICO:
-${diagnosticoPlaceholder}
-
-PLAN:
-${planPlaceholder}
+PENDIENTES:
+- Estudios pendientes:
+- Seguimiento:
 `;
 }
 
@@ -61,40 +52,135 @@ ${planPlaceholder}
  * @returns Objeto con las secciones extraídas
  */
 export function extractStructuredSections(clinicalNotes: string): {
+  datos: string;
   antecedentes: string;
+  enfermedadActual: string;
   examenFisico: string;
-  diagnostico: string;
-  plan: string;
-  motivoConsulta: string;
-  estudiosOCR: string;
+  estudiosComplementarios: string;
+  conducta: string;
+  pendientes: string;
 } {
   const sections = {
+    datos: '',
     antecedentes: '',
+    enfermedadActual: '',
     examenFisico: '',
-    diagnostico: '',
-    plan: '',
-    motivoConsulta: '',
-    estudiosOCR: ''
+    estudiosComplementarios: '',
+    conducta: '',
+    pendientes: ''
   };
 
-  // Regex patterns para extraer secciones
+  console.log('[WorkflowIntegration] extractStructuredSections -> Input length:', clinicalNotes.length);
+
+  // Regex patterns para nuevos headers estandarizados
   const patterns = {
-    motivoConsulta: /MOTIVO DE CONSULTA:\s*\n([\s\S]*?)(?=\n\n(?:ESTUDIOS COMPLEMENTARIOS|ANTECEDENTES)|$)/i,
-    estudiosOCR: /ESTUDIOS COMPLEMENTARIOS \(OCR\):\s*\n([\s\S]*?)(?=\n\nANTECEDENTES|$)/i,
-    antecedentes: /ANTECEDENTES:\s*\n([\s\S]*?)(?=\n\nEXAMEN|$)/i,
-    examenFisico: /EXAMEN F[ÍI]SICO:\s*\n([\s\S]*?)(?=\n\nDIAGN[ÓO]STICO|$)/i,
-    diagnostico: /DIAGN[ÓO]STICO:\s*\n([\s\S]*?)(?=\n\nPLAN|$)/i,
-    plan: /PLAN:\s*\n([\s\S]*?)$/i
+    // Datos - extrae todo entre DATOS: y ANTECEDENTES:
+    datos: /DATOS:\s*\n+([\s\S]*?)(?=\s*\n+ANTECEDENTES:)/i,
+
+    // Antecedentes - extrae hasta ENFERMEDAD ACTUAL:
+    antecedentes: /ANTECEDENTES:\s*\n+([\s\S]*?)(?=\s*\n+ENFERMEDAD\s+ACTUAL:)/i,
+
+    // Enfermedad actual - extrae hasta ESTUDIOS COMPLEMENTARIOS:
+    enfermedadActual: /ENFERMEDAD\s+ACTUAL:\s*\n+([\s\S]*?)(?=\s*\n+ESTUDIOS\s+COMPLEMENTARIOS:)/i,
+
+    // Estudios complementarios - extrae hasta EXAMEN FÍSICO:
+    estudiosComplementarios: /ESTUDIOS\s+COMPLEMENTARIOS:\s*\n+([\s\S]*?)(?=\s*\n+EXAMEN\s+F[ÍI]SICO:)/i,
+
+    // Examen físico - extrae hasta CONDUCTA:
+    examenFisico: /EXAMEN\s+F[ÍI]SICO:\s*\n+([\s\S]*?)(?=\s*\n+CONDUCTA:)/i,
+
+    // Conducta - extrae hasta PENDIENTES:
+    conducta: /CONDUCTA:\s*\n+([\s\S]*?)(?=\s*\n+PENDIENTES:)/i,
+
+    // Pendientes - extrae hasta el final
+    pendientes: /PENDIENTES:\s*\n+([\s\S]*?)$/i
   };
 
   for (const [key, pattern] of Object.entries(patterns)) {
     const match = clinicalNotes.match(pattern);
-    if (match) {
-      sections[key as keyof typeof sections] = match[1].trim();
+    if (match && match[1]) {
+      const extracted = match[1].trim();
+      sections[key as keyof typeof sections] = extracted;
+      console.log(`[WorkflowIntegration] ✅ Extracted ${key}:`, extracted.substring(0, 100) + (extracted.length > 100 ? '...' : ''));
+    } else {
+      console.warn(`[WorkflowIntegration] ⚠️ Failed to extract ${key} from clinical notes`);
     }
   }
 
+  // Log resumen
+  console.log('[WorkflowIntegration] Extraction summary:', {
+    datos: sections.datos.length,
+    antecedentes: sections.antecedentes.length,
+    enfermedadActual: sections.enfermedadActual.length,
+    examenFisico: sections.examenFisico.length,
+    estudiosComplementarios: sections.estudiosComplementarios.length,
+    conducta: sections.conducta.length,
+    pendientes: sections.pendientes.length
+  });
+
   return sections;
+}
+
+/**
+ * Extrae campos individuales de la sección DATOS
+ * @param datosSection - Texto de la sección DATOS
+ * @returns Objeto con campos nombre, dni, edad, cama
+ */
+export function extractDataFields(datosSection: string): {
+  nombre: string;
+  dni: string;
+  edad: string;
+  cama: string;
+} {
+  const fields = {
+    nombre: '',
+    dni: '',
+    edad: '',
+    cama: ''
+  };
+
+  // Buscar PACIENTE:
+  const nombreMatch = datosSection.match(/PACIENTE:\s*(.+)/i);
+  if (nombreMatch) fields.nombre = nombreMatch[1].trim();
+
+  // Buscar DNI:
+  const dniMatch = datosSection.match(/DNI:\s*(.+)/i);
+  if (dniMatch) fields.dni = dniMatch[1].trim();
+
+  // Buscar EDAD:
+  const edadMatch = datosSection.match(/EDAD:\s*(.+)/i);
+  if (edadMatch) fields.edad = edadMatch[1].trim();
+
+  // Buscar CAMA:
+  const camaMatch = datosSection.match(/CAMA:\s*(.+)/i);
+  if (camaMatch) fields.cama = camaMatch[1].trim();
+
+  return fields;
+}
+
+/**
+ * Intenta extraer diagnóstico de la sección CONDUCTA
+ * Busca líneas que contengan "diagnóstico" o "impresión"
+ * @param conducta - Texto de la sección CONDUCTA
+ * @returns Diagnóstico extraído o string vacío
+ */
+function extractDiagnosticoFromConducta(conducta: string): string {
+  if (!conducta) return '';
+
+  // Buscar líneas con "Diagnóstico presuntivo:", "Dx:", "Impresión:", etc.
+  const match = conducta.match(/(?:Diagn[óo]stico.*?:|Dx:?|Impresi[óo]n:?)\s*(.+?)(?=\n-|\n\n|$)/is);
+
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+
+  // Si no encuentra, intentar extraer primera viñeta
+  const firstBullet = conducta.match(/^-\s*(.+)/m);
+  if (firstBullet) {
+    return firstBullet[1].trim();
+  }
+
+  return '';
 }
 
 /**
@@ -107,24 +193,31 @@ export function mapToWardRoundPatient(
   interconsulta: InterconsultaRow,
   assessment: PatientAssessment
 ): any {
+  console.log('[WorkflowIntegration] mapToWardRoundPatient -> Starting mapping for:', interconsulta.nombre);
+
   const sections = extractStructuredSections(assessment.clinical_notes);
 
-  return {
-    nombre: interconsulta.nombre,
-    dni: interconsulta.dni,
-    edad: interconsulta.edad || assessment.patient_age || '',
-    cama: interconsulta.cama,
+  // Extraer datos individuales de la sección DATOS
+  const dataFields = extractDataFields(sections.datos);
+
+  const mappedData = {
+    // Datos del paciente - priorizar extracción de DATOS:, fallback a interconsulta
+    nombre: dataFields.nombre || interconsulta.nombre,
+    dni: dataFields.dni || interconsulta.dni,
+    edad: dataFields.edad || interconsulta.edad || assessment.patient_age || '',
+    cama: dataFields.cama || interconsulta.cama,
     fecha: new Date().toISOString().split('T')[0],
 
-    // Datos de interconsulta
-    motivo_consulta: sections.motivoConsulta || interconsulta.relato_consulta || '',
-    estudios: sections.estudiosOCR || interconsulta.estudios_ocr || '',
+    // Mapeo de secciones del Evolucionador
+    antecedentes: sections.antecedentes,                    // ANTECEDENTES: → antecedentes
+    motivo_consulta: sections.enfermedadActual,             // ENFERMEDAD ACTUAL: → motivo_consulta
+    examen_fisico: sections.examenFisico,                   // EXAMEN FÍSICO: → examen_fisico
+    estudios: sections.estudiosComplementarios,             // ESTUDIOS COMPLEMENTARIOS: → estudios
+    plan: sections.conducta,                                // CONDUCTA: → plan
+    pendientes: sections.pendientes,                        // PENDIENTES: → pendientes
 
-    // Datos del Evolucionador (secciones extraídas)
-    antecedentes: sections.antecedentes,
-    examen_fisico: sections.examenFisico,
-    diagnostico: sections.diagnostico,
-    plan: sections.plan,
+    // Diagnóstico - extraer de CONDUCTA (primera línea si contiene "Diagnóstico")
+    diagnostico: extractDiagnosticoFromConducta(sections.conducta),
 
     // Imágenes (trasladar desde interconsulta)
     image_thumbnail_url: interconsulta.image_thumbnail_url || [],
@@ -133,10 +226,21 @@ export function mapToWardRoundPatient(
 
     // Metadata
     hospital_context: interconsulta.hospital_context || 'Posadas',
-    severidad: 'II', // Default moderado, usuario puede cambiar después
-    pendientes: '',
-    display_order: 9999 // Al final, se recalcula después
+    severidad: 'II', // Default moderado
+    display_order: 9999
   };
+
+  console.log('[WorkflowIntegration] mapToWardRoundPatient -> Mapped data:', {
+    nombre: mappedData.nombre,
+    antecedentes_length: mappedData.antecedentes.length,
+    motivo_consulta_length: mappedData.motivo_consulta.length,
+    examen_fisico_length: mappedData.examen_fisico.length,
+    estudios_length: mappedData.estudios.length,
+    plan_length: mappedData.plan.length,
+    pendientes_length: mappedData.pendientes.length
+  });
+
+  return mappedData;
 }
 
 /**

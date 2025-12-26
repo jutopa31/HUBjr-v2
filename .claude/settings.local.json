@@ -71,7 +71,11 @@
       "Bash(timeout 10 npm run dev:*)",
       "Skill(frontend-design:frontend-design)",
       "Bash(mcp__playwright__browser_navigate)",
-      "Bash(timeout 3 bash:*)"
+      "Bash(timeout 3 bash:*)",
+      "Bash(git branch:*)",
+      "Bash(git log:*)",
+      "Bash(git show-ref:*)",
+      "Bash(git merge-base:*)"
     ],
     "deny": []
   },
