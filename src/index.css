@@ -224,6 +224,27 @@ h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent)
   color: var(--text-primary);
 }
 
+/* Mobile haptic-style feedback: active states for better touch UX */
+.btn-soft:active,
+.btn-accent:active,
+.btn-success:active,
+.btn-error:active {
+  transform: scale(0.96);
+  transition: transform 0.1s ease;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  /* Mobile-only: enhanced active states */
+  .btn-soft:active {
+    background-color: var(--bg-hover);
+  }
+
+  /* Touch-manipulation to prevent 300ms tap delay */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+}
+
 /* Success action button (sober green) */
 .btn-success {
   background-color: var(--state-success);
@@ -485,9 +506,15 @@ tr:hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Zebra striping for improved scannability */
+.expandable-row:nth-child(even) {
+  background-color: var(--bg-secondary);
+}
+
 .expandable-row:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-tertiary);
 }
 
 .expandable-content {
@@ -788,6 +815,19 @@ tr:hover {
 
 .medical-form .form-row.full-width {
   grid-column: 1 / -1;
+}
+
+/* Safe area padding for iOS */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent iOS scroll bounce in modals */
+.modal-content {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Responsive utilities for medical data */

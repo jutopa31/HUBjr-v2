@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, User, AlertCircle, GripVertical, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { Camera, User, AlertCircle, AlertTriangle, GripVertical, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { AccordionSection } from '../shared/AccordionModal';
 
 interface Patient {
@@ -200,6 +200,20 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     }
   };
 
+  // Touch event handlers for mobile feedback
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isEditing) {
+      const target = e.currentTarget as HTMLElement;
+      target.style.transform = 'scale(0.98)';
+      target.style.transition = 'transform 0.1s ease';
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.transform = 'scale(1)';
+  };
+
   return (
     <div
       className={cardClasses}
@@ -208,6 +222,8 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Drag handle (visible on hover) - only in read mode, hidden on mobile */}
       {onDragStart && !isEditing && (
@@ -406,11 +422,13 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
         <div className="flex items-center gap-1.5 md:gap-2">
           {patient.severidad && (
             <span
-              className={`px-1.5 md:px-2 py-0.5 text-xs font-semibold rounded ${getSeverityBadgeClass(
+              className={`px-1.5 md:px-2 py-0.5 text-xs font-semibold rounded flex items-center gap-1 ${getSeverityBadgeClass(
                 patient.severidad
               )}`}
             >
-              {patient.severidad}
+              {patient.severidad === 'IV' && <AlertCircle className="h-3 w-3" />}
+              {patient.severidad === 'III' && <AlertTriangle className="h-3 w-3" />}
+              <span>{patient.severidad}</span>
             </span>
           )}
           <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Download, Upload, Edit, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw, Save } from 'lucide-react';
+import { Plus, Download, Upload, Edit, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw, Save, MoreVertical, BarChart3 } from 'lucide-react';
+// Corrección de estilos para consistencia visual en modo edición
 import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
@@ -521,6 +522,10 @@ const WardRounds: React.FC = () => {
     if (typeof window === 'undefined') return 'table';
     return window.matchMedia('(max-width: 768px)').matches ? 'cards' : 'table';
   });
+
+  // Estados para menus móviles
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   // Estados para acordeón
   const [expandedSections, setExpandedSections] = useState<string[]>([
@@ -1686,7 +1691,7 @@ const WardRounds: React.FC = () => {
               }))}
               placeholder={placeholder}
               rows={6}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
               autoFocus
             />
 
@@ -2778,7 +2783,7 @@ const WardRounds: React.FC = () => {
               </p>
             </div>
 
-            {/* Badges de estadísticas */}
+            {/* Badges de estadísticas - Desktop: inline */}
             <div className="hidden lg:flex items-center gap-2 ml-4">
               <span className="text-xs px-2 py-1 bg-white rounded-full ring-1 ring-gray-200 text-[var(--text-secondary)]">
                 {patients.length} total
@@ -2796,10 +2801,52 @@ const WardRounds: React.FC = () => {
                 {severityCounts['IV']} Crítico
               </span>
             </div>
+
+            {/* Badges de estadísticas - Mobile/Tablet: collapsible */}
+            <div className="relative lg:hidden ml-4">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="text-xs px-2 py-1 bg-white rounded-full ring-1 ring-gray-200 flex items-center gap-1 hover:bg-gray-50 transition-colors touch-manipulation min-h-[44px] min-w-[44px] justify-center"
+                title="Ver estadísticas"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                <span className="font-medium">{patients.length}</span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${showStats ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown de stats */}
+              {showStats && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setShowStats(false)}
+                  />
+                  <div className="absolute top-full right-0 mt-2 bg-white shadow-lg rounded-lg border border-gray-200 p-3 z-40 min-w-[220px]">
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="text-xs px-2 py-1 bg-white rounded-full ring-1 ring-gray-200 text-[var(--text-secondary)] text-center">
+                        {patients.length} total
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-emerald-50 rounded-full ring-1 ring-emerald-100 text-emerald-800 text-center">
+                        {severityCounts['I']} Leve
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-amber-50 rounded-full ring-1 ring-amber-100 text-amber-800 text-center">
+                        {severityCounts['II']} Moderado
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-orange-50 rounded-full ring-1 ring-orange-100 text-orange-800 text-center">
+                        {severityCounts['III']} Severo
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-red-50 rounded-full ring-1 ring-red-100 text-red-800 text-center col-span-2">
+                        {severityCounts['IV']} Crítico
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Botones de acción */}
-          <div className="flex gap-2 flex-wrap justify-end">
+          {/* Botones de acción - Desktop: all visible */}
+          <div className="hidden md:flex gap-2 flex-wrap justify-end">
             <button
               onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
               className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
@@ -2850,6 +2897,78 @@ const WardRounds: React.FC = () => {
               <Plus className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{isCreatingPatient ? 'Creando...' : 'Agregar'}</span>
             </button>
+          </div>
+
+          {/* Botones de acción - Mobile: primary + overflow menu */}
+          <div className="flex md:hidden gap-2 items-center relative">
+            <button
+              onClick={createEmptyPatient}
+              disabled={isCreatingPatient}
+              className="px-3 py-2 text-xs btn-accent rounded inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px]"
+              title="Agregar Paciente"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{isCreatingPatient ? 'Creando...' : 'Agregar'}</span>
+            </button>
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="px-3 py-2 btn-soft rounded inline-flex items-center gap-1 touch-manipulation min-h-[44px] min-w-[44px] justify-center"
+              title="Más opciones"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+
+            {/* Dropdown menu móvil */}
+            {showMobileMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setShowMobileMenu(false)}
+                />
+                <div className="absolute top-full right-0 mt-2 bg-white shadow-lg rounded-lg border border-gray-200 z-40 min-w-[200px] overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setViewMode(viewMode === 'table' ? 'cards' : 'table');
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
+                  >
+                    {viewMode === 'table' ? <LayoutGrid className="h-4 w-4" /> : <TableIcon className="h-4 w-4" />}
+                    <span>{viewMode === 'table' ? 'Vista de tarjetas' : 'Vista de tabla'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowOutpatientModal(true);
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Ambulatorios</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCSVImportModal(true);
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Importar CSV</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      exportTablePDF();
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Exportar PDF</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
