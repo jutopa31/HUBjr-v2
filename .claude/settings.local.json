@@ -75,7 +75,18 @@
       "Bash(git branch:*)",
       "Bash(git log:*)",
       "Bash(git show-ref:*)",
-      "Bash(git merge-base:*)"
+      "Bash(git merge-base:*)",
+      "Bash(netstat:*)",
+      "Bash(set PORT=3001)",
+      "Bash(chmod:*)",
+      "Bash(bash scripts/validate-skill.sh:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(dir:*)",
+      "Bash(if not exist scripts mkdir scripts)",
+      "Bash(git rev-list:*)",
+      "Bash(while read commit)",
+      "Bash(do git show $commit:src)",
+      "Bash(done)"
     ],
     "deny": []
   },

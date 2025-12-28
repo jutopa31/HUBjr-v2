@@ -1,5 +1,6 @@
 import React from 'react';
-import { Camera, User, AlertCircle, GripVertical, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { Camera, AlertCircle, AlertTriangle, GripVertical, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { AccordionSection } from '../shared/AccordionModal';
 
 interface Patient {
   id?: string;
@@ -53,7 +54,7 @@ interface WardPatientCardProps {
 
 const WardPatientCard: React.FC<WardPatientCardProps> = ({
   patient,
-  resident,
+  resident: _resident, // Not used after removing resident display
   onClick,
   onEdit,
   onDelete,
@@ -91,6 +92,20 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     diagnosis: getTruncateLength('diagnosis'),
     pendientes: getTruncateLength('pendientes')
   });
+
+  // Estado de acordeón para la card
+  const [expandedCardSections, setExpandedCardSections] = React.useState<string[]>([
+    'motivo_consulta',
+    'diagnostico'
+  ]);
+
+  const toggleCardSection = (section: string) => {
+    setExpandedCardSections(prev =>
+      prev.includes(section)
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -130,14 +145,15 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
   const imageCount = getImageCount(patient);
   const hasPendientes = patient.pendientes && patient.pendientes.trim() !== '';
 
-  // Determine drag and drop styles
+  // Determine drag and drop styles - Clinical Precision enhanced hover
   const cardClasses = `
     medical-card rounded-lg
     p-3 md:p-3.5 lg:p-4
     border-2 border-gray-200 dark:border-gray-700
-    hover:border-blue-300 dark:hover:border-blue-400
-    hover:shadow-lg
-    transition-all duration-200
+    hover:border-[#06B6D4] dark:hover:border-[#06B6D4]
+    hover:shadow-2xl
+    hover:scale-[1.02]
+    transition-all duration-200 ease-out
     cursor-pointer
     relative
     group
@@ -185,6 +201,20 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
     }
   };
 
+  // Touch event handlers for mobile feedback
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isEditing) {
+      const target = e.currentTarget as HTMLElement;
+      target.style.transform = 'scale(0.98)';
+      target.style.transition = 'transform 0.1s ease';
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.transform = 'scale(1)';
+  };
+
   return (
     <div
       className={cardClasses}
@@ -193,6 +223,8 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Drag handle (visible on hover) - only in read mode, hidden on mobile */}
       {onDragStart && !isEditing && (
@@ -204,23 +236,23 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
       {isEditing ? (
         /* ==================== EDIT MODE ==================== */
         <div className="space-y-3">
-          {/* Header with Save/Cancel buttons */}
-          <div className="flex items-center justify-between pb-2 border-b-2 border-blue-200 dark:border-blue-800">
-            <h3 className="font-bold text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
+          {/* Header with Save/Cancel buttons - Clinical Precision */}
+          <div className="flex items-center justify-between pb-2 border-b-2 border-[#06B6D4] dark:border-[#06B6D4]">
+            <h3 className="font-semibold text-sm text-[#06B6D4] dark:text-[#06B6D4] flex items-center gap-2">
               <Edit className="h-4 w-4" />
               Editando Paciente
             </h3>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               <button
                 onClick={onCancelEdit}
-                className="px-3 py-1 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-3 py-1.5 text-xs rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 font-medium"
                 title="Cancelar edición"
               >
                 Cancelar
               </button>
               <button
                 onClick={onSave}
-                className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
+                className="px-3 py-1.5 text-xs rounded-md bg-[#06B6D4] text-white hover:bg-[#0891B2] transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
                 title="Guardar cambios"
               >
                 Guardar
@@ -228,7 +260,7 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
             </div>
           </div>
 
-          {/* Basic Info Grid */}
+          {/* Basic Info Grid - Clinical Precision */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
@@ -236,7 +268,7 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
                 type="text"
                 value={displayData.nombre || ''}
                 onChange={(e) => handleFieldChange('nombre', e.target.value)}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
               />
             </div>
             <div>
@@ -245,7 +277,7 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
                 type="text"
                 value={displayData.dni || ''}
                 onChange={(e) => handleFieldChange('dni', e.target.value)}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm font-mono rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
               />
             </div>
             <div>
@@ -254,7 +286,7 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
                 type="text"
                 value={displayData.edad || ''}
                 onChange={(e) => handleFieldChange('edad', e.target.value)}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
               />
             </div>
             <div>
@@ -263,76 +295,117 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
                 type="text"
                 value={displayData.cama || ''}
                 onChange={(e) => handleFieldChange('cama', e.target.value)}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm font-mono rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
               />
             </div>
           </div>
 
-          {/* Medical Fields - Full width */}
+          {/* Medical Fields CON ACORDEÓN */}
           <div className="space-y-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Antecedentes</label>
+            {/* Antecedentes */}
+            <AccordionSection
+              title="Antecedentes"
+              isExpanded={expandedCardSections.includes('antecedentes')}
+              onToggle={() => toggleCardSection('antecedentes')}
+            >
               <textarea
                 value={displayData.antecedentes || ''}
                 onChange={(e) => handleFieldChange('antecedentes', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Antecedentes del paciente"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo de Consulta</label>
+            </AccordionSection>
+
+            {/* Motivo de Consulta */}
+            <AccordionSection
+              title="Motivo de Consulta"
+              isExpanded={expandedCardSections.includes('motivo_consulta')}
+              onToggle={() => toggleCardSection('motivo_consulta')}
+            >
               <textarea
                 value={displayData.motivo_consulta || ''}
                 onChange={(e) => handleFieldChange('motivo_consulta', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Motivo de consulta"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">EF/NIHSS/ABCD2</label>
+            </AccordionSection>
+
+            {/* EF/NIHSS/ABCD2 */}
+            <AccordionSection
+              title="EF/NIHSS/ABCD2"
+              isExpanded={expandedCardSections.includes('examen_fisico')}
+              onToggle={() => toggleCardSection('examen_fisico')}
+            >
               <textarea
                 value={displayData.examen_fisico || ''}
                 onChange={(e) => handleFieldChange('examen_fisico', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Examen físico"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Estudios</label>
+            </AccordionSection>
+
+            {/* Estudios Complementarios */}
+            <AccordionSection
+              title="Estudios"
+              isExpanded={expandedCardSections.includes('estudios')}
+              onToggle={() => toggleCardSection('estudios')}
+            >
               <textarea
                 value={displayData.estudios || ''}
                 onChange={(e) => handleFieldChange('estudios', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Estudios complementarios"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Diagnóstico</label>
+            </AccordionSection>
+
+            {/* Diagnóstico */}
+            <AccordionSection
+              title="Diagnóstico"
+              isExpanded={expandedCardSections.includes('diagnostico')}
+              onToggle={() => toggleCardSection('diagnostico')}
+            >
               <textarea
                 value={displayData.diagnostico || ''}
                 onChange={(e) => handleFieldChange('diagnostico', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Diagnóstico"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Plan</label>
+            </AccordionSection>
+
+            {/* Plan */}
+            <AccordionSection
+              title="Plan"
+              isExpanded={expandedCardSections.includes('plan')}
+              onToggle={() => toggleCardSection('plan')}
+            >
               <textarea
                 value={displayData.plan || ''}
                 onChange={(e) => handleFieldChange('plan', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Plan de tratamiento"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pendientes</label>
+            </AccordionSection>
+
+            {/* Pendientes */}
+            <AccordionSection
+              title="Pendientes"
+              isExpanded={expandedCardSections.includes('pendientes')}
+              onToggle={() => toggleCardSection('pendientes')}
+            >
               <textarea
                 value={displayData.pendientes || ''}
                 onChange={(e) => handleFieldChange('pendientes', e.target.value)}
-                rows={2}
-                className="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200"
+                placeholder="Tareas pendientes"
               />
-            </div>
+            </AccordionSection>
           </div>
         </div>
       ) : (
@@ -343,14 +416,16 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
         <div className="flex items-center gap-1.5 md:gap-2">
           {patient.severidad && (
             <span
-              className={`px-1.5 md:px-2 py-0.5 text-xs font-semibold rounded ${getSeverityBadgeClass(
+              className={`px-1.5 md:px-2 py-0.5 text-xs font-semibold rounded flex items-center gap-1 ${getSeverityBadgeClass(
                 patient.severidad
               )}`}
             >
-              {patient.severidad}
+              {patient.severidad === 'IV' && <AlertCircle className="h-3 w-3" />}
+              {patient.severidad === 'III' && <AlertTriangle className="h-3 w-3" />}
+              <span>{patient.severidad}</span>
             </span>
           )}
-          <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-xs md:text-sm font-mono font-medium text-gray-700 dark:text-gray-300">
             Cama: {patient.cama || 'N/A'}
           </span>
         </div>
@@ -406,7 +481,7 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
           {patient.nombre}
         </h3>
         <div className="flex items-center gap-2 md:gap-3 text-xs text-gray-600 dark:text-gray-400 mt-1">
-          <span>DNI: {patient.dni || 'N/A'}</span>
+          <span className="font-mono">DNI: {patient.dni || 'N/A'}</span>
           <span className="text-gray-400 dark:text-gray-600">|</span>
           <span>Edad: {patient.edad || 'N/A'}</span>
         </div>
@@ -444,14 +519,6 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
             <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
               <Camera className="h-4 w-4" />
               <span>{imageCount}</span>
-            </div>
-          )}
-          {resident && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-              <User className="h-4 w-4" />
-              <span className="truncate max-w-[100px] md:max-w-[120px]" title={resident.full_name}>
-                {resident.full_name}
-              </span>
             </div>
           )}
         </div>

@@ -7,6 +7,7 @@ import SavePatientModal from './SavePatientModal';
 import HintsScaleModal, { HintsSavePayload } from './components/HintsScaleModal';
 import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import EpicrisisAssistantModal from './components/evolucionador/EpicrisisAssistantModal';
+import WardConfirmationModal from './components/interconsultas/WardConfirmationModal';
 import AIPromptChat from './components/evolucionador/AIPromptChat';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
@@ -85,6 +86,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [showSaveToWardModal, setShowSaveToWardModal] = useState(false);
   const [selectedFinalStatus, setSelectedFinalStatus] = useState<string>('Resuelta');
   const [lastSavedAssessmentId, setLastSavedAssessmentId] = useState<string | null>(null);
+
+  // Estados para modal de confirmación de Pase de Sala
+  const [showWardConfirmationModal, setShowWardConfirmationModal] = useState(false);
+  const [wardPatientData, setWardPatientData] = useState<any | null>(null);
 
   // useEffect para pre-cargar template desde interconsulta
   useEffect(() => {
@@ -381,25 +386,55 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }
 
     try {
-      const { createWardPatientFromEvolution } = await import('./services/workflowIntegrationService');
-      const { updateInterconsultaResponse: updateResponse } = await import('./services/interconsultasService');
+      // Paso 1: Cargar interconsulta y assessment completos
+      const { getInterconsultaById, getDiagnosticAssessmentById, mapToWardRoundPatient } =
+        await import('./services/workflowIntegrationService');
 
-      // Crear paciente en Pase de Sala
-      const result = await createWardPatientFromEvolution(activeInterconsulta.id, lastSavedAssessmentId);
+      const interconsulta = await getInterconsultaById(activeInterconsulta.id);
+      const assessment = await getDiagnosticAssessmentById(lastSavedAssessmentId);
+
+      if (!interconsulta || !assessment) {
+        throw new Error('No se pudo cargar datos necesarios');
+      }
+
+      // Paso 2: Parsear datos automáticamente usando la función existente
+      const parsedData = mapToWardRoundPatient(interconsulta, assessment);
+
+      // Paso 3: Abrir modal de confirmación con datos parseados
+      setWardPatientData(parsedData);
+      setShowSaveToWardModal(false); // Cerrar modal simple
+      setShowWardConfirmationModal(true); // Abrir modal de confirmación
+
+    } catch (error) {
+      console.error('[DiagnosticAlgorithm] Error al preparar datos para Pase de Sala:', error);
+      setSaveStatus({
+        success: false,
+        message: 'Error al preparar datos para Pase de Sala'
+      });
+    }
+  };
+
+  // Handler para confirmación final desde WardConfirmationModal
+  const handleWardConfirmationSubmit = async (editedData: any) => {
+    try {
+      const { createWardPatientDirectly } = await import('./services/workflowIntegrationService');
+      const { updateInterconsultaResponse } = await import('./services/interconsultasService');
+
+      // Crear paciente con datos editados
+      const result = await createWardPatientDirectly(editedData, lastSavedAssessmentId!);
 
       if (result.success) {
-        // Actualizar respuesta e interconsulta
-        await updateResponse(activeInterconsulta.id, notes, selectedFinalStatus as any);
+        // Actualizar interconsulta con respuesta
+        await updateInterconsultaResponse(activeInterconsulta!.id, notes, selectedFinalStatus as any);
 
         setSaveStatus({
           success: true,
-          message: '? Paciente agregado al Pase de Sala exitosamente'
+          message: '✓ Paciente agregado al Pase de Sala exitosamente'
         });
 
-        setShowSaveToWardModal(false);
+        setShowWardConfirmationModal(false);
         onClearInterconsulta?.();
 
-        // Limpiar mensaje después de 5 segundos
         setTimeout(() => setSaveStatus(null), 5000);
       } else {
         setSaveStatus({
@@ -1097,6 +1132,17 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de confirmación manual para Pase de Sala */}
+      {showWardConfirmationModal && wardPatientData && activeInterconsulta && (
+        <WardConfirmationModal
+          isOpen={showWardConfirmationModal}
+          onClose={() => setShowWardConfirmationModal(false)}
+          onConfirm={handleWardConfirmationSubmit}
+          initialData={wardPatientData}
+          interconsultaName={activeInterconsulta.nombre}
+        />
       )}
 
       {!isScalesVisible && (

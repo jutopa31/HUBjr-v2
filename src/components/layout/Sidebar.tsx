@@ -123,12 +123,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Always expanded on mobile for accessibility */}
       <div
         className={`${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#0b0b0b] shadow-2xl flex flex-col transition-all duration-200 ease-in-out ${
-          isExpanded ? 'w-56' : 'w-14'
+          isExpanded ? 'w-56' : 'lg:w-14 w-56'
         }`}
       >
         {/* Mobile close button */}
@@ -199,20 +199,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                         isActive
                           ? 'bg-gray-200 dark:bg-[#2a2a2a] text-gray-900 dark:text-white'
                           : 'text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#212121] hover:text-gray-900 dark:hover:text-gray-200'
-                      } ${!isExpanded ? 'justify-center' : 'space-x-2'}`}
+                      } ${!isExpanded ? 'lg:justify-center space-x-2' : 'space-x-2'}`}
                     >
                       <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-                      {isExpanded && (
-                        <>
-                          <span className="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis">
-                            {item.label}
-                          </span>
-                          {item.id === 'communication' && notifications > 0 && (
-                            <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center flex-shrink-0">
-                              {notifications}
-                            </span>
-                          )}
-                        </>
+                      {/* Always show labels on mobile, toggle on desktop */}
+                      <span className={`flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis ${!isExpanded ? 'lg:hidden' : ''}`}>
+                        {item.label}
+                      </span>
+                      {item.id === 'communication' && notifications > 0 && (
+                        <span className={`bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center flex-shrink-0 ${!isExpanded ? 'lg:hidden' : ''}`}>
+                          {notifications}
+                        </span>
                       )}
                     </button>
                     {!isExpanded && (

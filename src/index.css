@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,7 +9,7 @@
   --bg-hover-subtle: #eef2f7;
   --bg-input: #ffffff;
   --bg-button-hover: #e5e7eb;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -49,6 +51,26 @@
   /* Accent actual (cambia según sección) */
   --accent: var(--accent-dashboard);
   --on-accent: #ffffff; /* Texto sobre accent en light theme */
+
+  /* ========================================
+     CLINICAL PRECISION - Enhanced Color System
+     ======================================== */
+
+  /* Clinical Precision Palette */
+  --clinical-bg-primary: #F8FAFB;
+  --clinical-bg-secondary: #EDF2F7;
+  --clinical-text-primary: #1A2332;
+  --clinical-text-secondary: #4A5568;
+  --clinical-accent: #06B6D4;
+  --clinical-alert: #FF6B6B;
+  --clinical-success: #10B981;
+  --clinical-border: #E2E8F0;
+
+  /* Severity gradient overlays - lighter for subtle backgrounds */
+  --severity-i-bg: color-mix(in srgb, #10B981 8%, transparent);
+  --severity-ii-bg: color-mix(in srgb, #F59E0B 8%, transparent);
+  --severity-iii-bg: color-mix(in srgb, #F97316 8%, transparent);
+  --severity-iv-bg: color-mix(in srgb, #EF4444 8%, transparent);
 }
 
 .dark {
@@ -90,6 +112,16 @@
   /* Accent actual (cambia según sección) */
   --accent: var(--accent-dashboard);
   --on-accent: #111111; /* Texto sobre accent en dark theme (computed by StyleAgent) */
+
+  /* Clinical Precision Palette - Dark Mode */
+  --clinical-bg-primary: #1A2332;
+  --clinical-bg-secondary: #2D3748;
+  --clinical-text-primary: #F8FAFB;
+  --clinical-text-secondary: #CBD5E0;
+  --clinical-border: #4A5568;
+  --clinical-accent: #06B6D4;
+  --clinical-alert: #FF6B6B;
+  --clinical-success: #10B981;
 }
 
 body {
@@ -222,6 +254,27 @@ h2 { border-bottom: 1px solid color-mix(in srgb, var(--accent) 60%, transparent)
 .btn-soft:hover {
   background-color: var(--bg-hover);
   color: var(--text-primary);
+}
+
+/* Mobile haptic-style feedback: active states for better touch UX */
+.btn-soft:active,
+.btn-accent:active,
+.btn-success:active,
+.btn-error:active {
+  transform: scale(0.96);
+  transition: transform 0.1s ease;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  /* Mobile-only: enhanced active states */
+  .btn-soft:active {
+    background-color: var(--bg-hover);
+  }
+
+  /* Touch-manipulation to prevent 300ms tap delay */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
 }
 
 /* Success action button (sober green) */
@@ -485,9 +538,15 @@ tr:hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Zebra striping for improved scannability */
+.expandable-row:nth-child(even) {
+  background-color: var(--bg-secondary);
+}
+
 .expandable-row:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-tertiary);
 }
 
 .expandable-content {
@@ -790,6 +849,19 @@ tr:hover {
   grid-column: 1 / -1;
 }
 
+/* Safe area padding for iOS */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent iOS scroll bounce in modals */
+.modal-content {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 /* Responsive utilities for medical data */
 @media (max-width: 768px) {
   .modal-content {
@@ -811,5 +883,32 @@ tr:hover {
 
 /* Dark override for orange badges */
 .dark body .bg-orange-100 { background-color: var(--bg-secondary) !important; color: var(--text-secondary) !important; border: 1px solid var(--border-primary) !important; }
+
+/* Clinical Precision - Auto-save success glow animation */
+@keyframes success-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.3); }
+}
+
+.save-success {
+  animation: success-glow 1s ease-out;
+}
+
+/* Clinical Precision - Loading skeleton shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    var(--clinical-bg-secondary) 0%,
+    var(--clinical-bg-primary) 50%,
+    var(--clinical-bg-secondary) 100%
+  );
+  background-size: 1000px 100%;
+}
 
 
