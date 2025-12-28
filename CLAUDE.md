@@ -329,6 +329,37 @@ The project is configured with MCP servers for enhanced Claude Code integration:
 
 This enables Claude Code to navigate the large medical codebase more efficiently and consume fewer tokens during development.
 
+### Verifying MCP Usage
+
+**How to ensure Claude Code uses MCP and advanced tools:**
+
+1. **Ask explicitly** - Don't assume automatic usage:
+   ```
+   "Use the Explore agent to map the authentication system"
+   "Enter plan mode to design this refactor"
+   "Use ripgrep MCP to search for all database queries"
+   ```
+
+2. **Look for indicators** in Claude's responses:
+   - ✅ "Launching Explore agent..."
+   - ✅ "Using mcp__filesystem__search_files..."
+   - ✅ "Entering plan mode..."
+   - ❌ "Running grep command..." (should use Grep tool instead)
+
+3. **Verification prompts**:
+   ```
+   "What tools and agents will you use for this task?"
+   "Show me explicitly which MCP servers you're using"
+   ```
+
+4. **Force tool usage** when needed:
+   ```
+   "Use the Explore agent instead of reading files manually"
+   "Launch multiple Explore agents in parallel to understand this system"
+   ```
+
+**Complete verification guide:** See `docs/deployment/MCP_VERIFICATION_GUIDE.md`
+
 ## Common Development Patterns
 
 ### Service Layer Pattern

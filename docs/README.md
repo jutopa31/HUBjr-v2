@@ -43,10 +43,12 @@ Welcome to the HUBJR (Neurology Residency Hub) documentation. This directory con
   - [WARD_ROUNDS_UX_IMPROVEMENTS.md](features/ward-rounds/WARD_ROUNDS_UX_IMPROVEMENTS.md)
   - [ward-rounds-responsive-improvements.md](features/ward-rounds/ward-rounds-responsive-improvements.md)
 
-### Deployment
-**[docs/deployment/](deployment/)** - Deployment guides and DevOps documentation
+### Deployment & Tools
+**[docs/deployment/](deployment/)** - Deployment guides, DevOps, and development tools
 
 - **[VERCEL_DEPLOYMENT.md](deployment/VERCEL_DEPLOYMENT.md)** ⭐ - Vercel deployment guide
+- **[MCP_VERIFICATION_GUIDE.md](deployment/MCP_VERIFICATION_GUIDE.md)** 🔧 - How to verify and force use of MCP tools
+- **[PROMPT_TEMPLATES.md](deployment/PROMPT_TEMPLATES.md)** 📋 - Ready-to-use prompts for optimal Claude Code usage
 - [VERCEL_WEBHOOK_FIX.md](deployment/VERCEL_WEBHOOK_FIX.md) - Webhook troubleshooting
 
 ### Planning & Roadmap
@@ -67,6 +69,18 @@ Welcome to the HUBJR (Neurology Residency Hub) documentation. This directory con
 - [resumen.md](reports/resumen.md) - Project summary
 
 ## Quick Reference
+
+### For Claude Code Users 🤖
+**Maximize tool usage and efficiency:**
+1. **Verify MCP is active**: Check [deployment/MCP_VERIFICATION_GUIDE.md](deployment/MCP_VERIFICATION_GUIDE.md)
+2. **Use prompt templates**: Copy prompts from [deployment/PROMPT_TEMPLATES.md](deployment/PROMPT_TEMPLATES.md)
+3. **Force tool usage**: Always ask explicitly for Explore agents, Plan mode, and MCP tools
+4. **Verify indicators**: Look for "Launching Explore agent..." or "Using mcp__filesystem..." in responses
+
+**Quick verification prompt:**
+```
+"What MCP servers and agents will you use for this task? Show me before starting."
+```
 
 ### For New Developers
 1. Read [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) for system navigation
