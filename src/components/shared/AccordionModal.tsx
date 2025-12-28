@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, ChevronDown, ChevronUp, Save, CheckCircle, Edit as EditIcon } from 'lucide-react';
+import { X, Save, CheckCircle, Edit as EditIcon, Plus, Minus } from 'lucide-react';
 
 // ============================================================================
 // COMPONENTE ACORDEÓN REUTILIZABLE
@@ -25,6 +25,7 @@ interface AccordionSectionProps {
   children: React.ReactNode;
   contentLength?: number;
   badge?: React.ReactNode;
+  previewText?: string;          // Texto de preview para mostrar cuando está colapsado
 
   // Props para edición inline
   isEditing?: boolean;           // Si esta sección está en modo edición
@@ -38,47 +39,57 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
   isExpanded,
   onToggle,
   children,
-  contentLength,
+  contentLength: _contentLength,
   badge,
+  previewText = '',
   isEditing = false,
   onEditToggle,
   showEditButton = false,
   isSaving = false
 }) => {
-  const hasContent = contentLength && contentLength > 0;
+  // Truncar preview a 50-70 caracteres
+  const truncatedPreview = previewText && previewText.length > 70
+    ? previewText.substring(0, 67) + '...'
+    : previewText;
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-      {/* Header del acordeón - Siempre visible */}
-      <div className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
-        {/* Botón para expandir/colapsar */}
+      {/* Header del acordeón - Vista compacta en una línea */}
+      <div className="w-full px-3 py-2 flex items-center justify-between gap-2 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+        {/* Botón +/- */}
         <button
           onClick={onToggle}
-          className="flex-1 flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors rounded -ml-2 pl-2 pr-2 py-1"
+          className="flex-shrink-0 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          title={isExpanded ? 'Colapsar sección' : 'Expandir sección'}
         >
-          <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
-            {title}
-          </span>
-
-          {/* Badge de contador - Solo visible cuando está colapsado */}
-          {hasContent && !isExpanded && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-              {contentLength} caracteres
-            </span>
-          )}
-
-          {/* Badge personalizado (ej: icono de error, warning, etc.) */}
-          {badge}
-
-          {/* Icono de chevron */}
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-500 dark:text-gray-400 ml-auto" />
+            <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 ml-auto" />
+            <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           )}
         </button>
 
-        {/* Botón Editar/Guardar - Solo visible si showEditButton es true */}
+        {/* Título y preview en la misma línea */}
+        <button
+          onClick={onToggle}
+          className="flex-1 flex items-center gap-2 min-w-0 text-left"
+        >
+          <span className="font-medium text-sm text-gray-900 dark:text-gray-100 flex-shrink-0">
+            {title}
+          </span>
+
+          {/* Preview del texto - Solo visible cuando está colapsado */}
+          {!isExpanded && truncatedPreview && (
+            <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              {truncatedPreview}
+            </span>
+          )}
+
+          {/* Badge personalizado */}
+          {badge}
+        </button>
+
+        {/* Botón Editar/Guardar - Más compacto */}
         {showEditButton && onEditToggle && (
           <button
             onClick={(e) => {
@@ -86,7 +97,7 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
               onEditToggle();
             }}
             disabled={isSaving}
-            className={`ml-2 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+            className={`flex-shrink-0 px-2 py-1 rounded text-xs font-medium transition-all ${
               isEditing
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : 'bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-200'
@@ -95,17 +106,17 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
             {isSaving ? (
               <>
                 <Save className="h-3 w-3 animate-pulse" />
-                <span>Guardando...</span>
+                <span className="hidden sm:inline">Guardando...</span>
               </>
             ) : isEditing ? (
               <>
                 <CheckCircle className="h-3 w-3" />
-                <span>Guardar</span>
+                <span className="hidden sm:inline">Guardar</span>
               </>
             ) : (
               <>
                 <EditIcon className="h-3 w-3" />
-                <span>Editar</span>
+                <span className="hidden sm:inline">Editar</span>
               </>
             )}
           </button>
@@ -114,7 +125,7 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
 
       {/* Contenido - Solo visible cuando está expandido */}
       {isExpanded && (
-        <div className="p-4 bg-white dark:bg-gray-900">
+        <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
           {children}
         </div>
       )}
