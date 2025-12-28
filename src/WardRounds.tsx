@@ -43,10 +43,20 @@ interface Patient {
   image_thumbnail_url?: string[];
   image_full_url?: string[];
   exa_url?: (string | null)[];
+  video_url?: string[];
   assigned_resident_id?: string | null;
   display_order?: number;
   created_at?: string;
   updated_at?: string;
+}
+
+// Type for media items (images or videos)
+interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  thumbnail?: string;
+  exaUrl?: string | null;
+  index: number;
 }
 
 const NORMAL_EF_TEXT = 'Vigil, OTEP, MOE, PIR, Motor:, Sensitivo:, ROT, Babinski, Hoffman, Sensibilidad, Taxia';
@@ -435,6 +445,7 @@ const WardRounds: React.FC = () => {
     image_thumbnail_url: [],
     image_full_url: [],
     exa_url: [],
+    video_url: [],
     fecha: new Date().toISOString().split('T')[0],
     assigned_resident_id: undefined
   };
@@ -493,6 +504,7 @@ const WardRounds: React.FC = () => {
   const [savingSections, setSavingSections] = useState<Set<keyof Patient>>(new Set());
   const [savedSections, setSavedSections] = useState<Set<keyof Patient>>(new Set());
   const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
+  const [videoLightboxUrl, setVideoLightboxUrl] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [uploadingImages, setUploadingImages] = useState<boolean>(false);
@@ -1744,6 +1756,55 @@ const WardRounds: React.FC = () => {
   };
 
   /**
+   * Detectar si una URL corresponde a un archivo de video
+   * (Función helper para futuro uso)
+   */
+  const isVideoFile = (url: string): boolean => {
+    if (!url) return false;
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.m4v'];
+    const lowerUrl = url.toLowerCase();
+    return videoExtensions.some(ext => lowerUrl.includes(ext)) || lowerUrl.includes('video/');
+  };
+  // Marcar como usada para evitar warning de TypeScript
+  void isVideoFile;
+
+  /**
+   * Obtener todos los media items (imágenes y videos) del paciente
+   * Combina imágenes y videos en un array unificado de MediaItem
+   */
+  const getPatientMedia = (patient: Patient | Partial<Patient>): MediaItem[] => {
+    const media: MediaItem[] = [];
+    let index = 0;
+
+    // Agregar imágenes
+    const images = getPatientImages(patient);
+    images.forEach(img => {
+      media.push({
+        type: 'image',
+        url: img.full,
+        thumbnail: img.thumbnail,
+        exaUrl: img.exa || null,
+        index: index++
+      });
+    });
+
+    // Agregar videos
+    const videos = (patient.video_url as string[]) || [];
+    videos.forEach(videoUrl => {
+      if (videoUrl) {
+        media.push({
+          type: 'video',
+          url: videoUrl,
+          exaUrl: null,
+          index: index++
+        });
+      }
+    });
+
+    return media;
+  };
+
+  /**
    * Agregar nuevas imágenes a un paciente
    * Añade las URLs de las imágenes subidas a los arrays existentes
    */
@@ -1797,6 +1858,22 @@ const WardRounds: React.FC = () => {
   };
 
   /**
+   * Remover un video del array de videos del paciente
+   */
+  const removeVideoAtIndex = (
+    currentPatient: Patient | Partial<Patient>,
+    index: number
+  ): Partial<Patient> => {
+    const videos = [...((currentPatient.video_url as string[]) || [])];
+    videos.splice(index, 1);
+
+    return {
+      ...currentPatient,
+      video_url: videos
+    };
+  };
+
+  /**
    * Handler para subir múltiples archivos
    * Sube imágenes en paralelo usando uploadMultipleImagesToStorage
    */
@@ -1804,7 +1881,7 @@ const WardRounds: React.FC = () => {
     if (!fileList || fileList.length === 0) return;
     const patientIdForUpload = selectedPatient?.id || '';
     if (!patientIdForUpload) {
-      setImageUploadError('No hay ID de paciente; guarda primero el paciente antes de subir imagen.');
+      setImageUploadError('No hay ID de paciente; guarda primero el paciente antes de subir archivos.');
       return;
     }
 
@@ -1814,25 +1891,76 @@ const WardRounds: React.FC = () => {
     };
 
     const filesArray = Array.from(fileList);
+
+    // Separar archivos en imágenes y videos
+    const imageFiles: File[] = [];
+    const videoFiles: File[] = [];
+
+    filesArray.forEach(file => {
+      if (file.type.startsWith('video/')) {
+        videoFiles.push(file);
+      } else if (file.type.startsWith('image/')) {
+        imageFiles.push(file);
+      }
+    });
+
     setUploadingImages(true);
     setUploadProgress({uploaded: 0, total: filesArray.length});
     setImageUploadError(null);
     setImagePreviewError(null);
 
     try {
-      // Use parallel batch upload instead of sequential loop
-      const results = await uploadMultipleImagesToStorage(filesArray, patientIdForUpload);
+      let updatedPatient = { ...basePatient };
+      let uploadedCount = 0;
 
-      // Update progress to show completion
-      setUploadProgress({uploaded: filesArray.length, total: filesArray.length});
+      // Upload images
+      if (imageFiles.length > 0) {
+        const imageResults = await uploadMultipleImagesToStorage(imageFiles, patientIdForUpload);
+        updatedPatient = { ...updatedPatient, ...addImagesToPatient(updatedPatient, imageResults) };
+        uploadedCount += imageFiles.length;
+        setUploadProgress({uploaded: uploadedCount, total: filesArray.length});
+      }
 
-      const updatedPatient = addImagesToPatient(basePatient, results);
+      // Upload videos
+      if (videoFiles.length > 0) {
+        const videoUrls: string[] = [];
+        for (const videoFile of videoFiles) {
+          const fileName = `ward-video-${Date.now()}-${videoFile.name}`;
+          const filePath = `${patientIdForUpload}/${fileName}`;
+
+          const { error } = await supabase.storage
+            .from('ward-images')
+            .upload(filePath, videoFile, {
+              cacheControl: '3600',
+              contentType: videoFile.type
+            });
+
+          if (error) {
+            console.error('Error uploading video:', error);
+            throw new Error(`Error subiendo video: ${error.message}`);
+          }
+
+          const { data: publicUrl } = supabase.storage
+            .from('ward-images')
+            .getPublicUrl(filePath);
+
+          videoUrls.push(publicUrl.publicUrl);
+          uploadedCount++;
+          setUploadProgress({uploaded: uploadedCount, total: filesArray.length});
+        }
+
+        // Add video URLs to patient
+        const currentVideos = (updatedPatient.video_url as string[]) || [];
+        updatedPatient.video_url = [...currentVideos, ...videoUrls];
+      }
+
+      // Update patient in database
       await updatePatient(patientIdForUpload, updatedPatient as Patient);
       setInlineDetailValues(updatedPatient);
       setSelectedPatient(prev => ({ ...(prev as Patient), ...(updatedPatient as Patient) }));
     } catch (e: any) {
-      console.error('[WardRounds] Multiple image upload failed', e);
-      setImageUploadError(e?.message || 'No se pudieron subir las imágenes');
+      console.error('[WardRounds] Multiple file upload failed', e);
+      setImageUploadError(e?.message || 'No se pudieron subir los archivos');
     } finally {
       setUploadingImages(false);
       setUploadProgress({uploaded: 0, total: 0});
@@ -1947,9 +2075,28 @@ const WardRounds: React.FC = () => {
     }
   };
 
+  const handleRemoveVideo = async (index: number) => {
+    if (!selectedPatient?.id) return;
+
+    const updatedPatient = removeVideoAtIndex(inlineDetailValues, index);
+
+    try {
+      await updatePatient(selectedPatient.id, updatedPatient as Patient);
+      setInlineDetailValues(updatedPatient);
+      setSelectedPatient({...selectedPatient, ...updatedPatient} as Patient);
+    } catch (error) {
+      console.error('[WardRounds] Error removing video:', error);
+      setImageUploadError('Error al eliminar el video');
+    }
+  };
+
   const renderImagePreviewCard = () => {
+    const media = getPatientMedia(inlineDetailValues);
     const images = getPatientImages(inlineDetailValues);
+    const videos = (inlineDetailValues.video_url as string[]) || [];
+    const mediaCount = media.length;
     const imageCount = images.length;
+    const videoCount = videos.length;
 
     return (
       <div className="p-3 rounded-xl border border-[var(--border-primary)] bg-white/90 shadow-sm">
@@ -1957,7 +2104,7 @@ const WardRounds: React.FC = () => {
         <input
           ref={quickImageInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           className="hidden"
           onChange={(e) => {
@@ -1981,20 +2128,22 @@ const WardRounds: React.FC = () => {
           }}
         />
 
-        {/* Header con contador de fotos */}
+        {/* Header con contador de fotos y videos */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
-              IMG
+              {videoCount > 0 ? '📷' : 'IMG'}
             </span>
             <h4 className="text-sm font-semibold text-[var(--text-primary)]">
-              Imágenes {imageCount > 0 && `(${imageCount})`}
+              {videoCount > 0 ? 'Multimedia' : 'Imágenes'} {mediaCount > 0 && `(${mediaCount})`}
             </h4>
           </div>
           <div className="flex items-center space-x-2">
-            {imageCount > 0 && (
+            {mediaCount > 0 && (
               <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold dark:bg-blue-900 dark:text-blue-300">
-                {imageCount} {imageCount === 1 ? 'foto' : 'fotos'}
+                {imageCount > 0 && `${imageCount} ${imageCount === 1 ? 'foto' : 'fotos'}`}
+                {imageCount > 0 && videoCount > 0 && ' • '}
+                {videoCount > 0 && `${videoCount} ${videoCount === 1 ? 'video' : 'videos'}`}
               </span>
             )}
             {true && (
@@ -2081,7 +2230,7 @@ const WardRounds: React.FC = () => {
             {/* Upload section */}
             <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Subir nuevas imágenes
+                Subir imágenes o videos
               </label>
 
               {/* Button row - file picker + paste + camera - Responsive */}
@@ -2092,7 +2241,7 @@ const WardRounds: React.FC = () => {
                     const input = document.createElement('input');
                     input.type = 'file';
                     input.multiple = true;
-                    input.accept = 'image/*';
+                    input.accept = 'image/*,video/*';
                     input.onchange = (e: any) => handleMultipleFileUpload(e.target.files);
                     input.click();
                   }}
@@ -2128,7 +2277,7 @@ const WardRounds: React.FC = () => {
               </div>
 
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Puedes seleccionar archivos, pegar desde portapapeles o capturar con la cámara.
+                Puedes seleccionar imágenes/videos, pegar desde portapapeles o capturar con la cámara.
               </p>
 
               {uploadingImages && (
@@ -2141,66 +2290,110 @@ const WardRounds: React.FC = () => {
               )}
             </div>
           </div>
-        ) : imageCount > 0 ? (
+        ) : mediaCount > 0 ? (
           <div className="space-y-2">
             {/* Grilla 2 columnas responsive */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {images.map((img, idx) => {
-                const overrideUrl = imageOverrides[idx];
-                const fullUrl = overrideUrl || normalizeUrl(img.full);
-                const thumbUrl = overrideUrl || normalizeUrl(img.thumbnail) || fullUrl;
-                const exaUrl = img.exa ? normalizeUrl(img.exa) : '';
+              {media.map((item, idx) => {
+                const mediaUrl = normalizeUrl(item.url);
+                const exaUrl = item.exaUrl ? normalizeUrl(item.exaUrl) : '';
 
-                return (
-                  <div key={idx} className="relative group">
-                    <button
-                      type="button"
-                      className="relative w-full overflow-hidden rounded-lg border border-[var(--border-primary)] group/img"
-                      onClick={() => setImageLightboxUrl(fullUrl || thumbUrl)}
-                      style={{ minHeight: '120px' }}
-                    >
-                      {/* Container flexible con aspect ratio preservado */}
-                      <div className="w-full flex items-center justify-center bg-gray-100" style={{ minHeight: '120px' }}>
-                        <img
-                          src={thumbUrl}
-                          alt={`Imagen ${idx + 1}`}
-                          className="max-w-full max-h-48 object-contain transition-transform duration-200 group-hover/img:scale-[1.02]"
-                          onError={async () => {
-                            setImagePreviewError(`Error cargando imagen ${idx + 1}, reintentando...`);
-                            const refreshed = await refreshSignedUrl(fullUrl || thumbUrl);
-                            if (refreshed && refreshed !== fullUrl && refreshed !== thumbUrl) {
-                              setImageOverrides((prev) => ({ ...prev, [idx]: refreshed }));
-                              setImagePreviewError(null);
-                            } else {
-                              setImagePreviewError(`No se pudo cargar la imagen ${idx + 1}`);
-                              console.error('[WardRounds] Image preview failed', { thumbUrl, fullUrl, idx });
-                            }
+                if (item.type === 'video') {
+                  // Renderizar video
+                  // Calcular índice del video en el array video_url
+                  const videoIndex = idx - imageCount;
+
+                  return (
+                    <div key={`video-${idx}`} className="relative group">
+                      <div className="relative w-full overflow-hidden rounded-lg border border-[var(--border-primary)]" style={{ minHeight: '120px' }}>
+                        <video
+                          src={mediaUrl}
+                          controls
+                          preload="metadata"
+                          className="w-full max-h-48 object-contain bg-gray-900"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVideoLightboxUrl(mediaUrl);
                           }}
                         />
+                        {/* Badge indicador de VIDEO */}
+                        <div className="absolute top-2 left-2 px-2 py-1 rounded bg-purple-600 text-white text-xs font-semibold pointer-events-none">
+                          VIDEO
+                        </div>
+                        {/* Botón eliminar video - solo visible en modo edición */}
+                        {editingSection !== null && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveVideo(videoIndex);
+                            }}
+                            className="absolute top-2 right-2 p-1.5 rounded bg-red-600 text-white hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Eliminar video"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
+                    </div>
+                  );
+                } else {
+                  // Renderizar imagen
+                  const overrideUrl = imageOverrides[idx];
+                  const fullUrl = overrideUrl || normalizeUrl(item.url);
+                  const thumbUrl = overrideUrl || normalizeUrl(item.thumbnail || '') || fullUrl;
 
-                      {/* Overlay al hover */}
-                      <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs space-x-1">
-                        <Maximize2 className="h-4 w-4" />
-                        <span>Ver</span>
-                      </div>
-                    </button>
-
-                    {/* Badge EXA individual */}
-                    {exaUrl && (
-                      <a
-                        href={exaUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 flex items-center space-x-0.5"
-                        onClick={(e) => e.stopPropagation()}
+                  return (
+                    <div key={`image-${idx}`} className="relative group">
+                      <button
+                        type="button"
+                        className="relative w-full overflow-hidden rounded-lg border border-[var(--border-primary)] group/img"
+                        onClick={() => setImageLightboxUrl(fullUrl || thumbUrl)}
+                        style={{ minHeight: '120px' }}
                       >
-                        <ExternalLink className="h-3 w-3" />
-                        <span>EXA</span>
-                      </a>
-                    )}
-                  </div>
-                );
+                        {/* Container flexible con aspect ratio preservado */}
+                        <div className="w-full flex items-center justify-center bg-gray-100" style={{ minHeight: '120px' }}>
+                          <img
+                            src={thumbUrl}
+                            alt={`Imagen ${idx + 1}`}
+                            className="max-w-full max-h-48 object-contain transition-transform duration-200 group-hover/img:scale-[1.02]"
+                            onError={async () => {
+                              setImagePreviewError(`Error cargando imagen ${idx + 1}, reintentando...`);
+                              const refreshed = await refreshSignedUrl(fullUrl || thumbUrl);
+                              if (refreshed && refreshed !== fullUrl && refreshed !== thumbUrl) {
+                                setImageOverrides((prev) => ({ ...prev, [idx]: refreshed }));
+                                setImagePreviewError(null);
+                              } else {
+                                setImagePreviewError(`No se pudo cargar la imagen ${idx + 1}`);
+                                console.error('[WardRounds] Image preview failed', { thumbUrl, fullUrl, idx });
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {/* Overlay al hover */}
+                        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs space-x-1">
+                          <Maximize2 className="h-4 w-4" />
+                          <span>Ver</span>
+                        </div>
+                      </button>
+
+                      {/* Badge EXA individual */}
+                      {exaUrl && (
+                        <a
+                          href={exaUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 flex items-center space-x-0.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          <span>EXA</span>
+                        </a>
+                      )}
+                    </div>
+                  );
+                }
               })}
             </div>
             {imagePreviewError && (
@@ -2209,7 +2402,7 @@ const WardRounds: React.FC = () => {
           </div>
         ) : (
           <p className="text-sm text-[var(--text-secondary)]">
-            Sin imágenes. Usa el botón + para agregar fotos sin entrar en modo edición.
+            Sin multimedia. Usa el botón + para agregar imágenes o videos.
           </p>
         )}
       </div>
@@ -3812,6 +4005,42 @@ const WardRounds: React.FC = () => {
                 className="max-h-full max-w-full object-contain"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox de Video */}
+      {videoLightboxUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={() => setVideoLightboxUrl(null)}>
+          <div className="relative max-w-7xl max-h-[90vh] w-full p-4" onClick={(e) => e.stopPropagation()}>
+            {/* Header con botones */}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-white/80 truncate max-w-[60%]">{videoLightboxUrl}</span>
+              <div className="flex items-center space-x-2">
+                <a
+                  href={videoLightboxUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 px-3 py-1 rounded bg-white/10 hover:bg-white/20 text-xs font-semibold text-white"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Abrir</span>
+                </a>
+                <button
+                  onClick={() => setVideoLightboxUrl(null)}
+                  className="p-2 text-white bg-black/50 rounded-full hover:bg-black/70"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            {/* Video player */}
+            <video
+              src={videoLightboxUrl}
+              controls
+              autoPlay
+              className="w-full h-full max-h-[85vh] object-contain bg-black rounded-lg"
+            />
           </div>
         </div>
       )}
