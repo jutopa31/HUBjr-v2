@@ -394,6 +394,25 @@ interface ResidentProfile {
   role: string;
 }
 
+// Skeleton Card Component for loading state - Clinical Precision design
+const SkeletonCard: React.FC = () => {
+  return (
+    <div className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <div className="flex justify-between items-start mb-3">
+        <div className="h-5 w-16 bg-gray-300 dark:bg-gray-600 rounded skeleton-shimmer"></div>
+        <div className="h-5 w-20 bg-gray-300 dark:bg-gray-600 rounded skeleton-shimmer"></div>
+      </div>
+      <div className="h-6 w-3/4 bg-gray-300 dark:bg-gray-600 rounded mb-2 skeleton-shimmer"></div>
+      <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded mb-3 skeleton-shimmer"></div>
+      <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-3 skeleton-shimmer"></div>
+      <div className="flex gap-2">
+        <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded skeleton-shimmer"></div>
+        <div className="h-8 w-24 bg-gray-300 dark:bg-gray-600 rounded skeleton-shimmer"></div>
+      </div>
+    </div>
+  );
+};
+
 const WardRounds: React.FC = () => {
   const { user, loading: authLoading } = useAuthContext();
   // Feature flag: toggle DNI duplicate verification
@@ -472,6 +491,7 @@ const WardRounds: React.FC = () => {
 
   // Estado de guardado por sección
   const [savingSections, setSavingSections] = useState<Set<keyof Patient>>(new Set());
+  const [savedSections, setSavedSections] = useState<Set<keyof Patient>>(new Set());
   const [imageLightboxUrl, setImageLightboxUrl] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState<string | null>(null);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
@@ -630,6 +650,16 @@ const WardRounds: React.FC = () => {
 
       try {
         await saveSingleField(section, value);
+        // Mostrar indicador de éxito
+        setSavedSections(prev => new Set(prev).add(section));
+        // Ocultar indicador de éxito después de 1 segundo
+        setTimeout(() => {
+          setSavedSections(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(section);
+            return newSet;
+          });
+        }, 1000);
       } catch (error) {
         // Error ya manejado en saveSingleField
       } finally {
@@ -1236,9 +1266,7 @@ const WardRounds: React.FC = () => {
     return counts;
   }, [patients]);
 
-  const assignedResident = selectedPatient
-    ? residents.find((resident) => resident.id === selectedPatient.assigned_resident_id)
-    : null;
+  // Removed assignedResident - feature is no longer used
 
   const resetDragState = () => {
     setDraggedPatientId(null);
@@ -1499,32 +1527,7 @@ const WardRounds: React.FC = () => {
 
   // ==========================================
 
-  // Asignar residente a paciente
-  const assignResidentToPatient = async (patientId: string, residentId: string | null) => {
-    try {
-      console.log('[WardRounds] assignResidentToPatient -> patientId:', patientId, 'residentId:', residentId);
-      const { error } = await supabase
-        .from('ward_round_patients')
-        .update({ assigned_resident_id: residentId })
-        .eq('id', patientId);
-
-      if (error) throw error;
-
-      // Refresh the patients list to show the new assignment
-      await loadPatients();
-
-      // Show success message
-      const resident = residents.find(r => r.id === residentId);
-      const message = residentId
-        ? `Paciente asignado a ${resident?.full_name || 'residente'}`
-        : 'Asignación de residente removida';
-
-      alert(message);
-    } catch (error) {
-      console.error('[WardRounds] Error assigning resident:', error);
-      alert('Error al asignar residente');
-    }
-  };
+  // Removed assignResidentToPatient - feature is no longer used
 
   // Abrir modal + ventana detallada al seleccionar paciente
   const handlePatientSelection = (patient: Patient) => {
@@ -2081,8 +2084,8 @@ const WardRounds: React.FC = () => {
                 Subir nuevas imágenes
               </label>
 
-              {/* Button row - file picker + paste + camera */}
-              <div className="flex gap-2">
+              {/* Button row - file picker + paste + camera - Responsive */}
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -2094,27 +2097,29 @@ const WardRounds: React.FC = () => {
                     input.click();
                   }}
                   disabled={uploadingImages}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-blue-700 dark:hover:bg-blue-600"
+                  className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-blue-700 dark:hover:bg-blue-600"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>Seleccionar archivos</span>
+                  <span className="hidden sm:inline">Seleccionar archivos</span>
+                  <span className="sm:hidden">Archivo</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handlePasteFromClipboard}
                   disabled={uploadingImages}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-green-700 dark:hover:bg-green-600"
+                  className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-green-700 dark:hover:bg-green-600"
                 >
                   <Clipboard className="h-4 w-4" />
-                  <span>Pegar imagen</span>
+                  <span className="hidden sm:inline">Pegar imagen</span>
+                  <span className="sm:hidden">Pegar</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleCameraButtonClick}
                   disabled={uploadingImages}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-purple-700 dark:hover:bg-purple-600"
+                  className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-medium transition-colors dark:bg-purple-700 dark:hover:bg-purple-600"
                   title="Abrir cámara"
                 >
                   <Camera className="h-4 w-4" />
@@ -3298,12 +3303,6 @@ const WardRounds: React.FC = () => {
                         )}
                       </button>
                     </div>
-                    <div className="col-span-2 hidden lg:block">
-                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        <Users className="h-3 w-3 inline mr-1" />
-                        <span>Residente</span>
-                      </div>
-                    </div>
                   </div>
                   <div className="flex items-center justify-end min-w-[60px] sm:w-20 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     <span className="hidden sm:inline">Acciones</span>
@@ -3438,35 +3437,6 @@ const WardRounds: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <div className="col-span-2 hidden lg:block">
-                          {patient.assigned_resident_id ? (
-                            <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span className="text-xs text-gray-700">
-                                {residents.find((r) => r.id === patient.assigned_resident_id)?.full_name || 'Residente'}
-                              </span>
-                            </div>
-                          ) : (
-                            <select
-                              value=""
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                if (e.target.value) {
-                                  assignResidentToPatient(patient.id!, e.target.value);
-                                }
-                              }}
-                              className="text-xs border border-gray-300 rounded px-1 py-0.5 text-gray-500"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <option value="">Asignar...</option>
-                              {residents.map((resident) => (
-                                <option key={resident.id} value={resident.id}>
-                                  {resident.full_name}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </div>
                       </div>
                       {/* Columna de Acciones - visible en todos los dispositivos */}
                       <div className="flex items-center justify-end space-x-1 sm:space-x-1 min-w-[60px] sm:w-20">
@@ -3516,7 +3486,11 @@ const WardRounds: React.FC = () => {
         </div>
       ) : (
         <div className="flex-1 overflow-auto p-4">
-          {sortedPatients.length > 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
+            </div>
+          ) : sortedPatients.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedPatients.map((patient) => {
                 const resident = residents.find((r) => r.id === patient.assigned_resident_id);
@@ -3697,9 +3671,17 @@ const WardRounds: React.FC = () => {
               {/* Indicador de Auto-save por sección + Botón cerrar */}
               <div className="flex items-center gap-2">
                 {Array.from(savingSections).length > 0 && (
-                  <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                    <Save className="h-3 w-3 animate-pulse" />
+                  <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                    <Save className="h-3 w-3 animate-spin" />
                     Guardando {detailCardConfigs.find(c => c.field === Array.from(savingSections)[0])?.label}...
+                  </span>
+                )}
+                {Array.from(savedSections).length > 0 && Array.from(savingSections).length === 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 animate-pulse">
+                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                    Guardado ✓
                   </span>
                 )}
 
@@ -3718,11 +3700,6 @@ const WardRounds: React.FC = () => {
 
               {/* Segunda fila: metadatos - responsiva */}
               <div className="px-3 sm:px-4 pb-3 border-b bg-white dark:bg-gray-900 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300">
-                <Users className="h-3 w-3 mr-1" />
-                <span className="hidden sm:inline">{assignedResident ? assignedResident.full_name : 'Sin residente asignado'}</span>
-                <span className="sm:hidden">{assignedResident ? assignedResident.full_name.split(' ')[0] : 'Sin residente'}</span>
-              </span>
               <span className="badge badge-info text-xs uppercase">
                 Sev {selectedPatient.severidad || '-'}
               </span>

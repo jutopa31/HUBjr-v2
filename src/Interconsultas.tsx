@@ -281,8 +281,8 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
       recoveryTimeout={15000}
     >
       <div className="max-w-7xl mx-auto">
-        {/* Compact Header with Gradient and Badges */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 mb-3">
+        {/* Compact Header with Gradient and Badges - Sticky on mobile */}
+        <div className="sticky top-0 z-10 flex items-center justify-between bg-gradient-to-r from-blue-50 via-white to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-800 mb-3 backdrop-blur-sm bg-opacity-95">
           <div className="flex items-center gap-3">
             {/* Icono redondeado con sombra */}
             <div className="rounded-full bg-white p-1.5 shadow-sm ring-1 ring-gray-200">
@@ -321,14 +321,23 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
             </div>
           </div>
 
-          {/* Botones secundarios a la derecha */}
+          {/* Botones secundarios a la derecha - Responsive: solo iconos en mobile */}
           <div className="flex gap-2">
-            <button onClick={fetchAll} className="px-2.5 py-1.5 text-xs btn-soft rounded">
-              Actualizar
+            <button
+              onClick={fetchAll}
+              className="px-2.5 py-1.5 text-xs btn-soft rounded"
+              title="Actualizar"
+            >
+              <span className="hidden sm:inline">Actualizar</span>
+              <span className="sm:hidden">🔄</span>
             </button>
-            <button onClick={exportCSV} className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5">
+            <button
+              onClick={exportCSV}
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+              title="Exportar CSV"
+            >
               <Download className="h-3.5 w-3.5" />
-              Exportar CSV
+              <span className="hidden sm:inline">Exportar CSV</span>
             </button>
 
             {/* Botón de seleccionar todas */}

@@ -324,3 +324,138 @@ export async function createWardPatientFromEvolution(
     return { success: false, error: error?.message || String(error) };
   }
 }
+
+/**
+ * Obtiene interconsulta completa por ID
+ * @param id - ID de la interconsulta
+ * @returns Datos de la interconsulta o null
+ */
+export async function getInterconsultaById(id: string): Promise<InterconsultaRow | null> {
+  try {
+    const { data, error } = await supabase
+      .from('interconsultas')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('[WorkflowIntegration] Error al obtener interconsulta:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('[WorkflowIntegration] Error inesperado al obtener interconsulta:', error);
+    return null;
+  }
+}
+
+/**
+ * Obtiene assessment de diagnóstico por ID
+ * @param id - ID del assessment
+ * @returns Datos del assessment o null
+ */
+export async function getDiagnosticAssessmentById(id: string): Promise<PatientAssessment | null> {
+  try {
+    const { data, error } = await supabase
+      .from('diagnostic_assessments')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('[WorkflowIntegration] Error al obtener assessment:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('[WorkflowIntegration] Error inesperado al obtener assessment:', error);
+    return null;
+  }
+}
+
+/**
+ * Crea paciente en Pase de Sala con datos editados manualmente
+ * @param wardData - Datos editados por el usuario en el modal de confirmación
+ * @param assessmentId - ID del assessment para marcar como response_sent
+ * @returns Resultado con éxito/error y ID del paciente creado
+ */
+export async function createWardPatientDirectly(
+  wardData: any,
+  assessmentId: string
+): Promise<{ success: boolean; patientId?: string; error?: string }> {
+  try {
+    console.log('[WorkflowIntegration] createWardPatientDirectly -> Guardando datos editados');
+
+    // 1. Verificar duplicado por DNI
+    const { data: existingPatient } = await supabase
+      .from('ward_round_patients')
+      .select('id, nombre')
+      .eq('dni', wardData.dni)
+      .eq('hospital_context', wardData.hospital_context || 'Posadas')
+      .maybeSingle();
+
+    if (existingPatient) {
+      return {
+        success: false,
+        error: `Ya existe un paciente con DNI ${wardData.dni} en Pase de Sala (${existingPatient.nombre})`
+      };
+    }
+
+    // 2. Insertar paciente con datos editados
+    const { data: newPatient, error: insertError } = await supabase
+      .from('ward_round_patients')
+      .insert([{
+        nombre: wardData.nombre,
+        dni: wardData.dni,
+        edad: wardData.edad,
+        cama: wardData.cama,
+        fecha: new Date().toISOString().split('T')[0],
+        antecedentes: wardData.antecedentes || '',
+        motivo_consulta: wardData.motivo_consulta || '',
+        examen_fisico: wardData.examen_fisico || '',
+        estudios: wardData.estudios || '',
+        plan: wardData.plan || '',
+        diagnostico: wardData.diagnostico || '',
+        pendientes: wardData.pendientes || '',
+        image_thumbnail_url: wardData.image_thumbnail_url || [],
+        image_full_url: wardData.image_full_url || [],
+        exa_url: wardData.exa_url || [],
+        hospital_context: wardData.hospital_context || 'Posadas',
+        severidad: wardData.severidad || 'II',
+        display_order: wardData.display_order || 9999
+      }])
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error('[WorkflowIntegration] Error al insertar paciente:', insertError);
+      throw insertError;
+    }
+
+    // 3. Marcar assessment como response_sent: true
+    const { error: updateError } = await supabase
+      .from('diagnostic_assessments')
+      .update({ response_sent: true })
+      .eq('id', assessmentId);
+
+    if (updateError) {
+      console.warn('[WorkflowIntegration] No se pudo actualizar assessment:', updateError);
+    }
+
+    console.log('[WorkflowIntegration] ✓ Paciente creado exitosamente con datos editados:', newPatient.id);
+
+    return {
+      success: true,
+      patientId: newPatient.id
+    };
+
+  } catch (error: any) {
+    console.error('[WorkflowIntegration] Error al crear paciente:', error);
+    return {
+      success: false,
+      error: error?.message || 'Error desconocido'
+    };
+  }
+}

@@ -145,24 +145,26 @@ const InterconsultaFiltersComponent: React.FC<InterconsultaFiltersProps> = ({
 
   return (
     <div className="mb-4">
-      {/* Compact Horizontal Filters */}
-      <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg" style={{
+      {/* Compact Horizontal Filters - Reduced padding on mobile */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 sm:p-2 rounded-lg" style={{
         backgroundColor: 'var(--bg-secondary)',
         borderColor: 'var(--border-primary)',
       }}>
-        {/* Botón Nueva Interconsulta - A la izquierda */}
+        {/* Botón Nueva Interconsulta - Compact on mobile */}
         {onNewClick && (
           <button
             onClick={onNewClick}
             className="px-4 py-1.5 text-sm btn-accent rounded-lg inline-flex items-center gap-2 font-semibold shadow-sm hover:shadow-md transition-all flex-shrink-0"
+            title="Nueva Interconsulta"
           >
             <Plus className="h-4 w-4" />
-            Nueva Interconsulta
+            <span className="hidden sm:inline">Nueva Interconsulta</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
         )}
 
-        {/* Search Input - Compact */}
-        <div className="relative flex-shrink-0" style={{ minWidth: '200px', maxWidth: '240px' }}>
+        {/* Search Input - Responsive width */}
+        <div className="relative flex-1 min-w-[120px] max-w-[240px] md:min-w-[200px]">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <input
             type="text"
