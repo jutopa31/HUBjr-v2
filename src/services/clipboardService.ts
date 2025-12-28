@@ -1,6 +1,6 @@
 /**
  * Clipboard Service
- * Handles reading images from system clipboard
+ * Handles reading images and videos from system clipboard
  */
 
 export interface ClipboardImageResult {
@@ -9,8 +9,8 @@ export interface ClipboardImageResult {
 }
 
 /**
- * Read image from clipboard and convert to FileList
- * @returns FileList with clipboard image, or null if no image found
+ * Read image or video from clipboard and convert to FileList
+ * @returns FileList with clipboard media (image or video), or null if none found
  * @throws Error if permission denied or clipboard read fails
  */
 export async function readImageFromClipboard(): Promise<FileList | null> {
@@ -18,21 +18,27 @@ export async function readImageFromClipboard(): Promise<FileList | null> {
     // Request clipboard permission and read contents
     const clipboardItems = await navigator.clipboard.read();
 
-    // Search for image in clipboard items
+    // Search for image or video in clipboard items
     for (const item of clipboardItems) {
       // Find first image type (image/png, image/jpeg, etc.)
       const imageType = item.types.find(type => type.startsWith('image/'));
+      // Find first video type (video/mp4, video/webm, etc.)
+      const videoType = item.types.find(type => type.startsWith('video/'));
 
-      if (imageType) {
-        // Get the image blob
-        const blob = await item.getType(imageType);
+      // Prefer image over video if both exist
+      const mediaType = imageType || videoType;
+
+      if (mediaType) {
+        // Get the media blob
+        const blob = await item.getType(mediaType);
 
         // Generate filename with timestamp and correct extension
-        const extension = imageType.split('/')[1] || 'png';
-        const fileName = `clipboard-${Date.now()}.${extension}`;
+        const extension = mediaType.split('/')[1] || (imageType ? 'png' : 'mp4');
+        const prefix = imageType ? 'clipboard' : 'clipboard-video';
+        const fileName = `${prefix}-${Date.now()}.${extension}`;
 
         // Convert Blob to File
-        const file = new File([blob], fileName, { type: imageType });
+        const file = new File([blob], fileName, { type: mediaType });
 
         // Create FileList using DataTransfer API
         const dataTransfer = new DataTransfer();
@@ -42,7 +48,7 @@ export async function readImageFromClipboard(): Promise<FileList | null> {
       }
     }
 
-    // No image found in clipboard
+    // No media found in clipboard
     return null;
 
   } catch (error) {
