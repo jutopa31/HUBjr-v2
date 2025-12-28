@@ -1,0 +1,16 @@
+﻿{
+  "hubjr-filesystem": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "src", "database", "docs"],
+    "env": {
+      "MCP_ALLOWED_PATHS": "src,database,docs,pages"
+    }
+  },
+  "hubjr-ripgrep": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-ripgrep"],
+    "env": {
+      "MCP_RIPGREP_ARGS": "--type ts --type tsx --type js --type json --type sql"
+    }
+  }
+}

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- MCP (Model Context Protocol) configuration for enhanced Claude Code integration
+  - filesystem MCP server for intelligent file navigation across `src/`, `database/`, `docs/`, `pages/`
+  - ripgrep MCP server for advanced code search with TypeScript and SQL filtering
+  - shadcn and supabase MCP servers for specialized contexts
+  - Configuration files: `.mcp.json`, `mcp-config.json`
+
+### Changed
+- Reorganized documentation structure: moved 35 markdown files from root to `/docs` subdirectories
+- Updated README.md with Code Location and Documentation navigation sections
+- Created `/docs/README.md` as comprehensive documentation hub
+- Organized docs into 6 categories: architecture, database, features, deployment, planning, reports
+- Created `/docs/features/ward-rounds/` subfolder for Ward Rounds documentation
+- Updated `CLAUDE.md` with new documentation structure
+  - Database setup references now point to `docs/database/`
+  - Added "Documentation Structure" section explaining `docs/` hierarchy
+  - Added "MCP Configuration" section documenting MCP servers
+  - Corrected all file paths to reflect reorganized documentation
+- Removed duplicate MCP configuration file (`mcp-servers.json`)
+
 ## [2.0.0] - 2025-10-30
 
 ### 🎨 Transformación Completa a Tema Oscuro

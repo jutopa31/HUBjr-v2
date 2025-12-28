@@ -30,6 +30,61 @@
 - **Security**: Database-level privilege system with RLS policies
 - **Multi-Context Support**: Secure hospital data separation
 
+## 📂 Code Location
+
+All source code lives in the `src/` directory:
+
+```
+src/
+├── neurology_residency_hub.tsx           # Main application hub (1,700+ lines)
+├── DiagnosticAlgorithmContent.tsx        # Evolucionador - AI diagnostic assistant
+├── WardRounds.tsx, WardRoundsComplete.tsx # Ward rounds tracking
+├── EventManagerSupabase.tsx              # Calendar & events
+├── Interconsultas.tsx                    # Consultation requests
+├── PendientesManager.tsx                 # Task management
+├── components/                           # UI components
+│   ├── auth/                             # Authentication system
+│   ├── user/                             # User-specific features
+│   ├── admin/                            # Administrative interfaces
+│   ├── layout/                           # Layout components (Sidebar, etc.)
+│   ├── patients/                         # Patient management
+│   ├── scales/                           # Medical scales (NIHSS, Glasgow, etc.)
+│   └── wardRounds/                       # Ward rounds components
+├── services/                             # Business logic layer
+│   ├── interconsultasService.ts          # Interconsultas CRUD
+│   ├── patients.ts                       # Patient data service
+│   ├── neurologicalExamService.ts        # Neurological exams
+│   └── hospitalContextService.ts         # Hospital context management
+├── hooks/                                # Custom React hooks
+│   ├── useAuth.ts                        # Authentication hook
+│   ├── usePatients.ts                    # Patient data management
+│   └── useLumbarPuncture.ts              # Lumbar puncture data
+├── utils/                                # Utilities & helpers
+│   ├── supabase.js                       # Supabase client
+│   ├── diagnosticAssessmentDB.ts         # Database ops + privileges
+│   └── patientDataExtractor.ts           # AI text extraction
+└── contexts/                             # React contexts
+    └── ThemeContext.tsx                  # Dark/light theme
+```
+
+## 📚 Documentation
+
+### Essential Guides
+- **[ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)** ⭐ - Master architecture navigation guide (start here!)
+- **[CLAUDE.md](CLAUDE.md)** - Development guide for Claude Code AI assistant
+- **[AGENTS.md](AGENTS.md)** - Contributor workflow and coding guidelines
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+
+### Documentation by Topic
+- **Architecture & Design**: [docs/architecture/](docs/architecture/) - System architecture, patterns, principles
+- **Database & Setup**: [docs/database/](docs/database/) - Database schemas, RLS policies, setup guides
+- **Features**: [docs/features/](docs/features/) - Feature documentation and implementation details
+- **Deployment**: [docs/deployment/](docs/deployment/) - Vercel deployment and DevOps
+- **Planning**: [docs/planning/](docs/planning/) - Roadmaps and project plans
+- **Reports**: [docs/reports/](docs/reports/) - Status reports and audits
+
+See [docs/README.md](docs/README.md) for complete documentation index.
+
 ## 🛠️ Technical Architecture
 
 ### Frontend

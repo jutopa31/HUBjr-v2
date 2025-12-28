@@ -123,7 +123,7 @@ Multi-hospital data separation with privilege-based access:
 ### Admin Privilege System
 Database-level privilege management (not password-based):
 
-- **Setup**: Execute `setup_admin_privileges.sql` in Supabase SQL Editor
+- **Setup**: Execute `docs/database/setup_admin_privileges.sql` in Supabase SQL Editor
 - **Privilege Types** (defined in `diagnosticAssessmentDB.ts`):
   - `hospital_context_access` - Multi-hospital context switching
   - `full_admin` - Complete system access
@@ -156,13 +156,19 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 ## Database Setup
 
 ### Critical Setup Steps
-1. **Admin Privileges**: Run `setup_admin_privileges.sql` to create privilege system
-2. **Patient Tables**: Run `supabase_diagnostic_assessments.sql` for patient data tables
-3. **Ward Rounds**: Run `database/setup_ward_round_patients.sql`
-4. **Interconsultas**: Run `database/interconsultas_setup.txt`
-5. **Lumbar Punctures**: Run `database/setup_enhanced_lumbar_puncture.sql`
-6. **Post-Alta Patients**: Run `database/pacientes_post_alta_setup.sql`
-7. **Resident Profiles**: Run `database/resident_profiles_schema.sql`
+
+Para configuración completa de la base de datos, ver: `docs/database/DATABASE_SETUP.md`
+
+Archivos SQL principales:
+1. **Admin Privileges**: `docs/database/setup_admin_privileges.sql` - Create privilege system
+2. **Patient Tables**: `database/supabase_diagnostic_assessments.sql` - Patient data tables
+3. **Ward Rounds**: `database/setup_ward_round_patients.sql` - Ward round tracking
+4. **Interconsultas**: `database/interconsultas_setup.txt` - Consultation requests
+5. **Lumbar Punctures**: `database/setup_enhanced_lumbar_puncture.sql` - LP procedures
+6. **Post-Alta Patients**: `database/pacientes_post_alta_setup.sql` - Post-discharge tracking
+7. **Resident Profiles**: `database/resident_profiles_schema.sql` - User profiles
+
+**Note**: All database schemas and setup instructions are documented in `docs/database/`
 
 ### Key Database Tables
 - `diagnostic_assessments` - Patient evolution notes from Evolucionador
@@ -293,6 +299,35 @@ Complete implementation of 15+ neurological assessment tools:
 8. **TypeScript Strict**: The codebase uses TypeScript - avoid `any` types, prefer explicit interfaces
 9. **Dual Entry Points**: Be aware of both `neurology_residency_hub.tsx` (v2) and `neurology_residency_hub_v3.tsx` - v2 is currently active
 10. **User Guidance**: See AGENTS.md for contributor workflow guidelines and best practices
+
+## Documentation Structure
+
+The project documentation is organized hierarchically in the `docs/` directory:
+
+- **Architecture**: `docs/architecture/` - System architecture, project principles
+- **Database**: `docs/database/` - Database schemas, setup scripts, security
+- **Deployment**: `docs/deployment/` - Vercel deployment, production configuration
+- **Features**: `docs/features/` - Feature-specific documentation
+- **Planning**: `docs/planning/` - Development plans, pending tasks
+- **Reports**: `docs/reports/` - Audit reports, implementation summaries
+
+For the complete documentation index, see: `docs/README.md`
+
+## MCP (Model Context Protocol) Configuration
+
+The project is configured with MCP servers for enhanced Claude Code integration:
+
+**MCP Servers Active:**
+- **filesystem** - Intelligent file navigation across `src/`, `database/`, `docs/`, `pages/`
+- **ripgrep** - Advanced code search with TypeScript, SQL filtering
+- **shadcn** - Component library integration
+- **supabase** - Database context integration
+
+**Configuration files:**
+- `.mcp.json` - MCP server definitions
+- `mcp-config.json` - Server-specific configurations
+
+This enables Claude Code to navigate the large medical codebase more efficiently and consume fewer tokens during development.
 
 ## Common Development Patterns
 
