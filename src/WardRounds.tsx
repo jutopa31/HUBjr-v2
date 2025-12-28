@@ -1769,6 +1769,30 @@ const WardRounds: React.FC = () => {
   void isVideoFile;
 
   /**
+   * Sanitize filename for Supabase Storage
+   * Removes spaces, special characters, accents to create valid storage keys
+   */
+  const sanitizeFileName = (fileName: string): string => {
+    // Get extension
+    const lastDotIndex = fileName.lastIndexOf('.');
+    const name = lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
+    const extension = lastDotIndex > 0 ? fileName.substring(lastDotIndex) : '';
+
+    // Normalize unicode characters (convert accents to base letters)
+    const normalized = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Replace spaces and special chars with hyphens, convert to lowercase
+    const sanitized = normalized
+      .toLowerCase()
+      .replace(/\s+/g, '-')           // spaces to hyphens
+      .replace(/[^a-z0-9-_.]/g, '-')  // special chars to hyphens
+      .replace(/-+/g, '-')            // multiple hyphens to single
+      .replace(/^-|-$/g, '');         // remove leading/trailing hyphens
+
+    return sanitized + extension.toLowerCase();
+  };
+
+  /**
    * Obtener todos los media items (imágenes y videos) del paciente
    * Combina imágenes y videos en un array unificado de MediaItem
    */
@@ -1925,7 +1949,8 @@ const WardRounds: React.FC = () => {
       if (videoFiles.length > 0) {
         const videoUrls: string[] = [];
         for (const videoFile of videoFiles) {
-          const fileName = `ward-video-${Date.now()}-${videoFile.name}`;
+          const sanitizedName = sanitizeFileName(videoFile.name);
+          const fileName = `ward-video-${Date.now()}-${sanitizedName}`;
           const filePath = `${patientIdForUpload}/${fileName}`;
 
           const { error } = await supabase.storage
