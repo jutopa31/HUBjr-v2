@@ -4,7 +4,7 @@ import { Plus, Download, Upload, Edit, X, ChevronUp, ChevronDown, ChevronRight, 
 import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
 import Toast from './components/Toast';
-import { readImageFromClipboard, isClipboardSupported } from './services/clipboardService';
+import { readImageFromClipboard, isClipboardSupported, getFilesFromClipboardEvent } from './services/clipboardService';
 import { uploadMultipleImagesToStorage } from './services/storageService';
 import { createOrUpdateTaskFromPatient } from './utils/pendientesSync';
 import { archiveWardPatient } from './utils/diagnosticAssessmentDB';
@@ -423,6 +423,131 @@ const SkeletonCard: React.FC = () => {
   );
 };
 
+// Inline Editable Field Component
+interface InlineEditableFieldProps {
+  value: string;
+  fieldName: string;
+  displayClass: string;
+  inputClass: string;
+  placeholder: string;
+  onSave: (value: string) => Promise<boolean>;
+  type?: 'text' | 'number';
+  maxLength?: number;
+  isSaving?: boolean;
+  isSaved?: boolean;
+}
+
+const InlineEditableField: React.FC<InlineEditableFieldProps> = ({
+  value,
+  fieldName,
+  displayClass,
+  inputClass,
+  placeholder,
+  onSave,
+  type = 'text',
+  maxLength,
+  isSaving = false,
+  isSaved = false
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleClick = () => {
+    if (!isEditing && !isSaving) {
+      setIsEditing(true);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditValue(value);
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (editValue === value) {
+      setIsEditing(false);
+      return;
+    }
+
+    const success = await onSave(editValue);
+    if (success) {
+      setIsEditing(false);
+    } else {
+      // Error is handled by the onSave function (shows toast)
+      // Keep the field in edit mode
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
+
+  const handleBlur = () => {
+    // Only save on blur if not currently saving
+    if (!isSaving) {
+      handleSave();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="inline-flex items-center gap-1">
+        <input
+          ref={inputRef}
+          type={type}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className={`${inputClass} px-2 py-1 border-b-2 border-cyan-500 focus:border-cyan-600 focus:outline-none bg-transparent dark:text-gray-100 transition-colors`}
+          placeholder={placeholder}
+          maxLength={maxLength}
+        />
+        {isSaving && (
+          <Save className="h-3 w-3 text-blue-600 dark:text-blue-400 animate-spin flex-shrink-0" />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={handleClick}
+      className={`${displayClass} inline-flex items-center gap-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 rounded transition-colors group`}
+      title={`Click para editar ${fieldName}`}
+    >
+      <span className="dark:text-gray-100">{value || placeholder}</span>
+      {isSaved && (
+        <Check className="h-3 w-3 text-green-600 dark:text-green-400 flex-shrink-0 animate-pulse" />
+      )}
+      {!isSaving && !isSaved && (
+        <Edit className="h-3 w-3 text-gray-400 dark:text-gray-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      )}
+      {isSaving && (
+        <Save className="h-3 w-3 text-blue-600 dark:text-blue-400 animate-spin flex-shrink-0" />
+      )}
+    </div>
+  );
+};
+
 const WardRounds: React.FC = () => {
   const { user, loading: authLoading } = useAuthContext();
   // Feature flag: toggle DNI duplicate verification
@@ -531,6 +656,14 @@ const WardRounds: React.FC = () => {
   const [editingPendientesId, setEditingPendientesId] = useState<string | null>(null);
   const [tempPendientes, setTempPendientes] = useState<string>('');
 
+  // Estados para edición de header fields (nombre, DNI, edad)
+  const [savingHeaderFields, setSavingHeaderFields] = useState<Set<string>>(new Set());
+  const [savedHeaderFields, setSavedHeaderFields] = useState<Set<string>>(new Set());
+
+  // Estados para contador de caracteres de motivo_consulta
+  const [motivoConsultaOverLimit, setMotivoConsultaOverLimit] = useState(false);
+  const motivoWarningTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Estado de guardado para evitar dobles envíos y loops de UI
   const [isUpdatingPatient, setIsUpdatingPatient] = useState(false);
   const [isCreatingPatient, setIsCreatingPatient] = useState(false);
@@ -559,11 +692,8 @@ const WardRounds: React.FC = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
-  // Estados para acordeón
-  const [expandedSections, setExpandedSections] = useState<string[]>([
-    'motivo_consulta',
-    'diagnostico'
-  ]);
+  // Estados para acordeón - Todas las secciones colapsadas por default
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
   // Timer para debounce de auto-save
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -629,6 +759,147 @@ const WardRounds: React.FC = () => {
     } catch (error) {
       console.error(`Error guardando ${field}:`, error);
       throw error;
+    }
+  };
+
+  /**
+   * Guarda el campo nombre del paciente (header field)
+   */
+  const saveNombre = async (newValue: string): Promise<boolean> => {
+    if (!selectedPatient?.id) return false;
+
+    // Validar que el nombre no esté vacío
+    const trimmedValue = newValue.trim();
+    if (!trimmedValue) {
+      showToast('El nombre no puede estar vacío', 'error');
+      return false;
+    }
+
+    try {
+      // Agregar a set de guardando
+      setSavingHeaderFields(prev => new Set(prev).add('nombre'));
+
+      // Guardar usando saveSingleField
+      await saveSingleField('nombre', trimmedValue);
+
+      // Actualizar optimísticamente
+      if (selectedPatient) {
+        setSelectedPatient(prev => prev ? { ...prev, nombre: trimmedValue } : prev);
+      }
+
+      // Mostrar indicador de guardado
+      setSavedHeaderFields(prev => new Set(prev).add('nombre'));
+      setTimeout(() => {
+        setSavedHeaderFields(prev => {
+          const next = new Set(prev);
+          next.delete('nombre');
+          return next;
+        });
+      }, 1000);
+
+      return true;
+    } catch (error) {
+      showToast('Error al guardar el nombre', 'error');
+      return false;
+    } finally {
+      setSavingHeaderFields(prev => {
+        const next = new Set(prev);
+        next.delete('nombre');
+        return next;
+      });
+    }
+  };
+
+  /**
+   * Guarda el campo DNI del paciente (header field)
+   */
+  const saveDNI = async (newValue: string): Promise<boolean> => {
+    if (!selectedPatient?.id) return false;
+
+    const trimmedValue = newValue.trim();
+
+    // Validar duplicados si el DNI no está vacío
+    if (trimmedValue && ENABLE_DNI_CHECK) {
+      const isValid = await validateDNI(trimmedValue, selectedPatient.id);
+      if (!isValid) {
+        showToast('Ya existe un paciente con este DNI', 'error');
+        return false;
+      }
+    }
+
+    try {
+      setSavingHeaderFields(prev => new Set(prev).add('dni'));
+
+      await saveSingleField('dni', trimmedValue);
+
+      if (selectedPatient) {
+        setSelectedPatient(prev => prev ? { ...prev, dni: trimmedValue } : prev);
+      }
+
+      setSavedHeaderFields(prev => new Set(prev).add('dni'));
+      setTimeout(() => {
+        setSavedHeaderFields(prev => {
+          const next = new Set(prev);
+          next.delete('dni');
+          return next;
+        });
+      }, 1000);
+
+      return true;
+    } catch (error) {
+      showToast('Error al guardar el DNI', 'error');
+      return false;
+    } finally {
+      setSavingHeaderFields(prev => {
+        const next = new Set(prev);
+        next.delete('dni');
+        return next;
+      });
+    }
+  };
+
+  /**
+   * Guarda el campo edad del paciente (header field)
+   */
+  const saveEdad = async (newValue: string): Promise<boolean> => {
+    if (!selectedPatient?.id) return false;
+
+    const trimmedValue = newValue.trim();
+
+    // Validar que sea numérico si no está vacío
+    if (trimmedValue && !/^\d+$/.test(trimmedValue)) {
+      showToast('La edad debe ser un número', 'error');
+      return false;
+    }
+
+    try {
+      setSavingHeaderFields(prev => new Set(prev).add('edad'));
+
+      await saveSingleField('edad', trimmedValue);
+
+      if (selectedPatient) {
+        setSelectedPatient(prev => prev ? { ...prev, edad: trimmedValue } : prev);
+      }
+
+      setSavedHeaderFields(prev => new Set(prev).add('edad'));
+      setTimeout(() => {
+        setSavedHeaderFields(prev => {
+          const next = new Set(prev);
+          next.delete('edad');
+          return next;
+        });
+      }, 1000);
+
+      return true;
+    } catch (error) {
+      showToast('Error al guardar la edad', 'error');
+      return false;
+    } finally {
+      setSavingHeaderFields(prev => {
+        const next = new Set(prev);
+        next.delete('edad');
+        return next;
+      });
     }
   };
 
@@ -791,6 +1062,15 @@ const WardRounds: React.FC = () => {
     setImagePreviewError(null);
   }, [selectedPatient?.id]);
 
+  // Cleanup del timer de warning de motivo_consulta al desmontar
+  useEffect(() => {
+    return () => {
+      if (motivoWarningTimerRef.current) {
+        clearTimeout(motivoWarningTimerRef.current);
+      }
+    };
+  }, []);
+
   /**
    * Auto-save individual por sección
    * Se activa cuando se edita una sección específica
@@ -879,7 +1159,7 @@ const WardRounds: React.FC = () => {
   const detailCardConfigs: Array<{ label: string; field: keyof Patient; placeholder: string }> = [
     { label: 'Antecedentes', field: 'antecedentes', placeholder: 'Sin antecedentes' },
     { label: 'Motivo de Consulta', field: 'motivo_consulta', placeholder: 'Sin motivo' },
-    { label: 'EF/NIHSS/ABCD2', field: 'examen_fisico', placeholder: 'Sin examen' },
+    { label: 'EF', field: 'examen_fisico', placeholder: 'Sin examen' },
     { label: 'Estudios Complementarios', field: 'estudios', placeholder: 'Sin estudios' },
     { label: 'Diagnostico', field: 'diagnostico', placeholder: 'Sin diagnostico' },
     { label: 'Plan', field: 'plan', placeholder: 'Sin plan' },
@@ -889,9 +1169,9 @@ const WardRounds: React.FC = () => {
   /**
    * Show toast notification
    */
-  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
-  };
+  }, []);
 
   /**
    * Toggle expandir/colapsar sección de acordeón
@@ -926,7 +1206,7 @@ const WardRounds: React.FC = () => {
       const files = await readImageFromClipboard();
 
       if (!files || files.length === 0) {
-        showToast('No hay imagen en el portapapeles', 'info');
+        showToast('No se detectaron archivos. Para pegar videos, usa Ctrl+V.', 'info');
         return;
       }
 
@@ -934,7 +1214,7 @@ const WardRounds: React.FC = () => {
       await handleMultipleFileUpload(files);
 
       // Show success message
-      showToast('Imagen pegada correctamente', 'success');
+      showToast('Archivo pegado correctamente', 'success');
 
     } catch (error: any) {
       console.error('[WardRounds] Clipboard paste error:', error);
@@ -943,12 +1223,13 @@ const WardRounds: React.FC = () => {
       if (error.name === 'NotAllowedError') {
         showToast('Permiso denegado para acceder al portapapeles', 'error');
       } else if (error.name === 'NotFoundError') {
-        showToast('No hay imagen en el portapapeles', 'info');
+        showToast('No hay imagenes ni videos en el portapapeles', 'info');
       } else {
-        showToast('Error al pegar imagen del portapapeles', 'error');
+        showToast('Error al pegar desde el portapapeles', 'error');
       }
     }
   };
+
 
   const loadData = async () => {
     console.log('[WardRounds] loadData -> start');
@@ -1136,6 +1417,60 @@ const WardRounds: React.FC = () => {
       alert('No se pudo eliminar el paciente ambulatorio.');
     } finally {
       setOutpatientLoading(false);
+    }
+  };
+
+  /**
+   * Validar longitud de textos para impresión óptima del PDF
+   * Límites recomendados para impresión en 1 página A4 horizontal
+   * Muestra toast de advertencia si los textos son muy largos
+   */
+  const validateTextLengths = (patient: Patient): void => {
+    const limits = {
+      motivo_consulta: 300,
+      antecedentes: 400,
+      examen_fisico: 250,
+      estudios: 400,
+      diagnostico: 250,
+      plan: 400
+    };
+
+    const warnings: string[] = [];
+
+    console.log('[WardRounds] 🔍 Validando longitudes de texto...');
+    console.log('[WardRounds] Motivo Consulta:', patient.motivo_consulta?.length || 0, 'caracteres (límite:', limits.motivo_consulta, ')');
+    console.log('[WardRounds] Antecedentes:', patient.antecedentes?.length || 0, 'caracteres (límite:', limits.antecedentes, ')');
+
+    // Verificar cada campo
+    if (patient.motivo_consulta && patient.motivo_consulta.length > limits.motivo_consulta) {
+      warnings.push(`Motivo Consulta: ${patient.motivo_consulta.length} / ${limits.motivo_consulta} caracteres`);
+    }
+    if (patient.antecedentes && patient.antecedentes.length > limits.antecedentes) {
+      warnings.push(`Antecedentes: ${patient.antecedentes.length} / ${limits.antecedentes} caracteres`);
+    }
+    if (patient.examen_fisico && patient.examen_fisico.length > limits.examen_fisico) {
+      warnings.push(`Examen Físico: ${patient.examen_fisico.length} / ${limits.examen_fisico} caracteres`);
+    }
+    if (patient.estudios && patient.estudios.length > limits.estudios) {
+      warnings.push(`Estudios: ${patient.estudios.length} / ${limits.estudios} caracteres`);
+    }
+    if (patient.diagnostico && patient.diagnostico.length > limits.diagnostico) {
+      warnings.push(`Diagnóstico: ${patient.diagnostico.length} / ${limits.diagnostico} caracteres`);
+    }
+    if (patient.plan && patient.plan.length > limits.plan) {
+      warnings.push(`Plan: ${patient.plan.length} / ${limits.plan} caracteres`);
+    }
+
+    // Si hay advertencias, mostrar toast
+    if (warnings.length > 0) {
+      console.warn('[WardRounds] ⚠️ TEXTOS LARGOS DETECTADOS:', warnings);
+      console.warn('[WardRounds] 🟡 MOSTRANDO TOAST DE ADVERTENCIA');
+      showToast(
+        `⚠️ Textos largos arruinan la impresión del pase: ${warnings.join(', ')}`,
+        'info'
+      );
+    } else {
+      console.log('[WardRounds] ✅ Longitudes de texto OK');
     }
   };
 
@@ -1370,6 +1705,9 @@ const WardRounds: React.FC = () => {
     try {
       console.log('[WardRounds] updatePatient -> id:', id, 'payload:', updatedPatient);
 
+      // Validar longitud de textos (solo alerta, no bloquea guardado)
+      validateTextLengths(updatedPatient);
+
       // Validar DNI antes de actualizar (excluyendo el paciente actual)
       const isValidDNI = await validateDNI(updatedPatient.dni, id);
       if (!isValidDNI) {
@@ -1556,6 +1894,8 @@ const WardRounds: React.FC = () => {
   // ==========================================
 
   const startInlineCardEdit = (patient: Patient) => {
+    console.log('[WardRounds] ✏️ Starting inline edit for patient:', patient.nombre);
+    console.log('[WardRounds] Patient data:', { nombre: patient.nombre, edad: patient.edad, motivo_consulta: patient.motivo_consulta?.substring(0, 50) });
     setInlineEditingPatientId(patient.id || null);
     setInlineEditValues(patient);
   };
@@ -1566,11 +1906,20 @@ const WardRounds: React.FC = () => {
   };
 
   const saveInlineCardEdit = async () => {
-    if (!inlineEditingPatientId || !inlineEditValues) return;
+    console.log('[WardRounds] 💾 saveInlineCardEdit called');
+    console.log('[WardRounds] inlineEditingPatientId:', inlineEditingPatientId);
+    console.log('[WardRounds] inlineEditValues:', inlineEditValues);
+
+    if (!inlineEditingPatientId || !inlineEditValues) {
+      console.warn('[WardRounds] ❌ Cannot save: missing ID or values');
+      return;
+    }
 
     setIsUpdatingPatient(true);
     try {
+      console.log('[WardRounds] ➡️ Calling updatePatient...');
       await updatePatient(inlineEditingPatientId, inlineEditValues);
+      console.log('[WardRounds] ✅ updatePatient completed successfully');
       setInlineEditingPatientId(null);
       setInlineEditValues(null);
     } catch (error) {
@@ -1598,12 +1947,36 @@ const WardRounds: React.FC = () => {
       : '';
     const displayValue = processedValue || placeholder;
 
+    // Crear preview del texto (50-70 caracteres)
+    const previewText = processedValue && processedValue.trim()
+      ? processedValue.replace(/\n/g, ' ').trim()
+      : placeholder;
+
+    // Contador de caracteres para motivo_consulta
+    const charCount = value.length;
+    const charLimit = 200;
+    const isOverLimit = charCount > charLimit;
+    const isNearLimit = charCount > 180 && charCount <= 200;
+
+    // Elemento de contador para motivo_consulta
+    const charCounterElement = field === 'motivo_consulta' && isEditing ? (
+      <span className={`text-xs px-2 py-0.5 rounded ${
+        isOverLimit ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200' :
+        isNearLimit ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-200' :
+        'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+      }`}>
+        {charCount}/{charLimit}
+      </span>
+    ) : undefined;
+
     return (
       <AccordionSection
         title={label}
         isExpanded={isExpanded}
         onToggle={() => toggleSection(field)}
         contentLength={processedValue.length}
+        previewText={previewText}
+        rightElement={charCounterElement}
         isEditing={isEditing}
         isSaving={isSaving}
         showEditButton={true}
@@ -1700,10 +2073,40 @@ const WardRounds: React.FC = () => {
             {/* Textarea editable */}
             <textarea
               value={value}
-              onChange={(e) => setInlineDetailValues(prev => ({
-                ...prev,
-                [field]: e.target.value
-              }))}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setInlineDetailValues(prev => ({
+                  ...prev,
+                  [field]: newValue
+                }));
+
+                // Lógica de warning para motivo_consulta
+                if (field === 'motivo_consulta') {
+                  const isNowOverLimit = newValue.length > 200;
+                  const wasOverLimit = motivoConsultaOverLimit;
+
+                  setMotivoConsultaOverLimit(isNowOverLimit);
+
+                  // Mostrar toast cuando cruza el umbral (debounced 1s)
+                  if (isNowOverLimit && !wasOverLimit) {
+                    if (motivoWarningTimerRef.current) {
+                      clearTimeout(motivoWarningTimerRef.current);
+                    }
+
+                    motivoWarningTimerRef.current = setTimeout(() => {
+                      showToast(
+                        `⚠️ Motivo de consulta excede 200 caracteres (${newValue.length}). Puede afectar impresión PDF.`,
+                        'info'
+                      );
+                    }, 1000);
+                  }
+
+                  // Limpiar timer si baja del límite
+                  if (!isNowOverLimit && motivoWarningTimerRef.current) {
+                    clearTimeout(motivoWarningTimerRef.current);
+                  }
+                }
+              }}
               placeholder={placeholder}
               rows={6}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[100px]"
@@ -1992,6 +2395,32 @@ const WardRounds: React.FC = () => {
     }
   };
 
+  const handleClipboardPasteEvent = useCallback(async (event: ClipboardEvent) => {
+    if (uploadingImages) return;
+    const files = getFilesFromClipboardEvent(event);
+    if (!files || files.length === 0) return;
+
+    if (!selectedPatient?.id) {
+      showToast('Guarda el paciente antes de pegar archivos', 'error');
+      return;
+    }
+
+    event.preventDefault();
+
+    try {
+      await handleMultipleFileUpload(files);
+      showToast('Archivo pegado correctamente', 'success');
+    } catch (error) {
+      console.error('[WardRounds] Clipboard paste event error:', error);
+      showToast('Error al pegar desde el portapapeles', 'error');
+    }
+  }, [handleMultipleFileUpload, selectedPatient?.id, showToast, uploadingImages]);
+
+  useEffect(() => {
+    window.addEventListener('paste', handleClipboardPasteEvent);
+    return () => window.removeEventListener('paste', handleClipboardPasteEvent);
+  }, [handleClipboardPasteEvent]);
+
   const isMobileCameraDevice = () =>
     typeof navigator !== 'undefined' && /android|iphone|ipad|mobile/i.test(navigator.userAgent || '');
 
@@ -2175,35 +2604,32 @@ const WardRounds: React.FC = () => {
               <>
                 <button
                   type="button"
-                  className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
+                  className="inline-flex items-center justify-center p-2 rounded btn-soft text-xs"
                   onClick={() => quickImageInputRef.current?.click()}
                   disabled={uploadingImages || !selectedPatient?.id}
                   title="Agregar imágenes desde archivo"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Agregar</span>
                 </button>
 
                 <button
                   type="button"
-                  className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
+                  className="inline-flex items-center justify-center p-2 rounded btn-soft text-xs"
                   onClick={handlePasteFromClipboard}
                   disabled={uploadingImages || !selectedPatient?.id}
                   title="Pegar imagen desde portapapeles"
                 >
                   <Clipboard className="h-4 w-4" />
-                  <span className="hidden sm:inline">Pegar</span>
                 </button>
 
                 <button
                   type="button"
-                  className="inline-flex items-center space-x-1 px-2 py-1 rounded btn-soft text-xs"
+                  className="inline-flex items-center justify-center p-2 rounded btn-soft text-xs"
                   onClick={handleCameraButtonClick}
                   disabled={uploadingImages || !selectedPatient?.id}
                   title="Capturar con cámara"
                 >
                   <Camera className="h-4 w-4" />
-                  <span className="hidden sm:inline">Cámara</span>
                 </button>
               </>
             )}
@@ -2251,6 +2677,36 @@ const WardRounds: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {videos.length > 0 && (
+              <div className="space-y-2">
+                {videos.map((videoUrl, idx) => (
+                  <div key={videoUrl || idx} className="p-2 border border-gray-200 rounded-lg bg-gray-50 space-y-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-600">Video {idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVideo(idx)}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <input
+                      type="url"
+                      value={videoUrl}
+                      onChange={(e) => {
+                        const nextVideos = [...((inlineDetailValues.video_url as string[]) || [])];
+                        nextVideos[idx] = e.target.value;
+                        setInlineDetailValues(prev => ({...prev, video_url: nextVideos}));
+                      }}
+                      className="w-full text-xs rounded border border-gray-300 px-2 py-1"
+                      placeholder="URL video"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Upload section */}
             <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -2317,8 +2773,8 @@ const WardRounds: React.FC = () => {
           </div>
         ) : mediaCount > 0 ? (
           <div className="space-y-2">
-            {/* Grilla 2 columnas responsive */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* Grilla responsive - más columnas para aprovechar el ancho completo */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {media.map((item, idx) => {
                 const mediaUrl = normalizeUrl(item.url);
                 const exaUrl = item.exaUrl ? normalizeUrl(item.exaUrl) : '';
@@ -2677,23 +3133,31 @@ const WardRounds: React.FC = () => {
       day: 'numeric' 
     });
     
-    // Función para truncar texto largo
-    const truncateText = (text: string, maxLength: number) => {
+    // Función para truncar texto largo con límites adaptativos
+    // Si el texto es muy largo, trunca más agresivamente
+    const truncateText = (text: string, normalLimit: number, aggressiveLimit: number) => {
       if (!text) return '';
-      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      // Si el texto excede 1.5x el límite normal, usar límite agresivo
+      const limit = text.length > normalLimit * 1.5 ? aggressiveLimit : normalLimit;
+      return text.length > limit ? text.substring(0, limit) + '...' : text;
     };
 
-    // Generar filas de la tabla
+    // Generar filas de la tabla con page breaks cada 12 pacientes
     const generateTableRows = () => {
       return sortedPatients.map((patient, index) => {
-        const severityColor = 
+        const severityColor =
           patient.severidad === 'I' ? '#10b981' :
           patient.severidad === 'II' ? '#f59e0b' :
           patient.severidad === 'III' ? '#f97316' :
           patient.severidad === 'IV' ? '#ef4444' : '#6b7280';
 
+        // Agregar page break cada 12 pacientes (excepto después del último)
+        const pageBreak = ((index + 1) % 12 === 0 && index + 1 < sortedPatients.length)
+          ? ' style="page-break-after: always;"'
+          : '';
+
         return `
-          <tr>
+          <tr${pageBreak}>
             <td class="number-cell col-num">${index + 1}</td>
             <td class="text-cell bold col-bed">${patient.cama || '-'}</td>
             <td class="text-cell bold col-name">${patient.nombre || '-'}</td>
@@ -2702,13 +3166,13 @@ const WardRounds: React.FC = () => {
             <td class="severity-cell col-severity" style="background-color: ${severityColor}20; border-left: 3px solid ${severityColor};">
               <strong style="color: ${severityColor};">${patient.severidad || '-'}</strong>
             </td>
-            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 500)}</td>
-            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 400)}</td>
-            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 300)}</td>
-            <td class="text-cell small col-studies">${truncateText(patient.estudios, 500)}</td>
-            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 400)}</td>
-            <td class="text-cell small col-plan">${truncateText(patient.plan, 450)}</td>
-            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 350)}</td>
+            <td class="text-cell small col-history">${truncateText(patient.antecedentes, 400, 250)}</td>
+            <td class="text-cell small col-reason">${truncateText(patient.motivo_consulta, 300, 200)}</td>
+            <td class="text-cell small col-exam">${truncateText(patient.examen_fisico, 250, 150)}</td>
+            <td class="text-cell small col-studies">${truncateText(patient.estudios, 400, 250)}</td>
+            <td class="text-cell small col-diagnosis">${truncateText(patient.diagnostico, 250, 180)}</td>
+            <td class="text-cell small col-plan">${truncateText(patient.plan, 400, 250)}</td>
+            <td class="text-cell small pending-cell col-pending">${truncateText(patient.pendientes, 200, 150)}</td>
           </tr>
         `;
       }).join('');
@@ -2727,7 +3191,7 @@ const WardRounds: React.FC = () => {
                 print-color-adjust: exact;
               }
               @page {
-                margin: 10mm;
+                margin: 5mm 3mm;
                 size: A4 landscape;
               }
               thead {
@@ -2738,13 +3202,13 @@ const WardRounds: React.FC = () => {
                 page-break-inside: avoid;
               }
             }
-            
+
             body {
               font-family: 'Arial', sans-serif;
               margin: 0;
               padding: 8px;
-              font-size: 10pt;
-              line-height: 1.4;
+              font-size: 9pt;
+              line-height: 1.25;
               color: #333;
             }
             
@@ -2799,30 +3263,34 @@ const WardRounds: React.FC = () => {
               width: 100%;
               border-collapse: collapse;
               border: 1px solid #d1d5db;
-              font-size: 10pt;
+              font-size: 9pt;
               table-layout: fixed;
             }
-            
+
             th {
               background: #f9fafb;
               font-weight: bold;
-              padding: 6px 4px;
+              padding: 4px 3px;
               text-align: center;
               border: 1px solid #d1d5db;
-              font-size: 10pt;
+              font-size: 9pt;
               color: #374151;
               white-space: nowrap;
             }
-            
+
             td {
-              padding: 5px 4px;
+              padding: 3px 3px;
               border: 1px solid #e5e7eb;
               vertical-align: top;
               word-wrap: break-word;
-              overflow-wrap: anywhere;
+              overflow-wrap: break-word;
               word-break: break-word;
               white-space: normal;
-              line-height: 1.4;
+              line-height: 1.25;
+              hyphens: auto;
+              -webkit-hyphens: auto;
+              max-height: 120px;
+              overflow: hidden;
             }
             
             .number-cell {
@@ -2830,26 +3298,30 @@ const WardRounds: React.FC = () => {
               text-align: center;
               font-weight: bold;
               background: #f9fafb;
+              font-size: 10pt;
             }
-            
+
             .text-cell {
               word-break: break-word;
+              font-size: 9pt;
             }
-            
+
             .text-cell.bold {
               font-weight: bold;
               color: #1f2937;
+              font-size: 10pt;
             }
-            
+
             .text-cell.small {
               font-size: 9pt;
-              line-height: 1.4;
+              line-height: 1.25;
             }
-            
+
             .severity-cell {
               width: 3%;
               text-align: center;
               font-weight: bold;
+              font-size: 10pt;
             }
             
             .pending-cell {
@@ -2865,20 +3337,20 @@ const WardRounds: React.FC = () => {
               background-color: #f3f4f6;
             }
             
-            /* Optimización de columnas */
+            /* Optimización de columnas - Priorizar Diagnóstico y Plan */
             .col-num { width: 2%; }
-            .col-bed { width: 4%; }
-            .col-name { width: 9%; }
-            .col-dni { width: 6%; }
+            .col-bed { width: 5%; }
+            .col-name { width: 10%; }
+            .col-dni { width: 5%; }
             .col-age { width: 3%; }
             .col-severity { width: 3%; }
-            .col-history { width: 14%; }
-            .col-reason { width: 12%; }
-            .col-exam { width: 10%; }
-            .col-studies { width: 15%; }
-            .col-diagnosis { width: 11%; }
-            .col-plan { width: 13%; }
-            .col-pending { width: 10%; }
+            .col-history { width: 12%; }
+            .col-reason { width: 11%; }
+            .col-exam { width: 9%; }
+            .col-studies { width: 14%; }
+            .col-diagnosis { width: 13%; }
+            .col-plan { width: 15%; }
+            .col-pending { width: 8%; }
             
             .footer {
               margin-top: 8px;
@@ -2889,22 +3361,6 @@ const WardRounds: React.FC = () => {
               padding-top: 4px;
             }
           </style>
-          <script>
-            window.addEventListener('load', function() {
-              const table = document.querySelector('table');
-              const wrapper = document.querySelector('.table-wrapper');
-              if (!table || !wrapper) return;
-
-              const pageWidth = wrapper.clientWidth;
-              const contentWidth = table.scrollWidth;
-              if (contentWidth <= pageWidth) return;
-
-              const scale = Math.max(0.65, Math.min(1, pageWidth / contentWidth));
-              table.style.transform = 'scale(' + scale + ')';
-              table.style.transformOrigin = 'top left';
-              wrapper.style.height = (table.offsetHeight * scale) + 'px';
-            });
-          </script>
         </head>
         <body>
           <div class="header">
@@ -2949,9 +3405,9 @@ const WardRounds: React.FC = () => {
                 <th class="col-dni">DNI</th>
                 <th class="col-age">Edad</th>
                 <th class="col-severity">Sev</th>
-                <th class="col-history">Antecedentes</th>
-                <th class="col-reason">Motivo Consulta</th>
-                <th class="col-exam">EF/NIHSS/ABCD2</th>
+                <th class="col-history">Antec.</th>
+                <th class="col-reason">Motivo Cons.</th>
+                <th class="col-exam">EF/Escalas</th>
                 <th class="col-studies">Estudios</th>
                 <th class="col-diagnosis">Diagnóstico</th>
                 <th class="col-plan">Plan</th>
@@ -3872,17 +4328,46 @@ const WardRounds: React.FC = () => {
         <div className="modal-overlay">
           <div className="modal-content max-w-4xl w-full h-[90vh] flex flex-col">
             <div className="p-3 sm:p-4 border-b bg-white sticky top-0 z-10">
-              {/* Header simplificado - Solo lectura */}
+              {/* Header con campos editables */}
               <div className="flex items-start justify-between gap-2 mb-2 sm:mb-0">
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {selectedPatient.nombre || 'Paciente sin nombre'}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    DNI: {selectedPatient.dni || 'Sin DNI'} |
-                    Cama: {selectedPatient.cama || 'Sin cama'} |
-                    {selectedPatient.edad ? `${selectedPatient.edad} años` : 'Edad sin registrar'} |
-                    {selectedPatient.fecha || 'Sin fecha'}
+                  <InlineEditableField
+                    value={selectedPatient.nombre || ''}
+                    fieldName="nombre"
+                    displayClass="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                    inputClass="text-lg font-semibold"
+                    placeholder="Nombre del paciente"
+                    onSave={saveNombre}
+                    isSaving={savingHeaderFields.has('nombre')}
+                    isSaved={savedHeaderFields.has('nombre')}
+                  />
+                  <p className="text-sm text-gray-600 dark:text-gray-400 flex flex-wrap items-center gap-x-1">
+                    <span className="whitespace-nowrap">DNI:</span>
+                    <InlineEditableField
+                      value={selectedPatient.dni || ''}
+                      fieldName="DNI"
+                      displayClass="text-sm text-gray-600 dark:text-gray-400"
+                      inputClass="text-sm"
+                      placeholder="Sin DNI"
+                      onSave={saveDNI}
+                      isSaving={savingHeaderFields.has('dni')}
+                      isSaved={savedHeaderFields.has('dni')}
+                      maxLength={20}
+                    />
+                    <span className="whitespace-nowrap">| Cama: {selectedPatient.cama || 'Sin cama'} |</span>
+                    <InlineEditableField
+                      value={selectedPatient.edad || ''}
+                      fieldName="edad"
+                      displayClass="text-sm text-gray-600 dark:text-gray-400"
+                      inputClass="text-sm"
+                      placeholder="Sin edad"
+                      onSave={saveEdad}
+                      type="number"
+                      isSaving={savingHeaderFields.has('edad')}
+                      isSaved={savedHeaderFields.has('edad')}
+                      maxLength={3}
+                    />
+                    <span className="whitespace-nowrap">años | {selectedPatient.fecha || 'Sin fecha'}</span>
                   </p>
                 </div>
 
@@ -3918,9 +4403,25 @@ const WardRounds: React.FC = () => {
 
               {/* Segunda fila: metadatos - responsiva */}
               <div className="px-3 sm:px-4 pb-3 border-b bg-white dark:bg-gray-900 flex flex-wrap items-center gap-2">
-              <span className="badge badge-info text-xs uppercase">
-                Sev {selectedPatient.severidad || '-'}
-              </span>
+              {/* Select de Severidad - Editable directamente */}
+              <select
+                value={selectedPatient.severidad || ''}
+                onChange={(e) => {
+                  const updatedPatient = { ...selectedPatient, severidad: e.target.value };
+                  setSelectedPatient(updatedPatient);
+                  if (selectedPatient.id) {
+                    saveSingleField('severidad', e.target.value);
+                  }
+                }}
+                className="text-xs px-2 py-1 rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:border-[#06B6D4] focus:ring-2 focus:ring-[#06B6D4] focus:ring-opacity-20 transition-all duration-200 font-medium"
+                title="Cambiar severidad del paciente"
+              >
+                <option value="">Sin severidad</option>
+                <option value="I">I - Leve</option>
+                <option value="II">II - Moderado</option>
+                <option value="III">III - Severo</option>
+                <option value="IV">IV - Crítico</option>
+              </select>
 
               {/* Dropdown de escalas neurológicas */}
               <select
@@ -3943,35 +4444,24 @@ const WardRounds: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-2 bg-[var(--bg-secondary)]">
+            <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-3 bg-[var(--bg-secondary)]">
 
-              {/* DESKTOP: Layout auto-balanceado LG+ (1024px+) */}
-              <div className="hidden lg:grid lg:grid-cols-[1fr_1fr_minmax(240px,300px)] gap-3 items-start">
-
-                {/* Contenedor de 2 columnas auto-flow para cards */}
-                <div className="lg:col-span-2 grid grid-cols-2 gap-3 auto-rows-max">
+              {/* DESKTOP & TABLET: Layout vertical con imágenes abajo (768px+) */}
+              <div className="hidden md:block">
+                {/* Cards de información en grid de 2 columnas */}
+                <div className="grid grid-cols-2 gap-3 auto-rows-max mb-3">
                   {detailCardConfigs.map((card) =>
                     renderAccordionCard(card.label, card.field, card.placeholder, { multiline: true })
                   )}
                 </div>
 
-                {/* Columna fija de imágenes */}
-                <div className="flex flex-col">
+                {/* Imágenes ocupando todo el ancho disponible */}
+                <div className="w-full">
                   {renderImagePreviewCard()}
                 </div>
               </div>
 
-              {/* TABLET: Grid 2 columnas MD-LG (768px-1023px) */}
-              <div className="hidden md:grid lg:hidden md:grid-cols-2 gap-3 auto-rows-max">
-                {detailCardConfigs.map((card) =>
-                  renderAccordionCard(card.label, card.field, card.placeholder, { multiline: true })
-                )}
-                <div className="flex justify-end items-start">
-                  <div className="w-full max-w-xs">{renderImagePreviewCard()}</div>
-                </div>
-              </div>
-
-              {/* MOBILE: Formulario vertical compacto - eliminado carrusel horizontal */}
+              {/* MOBILE: Layout vertical compacto */}
               <div className="md:hidden space-y-3">
                 {detailCardConfigs.map((card) => (
                   <div key={card.field}>

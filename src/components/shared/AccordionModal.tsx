@@ -26,6 +26,7 @@ interface AccordionSectionProps {
   contentLength?: number;
   badge?: React.ReactNode;
   previewText?: string;          // Texto de preview para mostrar cuando está colapsado
+  rightElement?: React.ReactNode; // Elemento personalizado a la derecha del título (ej: contador de caracteres)
 
   // Props para edición inline
   isEditing?: boolean;           // Si esta sección está en modo edición
@@ -42,6 +43,7 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
   contentLength: _contentLength,
   badge,
   previewText = '',
+  rightElement,
   isEditing = false,
   onEditToggle,
   showEditButton = false,
@@ -88,6 +90,13 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
           {/* Badge personalizado */}
           {badge}
         </button>
+
+        {/* Elemento personalizado a la derecha (ej: contador de caracteres) */}
+        {rightElement && (
+          <div className="flex-shrink-0">
+            {rightElement}
+          </div>
+        )}
 
         {/* Botón Editar/Guardar - Más compacto */}
         {showEditButton && onEditToggle && (
