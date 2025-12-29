@@ -697,6 +697,8 @@ const WardRounds: React.FC = () => {
 
   // Timer para debounce de auto-save
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref para trackear último valor guardado (prevención de loops)
+  const lastSavedValueRef = useRef<Record<string, any>>({});
   React.useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)');
     const handleChange = () => {
@@ -973,6 +975,20 @@ const WardRounds: React.FC = () => {
   };
 
   const closeSelectedPatientModal = () => {
+    // Cancelar auto-save en progreso
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
+    // Limpiar ref de valores guardados
+    lastSavedValueRef.current = {};
+
+    // Limpiar indicadores de estado
+    setSavingSections(new Set());
+    setSavedSections(new Set());
+
+    // Cerrar modal y limpiar estados
     setSelectedPatient(null);
     setEditingSection(null); // Cerrar cualquier sección que esté editándose
     setImageLightboxUrl(null);
@@ -1082,7 +1098,12 @@ const WardRounds: React.FC = () => {
     const fieldValue = inlineDetailValues[editingSection];
     const originalValue = selectedPatient[editingSection];
 
-    if (fieldValue === originalValue) return;
+    // También verificar contra el último valor guardado (prevención de loops)
+    const lastSaved = lastSavedValueRef.current[editingSection];
+    if (fieldValue === originalValue || fieldValue === lastSaved) return;
+
+    // Protección extra: no guardar valores undefined
+    if (fieldValue === undefined) return;
 
     // Cancelar timer anterior
     if (autoSaveTimerRef.current) {
@@ -1097,6 +1118,9 @@ const WardRounds: React.FC = () => {
       try {
         // Guardar solo este campo
         await saveSingleField(editingSection, fieldValue);
+
+        // Guardar referencia del valor guardado (prevención de loops)
+        lastSavedValueRef.current[editingSection] = fieldValue;
 
         // Mantener el indicador de "guardado" por 1 segundo
         setTimeout(() => {
@@ -1123,7 +1147,7 @@ const WardRounds: React.FC = () => {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [inlineDetailValues[editingSection as keyof Patient], editingSection, selectedPatient]);
+  }, [inlineDetailValues[editingSection as keyof Patient], editingSection, selectedPatient?.id]);
 
   const sortPatientsByDisplayOrder = (list: Patient[]) => {
     return [...list].sort((a, b) => {
@@ -1885,6 +1909,10 @@ const WardRounds: React.FC = () => {
     setSelectedPatient(patientWithDefaults);
     setInlineDetailValues(patientWithDefaults);
     setEditingSection(null); // Resetear sección editándose
+
+    // Limpiar referencia de valores guardados al cambiar paciente
+    lastSavedValueRef.current = {};
+
     setImagePreviewError(null);
     setImageUploadError(null);
   };
