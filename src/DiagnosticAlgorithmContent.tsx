@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText, Sparkles, MessageSquare } from 'lucide-react';
+import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText, Sparkles, MessageSquare, RefreshCw, FileDown } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -72,6 +72,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [draftSyncLabel, setDraftSyncLabel] = useState<string | null>(null);
   const [draftListStatus, setDraftListStatus] = useState<string | null>(null);
+  const [isRefreshingDrafts, setIsRefreshingDrafts] = useState(false);
   const isHydratingDraft = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
   const hasLoadedDraft = useRef(false);
@@ -310,6 +311,166 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       [category]: !prev[category]
     }));
   };
+
+  // Función para refrescar borradores manualmente
+  const handleRefreshDrafts = useCallback(async () => {
+    if (!userId) return;
+    setIsRefreshingDrafts(true);
+    setDraftListStatus('Actualizando borradores...');
+
+    const result = await listEvolucionadorDrafts(userId);
+
+    if (result.success && result.data) {
+      const drafts = result.data || [];
+      const matchingDraft = activeInterconsulta?.id
+        ? drafts.find((draft) => draft.source_interconsulta_id === activeInterconsulta.id)
+        : drafts[0];
+
+      if (matchingDraft && matchingDraft.id !== activeDraftId) {
+        // Hay un borrador nuevo/actualizado
+        setActiveDraftId(matchingDraft.id);
+        isHydratingDraft.current = true;
+        setNotes(matchingDraft.notes || '');
+        setDraftSyncLabel('Borrador restaurado');
+        setTimeout(() => {
+          isHydratingDraft.current = false;
+        }, 0);
+      }
+      setDraftListStatus(null);
+    } else {
+      setDraftListStatus(result.error || 'Error al actualizar');
+    }
+
+    setIsRefreshingDrafts(false);
+  }, [userId, activeInterconsulta?.id, activeDraftId, setNotes]);
+
+  // Función para descargar PDF
+  const handleDownloadPDF = useCallback(() => {
+    // Importar jsPDF dinámicamente para evitar problemas de SSR
+    import('jspdf').then(({ default: jsPDF }) => {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Configuración de fuente y márgenes
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const lineHeight = 7;
+      const maxWidth = pageWidth - (2 * margin);
+
+      let yPosition = margin;
+
+      // Encabezado
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Evolucionador - Notas Clínicas', margin, yPosition);
+      yPosition += lineHeight * 1.5;
+
+      // Fecha
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const fecha = new Date().toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      doc.text(`Fecha: ${fecha}`, margin, yPosition);
+      yPosition += lineHeight * 2;
+
+      // Datos del paciente (si existen)
+      const extracted = extractPatientData(notes);
+      if (extracted.name || extracted.dni || extracted.age) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Datos del Paciente', margin, yPosition);
+        yPosition += lineHeight;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        if (extracted.name) {
+          doc.text(`Nombre: ${extracted.name}`, margin, yPosition);
+          yPosition += lineHeight;
+        }
+        if (extracted.dni) {
+          doc.text(`DNI: ${extracted.dni}`, margin, yPosition);
+          yPosition += lineHeight;
+        }
+        if (extracted.age) {
+          doc.text(`Edad: ${extracted.age}`, margin, yPosition);
+          yPosition += lineHeight;
+        }
+        yPosition += lineHeight;
+      }
+
+      // Línea separadora
+      doc.setDrawColor(200);
+      doc.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += lineHeight;
+
+      // Notas clínicas
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Notas Clínicas', margin, yPosition);
+      yPosition += lineHeight;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+
+      // Dividir texto en líneas y manejar páginas
+      const lines = doc.splitTextToSize(notes || 'Sin notas', maxWidth);
+
+      for (const line of lines) {
+        // Verificar si necesitamos nueva página
+        if (yPosition > pageHeight - margin) {
+          doc.addPage();
+          yPosition = margin;
+        }
+
+        doc.text(line, margin, yPosition);
+        yPosition += lineHeight;
+      }
+
+      // Pie de página en todas las páginas
+      const totalPages = doc.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+          `Generado por HubJR - Página ${i} de ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+      }
+
+      // Guardar PDF
+      const fileName = extracted.name
+        ? `Evolucion_${extracted.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`
+        : `Evolucion_${new Date().getTime()}.pdf`;
+
+      doc.save(fileName);
+
+      // Mostrar mensaje de éxito
+      setSaveStatus({
+        success: true,
+        message: '✅ PDF descargado correctamente'
+      });
+      setTimeout(() => setSaveStatus(null), 3000);
+    }).catch((error) => {
+      console.error('Error al cargar jsPDF:', error);
+      setSaveStatus({
+        success: false,
+        message: '❌ Error al generar PDF'
+      });
+      setTimeout(() => setSaveStatus(null), 3000);
+    });
+  }, [notes, setSaveStatus]);
 
   // Función para manejar el guardado de paciente
   const handleSavePatient = () => {
@@ -563,6 +724,19 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
               {draftListStatus || draftSyncLabel}
             </p>
           )}
+          {userId && (
+            <button
+              onClick={handleRefreshDrafts}
+              disabled={isRefreshingDrafts}
+              className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+              title="Actualizar borradores"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshingDrafts ? 'animate-spin' : ''}`} />
+              <span className="hidden xl:inline">
+                {isRefreshingDrafts ? 'Actualizando...' : 'Actualizar'}
+              </span>
+            </button>
+          )}
           <button
             onClick={handleToggleScales}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
@@ -578,6 +752,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
           >
             <Database className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">Guardar</span>
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Descargar PDF"
+          >
+            <FileDown className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">PDF</span>
           </button>
           <button
             onClick={copyNotes}
@@ -694,6 +876,14 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           >
             <Database className="h-3.5 w-3.5" />
             <span>Guardar</span>
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
+            title="Descargar PDF"
+          >
+            <FileDown className="h-3.5 w-3.5" />
+            <span>PDF</span>
           </button>
           <button
             onClick={copyNotes}

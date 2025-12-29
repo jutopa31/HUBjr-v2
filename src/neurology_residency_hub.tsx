@@ -32,7 +32,6 @@ import ResidentManagement from './components/ResidentManagement';
 import Interconsultas from './Interconsultas';
 import PacientesPostAlta from './PacientesPostAlta';
 import Sidebar from './components/layout/Sidebar';
-import { EvolucionadorApp } from './evolucionador';
 
 // Import types from separate file
 import ScaleModal from './ScaleModal';
@@ -45,7 +44,6 @@ const NeurologyResidencyHub = () => {
   const [notifications] = useState(3);
   const [selectedScale, setSelectedScale] = useState<Scale | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const useNewEvolucionador = false;
 
   // Function to handle tab changes and close sidebar on mobile
   const handleTabChange = (tabId: string) => {
@@ -5237,20 +5235,7 @@ const NeurologyResidencyHub = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'diagnostic':
-        return useNewEvolucionador ? (
-          <EvolucionadorApp
-            interconsultaData={activeInterconsulta}
-            hospitalContext={currentHospitalContext}
-            onCancel={() => {
-              setActiveInterconsulta(null);
-              setActiveTab(activeInterconsulta ? 'interconsultas' : 'inicio');
-            }}
-            onComplete={() => {
-              setActiveInterconsulta(null);
-              setActiveTab('interconsultas');
-            }}
-          />
-        ) : (
+        return (
           <DiagnosticAlgorithmContent
             notes={notes}
             setNotes={setNotes}
@@ -5613,27 +5598,17 @@ const NeurologyResidencyHub = () => {
           </div>
         ); */
       default:
-        return useNewEvolucionador ? (
-          <EvolucionadorApp
-            interconsultaData={activeInterconsulta}
-            hospitalContext={currentHospitalContext}
-            onCancel={() => {
-              setActiveInterconsulta(null);
-              setActiveTab(activeInterconsulta ? 'interconsultas' : 'inicio');
-            }}
-            onComplete={() => {
-              setActiveInterconsulta(null);
-              setActiveTab('interconsultas');
-            }}
-          />
-        ) : (
+        return (
           <DiagnosticAlgorithmContent
             notes={notes}
             setNotes={setNotes}
             copyNotes={copyNotes}
+            clearNotes={clearNotes}
             openScaleModal={openScaleModal}
             medicalScales={medicalScales}
             currentHospitalContext={currentHospitalContext}
+            activeInterconsulta={activeInterconsulta}
+            onClearInterconsulta={() => setActiveInterconsulta(null)}
           />
         );
     }
