@@ -41,9 +41,9 @@ node scripts/responsive-audit.mjs # Verify responsive breakpoints
 - **Dual Build System**: Next.js (production) + Vite (fast development alternative)
 
 ### Core Feature Modules
-The application is organized into distinct medical/administrative modules:
+The application is organized into distinct medical/administrative modules. Module visibility and routing are centralized in `src/config/modules.ts`, which defines core vs auxiliary module classification:
 
-- **Evolucionador (Diagnostic)**: `src/DiagnosticAlgorithmContent.tsx` - AI-assisted patient evolution notes with context-aware saving
+- **Evolucionador (Diagnostic)**: See dedicated architecture section below - AI-assisted patient evolution notes with multi-step wizard
 - **Pase de Sala (Ward Rounds)**: `src/WardRounds.tsx`, `src/WardRoundsComplete.tsx` - Daily patient rounds tracking
 - **Interconsultas**: `src/Interconsultas.tsx` + `src/services/interconsultasService.ts` - Consultation request management with auth guards
 - **Pendientes (Tasks)**: `src/PendientesManager.tsx` - Task tracking system
@@ -52,6 +52,60 @@ The application is organized into distinct medical/administrative modules:
 - **Punciones Lumbares**: `src/components/LumbarPunctureDashboard.tsx` - Lumbar puncture tracking
 - **Pacientes Post-Alta**: `src/PacientesPostAlta.tsx` - Post-discharge patient follow-up
 - **Saved Patients**: `src/SavedPatients.tsx` - Patient list with hospital context filtering
+
+**Module Configuration**: The `src/config/modules.ts` manifest controls module visibility in the sidebar. Modules are categorized as 'core' (visible in main sidebar) or 'auxiliary' (accessible via routes but hidden from primary navigation). When adding new features, update this configuration to control module exposure.
+
+### Evolucionador Architecture (AI-Assisted Diagnostic Assistant)
+The Evolucionador is a complex multi-file sub-application within `src/evolucionador/` that implements a comprehensive patient evolution note creation system with AI assistance.
+
+**Directory Structure**:
+```
+src/evolucionador/
+├── EvolucionadorApp.tsx           # Main component orchestrator
+├── index.tsx                      # Public exports
+├── components/
+│   ├── wizard/                    # Multi-step wizard UI
+│   │   ├── WizardContainer.tsx    # Wizard state management
+│   │   ├── StepNavigation.tsx     # Step controls and progress
+│   │   ├── ProgressBar.tsx        # Visual progress indicator
+│   │   └── steps/                 # Individual wizard steps
+│   │       ├── PatientDataStep.tsx    # Patient demographics & clinical data
+│   │       ├── NotesEditorStep.tsx    # Evolution note text editor
+│   │       ├── ScalesStep.tsx         # Medical scale assessments
+│   │       └── ConfirmStep.tsx        # Review and save
+│   └── ocr/                       # OCR processing components
+│       ├── OCRUploader.tsx        # File upload interface
+│       ├── OCRProcessor.tsx       # Processing orchestrator
+│       ├── ImagePreview.tsx       # Image preview with annotations
+│       └── OCRResultCard.tsx      # Extracted data display
+├── hooks/
+│   └── useOCRProcessor.ts         # OCR state management hook
+├── services/
+│   ├── claude/                    # Claude API integrations
+│   │   ├── claudeVisionService.ts     # Vision API for OCR
+│   │   ├── claudeEvolutionService.ts  # Evolution note AI suggestions
+│   │   └── claudeCacheService.ts      # API response caching
+│   └── ocr/
+│       ├── imagePreprocessor.ts   # Image optimization before OCR
+│       ├── ocrOrchestrator.ts     # Multi-engine OCR coordination
+│       └── ocrCostCalculator.ts   # Token usage estimation
+├── types/
+│   ├── ocr.types.ts               # OCR-specific TypeScript interfaces
+│   ├── evolution.types.ts         # Evolution note types
+│   └── claude.types.ts            # Claude API types
+└── config/
+    └── claude.config.ts           # Claude API configuration
+```
+
+**Key Features**:
+- **Multi-Step Wizard**: Four-step process (Patient Data → Notes Editor → Scales → Confirm) with state persistence between steps
+- **OCR Processing**: Integrates Claude Vision API for extracting patient data from medical documents and images
+- **Draft Management**: Auto-save functionality via `evolucionadorDraftsService.ts` with recovery from interrupted sessions
+- **Workflow Integration**: Receives patient context from Interconsultas module and can create Ward Round patients from saved notes
+- **Hospital Context Aware**: All saves respect the active hospital context (Posadas/Julian)
+- **AI Suggestions**: Claude-powered suggestions for evolution note structure and medical terminology
+
+**Usage Pattern**: The Evolucionador serves as a reference implementation for complex, multi-step feature development with AI integration.
 
 ### Component Organization
 
@@ -62,45 +116,161 @@ src/
 │   │   ├── AuthProvider.tsx     # Auth context provider
 │   │   ├── AuthModal.tsx        # Login modal
 │   │   ├── SessionGuard.tsx     # Session protection
-│   │   └── ProtectedRoute.tsx   # Route protection wrapper
+│   │   ├── ProtectedRoute.tsx   # Route protection wrapper
+│   │   └── UserMenu.tsx         # User account menu
 │   ├── user/                    # User-specific features
 │   │   ├── UserDashboard.tsx    # Personal resident dashboard
 │   │   ├── MyPatients.tsx       # Personal patient list
 │   │   ├── ResidentProfile.tsx  # Profile management
-│   │   └── ProcedureLogger.tsx  # Procedure tracking
+│   │   ├── ProcedureLogger.tsx  # Procedure tracking
+│   │   └── UserStatistics.tsx   # User stats visualization
 │   ├── admin/                   # Administrative interfaces
 │   │   ├── UserCreator.tsx      # User management
 │   │   └── OCRProcessorModal.tsx # OCR document processing
 │   ├── layout/
-│   │   └── Sidebar.tsx          # Main navigation sidebar with theme support
+│   │   ├── Sidebar.tsx          # Main navigation sidebar with theme support
+│   │   └── SectionHeader.tsx    # Section headers
 │   ├── patients/                # Patient management components
 │   │   ├── PatientsList.tsx
 │   │   ├── PatientsFilters.tsx
 │   │   └── PatientDetailDrawer.tsx
-│   └── v3/                      # Version 3 components (newer architecture)
+│   ├── wardRounds/              # Ward rounds feature components
+│   │   ├── WardPatientCard.tsx  # Patient card display
+│   │   ├── ImageGallery.tsx     # Media gallery (images/videos)
+│   │   ├── CSVImportModal.tsx   # CSV import interface
+│   │   └── ImportValidationResults.tsx
+│   ├── interconsultas/          # Consultation request components
+│   │   ├── InterconsultaCard.tsx        # Consultation display card
+│   │   ├── InterconsultaDetailModal.tsx # Detail view modal
+│   │   └── StatusBadge.tsx              # Status indicator
+│   ├── postAlta/                # Post-discharge feature components
+│   │   ├── CalendarView.tsx     # Calendar interface
+│   │   ├── PatientDetailModal.tsx   # Patient details
+│   │   └── CreatePatientForm.tsx    # Patient creation form
+│   ├── ranking/                 # Resident point system components
+│   │   ├── RankingView.tsx      # Ranking leaderboard
+│   │   ├── TopicsList.tsx       # Topics list
+│   │   ├── AdminPanel.tsx       # Admin configuration
+│   │   └── ParticipationForm.tsx # Entry submission form
+│   ├── scales/                  # Medical scale input components
+│   │   ├── NIHSSMotorItem.tsx   # NIHSS scale items
+│   │   └── [other scale components]
+│   ├── shared/                  # Reusable UI components
+│   │   ├── AccordionModal.tsx   # Accordion component
+│   │   └── Toast.tsx            # Toast notifications
+│   └── v3/                      # Version 3 components (experimental)
 │       ├── dashboard/
 │       ├── patients/
 │       ├── resources/
 │       └── admin/
-├── services/                    # Business logic layer
-│   ├── interconsultasService.ts # Interconsultas CRUD with timeout protection
+├── evolucionador/               # Evolucionador sub-application (see dedicated section)
+│   ├── EvolucionadorApp.tsx
+│   ├── components/wizard/       # Multi-step wizard
+│   ├── components/ocr/          # OCR processing
+│   ├── hooks/
+│   ├── services/claude/
+│   ├── services/ocr/
+│   ├── types/
+│   └── config/
+├── services/                    # Business logic layer (see Service Layer Architecture)
+│   ├── interconsultasService.ts
+│   ├── wardRoundsImportService.ts
 │   ├── pacientesPostAltaService.ts
-│   ├── patients.ts              # Patient data service
+│   ├── academiaService.ts
+│   ├── rankingService.ts
+│   ├── hospitalContextService.ts
+│   ├── evolucionadorDraftsService.ts
 │   ├── neurologicalExamService.ts
-│   └── hospitalContextService.ts # Hospital context management
+│   ├── storageService.ts
+│   ├── clipboardService.ts
+│   ├── workflowIntegrationService.ts
+│   ├── api.ts
+│   └── patients.ts
 ├── hooks/                       # Custom React hooks
-│   ├── useAuth.ts              # Authentication hook with privilege detection
+│   ├── useAuth.ts              # Authentication with privilege caching
 │   ├── usePatients.ts          # Patient data management
-│   └── useLumbarPuncture.ts    # Lumbar puncture data
+│   ├── useLumbarPuncture.ts    # Lumbar puncture data
+│   ├── usePatientDetail.ts     # Patient detail loading
+│   ├── useUserData.ts          # User profile data
+│   └── useEscapeKey.ts         # Keyboard shortcuts
 ├── utils/
 │   ├── supabase.js             # Supabase client configuration
 │   ├── diagnosticAssessmentDB.ts # Database operations + privilege checking
 │   ├── patientDataExtractor.ts  # AI text extraction utilities
-│   └── theme.ts                 # Theme utilities
+│   ├── queryHelpers.ts         # Robust Supabase query patterns
+│   ├── csvParser.ts            # CSV parsing utilities
+│   ├── theme.ts                # Theme utilities
+│   ├── pendientesSync.ts       # Task synchronization
+│   ├── dashboardQueries.ts     # Dashboard queries
+│   └── interconsultasUtils.ts  # Consultation utilities
 ├── contexts/
-│   └── ThemeContext.tsx         # Dark/light theme context
-└── types.ts                     # Shared TypeScript definitions
+│   └── ThemeContext.tsx        # Dark/light theme context
+├── types/                      # TypeScript type definitions (see Types Organization)
+│   ├── types.ts                # Core types
+│   ├── patients.ts             # Patient types
+│   ├── lumbarPuncture.ts       # LP types
+│   ├── residentProfile.ts      # User profile types
+│   ├── neurologicalExamTypes.ts # Exam types
+│   └── userTracking.ts         # User tracking types
+├── config/
+│   └── modules.ts              # Module visibility manifest
+└── [Top-level feature components]
+    ├── neurology_residency_hub.tsx (v2 - production)
+    ├── neurology_residency_hub_v3.tsx (v3 - experimental)
+    ├── Interconsultas.tsx
+    ├── WardRounds.tsx
+    ├── PendientesIntegrados.tsx
+    ├── PacientesPostAlta.tsx
+    └── [other feature modules]
 ```
+
+### Service Layer Architecture
+All Supabase and external API interactions are centralized in dedicated service files within `src/services/`. This pattern ensures consistent error handling, timeout protection, and retry logic across the application.
+
+**Core Services**:
+- **`interconsultasService.ts`** - Consultation request CRUD operations with 12-second timeout protection to prevent UI hangs. Implements robust query patterns with retry logic.
+- **`wardRoundsImportService.ts`** - CSV import logic for ward rounds. Validates patient data, handles duplicate detection, and manages bulk insertions.
+- **`pacientesPostAltaService.ts`** - Post-discharge patient management. Handles patient creation, updates, and calendar integration.
+- **`academiaService.ts`** - Educational resources and class scheduling management. Integrates with Google Calendar API.
+- **`rankingService.ts`** - Resident point system and topic management. Tracks resident participation and maintains leaderboards.
+- **`hospitalContextService.ts`** - Hospital context switching logic. Manages context selection and enforces privilege-based access.
+- **`evolucionadorDraftsService.ts`** - Draft auto-save and recovery for Evolucionador. Implements debounced auto-save with conflict resolution.
+- **`neurologicalExamService.ts`** - Neurological examination tracking. Stores and retrieves structured exam data.
+- **`storageService.ts`** - Supabase storage operations for images and videos. Handles file upload, compression, and retrieval with signed URLs.
+- **`clipboardService.ts`** - Clipboard paste handling for images and videos. Extracts media from clipboard events and prepares for upload.
+- **`workflowIntegrationService.ts`** - Cross-module workflow orchestration. Coordinates data flow between Interconsultas, Evolucionador, and Ward Rounds.
+- **`api.ts`** - API route helpers for server-side operations. Wraps Next.js API routes with error handling.
+- **`patients.ts`** - Core patient data operations. Central service for patient CRUD across all modules.
+
+**Service Pattern**:
+All services implement:
+- Try-catch error handling with descriptive console logging
+- Timeout protection for user-facing queries (typically 8-12 seconds)
+- Return pattern: `{ data, error }` for consistent error handling
+- Hospital context awareness where applicable
+- Authentication checks for write operations
+
+### TypeScript Types Organization
+The application uses a distributed type system with feature-specific type files for better code organization and maintainability.
+
+**Core Type Files** (`src/types/`):
+- **`types.ts`** - Core shared types including medical scales (NIHSS, Glasgow, mRS, etc.), diagnostic assessments, and common interfaces
+- **`patients.ts`** - Patient data structures, patient list interfaces, and patient-related enums
+- **`lumbarPuncture.ts`** - Lumbar puncture procedure types, CSF analysis results, and LP log structures
+- **`residentProfile.ts`** - User profile types, resident data structures, and profile-related interfaces
+- **`neurologicalExamTypes.ts`** - Neurological examination types and structured exam data
+- **`userTracking.ts`** - User activity tracking types and analytics interfaces
+
+**Evolucionador Types** (`src/evolucionador/types/`):
+- **`ocr.types.ts`** - OCR processing types, image preprocessing interfaces, and extraction results
+- **`evolution.types.ts`** - Evolution note types, patient note structures, and draft interfaces
+- **`claude.types.ts`** - Claude API types, vision service interfaces, and AI response structures
+
+**Type Organization Pattern**:
+- Use feature-specific type files for complex domains (e.g., Evolucionador, Lumbar Puncture)
+- Keep shared, cross-feature types in `src/types/types.ts`
+- Co-locate types with feature modules when types are exclusively used within that feature
+- Export all types from feature index files for easy imports
 
 ### Hospital Context System
 Multi-hospital data separation with privilege-based access:
@@ -203,9 +373,12 @@ hospital_context IN (SELECT accessible_context FROM user_contexts WHERE user_id 
 ### Adding New Features
 1. **Database First**: Create table schema with RLS policies in a new `.sql` file
 2. **Service Layer**: Add business logic in `src/services/[feature]Service.ts`
-3. **TypeScript Types**: Define interfaces in `src/types.ts` or feature-specific type files
-4. **Component**: Create UI component in appropriate `src/components/` subdirectory
-5. **Integration**: Add navigation in `neurology_residency_hub.tsx` sidebar menu
+3. **TypeScript Types**: Define interfaces in `src/types/` directory (use feature-specific files for complex domains)
+4. **Component**: Create UI component in appropriate `src/components/` subdirectory (use feature-specific subdirectories for related components)
+5. **Module Configuration**: Update `src/config/modules.ts` to control module visibility and routing (set as 'core' for sidebar or 'auxiliary' for route-only access)
+6. **Integration**: Add navigation in `neurology_residency_hub.tsx` sidebar menu (if core module)
+
+**For Complex Multi-Step Features**: Reference the Evolucionador architecture as a pattern for implementing wizard-based workflows with draft management and AI integration.
 
 ### Database Changes
 1. **Always implement RLS policies** for new tables

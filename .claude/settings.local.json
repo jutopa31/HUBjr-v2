@@ -86,7 +86,15 @@
       "Bash(git rev-list:*)",
       "Bash(while read commit)",
       "Bash(do git show $commit:src)",
-      "Bash(done)"
+      "Bash(done)",
+      "mcp__playwright__browser_press_key",
+      "Bash(git -C \"C:\\\\Users\\\\julia\\\\dev\\\\proyectos\\\\hubjr-v2\" log --oneline -20)",
+      "Bash(timeout 2 cmd /c npx:*)",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__list_directory",
+      "mcp__playwright__browser_tabs",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__write_file"
     ],
     "deny": []
   },

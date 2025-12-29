@@ -19,7 +19,7 @@ import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
-import PendientesManager from './PendientesManager';
+import PendientesIntegrados from './PendientesIntegrados';
 import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
@@ -5553,7 +5553,7 @@ const NeurologyResidencyHub = () => {
       case 'pendientes':
         return (
           <ProtectedRoute>
-            <PendientesManager />
+            <PendientesIntegrados />
           </ProtectedRoute>
         );
       /* case 'clinical':

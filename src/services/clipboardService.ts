@@ -20,25 +20,37 @@ export async function readImageFromClipboard(): Promise<FileList | null> {
 
     // Search for image or video in clipboard items
     for (const item of clipboardItems) {
-      // Find first image type (image/png, image/jpeg, etc.)
-      const imageType = item.types.find(type => type.startsWith('image/'));
-      // Find first video type (video/mp4, video/webm, etc.)
-      const videoType = item.types.find(type => type.startsWith('video/'));
+      // Prefer explicit image/video types, then fall back to other types.
+      const prioritizedTypes = [
+        ...item.types.filter(type => type.startsWith('image/')),
+        ...item.types.filter(type => type.startsWith('video/')),
+        ...item.types
+      ];
+      const seenTypes = new Set<string>();
 
-      // Prefer image over video if both exist
-      const mediaType = imageType || videoType;
+      for (const type of prioritizedTypes) {
+        if (seenTypes.has(type)) continue;
+        seenTypes.add(type);
 
-      if (mediaType) {
-        // Get the media blob
-        const blob = await item.getType(mediaType);
+        let blob: Blob;
+        try {
+          blob = await item.getType(type);
+        } catch {
+          continue;
+        }
 
-        // Generate filename with timestamp and correct extension
-        const extension = mediaType.split('/')[1] || (imageType ? 'png' : 'mp4');
-        const prefix = imageType ? 'clipboard' : 'clipboard-video';
+        const resolvedType = blob.type || type;
+        const isImage = resolvedType.startsWith('image/');
+        const isVideo = resolvedType.startsWith('video/');
+
+        if (!isImage && !isVideo) continue;
+
+        const extension = resolvedType.split('/')[1] || (isImage ? 'png' : 'mp4');
+        const prefix = isImage ? 'clipboard' : 'clipboard-video';
         const fileName = `${prefix}-${Date.now()}.${extension}`;
 
         // Convert Blob to File
-        const file = new File([blob], fileName, { type: mediaType });
+        const file = new File([blob], fileName, { type: resolvedType });
 
         // Create FileList using DataTransfer API
         const dataTransfer = new DataTransfer();
@@ -63,4 +75,29 @@ export async function readImageFromClipboard(): Promise<FileList | null> {
  */
 export function isClipboardSupported(): boolean {
   return !!(navigator?.clipboard?.read);
+}
+
+/**
+ * Read files from a clipboard paste event (file copies from OS clipboard).
+ */
+export function getFilesFromClipboardEvent(event: ClipboardEvent): FileList | null {
+  const clipboardData = event.clipboardData;
+  if (!clipboardData) return null;
+
+  if (clipboardData.files && clipboardData.files.length > 0) {
+    return clipboardData.files;
+  }
+
+  const files: File[] = [];
+  for (const item of Array.from(clipboardData.items || [])) {
+    if (item.kind !== 'file') continue;
+    const file = item.getAsFile();
+    if (file) files.push(file);
+  }
+
+  if (files.length === 0) return null;
+
+  const dataTransfer = new DataTransfer();
+  files.forEach(file => dataTransfer.items.add(file));
+  return dataTransfer.files;
 }

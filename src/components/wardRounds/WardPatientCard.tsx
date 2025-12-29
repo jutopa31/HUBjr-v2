@@ -196,8 +196,13 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
 
   // Handle field change during inline editing
   const handleFieldChange = (field: keyof Patient, value: string) => {
+    console.log('[WardPatientCard] 🔄 handleFieldChange called:', { field, value, hasEditValues: !!editValues, hasCallback: !!onEditValuesChange });
     if (onEditValuesChange && editValues) {
-      onEditValuesChange({ ...editValues, [field]: value });
+      const updated = { ...editValues, [field]: value };
+      console.log('[WardPatientCard] ✅ Calling onEditValuesChange with:', { field, value, updatedPatient: updated.nombre });
+      onEditValuesChange(updated);
+    } else {
+      console.warn('[WardPatientCard] ⚠️ Cannot update field - missing editValues or onEditValuesChange');
     }
   };
 

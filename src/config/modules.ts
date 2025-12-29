@@ -122,7 +122,6 @@ export const CORE_MODULE_IDS: ModuleId[] = [
   'inicio',
   'ward-rounds',
   'pendientes',
-  'schedule',
   'interconsultas',
   'diagnostic',
   'pacientes-post-alta',
