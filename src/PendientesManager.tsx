@@ -33,7 +33,8 @@ const PendientesManager: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [_editingTask, setEditingTask] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
+  const [editedValues, setEditedValues] = useState<Partial<Task>>({});
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
@@ -260,21 +261,104 @@ const PendientesManager: React.FC = () => {
   // Delete task
   const deleteTask = async (taskId: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
-    
+
     try {
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId);
-      
+
       if (error) {
         console.error('Error deleting task:', error);
       }
-      
+
       setTasks(tasks.filter(task => task.id !== taskId));
     } catch (err) {
       console.error('Error deleting task:', err);
     }
+  };
+
+  // Update complete task (all fields)
+  const updateTask = async (taskId: string, updatedData: Partial<Task>) => {
+    if (!user) {
+      setError('Debe estar autenticado para actualizar tareas');
+      return;
+    }
+
+    try {
+      setError(null);
+      setLoading(true);
+
+      // Validación: título no puede estar vacío
+      if (updatedData.title !== undefined && !updatedData.title.trim()) {
+        setError('El título no puede estar vacío');
+        setLoading(false);
+        return;
+      }
+
+      // Preparar datos con updated_at
+      const dataToUpdate = {
+        ...updatedData,
+        updated_at: new Date().toISOString()
+      };
+
+      // Actualizar en Supabase
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update(dataToUpdate)
+        .eq('id', taskId);
+
+      if (updateError) {
+        console.error('Error updating task:', updateError);
+        if (updateError.code === '42501') {
+          setError('Sin permisos para actualizar esta tarea');
+        } else {
+          setError(`Error al actualizar tarea: ${updateError.message}`);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Actualizar estado local
+      setTasks(tasks.map(task =>
+        task.id === taskId
+          ? { ...task, ...dataToUpdate }
+          : task
+      ));
+
+      // Limpiar estado de edición
+      setEditingTask(null);
+      setEditedValues({});
+
+    } catch (err) {
+      console.error('Error updating task:', err);
+      setError('Error de conexión al actualizar la tarea');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enter edit mode
+  const startEditing = (task: Task) => {
+    setEditingTask(task.id!);
+    setEditedValues({
+      title: task.title,
+      description: task.description || '',
+      priority: task.priority,
+      status: task.status,
+      due_date: task.due_date || ''
+    });
+  };
+
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingTask(null);
+    setEditedValues({});
+  };
+
+  // Save edits
+  const saveEdits = async (taskId: string) => {
+    await updateTask(taskId, editedValues);
   };
 
 
@@ -627,8 +711,10 @@ const PendientesManager: React.FC = () => {
                       </div>
                     ) : (
                       columnTasks.map((task) => {
-                        const priorityDisplay = getPriorityDisplay(task.priority);
-                        const statusDisplay = getStatusDisplay(task.status);
+                        const isEditing = editingTask === task.id;
+                        const currentValues = isEditing ? editedValues : task;
+                        const priorityDisplay = getPriorityDisplay(currentValues.priority!);
+                        const statusDisplay = getStatusDisplay(currentValues.status!);
                         const PriorityIcon = priorityDisplay.icon;
                         const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
                         const priorityAccent =
@@ -639,105 +725,206 @@ const PendientesManager: React.FC = () => {
                               : 'border-l-4 border-l-emerald-300';
 
                         return (
-                          <div 
+                          <div
                             key={task.id}
-                            draggable
-                            onDragStart={() => handleDragStart(task.id!)}
+                            draggable={!isEditing}
+                            onDragStart={() => !isEditing && handleDragStart(task.id!)}
                             onDragEnd={handleDragEnd}
-                            className={`medical-card relative overflow-hidden p-4 shadow-sm transition-transform hover:-translate-y-0.5 ${priorityAccent}`}
+                            className={`medical-card relative overflow-hidden p-4 shadow-sm transition-transform ${
+                              isEditing ? 'ring-2 ring-blue-400' : 'hover:-translate-y-0.5'
+                            } ${priorityAccent}`}
                           >
-                            <div className="flex flex-col gap-3">
-                              <div className="flex flex-wrap items-start gap-3 justify-between">
-                                <div className="flex items-start gap-3">
-                                  <button
-                                    onClick={() => {
-                                      const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-                                      updateTaskStatus(task.id!, newStatus);
-                                    }}
-                                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
-                                      task.status === 'completed' 
-                                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                                        : 'border-gray-300 bg-white hover:border-emerald-400'
-                                    }`}
-                                  >
-                                    {task.status === 'completed' && <CheckCircle className="h-3.5 w-3.5" />}
-                                  </button>
+                            {isEditing ? (
+                              // MODO EDICIÓN
+                              <div className="flex flex-col gap-3">
+                                {/* Input: Título */}
+                                <div>
+                                  <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
+                                    Título *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={editedValues.title || ''}
+                                    onChange={(e) => setEditedValues({ ...editedValues, title: e.target.value })}
+                                    className="w-full rounded-lg px-3 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    placeholder="Título de la tarea"
+                                  />
+                                </div>
+
+                                {/* Textarea: Descripción */}
+                                <div>
+                                  <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
+                                    Descripción
+                                  </label>
+                                  <textarea
+                                    value={editedValues.description || ''}
+                                    onChange={(e) => setEditedValues({ ...editedValues, description: e.target.value })}
+                                    className="w-full rounded-lg px-3 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 h-20 resize-none"
+                                    placeholder="Descripción detallada (opcional)"
+                                  />
+                                </div>
+
+                                {/* Grid: Prioridad, Estado, Fecha */}
+                                <div className="grid grid-cols-3 gap-2">
                                   <div>
-                                    <h3 className={`font-semibold ${
-                                      task.status === 'completed' ? 'line-through text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'
-                                    }`}>
-                                      {task.title}
-                                    </h3>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                      {task.source === 'ward_rounds' && (
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-blue-800 ring-1 ring-blue-200">
-                                          <Users className="h-3 w-3" />
-                                          <span>Pase de Sala</span>
-                                        </span>
-                                      )}
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[var(--text-secondary)] ring-1 ring-gray-200">
-                                        <PriorityIcon className="h-3 w-3" />
-                                        <span>{priorityDisplay.label}</span>
-                                      </span>
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[var(--text-secondary)] ring-1 ring-gray-200">
-                                        {statusDisplay.label}
-                                      </span>
-                                      {isOverdue && (
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-red-700 ring-1 ring-red-100">
-                                          Vencida
-                                        </span>
-                                      )}
-                                    </div>
+                                    <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
+                                      Prioridad
+                                    </label>
+                                    <select
+                                      value={editedValues.priority || 'medium'}
+                                      onChange={(e) => setEditedValues({ ...editedValues, priority: e.target.value as Task['priority'] })}
+                                      className="w-full rounded-lg px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    >
+                                      <option value="low">Baja</option>
+                                      <option value="medium">Media</option>
+                                      <option value="high">Alta</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
+                                      Estado
+                                    </label>
+                                    <select
+                                      value={editedValues.status || 'pending'}
+                                      onChange={(e) => setEditedValues({ ...editedValues, status: e.target.value as Task['status'] })}
+                                      className="w-full rounded-lg px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    >
+                                      <option value="pending">Pendiente</option>
+                                      <option value="in_progress">En Progreso</option>
+                                      <option value="completed">Completada</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
+                                      Fecha límite
+                                    </label>
+                                    <input
+                                      type="date"
+                                      value={editedValues.due_date || ''}
+                                      onChange={(e) => setEditedValues({ ...editedValues, due_date: e.target.value })}
+                                      className="w-full rounded-lg px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
                                   </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-2 text-xs text-[var(--text-tertiary)]">
-                                  {task.due_date && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
-                                      <Calendar className="h-3 w-3" />
-                                      {new Date(task.due_date).toLocaleDateString('es-ES')}
-                                    </span>
-                                  )}
-                                  {task.created_at && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
-                                      <Clock className="h-3 w-3" />
-                                      {new Date(task.created_at).toLocaleDateString('es-ES')}
-                                    </span>
-                                  )}
+
+                                {/* Botones: Guardar y Cancelar */}
+                                <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                                  <button
+                                    onClick={() => saveEdits(task.id!)}
+                                    disabled={loading || !editedValues.title?.trim()}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 btn-accent rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    <Save className="h-4 w-4" />
+                                    <span>Guardar</span>
+                                  </button>
+                                  <button
+                                    onClick={cancelEditing}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 btn-soft rounded text-sm font-medium"
+                                  >
+                                    <X className="h-4 w-4" />
+                                    <span>Cancelar</span>
+                                  </button>
                                 </div>
                               </div>
+                            ) : (
+                              // MODO VISTA
+                              <div className="flex flex-col gap-3">
+                                <div className="flex flex-wrap items-start gap-3 justify-between">
+                                  <div className="flex items-start gap-3">
+                                    <button
+                                      onClick={() => {
+                                        const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+                                        updateTaskStatus(task.id!, newStatus);
+                                      }}
+                                      className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+                                        task.status === 'completed'
+                                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                                          : 'border-gray-300 bg-white hover:border-emerald-400'
+                                      }`}
+                                    >
+                                      {task.status === 'completed' && <CheckCircle className="h-3.5 w-3.5" />}
+                                    </button>
+                                    <div>
+                                      <h3 className={`font-semibold ${
+                                        task.status === 'completed' ? 'line-through text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'
+                                      }`}>
+                                        {task.title}
+                                      </h3>
+                                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                                        {task.source === 'ward_rounds' && (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-blue-800 ring-1 ring-blue-200">
+                                            <Users className="h-3 w-3" />
+                                            <span>Pase de Sala</span>
+                                          </span>
+                                        )}
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[var(--text-secondary)] ring-1 ring-gray-200">
+                                          <PriorityIcon className="h-3 w-3" />
+                                          <span>{priorityDisplay.label}</span>
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[var(--text-secondary)] ring-1 ring-gray-200">
+                                          {statusDisplay.label}
+                                        </span>
+                                        {isOverdue && (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-red-700 ring-1 ring-red-100">
+                                            Vencida
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-2 text-xs text-[var(--text-tertiary)]">
+                                    {task.due_date && (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
+                                        <Calendar className="h-3 w-3" />
+                                        {new Date(task.due_date).toLocaleDateString('es-ES')}
+                                      </span>
+                                    )}
+                                    {task.created_at && (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
+                                        <Clock className="h-3 w-3" />
+                                        {new Date(task.created_at).toLocaleDateString('es-ES')}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
 
-                              {task.description && (
-                                <p className="text-sm text-[var(--text-secondary)]">
-                                  {task.description}
-                                </p>
-                              )}
-                            
-                              <div className="flex flex-wrap items-center gap-2">
-                                <select
-                                  value={task.status}
-                                  onChange={(e) => updateTaskStatus(task.id!, e.target.value as Task['status'])}
-                                  className="text-xs rounded-md border border-gray-200 bg-white px-3 py-1.5"
-                                >
-                                  <option value="pending">Pendiente</option>
-                                  <option value="in_progress">En Progreso</option>
-                                  <option value="completed">Completada</option>
-                                </select>
-                                
-                                <button
-                                  onClick={() => setEditingTask(task.id!)}
-                                  className="p-1.5 transition-colors btn-soft rounded"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </button>
-                                
-                                <button
-                                  onClick={() => deleteTask(task.id!)}
-                                  className="p-1.5 transition-colors btn-soft rounded"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                                {task.description && (
+                                  <p className="text-sm text-[var(--text-secondary)]">
+                                    {task.description}
+                                  </p>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <select
+                                    value={task.status}
+                                    onChange={(e) => updateTaskStatus(task.id!, e.target.value as Task['status'])}
+                                    className="text-xs rounded-md border border-gray-200 bg-white px-3 py-1.5"
+                                  >
+                                    <option value="pending">Pendiente</option>
+                                    <option value="in_progress">En Progreso</option>
+                                    <option value="completed">Completada</option>
+                                  </select>
+
+                                  <button
+                                    onClick={() => startEditing(task)}
+                                    className="p-1.5 transition-colors btn-soft rounded"
+                                    title="Editar tarea"
+                                  >
+                                    <Edit3 className="h-4 w-4" />
+                                  </button>
+
+                                  <button
+                                    onClick={() => deleteTask(task.id!)}
+                                    className="p-1.5 transition-colors btn-soft rounded"
+                                    title="Eliminar tarea"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         );
                       })

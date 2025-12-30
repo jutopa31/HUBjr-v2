@@ -300,7 +300,28 @@ const PendientesIntegrados: React.FC = () => {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
 
-    const days: Date[] = [];
+    const days: (Date | null)[] = [];
+
+    // Encontrar el primer día hábil del mes
+    let firstWeekday = -1;
+    for (let i = 1; i <= daysInMonth; i++) {
+      const day = new Date(year, month, i);
+      const dayOfWeek = day.getDay();
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        firstWeekday = dayOfWeek;
+        break;
+      }
+    }
+
+    // Agregar espacios vacíos antes del primer día hábil
+    // dayOfWeek: 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie
+    if (firstWeekday > 1) {
+      for (let i = 1; i < firstWeekday; i++) {
+        days.push(null);
+      }
+    }
+
+    // Agregar solo días hábiles (lun-vie)
     for (let i = 1; i <= daysInMonth; i += 1) {
       const day = new Date(year, month, i);
       const dayOfWeek = day.getDay();
@@ -314,6 +335,20 @@ const PendientesIntegrados: React.FC = () => {
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toDateString();
     return events.filter((event) => new Date(event.start_date).toDateString() === dateStr);
+  };
+
+  const getTasksForDate = (date: Date) => {
+    const dateStr = date.toDateString();
+    return tasks.filter((task) => {
+      if (!task.due_date) return false;
+      return new Date(task.due_date).toDateString() === dateStr;
+    });
+  };
+
+  const getCombinedItemsForDate = (date: Date) => {
+    const dateEvents = getEventsForDate(date);
+    const dateTasks = getTasksForDate(date);
+    return { events: dateEvents, tasks: dateTasks };
   };
 
   const statusOrder: Record<Task['status'], number> = {
@@ -579,9 +614,27 @@ const PendientesIntegrados: React.FC = () => {
               ))}
 
               {getMonthDays(currentDate).map((day, index) => {
-                const dayEvents = getEventsForDate(day);
+                // Manejar espacios vacíos (días antes del primer día hábil)
+                if (day === null) {
+                  return (
+                    <div
+                      key={`empty-${index}`}
+                      className="rounded-md border border-gray-200 bg-gray-50 p-1.5"
+                    />
+                  );
+                }
+
+                const { events: dayEvents, tasks: dayTasks } = getCombinedItemsForDate(day);
                 const isToday = day.toDateString() === new Date().toDateString();
                 const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+
+                // Calcular cuántos items se pueden mostrar
+                const maxItems = 3;
+                const totalItems = dayEvents.length + dayTasks.length;
+                const eventsToShow = dayEvents.slice(0, maxItems);
+                const remainingSlots = maxItems - eventsToShow.length;
+                const tasksToShow = remainingSlots > 0 ? dayTasks.slice(0, remainingSlots) : [];
+                const hiddenCount = totalItems - (eventsToShow.length + tasksToShow.length);
 
                 return (
                   <div
@@ -598,20 +651,44 @@ const PendientesIntegrados: React.FC = () => {
                       {day.getDate()}
                     </div>
 
-                    {dayEvents.length > 0 && (
+                    {(eventsToShow.length > 0 || tasksToShow.length > 0) && (
                       <div className="space-y-1 overflow-hidden">
-                        {dayEvents.slice(0, 3).map((event) => (
+                        {/* Eventos primero */}
+                        {eventsToShow.map((event) => (
                           <div
-                            key={event.id}
+                            key={`event-${event.id}`}
                             className="text-[11px] px-1.5 py-0.5 rounded truncate font-semibold flex items-center space-x-1 bg-blue-100 text-gray-800 border border-blue-300"
-                            title={event.title}
+                            title={`Evento: ${event.title}`}
                           >
                             <Users className="w-2 h-2 flex-shrink-0" />
                             <span className="truncate">{event.title}</span>
                           </div>
                         ))}
-                        {dayEvents.length > 3 && (
-                          <div className="text-[11px] text-blue-600">+{dayEvents.length - 3} más</div>
+
+                        {/* Tareas después */}
+                        {tasksToShow.map((task) => {
+                          const taskPriorityColor =
+                            task.priority === 'high' ? 'bg-red-100 border-red-300 text-red-900' :
+                            task.priority === 'medium' ? 'bg-amber-100 border-amber-300 text-amber-900' :
+                            'bg-green-100 border-green-300 text-green-900';
+
+                          return (
+                            <div
+                              key={`task-${task.id}`}
+                              className={`text-[11px] px-1.5 py-0.5 rounded truncate font-semibold flex items-center space-x-1 ${taskPriorityColor}`}
+                              title={`Tarea: ${task.title} (${task.priority})`}
+                            >
+                              <CheckSquare className="w-2 h-2 flex-shrink-0" />
+                              <span className="truncate">{task.title}</span>
+                            </div>
+                          );
+                        })}
+
+                        {/* Contador de items ocultos */}
+                        {hiddenCount > 0 && (
+                          <div className="text-[11px] text-blue-600 font-semibold">
+                            +{hiddenCount} más
+                          </div>
                         )}
                       </div>
                     )}
