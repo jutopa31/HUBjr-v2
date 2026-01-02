@@ -4101,7 +4101,18 @@ const WardRounds: React.FC = () => {
                         <div className="col-span-2">
                           <div className="text-sm font-medium text-gray-900 truncate">{patient.nombre}</div>
                           <div className="text-xs text-gray-500">
-                            <span className="hidden sm:inline">DNI: {patient.dni}</span>
+                            <span
+                              className="hidden sm:inline cursor-pointer hover:bg-gray-200 px-1 py-0.5 rounded transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (patient.dni) {
+                                  navigator.clipboard.writeText(patient.dni);
+                                }
+                              }}
+                              title="Click para copiar DNI"
+                            >
+                              DNI: {patient.dni}
+                            </span>
                             <span className="sm:hidden">{patient.edad} años</span>
                           </div>
                         </div>
