@@ -488,8 +488,9 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
         <div className="flex items-center gap-2 md:gap-3 text-xs text-gray-600 dark:text-gray-400 mt-1">
           <span
             className="font-mono cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
-            onClick={(e) => {
+            onClickCapture={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               if (patient.dni) {
                 navigator.clipboard.writeText(patient.dni);
               }
