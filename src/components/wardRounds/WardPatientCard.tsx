@@ -486,7 +486,18 @@ const WardPatientCard: React.FC<WardPatientCardProps> = ({
           {patient.nombre}
         </h3>
         <div className="flex items-center gap-2 md:gap-3 text-xs text-gray-600 dark:text-gray-400 mt-1">
-          <span className="font-mono">DNI: {patient.dni || 'N/A'}</span>
+          <span
+            className="font-mono cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (patient.dni) {
+                navigator.clipboard.writeText(patient.dni);
+              }
+            }}
+            title="Click para copiar DNI"
+          >
+            DNI: {patient.dni || 'N/A'}
+          </span>
           <span className="text-gray-400 dark:text-gray-600">|</span>
           <span>Edad: {patient.edad || 'N/A'}</span>
         </div>
