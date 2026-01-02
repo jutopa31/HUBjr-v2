@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Download, Upload, Edit, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw, Save, MoreVertical, BarChart3 } from 'lucide-react';
+import { Plus, Download, Upload, Edit, X, ChevronUp, ChevronDown, ChevronRight, Check, Clipboard, Stethoscope, Trash2, Users, ExternalLink, Maximize2, GripVertical, LayoutGrid, Table as TableIcon, Camera, RefreshCw, Save, MoreVertical, BarChart3, Search } from 'lucide-react';
 // Corrección de estilos para consistencia visual en modo edición
 import ReactDOM from 'react-dom';
 import { supabase } from './utils/supabase';
@@ -611,6 +611,7 @@ const WardRounds: React.FC = () => {
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [outpatients, setOutpatients] = useState<OutpatientPatient[]>([]);
+  const [outpatientSearch, setOutpatientSearch] = useState('');
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [showOutpatientModal, setShowOutpatientModal] = useState(false);
   const [showCSVImportModal, setShowCSVImportModal] = useState(false);
@@ -1653,12 +1654,34 @@ const WardRounds: React.FC = () => {
   }, [orderedPatients, sortField, sortDirection]);
 
   const sortedOutpatients = React.useMemo(() => {
-    return [...outpatients].sort((a, b) => {
+    const searchTerm = outpatientSearch.toLowerCase().trim();
+
+    // Filter by search term
+    const filtered = searchTerm
+      ? outpatients.filter((p) => {
+          const nombre = (p.nombre || '').toLowerCase();
+          const dni = (p.dni || '').toLowerCase();
+          const motivo = (p.motivo_consulta || '').toLowerCase();
+          const diagnostico = (p.diagnostico || '').toLowerCase();
+          const pendientes = (p.pendientes || '').toLowerCase();
+
+          return (
+            nombre.includes(searchTerm) ||
+            dni.includes(searchTerm) ||
+            motivo.includes(searchTerm) ||
+            diagnostico.includes(searchTerm) ||
+            pendientes.includes(searchTerm)
+          );
+        })
+      : outpatients;
+
+    // Sort by next appointment date
+    return filtered.sort((a, b) => {
       const nextDateA = a.fecha_proxima_cita || a.fecha || '';
       const nextDateB = b.fecha_proxima_cita || b.fecha || '';
       return nextDateA.localeCompare(nextDateB, 'es');
     });
-  }, [outpatients]);
+  }, [outpatients, outpatientSearch]);
 
   // Calculate severity counts for header badges
   const severityCounts = React.useMemo(() => {
@@ -3745,6 +3768,34 @@ const WardRounds: React.FC = () => {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+            </div>
+
+            {/* Search bar for filtering outpatients */}
+            <div className="p-4 border-b" style={{ borderColor: 'var(--border-secondary)' }}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  className="input pl-10 w-full"
+                  placeholder="Buscar por nombre, DNI, motivo, diagnóstico o pendientes..."
+                  value={outpatientSearch}
+                  onChange={(e) => setOutpatientSearch(e.target.value)}
+                />
+                {outpatientSearch && (
+                  <button
+                    onClick={() => setOutpatientSearch('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    title="Limpiar búsqueda"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {outpatientSearch && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Mostrando {sortedOutpatients.length} de {outpatients.length} pacientes
+                </p>
+              )}
             </div>
 
             <div className="p-4 border-b" style={{ borderColor: 'var(--border-secondary)' }}>
