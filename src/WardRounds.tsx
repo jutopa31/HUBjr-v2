@@ -906,6 +906,45 @@ const WardRounds: React.FC = () => {
   };
 
   /**
+   * Guarda el campo cama del paciente (header field)
+   */
+  const saveCama = async (newValue: string): Promise<boolean> => {
+    if (!selectedPatient?.id) return false;
+
+    const trimmedValue = newValue.trim();
+
+    try {
+      setSavingHeaderFields(prev => new Set(prev).add('cama'));
+
+      await saveSingleField('cama', trimmedValue);
+
+      if (selectedPatient) {
+        setSelectedPatient(prev => prev ? { ...prev, cama: trimmedValue } : prev);
+      }
+
+      setSavedHeaderFields(prev => new Set(prev).add('cama'));
+      setTimeout(() => {
+        setSavedHeaderFields(prev => {
+          const next = new Set(prev);
+          next.delete('cama');
+          return next;
+        });
+      }, 1000);
+
+      return true;
+    } catch (error) {
+      showToast('Error al guardar la cama', 'error');
+      return false;
+    } finally {
+      setSavingHeaderFields(prev => {
+        const next = new Set(prev);
+        next.delete('cama');
+        return next;
+      });
+    }
+  };
+
+  /**
    * Activa modo edición para una sección específica
    */
   const startEditingSection = (section: keyof Patient) => {
@@ -4382,7 +4421,19 @@ const WardRounds: React.FC = () => {
                       isSaved={savedHeaderFields.has('dni')}
                       maxLength={20}
                     />
-                    <span className="whitespace-nowrap">| Cama: {selectedPatient.cama || 'Sin cama'} |</span>
+                    <span className="whitespace-nowrap">| Cama:</span>
+                    <InlineEditableField
+                      value={selectedPatient.cama || ''}
+                      fieldName="Cama"
+                      displayClass="text-sm text-gray-600 dark:text-gray-400"
+                      inputClass="text-sm"
+                      placeholder="Sin cama"
+                      onSave={saveCama}
+                      isSaving={savingHeaderFields.has('cama')}
+                      isSaved={savedHeaderFields.has('cama')}
+                      maxLength={10}
+                    />
+                    <span className="whitespace-nowrap">|</span>
                     <InlineEditableField
                       value={selectedPatient.edad || ''}
                       fieldName="edad"
