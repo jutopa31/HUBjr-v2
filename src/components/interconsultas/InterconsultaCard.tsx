@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, MessageCircleOff, Trash2, ArrowRight } from 'lucide-react';
+import { MessageCircle, MessageCircleOff, Trash2, ArrowRight, Send } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { InterconsultaRow } from '../../services/interconsultasService';
 
@@ -10,6 +10,7 @@ interface InterconsultaCardProps {
   onToggleSelection?: (id: string) => void;
   onDelete?: (id: string) => void;
   onGoToEvolucionador?: (interconsulta: InterconsultaRow) => void;
+  onSendToWardRounds?: (interconsulta: InterconsultaRow) => void;
 }
 
 const InterconsultaCard: React.FC<InterconsultaCardProps> = ({
@@ -18,7 +19,8 @@ const InterconsultaCard: React.FC<InterconsultaCardProps> = ({
   isSelected = false,
   onToggleSelection,
   onDelete,
-  onGoToEvolucionador
+  onGoToEvolucionador,
+  onSendToWardRounds
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -145,6 +147,23 @@ const InterconsultaCard: React.FC<InterconsultaCardProps> = ({
                 >
                   <ArrowRight className="h-3 w-3" />
                   Evolucion
+                </button>
+              </>
+            )}
+
+            {onSendToWardRounds && hasResponse && (
+              <>
+                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSendToWardRounds(interconsulta);
+                  }}
+                  className="text-xs text-green-600 dark:text-green-400 hover:underline inline-flex items-center gap-1 font-semibold"
+                  title="Enviar a Pase de Sala"
+                >
+                  <Send className="h-3 w-3" />
+                  Pase
                 </button>
               </>
             )}

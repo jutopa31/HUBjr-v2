@@ -106,6 +106,7 @@ const WardConfirmationModal: React.FC<Props> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Datos básicos (obligatorios)
     if (!editedData.nombre.trim()) {
       newErrors.nombre = 'El nombre es obligatorio';
     }
@@ -114,6 +115,23 @@ const WardConfirmationModal: React.FC<Props> = ({
     }
     if (!editedData.cama.trim()) {
       newErrors.cama = 'La cama es obligatoria';
+    }
+
+    // Campos clínicos obligatorios (req. 6C del plan)
+    if (!editedData.antecedentes.trim()) {
+      newErrors.antecedentes = 'Los antecedentes son obligatorios';
+    }
+    if (!editedData.motivo_consulta.trim()) {
+      newErrors.motivo_consulta = 'El motivo de consulta es obligatorio';
+    }
+    if (!editedData.examen_fisico.trim()) {
+      newErrors.examen_fisico = 'El examen físico es obligatorio';
+    }
+    if (!editedData.plan.trim()) {
+      newErrors.plan = 'El plan/conducta es obligatorio';
+    }
+    if (!editedData.diagnostico.trim()) {
+      newErrors.diagnostico = 'El diagnóstico es obligatorio';
     }
 
     setErrors(newErrors);
@@ -141,10 +159,16 @@ const WardConfirmationModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
+  // Validación completa (datos básicos + campos clínicos)
   const isValid =
     editedData.nombre.trim() !== '' &&
     editedData.dni.trim() !== '' &&
-    editedData.cama.trim() !== '';
+    editedData.cama.trim() !== '' &&
+    editedData.antecedentes.trim() !== '' &&
+    editedData.motivo_consulta.trim() !== '' &&
+    editedData.examen_fisico.trim() !== '' &&
+    editedData.plan.trim() !== '' &&
+    editedData.diagnostico.trim() !== '';
 
   const hasImages =
     (editedData.image_thumbnail_url && editedData.image_thumbnail_url.length > 0) ||
@@ -278,13 +302,33 @@ const WardConfirmationModal: React.FC<Props> = ({
               isExpanded={expandedSections.includes('antecedentes')}
               onToggle={() => toggleSection('antecedentes')}
               contentLength={editedData.antecedentes.length}
+              badge={!editedData.antecedentes.trim() ? <span className="text-xs text-red-500">*</span> : undefined}
             >
-              <textarea
-                value={editedData.antecedentes}
-                onChange={(e) => updateField('antecedentes', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                placeholder="Antecedentes del paciente..."
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <span className="text-red-500">*</span> Campo obligatorio
+                </label>
+                <textarea
+                  value={editedData.antecedentes}
+                  onChange={(e) => updateField('antecedentes', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    errors.antecedentes
+                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
+                      : !editedData.antecedentes.trim()
+                      ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                  } text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]`}
+                  placeholder="Antecedentes del paciente..."
+                />
+                {errors.antecedentes && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.antecedentes}</p>
+                )}
+                {!editedData.antecedentes.trim() && !errors.antecedentes && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    ⚠️ Campo vacío - debe completarlo antes de confirmar
+                  </p>
+                )}
+              </div>
             </AccordionSection>
 
             {/* Sección 3: Motivo de Consulta */}
@@ -293,13 +337,33 @@ const WardConfirmationModal: React.FC<Props> = ({
               isExpanded={expandedSections.includes('motivo')}
               onToggle={() => toggleSection('motivo')}
               contentLength={editedData.motivo_consulta.length}
+              badge={!editedData.motivo_consulta.trim() ? <span className="text-xs text-red-500">*</span> : undefined}
             >
-              <textarea
-                value={editedData.motivo_consulta}
-                onChange={(e) => updateField('motivo_consulta', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-                placeholder="Motivo de consulta / enfermedad actual..."
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <span className="text-red-500">*</span> Campo obligatorio
+                </label>
+                <textarea
+                  value={editedData.motivo_consulta}
+                  onChange={(e) => updateField('motivo_consulta', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    errors.motivo_consulta
+                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
+                      : !editedData.motivo_consulta.trim()
+                      ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                  } text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]`}
+                  placeholder="Motivo de consulta / enfermedad actual..."
+                />
+                {errors.motivo_consulta && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.motivo_consulta}</p>
+                )}
+                {!editedData.motivo_consulta.trim() && !errors.motivo_consulta && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    ⚠️ Campo vacío - debe completarlo antes de confirmar
+                  </p>
+                )}
+              </div>
             </AccordionSection>
 
             {/* Sección 4: Examen Físico */}
@@ -308,13 +372,33 @@ const WardConfirmationModal: React.FC<Props> = ({
               isExpanded={expandedSections.includes('examen')}
               onToggle={() => toggleSection('examen')}
               contentLength={editedData.examen_fisico.length}
+              badge={!editedData.examen_fisico.trim() ? <span className="text-xs text-red-500">*</span> : undefined}
             >
-              <textarea
-                value={editedData.examen_fisico}
-                onChange={(e) => updateField('examen_fisico', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                placeholder="Examen físico..."
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <span className="text-red-500">*</span> Campo obligatorio
+                </label>
+                <textarea
+                  value={editedData.examen_fisico}
+                  onChange={(e) => updateField('examen_fisico', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    errors.examen_fisico
+                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
+                      : !editedData.examen_fisico.trim()
+                      ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                  } text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]`}
+                  placeholder="Examen físico..."
+                />
+                {errors.examen_fisico && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.examen_fisico}</p>
+                )}
+                {!editedData.examen_fisico.trim() && !errors.examen_fisico && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    ⚠️ Campo vacío - debe completarlo antes de confirmar
+                  </p>
+                )}
+              </div>
             </AccordionSection>
 
             {/* Sección 5: Estudios Complementarios */}
@@ -338,13 +422,33 @@ const WardConfirmationModal: React.FC<Props> = ({
               isExpanded={expandedSections.includes('diagnostico')}
               onToggle={() => toggleSection('diagnostico')}
               contentLength={editedData.diagnostico.length}
+              badge={!editedData.diagnostico.trim() ? <span className="text-xs text-red-500">*</span> : undefined}
             >
-              <textarea
-                value={editedData.diagnostico}
-                onChange={(e) => updateField('diagnostico', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
-                placeholder="Diagnóstico..."
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <span className="text-red-500">*</span> Campo obligatorio
+                </label>
+                <textarea
+                  value={editedData.diagnostico}
+                  onChange={(e) => updateField('diagnostico', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    errors.diagnostico
+                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
+                      : !editedData.diagnostico.trim()
+                      ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                  } text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]`}
+                  placeholder="Diagnóstico..."
+                />
+                {errors.diagnostico && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.diagnostico}</p>
+                )}
+                {!editedData.diagnostico.trim() && !errors.diagnostico && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    ⚠️ Campo vacío - debe completarlo antes de confirmar
+                  </p>
+                )}
+              </div>
             </AccordionSection>
 
             {/* Sección 7: Plan / Conducta */}
@@ -353,13 +457,33 @@ const WardConfirmationModal: React.FC<Props> = ({
               isExpanded={expandedSections.includes('plan')}
               onToggle={() => toggleSection('plan')}
               contentLength={editedData.plan.length}
+              badge={!editedData.plan.trim() ? <span className="text-xs text-red-500">*</span> : undefined}
             >
-              <textarea
-                value={editedData.plan}
-                onChange={(e) => updateField('plan', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                placeholder="Plan terapéutico / conducta..."
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <span className="text-red-500">*</span> Campo obligatorio
+                </label>
+                <textarea
+                  value={editedData.plan}
+                  onChange={(e) => updateField('plan', e.target.value)}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    errors.plan
+                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
+                      : !editedData.plan.trim()
+                      ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                  } text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]`}
+                  placeholder="Plan terapéutico / conducta..."
+                />
+                {errors.plan && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.plan}</p>
+                )}
+                {!editedData.plan.trim() && !errors.plan && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    ⚠️ Campo vacío - debe completarlo antes de confirmar
+                  </p>
+                )}
+              </div>
             </AccordionSection>
 
             {/* Sección 8: Pendientes */}
@@ -424,7 +548,7 @@ const WardConfirmationModal: React.FC<Props> = ({
           </div>
           {!isValid && (
             <p className="text-xs text-red-600 dark:text-red-400 mt-2 text-center">
-              * Completa los campos obligatorios (Nombre, DNI, Cama)
+              * Completa todos los campos obligatorios (Nombre, DNI, Cama, Antecedentes, Motivo, Examen, Plan, Diagnóstico)
             </p>
           )}
         </div>

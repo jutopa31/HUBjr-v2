@@ -6,6 +6,9 @@ import { LoadingWithRecovery } from './components/LoadingWithRecovery';
 import InterconsultaCard from './components/interconsultas/InterconsultaCard';
 import InterconsultaDetailModal from './components/interconsultas/InterconsultaDetailModal';
 import InterconsultaFiltersComponent from './components/interconsultas/InterconsultaFilters';
+import WardConfirmationModal from './components/interconsultas/WardConfirmationModal';
+import { mapToWardRoundPatient, createWardPatientDirectly } from './services/workflowIntegrationService';
+import { supabase } from './utils/supabase';
 
 type Row = InterconsultaRow;
 
@@ -45,6 +48,12 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Estados para Ward Confirmation Modal
+  const [wardConfirmModalOpen, setWardConfirmModalOpen] = useState(false);
+  const [wardInterconsulta, setWardInterconsulta] = useState<InterconsultaRow | null>(null);
+  const [wardAssessment, setWardAssessment] = useState<any | null>(null);
+  const [wardInitialData, setWardInitialData] = useState<any>(null);
 
   const [form, setForm] = useState(buildDefaultForm());
   const isValid = useMemo(() => (
@@ -265,6 +274,55 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
       setSuccessMessage(`${deletedCount} interconsulta(s) eliminada(s)`);
     } else {
       setError(error || 'Error al eliminar las interconsultas');
+    }
+  };
+
+  // Abrir modal de confirmación Ward Rounds
+  const handleSendToWardRounds = async (interconsulta: InterconsultaRow) => {
+    setError(null);
+
+    // Buscar assessment asociado a esta interconsulta
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('diagnostic_assessments')
+      .select('*')
+      .eq('source_interconsulta_id', interconsulta.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (assessmentError || !assessment) {
+      setError('No se encontró una evolución asociada a esta interconsulta. Primero debe evolucionar el paciente.');
+      return;
+    }
+
+    // Mapear datos usando el servicio
+    const mappedData = mapToWardRoundPatient(interconsulta, assessment);
+
+    setWardInterconsulta(interconsulta);
+    setWardAssessment(assessment);
+    setWardInitialData(mappedData);
+    setWardConfirmModalOpen(true);
+  };
+
+  // Confirmar y enviar a Ward Rounds
+  const handleConfirmWardRounds = async (editedData: any) => {
+    if (!wardAssessment) {
+      setError('No se pudo obtener la evaluación asociada');
+      return;
+    }
+
+    const result = await createWardPatientDirectly(editedData, wardAssessment.id);
+
+    if (result.success) {
+      setSuccessMessage('✓ Paciente enviado a Pase de Sala exitosamente');
+      setWardConfirmModalOpen(false);
+
+      // Limpiar estados
+      setWardInterconsulta(null);
+      setWardAssessment(null);
+      setWardInitialData(null);
+    } else {
+      setError(`Error al enviar a Pase de Sala: ${result.error}`);
     }
   };
 
@@ -522,6 +580,7 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
                 onToggleSelection={handleToggleSelection}
                 onDelete={handleDeleteSingle}
                 onGoToEvolucionador={onGoToEvolucionador}
+                onSendToWardRounds={handleSendToWardRounds}
               />
             ))}
           </div>
@@ -587,6 +646,22 @@ const Interconsultas: React.FC<InterconsultasProps> = ({ onGoToEvolucionador }) 
               </div>
             </div>
           </div>
+        )}
+
+        {/* Modal de confirmación Ward Rounds */}
+        {wardConfirmModalOpen && wardInitialData && wardInterconsulta && (
+          <WardConfirmationModal
+            isOpen={wardConfirmModalOpen}
+            onClose={() => {
+              setWardConfirmModalOpen(false);
+              setWardInterconsulta(null);
+              setWardAssessment(null);
+              setWardInitialData(null);
+            }}
+            onConfirm={handleConfirmWardRounds}
+            initialData={wardInitialData}
+            interconsultaName={`${wardInterconsulta.nombre} (DNI: ${wardInterconsulta.dni})`}
+          />
         )}
       </div>
     </LoadingWithRecovery>

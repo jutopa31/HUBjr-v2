@@ -10,48 +10,122 @@ import type { PatientAssessment } from '../types';
 /**
  * Genera template estructurado para Evolucionador desde interconsulta
  * @param interconsulta - Datos de la interconsulta
- * @returns Template con secciones estructuradas pre-cargadas
+ * @returns Template con secciones estructuradas pre-cargadas (formato nuevo)
  */
 export function generateEvolucionadorTemplate(interconsulta: InterconsultaRow): string {
-  return `DATOS:
-PACIENTE: ${interconsulta.nombre}
-DNI: ${interconsulta.dni}
-EDAD: ${interconsulta.edad || 'No especificada'}
-CAMA: ${interconsulta.cama}
+  return `PACIENTE: ${interconsulta.nombre}
+DNI: ${interconsulta.dni}, EDAD: ${interconsulta.edad || 'No especificada'}, CAMA: ${interconsulta.cama}
 
-ANTECEDENTES:
-- Antecedentes personales:
-- Medicación actual:
-- Alergias:
+Antecedentes:
 
-ENFERMEDAD ACTUAL:
+Enfermedad actual:
 ${interconsulta.relato_consulta || ''}
 
-${interconsulta.estudios_ocr ? `ESTUDIOS COMPLEMENTARIOS:
-${interconsulta.estudios_ocr}
+Examen neurológico
 
-` : 'ESTUDIOS COMPLEMENTARIOS:\n\n'}EXAMEN FÍSICO:
-- Signos vitales:
-- Nivel de conciencia:
-- Examen neurológico:
+Estudios complementarios
+${interconsulta.estudios_ocr ? interconsulta.estudios_ocr + '\n' : ''}
+Interpretación
 
-CONDUCTA:
-- Diagnóstico presuntivo:
-- Plan terapéutico:
-- Interconsultas:
+Sugerencias
 
-PENDIENTES:
-- Estudios pendientes:
-- Seguimiento:
+Personal interviniente
 `;
 }
 
 /**
- * Extrae secciones estructuradas del texto del Evolucionador
- * @param clinicalNotes - Notas clínicas completas del evolucionador
- * @returns Objeto con las secciones extraídas
+ * Extrae secciones estructuradas del texto del Evolucionador (FORMATO NUEVO)
+ * @param clinicalNotes - Notas clínicas completas del evolucionador en formato nuevo
+ * @returns Objeto con las secciones extraídas del formato nuevo
  */
-export function extractStructuredSections(clinicalNotes: string): {
+function extractStructuredSections_Nuevo(clinicalNotes: string): {
+  paciente: string;
+  datosBasicos: string;
+  antecedentes: string;
+  enfermedadActual: string;
+  examenNeurologico: string;
+  estudiosComplementarios: string;
+  interpretacion: string;
+  sugerencias: string;
+  personalInterviniente: string;
+} {
+  const sections = {
+    paciente: '',
+    datosBasicos: '',
+    antecedentes: '',
+    enfermedadActual: '',
+    examenNeurologico: '',
+    estudiosComplementarios: '',
+    interpretacion: '',
+    sugerencias: '',
+    personalInterviniente: ''
+  };
+
+  console.log('[WorkflowIntegration] extractStructuredSections_Nuevo -> Input length:', clinicalNotes.length);
+
+  // Regex patterns para formato nuevo
+  const patterns = {
+    // PACIENTE: Nombre (primera línea)
+    paciente: /^PACIENTE:\s*(.+?)(?=\n)/m,
+
+    // DNI, EDAD, CAMA (segunda línea)
+    datosBasicos: /DNI:\s*(.+?)(?=\n\n|$)/s,
+
+    // Antecedentes
+    antecedentes: /Antecedentes:\s*\n+([^\n]*(?:\n(?!Enfermedad actual:)[^\n]*)*)/i,
+
+    // Enfermedad actual
+    enfermedadActual: /Enfermedad actual:\s*\n+([^\n]*(?:\n(?!Examen neurológico)[^\n]*)*)/i,
+
+    // Examen neurológico
+    examenNeurologico: /Examen neurológico\s*\n+([^\n]*(?:\n(?!Estudios complementarios)[^\n]*)*)/i,
+
+    // Estudios complementarios
+    estudiosComplementarios: /Estudios complementarios\s*\n+([^\n]*(?:\n(?!Interpretación)[^\n]*)*)/i,
+
+    // Interpretación
+    interpretacion: /Interpretación\s*\n+([^\n]*(?:\n(?!Sugerencias)[^\n]*)*)/i,
+
+    // Sugerencias
+    sugerencias: /Sugerencias\s*\n+([^\n]*(?:\n(?!Personal interviniente)[^\n]*)*)/i,
+
+    // Personal interviniente
+    personalInterviniente: /Personal interviniente\s*\n+([^\n]*(?:\n[^\n]*)*)/i
+  };
+
+  for (const [key, pattern] of Object.entries(patterns)) {
+    const match = clinicalNotes.match(pattern);
+    if (match && match[1]) {
+      const extracted = match[1].trim();
+      sections[key as keyof typeof sections] = extracted;
+      console.log(`[WorkflowIntegration] ✅ Extracted ${key}:`, extracted.substring(0, 100) + (extracted.length > 100 ? '...' : ''));
+    } else {
+      console.log(`[WorkflowIntegration] ⚠️ No match for ${key}`);
+    }
+  }
+
+  // Log resumen
+  console.log('[WorkflowIntegration] Extraction summary (NUEVO):', {
+    paciente: sections.paciente.length,
+    datosBasicos: sections.datosBasicos.length,
+    antecedentes: sections.antecedentes.length,
+    enfermedadActual: sections.enfermedadActual.length,
+    examenNeurologico: sections.examenNeurologico.length,
+    estudiosComplementarios: sections.estudiosComplementarios.length,
+    interpretacion: sections.interpretacion.length,
+    sugerencias: sections.sugerencias.length,
+    personalInterviniente: sections.personalInterviniente.length
+  });
+
+  return sections;
+}
+
+/**
+ * Extrae secciones estructuradas del texto del Evolucionador (FORMATO SOAP ANTIGUO)
+ * @param clinicalNotes - Notas clínicas completas del evolucionador en formato SOAP
+ * @returns Objeto con las secciones extraídas del formato SOAP
+ */
+function extractStructuredSections_SOAP(clinicalNotes: string): {
   datos: string;
   antecedentes: string;
   enfermedadActual: string;
@@ -70,7 +144,7 @@ export function extractStructuredSections(clinicalNotes: string): {
     pendientes: ''
   };
 
-  console.log('[WorkflowIntegration] extractStructuredSections -> Input length:', clinicalNotes.length);
+  console.log('[WorkflowIntegration] extractStructuredSections_SOAP -> Input length:', clinicalNotes.length);
 
   // Regex patterns para nuevos headers estandarizados
   const patterns = {
@@ -122,6 +196,30 @@ export function extractStructuredSections(clinicalNotes: string): {
 }
 
 /**
+ * Extrae secciones estructuradas del texto del Evolucionador
+ * Detecta automáticamente el formato (SOAP antiguo o nuevo) y usa el parser apropiado
+ * @param clinicalNotes - Notas clínicas completas del evolucionador
+ * @returns Objeto con las secciones extraídas (formato varía según detección)
+ */
+export function extractStructuredSections(clinicalNotes: string): any {
+  // Detectar formato automáticamente
+  const hasNewFormat = /^PACIENTE:/.test(clinicalNotes.trim());
+  const hasSOAPFormat = /^DATOS:/i.test(clinicalNotes.trim());
+
+  if (hasNewFormat) {
+    console.log('[WorkflowIntegration] ✅ Formato NUEVO detectado');
+    return extractStructuredSections_Nuevo(clinicalNotes);
+  } else if (hasSOAPFormat) {
+    console.log('[WorkflowIntegration] ℹ️ Formato SOAP detectado (compatibilidad)');
+    return extractStructuredSections_SOAP(clinicalNotes);
+  } else {
+    // Default: asumir SOAP para compatibilidad con evoluciones viejas
+    console.warn('[WorkflowIntegration] ⚠️ Formato desconocido, asumiendo SOAP');
+    return extractStructuredSections_SOAP(clinicalNotes);
+  }
+}
+
+/**
  * Extrae campos individuales de la sección DATOS
  * @param datosSection - Texto de la sección DATOS
  * @returns Objeto con campos nombre, dni, edad, cama
@@ -153,6 +251,35 @@ export function extractDataFields(datosSection: string): {
 
   // Buscar CAMA:
   const camaMatch = datosSection.match(/CAMA:\s*(.+)/i);
+  if (camaMatch) fields.cama = camaMatch[1].trim();
+
+  return fields;
+}
+
+/**
+ * Extrae campos individuales de la línea de datos básicos (formato nuevo)
+ * @param datosLine - Línea con formato "DNI: X, EDAD: Y, CAMA: Z"
+ * @returns Objeto con campos dni, edad, cama
+ */
+export function extractDataFieldsFromLine(datosLine: string): {
+  dni: string;
+  edad: string;
+  cama: string;
+} {
+  const fields = {
+    dni: '',
+    edad: '',
+    cama: ''
+  };
+
+  // Formato: "DNI: 12345678, EDAD: 45, CAMA: 4-3"
+  const dniMatch = datosLine.match(/DNI:\s*([^,\n]+)/i);
+  if (dniMatch) fields.dni = dniMatch[1].trim();
+
+  const edadMatch = datosLine.match(/EDAD:\s*([^,\n]+)/i);
+  if (edadMatch) fields.edad = edadMatch[1].trim();
+
+  const camaMatch = datosLine.match(/CAMA:\s*(.+?)(?=\n|$)/i);
   if (camaMatch) fields.cama = camaMatch[1].trim();
 
   return fields;
@@ -197,50 +324,69 @@ export function mapToWardRoundPatient(
 
   const sections = extractStructuredSections(assessment.clinical_notes);
 
-  // Extraer datos individuales de la sección DATOS
+  // Caso 1: Formato NUEVO
+  if ('paciente' in sections && sections.paciente) {
+    console.log('[WorkflowIntegration] ✅ Usando formato NUEVO para mapeo');
+
+    const dataFields = extractDataFieldsFromLine(sections.datosBasicos);
+
+    return {
+      nombre: sections.paciente || interconsulta.nombre,
+      dni: dataFields.dni || interconsulta.dni,
+      edad: dataFields.edad || interconsulta.edad || '',
+      cama: dataFields.cama || interconsulta.cama,
+      fecha: new Date().toISOString().split('T')[0],
+
+      antecedentes: sections.antecedentes || '',
+      motivo_consulta: sections.enfermedadActual || '',
+      examen_fisico: sections.examenNeurologico || '',
+      estudios: sections.estudiosComplementarios || '',
+
+      // Mapear nuevas secciones a campos existentes
+      diagnostico: sections.interpretacion || '',
+      plan: sections.sugerencias || '',
+
+      // Personal interviniente NO se mapea (se ignora según requerimientos)
+      pendientes: '',
+
+      image_thumbnail_url: interconsulta.image_thumbnail_url || [],
+      image_full_url: interconsulta.image_full_url || [],
+      exa_url: interconsulta.exa_url || [],
+
+      hospital_context: interconsulta.hospital_context || 'Posadas',
+      severidad: 'II',
+      display_order: 9999
+    };
+  }
+
+  // Caso 2: Formato SOAP (compatibilidad hacia atrás)
+  console.log('[WorkflowIntegration] ℹ️ Usando formato SOAP para mapeo (compatibilidad)');
+
   const dataFields = extractDataFields(sections.datos);
 
-  const mappedData = {
-    // Datos del paciente - priorizar extracción de DATOS:, fallback a interconsulta
+  return {
     nombre: dataFields.nombre || interconsulta.nombre,
     dni: dataFields.dni || interconsulta.dni,
     edad: dataFields.edad || interconsulta.edad || assessment.patient_age || '',
     cama: dataFields.cama || interconsulta.cama,
     fecha: new Date().toISOString().split('T')[0],
 
-    // Mapeo de secciones del Evolucionador
-    antecedentes: sections.antecedentes,                    // ANTECEDENTES: → antecedentes
-    motivo_consulta: sections.enfermedadActual,             // ENFERMEDAD ACTUAL: → motivo_consulta
-    examen_fisico: sections.examenFisico,                   // EXAMEN FÍSICO: → examen_fisico
-    estudios: sections.estudiosComplementarios,             // ESTUDIOS COMPLEMENTARIOS: → estudios
-    plan: sections.conducta,                                // CONDUCTA: → plan
-    pendientes: sections.pendientes,                        // PENDIENTES: → pendientes
-
-    // Diagnóstico - extraer de CONDUCTA (primera línea si contiene "Diagnóstico")
+    antecedentes: sections.antecedentes,
+    motivo_consulta: sections.enfermedadActual,
+    examen_fisico: sections.examenFisico,
+    estudios: sections.estudiosComplementarios,
+    plan: sections.conducta,
     diagnostico: extractDiagnosticoFromConducta(sections.conducta),
+    pendientes: sections.pendientes,
 
-    // Imágenes (trasladar desde interconsulta)
     image_thumbnail_url: interconsulta.image_thumbnail_url || [],
     image_full_url: interconsulta.image_full_url || [],
     exa_url: interconsulta.exa_url || [],
 
-    // Metadata
     hospital_context: interconsulta.hospital_context || 'Posadas',
-    severidad: 'II', // Default moderado
+    severidad: 'II',
     display_order: 9999
   };
-
-  console.log('[WorkflowIntegration] mapToWardRoundPatient -> Mapped data:', {
-    nombre: mappedData.nombre,
-    antecedentes_length: mappedData.antecedentes.length,
-    motivo_consulta_length: mappedData.motivo_consulta.length,
-    examen_fisico_length: mappedData.examen_fisico.length,
-    estudios_length: mappedData.estudios.length,
-    plan_length: mappedData.plan.length,
-    pendientes_length: mappedData.pendientes.length
-  });
-
-  return mappedData;
 }
 
 /**
