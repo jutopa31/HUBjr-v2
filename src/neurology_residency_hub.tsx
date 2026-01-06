@@ -36,6 +36,7 @@ import Sidebar from './components/layout/Sidebar';
 // Import types from separate file
 import ScaleModal from './ScaleModal';
 import UpdrsModal from './components/UpdrsModal';
+import MuscleStrengthModal from './components/MuscleStrengthModal';
 import RankingView from './components/ranking/RankingView';
 import { CORE_MODULE_IDS, MODULES, ModuleId } from './config/modules';
 
@@ -351,8 +352,8 @@ const NeurologyResidencyHub = () => {
       description: 'Evaluación de fuerza muscular según escala Medical Research Council (0/5 a 5/5)',
       items: [
         {
-          id: 'neck_flexor_left',
-          label: 'Flexor del cuello - Izquierdo',
+          id: 'neck_flexor',
+          label: 'Flexor del cuello',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -364,8 +365,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'neck_flexor_right',
-          label: 'Flexor del cuello - Derecho',
+          id: 'deltoid',
+          label: 'Deltoides (Abducción de hombro)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -377,8 +378,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'deltoid_left',
-          label: 'Deltoides - Izquierdo',
+          id: 'biceps',
+          label: 'Bíceps (Flexión de codo)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -390,8 +391,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'deltoid_right',
-          label: 'Deltoides - Derecho',
+          id: 'wrist_extension',
+          label: 'Extensión de muñeca',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -403,8 +404,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'biceps_left',
-          label: 'Bíceps - Izquierdo',
+          id: 'wrist_flexion',
+          label: 'Flexión de muñeca',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -416,8 +417,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'biceps_right',
-          label: 'Bíceps - Derecho',
+          id: 'psoas',
+          label: 'Psoas (Flexión de cadera)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -429,8 +430,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_extension_left',
-          label: 'Extensión de muñeca - Izquierdo',
+          id: 'gluteus',
+          label: 'Glúteos (Extensión de cadera)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -442,8 +443,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_extension_right',
-          label: 'Extensión de muñeca - Derecho',
+          id: 'quadriceps',
+          label: 'Cuádriceps (Extensión de rodilla)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -455,8 +456,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_flexion_left',
-          label: 'Flexión de muñeca - Izquierdo',
+          id: 'plantar_flexor',
+          label: 'Flexor plantar (Flexión de tobillo)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -468,138 +469,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_flexion_right',
-          label: 'Flexión de muñeca - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'psoas_left',
-          label: 'Psoas (Flexión de cadera) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'psoas_right',
-          label: 'Psoas (Flexión de cadera) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'gluteus_left',
-          label: 'Glúteos (Extensión de cadera) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'gluteus_right',
-          label: 'Glúteos (Extensión de cadera) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'quadriceps_left',
-          label: 'Cuádriceps (Extensión de rodilla) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'quadriceps_right',
-          label: 'Cuádriceps (Extensión de rodilla) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_flexor_left',
-          label: 'Flexor plantar (Flexión de tobillo) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_flexor_right',
-          label: 'Flexor plantar (Flexión de tobillo) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_extensor_left',
-          label: 'Extensor plantar (Dorsiflexión) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_extensor_right',
-          label: 'Extensor plantar (Dorsiflexión) - Derecho',
+          id: 'plantar_extensor',
+          label: 'Extensor plantar (Dorsiflexión)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3429,8 +3300,8 @@ const NeurologyResidencyHub = () => {
       description: 'Evaluación de fuerza muscular según escala Medical Research Council (0/5 a 5/5)',
       items: [
         {
-          id: 'neck_flexor_left',
-          label: 'Flexor del cuello - Izquierdo',
+          id: 'neck_flexor',
+          label: 'Flexor del cuello',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3442,8 +3313,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'neck_flexor_right',
-          label: 'Flexor del cuello - Derecho',
+          id: 'deltoid',
+          label: 'Deltoides (Abducción de hombro)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3455,8 +3326,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'deltoid_left',
-          label: 'Deltoides - Izquierdo',
+          id: 'biceps',
+          label: 'Bíceps (Flexión de codo)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3468,8 +3339,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'deltoid_right',
-          label: 'Deltoides - Derecho',
+          id: 'wrist_extension',
+          label: 'Extensión de muñeca',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3481,8 +3352,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'biceps_left',
-          label: 'Bíceps - Izquierdo',
+          id: 'wrist_flexion',
+          label: 'Flexión de muñeca',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3494,8 +3365,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'biceps_right',
-          label: 'Bíceps - Derecho',
+          id: 'psoas',
+          label: 'Psoas (Flexión de cadera)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3507,8 +3378,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_extension_left',
-          label: 'Extensión de muñeca - Izquierdo',
+          id: 'gluteus',
+          label: 'Glúteos (Extensión de cadera)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3520,8 +3391,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_extension_right',
-          label: 'Extensión de muñeca - Derecho',
+          id: 'quadriceps',
+          label: 'Cuádriceps (Extensión de rodilla)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3533,8 +3404,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_flexion_left',
-          label: 'Flexión de muñeca - Izquierdo',
+          id: 'plantar_flexor',
+          label: 'Flexor plantar (Flexión de tobillo)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3546,138 +3417,8 @@ const NeurologyResidencyHub = () => {
           score: 5
         },
         {
-          id: 'wrist_flexion_right',
-          label: 'Flexión de muñeca - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'psoas_left',
-          label: 'Psoas (Flexión de cadera) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'psoas_right',
-          label: 'Psoas (Flexión de cadera) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'gluteus_left',
-          label: 'Glúteos (Extensión de cadera) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'gluteus_right',
-          label: 'Glúteos (Extensión de cadera) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'quadriceps_left',
-          label: 'Cuádriceps (Extensión de rodilla) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'quadriceps_right',
-          label: 'Cuádriceps (Extensión de rodilla) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_flexor_left',
-          label: 'Flexor plantar (Flexión de tobillo) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_flexor_right',
-          label: 'Flexor plantar (Flexión de tobillo) - Derecho',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_extensor_left',
-          label: 'Extensor plantar (Dorsiflexión) - Izquierdo',
-          options: [
-            '0 - Sin contracción muscular',
-            '1 - Contracción visible sin movimiento',
-            '2 - Movimiento sin vencer gravedad',
-            '3 - Movimiento venciendo gravedad',
-            '4 - Movimiento contra resistencia moderada',
-            '5 - Fuerza normal'
-          ],
-          score: 5
-        },
-        {
-          id: 'plantar_extensor_right',
-          label: 'Extensor plantar (Dorsiflexión) - Derecho',
+          id: 'plantar_extensor',
+          label: 'Extensor plantar (Dorsiflexión)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -6154,12 +5895,18 @@ const NeurologyResidencyHub = () => {
   const modalRoot = typeof window !== 'undefined' ? document.getElementById('modal-root') : null;
   
   
-  // Create modal content (usar modal especializado para UPDRS)
+  // Create modal content (usar modal especializado para UPDRS y Fuerza Muscular)
   // Using key at Fragment level to ensure complete remount when scale changes
   const modalContent = selectedScale ? (
     <React.Fragment key={selectedScale.id}>
       {selectedScale.id.startsWith('updrs') ? (
         <UpdrsModal
+          scale={selectedScale}
+          onClose={handleModalClose}
+          onSubmit={handleModalSubmit}
+        />
+      ) : selectedScale.id === 'muscle_strength' ? (
+        <MuscleStrengthModal
           scale={selectedScale}
           onClose={handleModalClose}
           onSubmit={handleModalSubmit}
