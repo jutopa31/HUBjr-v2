@@ -324,23 +324,291 @@ const NeurologyResidencyHub = () => {
       category: 'Evaluación Neurológica',
       description: 'Escala para evaluar el nivel de conciencia',
       items: [
-        { 
-          id: 'eye_opening', 
-          label: 'Apertura ocular', 
-          options: ['4 - Espontánea', '3 - Al habla', '2 - Al dolor', '1 - Ninguna'], 
-          score: 4 
+        {
+          id: 'eye_opening',
+          label: 'Apertura ocular',
+          options: ['4 - Espontánea', '3 - Al habla', '2 - Al dolor', '1 - Ninguna'],
+          score: 4
         },
-        { 
-          id: 'verbal_response', 
-          label: 'Respuesta verbal', 
-          options: ['5 - Orientada', '4 - Confusa', '3 - Palabras inapropiadas', '2 - Sonidos incomprensibles', '1 - Ninguna'], 
-          score: 5 
+        {
+          id: 'verbal_response',
+          label: 'Respuesta verbal',
+          options: ['5 - Orientada', '4 - Confusa', '3 - Palabras inapropiadas', '2 - Sonidos incomprensibles', '1 - Ninguna'],
+          score: 5
         },
-        { 
-          id: 'motor_response', 
-          label: 'Respuesta motora', 
-          options: ['6 - Obedece órdenes', '5 - Localiza dolor', '4 - Retirada normal', '3 - Flexión anormal', '2 - Extensión', '1 - Ninguna'], 
-          score: 6 
+        {
+          id: 'motor_response',
+          label: 'Respuesta motora',
+          options: ['6 - Obedece órdenes', '5 - Localiza dolor', '4 - Retirada normal', '3 - Flexión anormal', '2 - Extensión', '1 - Ninguna'],
+          score: 6
+        }
+      ]
+    },
+    {
+      id: 'muscle_strength',
+      name: 'Fuerza Muscular por Grupos (MRC)',
+      category: 'Evaluación Neurológica',
+      description: 'Evaluación de fuerza muscular según escala Medical Research Council (0/5 a 5/5)',
+      items: [
+        {
+          id: 'neck_flexor_left',
+          label: 'Flexor del cuello - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'neck_flexor_right',
+          label: 'Flexor del cuello - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'deltoid_left',
+          label: 'Deltoides - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'deltoid_right',
+          label: 'Deltoides - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'biceps_left',
+          label: 'Bíceps - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'biceps_right',
+          label: 'Bíceps - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_extension_left',
+          label: 'Extensión de muñeca - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_extension_right',
+          label: 'Extensión de muñeca - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_flexion_left',
+          label: 'Flexión de muñeca - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_flexion_right',
+          label: 'Flexión de muñeca - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'psoas_left',
+          label: 'Psoas (Flexión de cadera) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'psoas_right',
+          label: 'Psoas (Flexión de cadera) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'gluteus_left',
+          label: 'Glúteos (Extensión de cadera) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'gluteus_right',
+          label: 'Glúteos (Extensión de cadera) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'quadriceps_left',
+          label: 'Cuádriceps (Extensión de rodilla) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'quadriceps_right',
+          label: 'Cuádriceps (Extensión de rodilla) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_flexor_left',
+          label: 'Flexor plantar (Flexión de tobillo) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_flexor_right',
+          label: 'Flexor plantar (Flexión de tobillo) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_extensor_left',
+          label: 'Extensor plantar (Dorsiflexión) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_extensor_right',
+          label: 'Extensor plantar (Dorsiflexión) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
         }
       ]
     },
@@ -3134,23 +3402,291 @@ const NeurologyResidencyHub = () => {
       category: 'Evaluación Neurológica',
       description: 'Escala para evaluar el nivel de conciencia',
       items: [
-        { 
-          id: 'eye_opening', 
-          label: 'Apertura ocular', 
-          options: ['4 - Espontánea', '3 - Al habla', '2 - Al dolor', '1 - Ninguna'], 
-          score: 4 
+        {
+          id: 'eye_opening',
+          label: 'Apertura ocular',
+          options: ['4 - Espontánea', '3 - Al habla', '2 - Al dolor', '1 - Ninguna'],
+          score: 4
         },
-        { 
-          id: 'verbal_response', 
-          label: 'Respuesta verbal', 
-          options: ['5 - Orientada', '4 - Confusa', '3 - Palabras inapropiadas', '2 - Sonidos incomprensibles', '1 - Ninguna'], 
-          score: 5 
+        {
+          id: 'verbal_response',
+          label: 'Respuesta verbal',
+          options: ['5 - Orientada', '4 - Confusa', '3 - Palabras inapropiadas', '2 - Sonidos incomprensibles', '1 - Ninguna'],
+          score: 5
         },
-        { 
-          id: 'motor_response', 
-          label: 'Respuesta motora', 
-          options: ['6 - Obedece órdenes', '5 - Localiza dolor', '4 - Retirada normal', '3 - Flexión anormal', '2 - Extensión', '1 - Ninguna'], 
-          score: 6 
+        {
+          id: 'motor_response',
+          label: 'Respuesta motora',
+          options: ['6 - Obedece órdenes', '5 - Localiza dolor', '4 - Retirada normal', '3 - Flexión anormal', '2 - Extensión', '1 - Ninguna'],
+          score: 6
+        }
+      ]
+    },
+    {
+      id: 'muscle_strength',
+      name: 'Fuerza Muscular por Grupos (MRC)',
+      category: 'Evaluación Neurológica',
+      description: 'Evaluación de fuerza muscular según escala Medical Research Council (0/5 a 5/5)',
+      items: [
+        {
+          id: 'neck_flexor_left',
+          label: 'Flexor del cuello - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'neck_flexor_right',
+          label: 'Flexor del cuello - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'deltoid_left',
+          label: 'Deltoides - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'deltoid_right',
+          label: 'Deltoides - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'biceps_left',
+          label: 'Bíceps - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'biceps_right',
+          label: 'Bíceps - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_extension_left',
+          label: 'Extensión de muñeca - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_extension_right',
+          label: 'Extensión de muñeca - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_flexion_left',
+          label: 'Flexión de muñeca - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'wrist_flexion_right',
+          label: 'Flexión de muñeca - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'psoas_left',
+          label: 'Psoas (Flexión de cadera) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'psoas_right',
+          label: 'Psoas (Flexión de cadera) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'gluteus_left',
+          label: 'Glúteos (Extensión de cadera) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'gluteus_right',
+          label: 'Glúteos (Extensión de cadera) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'quadriceps_left',
+          label: 'Cuádriceps (Extensión de rodilla) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'quadriceps_right',
+          label: 'Cuádriceps (Extensión de rodilla) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_flexor_left',
+          label: 'Flexor plantar (Flexión de tobillo) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_flexor_right',
+          label: 'Flexor plantar (Flexión de tobillo) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_extensor_left',
+          label: 'Extensor plantar (Dorsiflexión) - Izquierdo',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
+        },
+        {
+          id: 'plantar_extensor_right',
+          label: 'Extensor plantar (Dorsiflexión) - Derecho',
+          options: [
+            '0 - Sin contracción muscular',
+            '1 - Contracción visible sin movimiento',
+            '2 - Movimiento sin vencer gravedad',
+            '3 - Movimiento venciendo gravedad',
+            '4 - Movimiento contra resistencia moderada',
+            '5 - Fuerza normal'
+          ],
+          score: 5
         }
       ]
     },
