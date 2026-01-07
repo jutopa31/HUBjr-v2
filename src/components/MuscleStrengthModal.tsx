@@ -10,9 +10,13 @@ function stripLeadingNumber(label: string): string {
   return m ? m[1] : label;
 }
 
-// Todos los ítems de fuerza muscular tienen lateralidad (izquierda/derecha)
+// Ítems con evaluación de flexión/extensión (cuello)
+const FLEXION_EXTENSION_ITEMS = new Set<string>([
+  'neck'
+]);
+
+// Ítems con lateralidad (izquierda/derecha) - todos excepto cuello
 const LATERAL_ITEMS = new Set<string>([
-  'neck_flexor',
   'deltoid',
   'biceps',
   'wrist_extension',
@@ -26,7 +30,7 @@ const LATERAL_ITEMS = new Set<string>([
 
 // Instrucciones para evaluación de fuerza muscular MRC
 const MRC_INSTRUCTIONS: Record<string, string> = {
-  neck_flexor: 'Evaluación del flexor del cuello: solicite al paciente flexionar la cabeza contra resistencia. Observe la capacidad de vencer la gravedad y resistir presión manual.',
+  neck: 'Evaluación del cuello: evalúe la flexión (llevar mentón al pecho) y extensión (llevar cabeza hacia atrás) contra resistencia. Observe la capacidad de vencer la gravedad y resistir presión manual.',
   deltoid: 'Evaluación del deltoides (abducción de hombro): solicite al paciente elevar el brazo lateralmente a 90°. Evalúe contra gravedad y resistencia.',
   biceps: 'Evaluación del bíceps (flexión de codo): solicite flexionar el codo contra resistencia. Observe fuerza y capacidad de mantener la posición.',
   wrist_extension: 'Evaluación de extensión de muñeca: solicite extender la muñeca contra resistencia. Evalúe fuerza del extensor carpi radialis/ulnaris.',
@@ -72,11 +76,15 @@ const MuscleStrengthModal: React.FC<MuscleStrengthModalProps> = ({ scale, onClos
     setShowItemHelp(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   }, []);
 
-  // Construir mapa combinado para cálculo (sumar izquierda+derecha)
+  // Construir mapa combinado para cálculo (sumar laterales o flexión/extensión)
   const combinedScores = useMemo(() => {
     const out: Record<string, number | string> = {};
     scale.items.forEach((it) => {
-      if (LATERAL_ITEMS.has(it.id)) {
+      if (FLEXION_EXTENSION_ITEMS.has(it.id)) {
+        const flex = typeof scores[`${it.id}_flex`] === 'number' ? (scores[`${it.id}_flex`] as number) : 0;
+        const ext = typeof scores[`${it.id}_ext`] === 'number' ? (scores[`${it.id}_ext`] as number) : 0;
+        out[it.id] = flex + ext;
+      } else if (LATERAL_ITEMS.has(it.id)) {
         const L = typeof scores[`${it.id}_L`] === 'number' ? (scores[`${it.id}_L`] as number) : 0;
         const R = typeof scores[`${it.id}_R`] === 'number' ? (scores[`${it.id}_R`] as number) : 0;
         out[it.id] = L + R;
@@ -102,10 +110,20 @@ const MuscleStrengthModal: React.FC<MuscleStrengthModalProps> = ({ scale, onClos
   const handleSubmit = useCallback(() => {
     let result: ScaleResult = calculateScaleScore(scale, combinedScores);
 
-    // Detalle por lateralidad
+    // Detalle por flexión/extensión y lateralidad
     const idToLabel = Object.fromEntries(scale.items.map(it => [it.id, stripLeadingNumber(it.label)]));
     const lines: string[] = [];
 
+    // Primero ítems de flexión/extensión (cuello)
+    FLEXION_EXTENSION_ITEMS.forEach((id) => {
+      const flex = scores[`${id}_flex`] ?? 0;
+      const ext = scores[`${id}_ext`] ?? 0;
+      if (flex || ext) {
+        lines.push(`• ${idToLabel[id] || id}: Flexión ${flex}/5, Extensión ${ext}/5 (total ${(Number(flex)||0)+(Number(ext)||0)}/10)`);
+      }
+    });
+
+    // Luego ítems con lateralidad
     LATERAL_ITEMS.forEach((id) => {
       const L = scores[`${id}_L`] ?? 0;
       const R = scores[`${id}_R`] ?? 0;
@@ -114,11 +132,11 @@ const MuscleStrengthModal: React.FC<MuscleStrengthModalProps> = ({ scale, onClos
       }
     });
 
-    const lateralDetail = lines.length ? `\nDetalle por miembro:\n${lines.join('\n')}` : '';
+    const detail = lines.length ? `\nDetalle por grupo muscular:\n${lines.join('\n')}` : '';
 
     result = {
       ...result,
-      details: `${result.details}${lateralDetail}\n\nEscala MRC (Medical Research Council) - Rango: 0-5 por grupo muscular, 0-10 bilateral`
+      details: `${result.details}${detail}\n\nEscala MRC (Medical Research Council) - Rango: 0-5 por movimiento/lado, 0-10 por grupo muscular`
     };
 
     onSubmit(result);
@@ -126,6 +144,109 @@ const MuscleStrengthModal: React.FC<MuscleStrengthModalProps> = ({ scale, onClos
 
   // Limpiar refs antes de mapear
   inputsRef.current = [];
+
+  const renderFlexionExtensionInputs = (item: ScaleItem, _indexBase: number) => {
+    const keyFlex = `${item.id}_flex`;
+    const keyExt = `${item.id}_ext`;
+
+    return (
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Flexión */}
+        <div>
+          <div className="text-xs text-[var(--text-secondary)] mb-1">Flexión</div>
+          <div className="flex items-center gap-3">
+            <input
+              inputMode="numeric"
+              pattern="[0-5]"
+              value={scores[keyFlex] ?? ''}
+              onChange={(e) => handleInput(keyFlex, e.target.value)}
+              onKeyDown={(e) => {
+                const k = e.key;
+                if (['0','1','2','3','4','5'].includes(k)) {
+                  e.preventDefault();
+                  handleQuickSet(keyFlex, parseInt(k, 10));
+                  const active = e.currentTarget as HTMLInputElement;
+                  const idx = inputsRef.current.indexOf(active);
+                  const next = inputsRef.current[idx + 1];
+                  if (next) next.focus(); else handleSubmit();
+                }
+                if (k === 'Enter') {
+                  e.preventDefault();
+                  const active = e.currentTarget as HTMLInputElement;
+                  const idx = inputsRef.current.indexOf(active);
+                  const next = inputsRef.current[idx + 1];
+                  if (next) next.focus(); else handleSubmit();
+                }
+              }}
+              placeholder="0–5"
+              className="w-16 h-10 border border-[var(--border-primary)] rounded px-2 text-center text-[var(--text-primary)] bg-[var(--bg-primary)]"
+              ref={(el) => { if (el) inputsRef.current.push(el); }}
+            />
+            <div className="flex gap-2">
+              {[0, 1, 2, 3, 4, 5].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => handleQuickSet(keyFlex, v)}
+                  className={`h-10 w-10 rounded border ${scores[keyFlex] === v ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
+                  tabIndex={-1}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Extensión */}
+        <div>
+          <div className="text-xs text-[var(--text-secondary)] mb-1 text-right sm:text-left">Extensión</div>
+          <div className="flex items-center gap-3 justify-start sm:justify-start">
+            <input
+              inputMode="numeric"
+              pattern="[0-5]"
+              value={scores[keyExt] ?? ''}
+              onChange={(e) => handleInput(keyExt, e.target.value)}
+              onKeyDown={(e) => {
+                const k = e.key;
+                if (['0','1','2','3','4','5'].includes(k)) {
+                  e.preventDefault();
+                  handleQuickSet(keyExt, parseInt(k, 10));
+                  const active = e.currentTarget as HTMLInputElement;
+                  const idx = inputsRef.current.indexOf(active);
+                  const next = inputsRef.current[idx + 1];
+                  if (next) next.focus(); else handleSubmit();
+                }
+                if (k === 'Enter') {
+                  e.preventDefault();
+                  const active = e.currentTarget as HTMLInputElement;
+                  const idx = inputsRef.current.indexOf(active);
+                  const next = inputsRef.current[idx + 1];
+                  if (next) next.focus(); else handleSubmit();
+                }
+              }}
+              placeholder="0–5"
+              className="w-16 h-10 border border-[var(--border-primary)] rounded px-2 text-center text-[var(--text-primary)] bg-[var(--bg-primary)]"
+              ref={(el) => { if (el) inputsRef.current.push(el); }}
+            />
+            <div className="flex gap-2">
+              {[0, 1, 2, 3, 4, 5].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => handleQuickSet(keyExt, v)}
+                  className={`h-10 w-10 rounded border ${scores[keyExt] === v ? 'btn-accent' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
+                  tabIndex={-1}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderLateralInputs = (item: ScaleItem, _indexBase: number) => {
     const keyL = `${item.id}_L`;
@@ -264,7 +385,9 @@ const MuscleStrengthModal: React.FC<MuscleStrengthModalProps> = ({ scale, onClos
           </div>
         )}
 
-        {renderLateralInputs(item, index)}
+        {FLEXION_EXTENSION_ITEMS.has(item.id)
+          ? renderFlexionExtensionInputs(item, index)
+          : renderLateralInputs(item, index)}
       </div>
     );
   };

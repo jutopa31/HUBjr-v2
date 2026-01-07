@@ -352,8 +352,8 @@ const NeurologyResidencyHub = () => {
       description: 'Evaluación de fuerza muscular según escala Medical Research Council (0/5 a 5/5)',
       items: [
         {
-          id: 'neck_flexor',
-          label: 'Flexor del cuello',
+          id: 'neck',
+          label: 'Cuello (Flexión/Extensión)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
@@ -3300,8 +3300,8 @@ const NeurologyResidencyHub = () => {
       description: 'Evaluación de fuerza muscular según escala Medical Research Council (0/5 a 5/5)',
       items: [
         {
-          id: 'neck_flexor',
-          label: 'Flexor del cuello',
+          id: 'neck',
+          label: 'Cuello (Flexión/Extensión)',
           options: [
             '0 - Sin contracción muscular',
             '1 - Contracción visible sin movimiento',
