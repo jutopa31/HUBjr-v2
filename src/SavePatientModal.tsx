@@ -8,7 +8,7 @@ import { InterconsultaRow } from './services/interconsultasService';
 interface SavePatientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (patientData: SavePatientData) => Promise<void>;
+  onSave: (patientData: SavePatientData, addToWardRounds?: boolean) => Promise<void>;
   extractedData: ExtractedPatientData;
   fullNotes: string;
   currentHospitalContext?: HospitalContext;
@@ -30,6 +30,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   const [hospitalContext, setHospitalContext] = useState<HospitalContext>(currentHospitalContext);
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [addToWardRounds, setAddToWardRounds] = useState(false);
 
   // Actualizar el contexto hospitalario cuando cambia el prop
   useEffect(() => {
@@ -88,7 +89,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
 
       console.log('[SavePatientModal] handleSave -> payload completo:', saveData);
       console.log('[SavePatientModal] Guardando en contexto:', saveData.hospital_context);
-      await onSave(saveData);
+      await onSave(saveData, addToWardRounds);
       const contextLabel = hospitalContext === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas';
       setSaveResult({ success: true, message: 'Paciente guardado exitosamente en ' + contextLabel });
 
@@ -263,6 +264,27 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
                 {fullNotes.slice(0, 500)}
                 {fullNotes.length > 500 && '...'}
               </div>
+            </div>
+
+            {/* Checkbox: Agregar a Pase de Sala */}
+            <div className="mt-4 p-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-secondary)]">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={addToWardRounds}
+                  onChange={(e) => setAddToWardRounds(e.target.checked)}
+                  disabled={isSaving}
+                  className="w-5 h-5 text-blue-600 bg-[var(--bg-primary)] border-[var(--border-primary)] rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                    Agregar a Pase de Sala
+                  </span>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                    El paciente se agregará automáticamente al Pase de Sala después de guardarlo
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
 

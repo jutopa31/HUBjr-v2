@@ -91,6 +91,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   // Estados para modal de confirmación de Pase de Sala
   const [showWardConfirmationModal, setShowWardConfirmationModal] = useState(false);
   const [wardPatientData, setWardPatientData] = useState<any | null>(null);
+  const [wardDataWithoutInterconsulta, setWardDataWithoutInterconsulta] = useState<any | null>(null);
 
   // useEffect para pre-cargar template desde interconsulta
   useEffect(() => {
@@ -490,7 +491,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   };
 
   // Función para confirmar el guardado
-  const handleConfirmSave = async (patientData: SavePatientData) => {
+  const handleConfirmSave = async (
+    patientData: SavePatientData,
+    addToWardRounds: boolean = false
+  ) => {
     try {
       console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
       console.log('[DiagnosticAlgorithm] Guardando con contexto:', patientData.hospital_context);
@@ -519,11 +523,44 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         });
         setShowSaveModal(false);
 
-        // Si vino de interconsulta, mostrar modal de confirmación para Pase de Sala
-        if (activeInterconsulta) {
+        // Caso 1: Usuario marcó checkbox Y hay interconsulta (flujo original)
+        if (addToWardRounds && activeInterconsulta) {
           setShowSaveToWardModal(true);
-        } else {
-          // Limpiar mensaje después de 5 segundos si no hay interconsulta
+        }
+        // Caso 2: Usuario marcó checkbox SIN interconsulta (NUEVO FLUJO)
+        else if (addToWardRounds && !activeInterconsulta) {
+          // Crear datos básicos desde assessment
+          const basicWardData = {
+            nombre: patientData.patient_name,
+            dni: patientData.patient_dni,
+            edad: patientData.patient_age || '',
+            cama: '', // Usuario debe completar en modal
+
+            // Secciones clínicas vacías (usuario las completa)
+            antecedentes: '',
+            motivo_consulta: '',
+            examen_fisico: '',
+            estudios: '',
+            diagnostico: '',
+            plan: '',
+            pendientes: '',
+
+            // Metadata
+            hospital_context: patientData.hospital_context || 'Posadas',
+            severidad: 'II',
+            display_order: 9999,
+
+            // Sin imágenes (no hay interconsulta de origen)
+            image_thumbnail_url: [],
+            image_full_url: [],
+            exa_url: []
+          };
+
+          setWardDataWithoutInterconsulta(basicWardData);
+          setShowWardConfirmationModal(true); // Abrir modal directamente
+        }
+        // Caso 3: NO marcó checkbox (flujo normal)
+        else {
           setTimeout(() => setSaveStatus(null), 5000);
         }
       } else {
@@ -585,8 +622,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       const result = await createWardPatientDirectly(editedData, lastSavedAssessmentId!);
 
       if (result.success) {
-        // Actualizar interconsulta con respuesta
-        await updateInterconsultaResponse(activeInterconsulta!.id, notes, selectedFinalStatus as any);
+        // Actualizar interconsulta SOLO si existe
+        if (activeInterconsulta) {
+          await updateInterconsultaResponse(activeInterconsulta.id, notes, selectedFinalStatus as any);
+          onClearInterconsulta?.();
+        }
 
         setSaveStatus({
           success: true,
@@ -594,7 +634,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         });
 
         setShowWardConfirmationModal(false);
-        onClearInterconsulta?.();
+        setWardDataWithoutInterconsulta(null); // Limpiar datos sin interconsulta
 
         setTimeout(() => setSaveStatus(null), 5000);
       } else {
@@ -1325,13 +1365,19 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
       )}
 
       {/* Modal de confirmación manual para Pase de Sala */}
-      {showWardConfirmationModal && wardPatientData && activeInterconsulta && (
+      {showWardConfirmationModal && (wardPatientData || wardDataWithoutInterconsulta) && (
         <WardConfirmationModal
           isOpen={showWardConfirmationModal}
-          onClose={() => setShowWardConfirmationModal(false)}
+          onClose={() => {
+            setShowWardConfirmationModal(false);
+            setWardDataWithoutInterconsulta(null); // Limpiar datos
+          }}
           onConfirm={handleWardConfirmationSubmit}
-          initialData={wardPatientData}
-          interconsultaName={activeInterconsulta.nombre}
+          initialData={wardPatientData || wardDataWithoutInterconsulta}
+          interconsultaName={
+            activeInterconsulta?.nombre ||
+            (wardDataWithoutInterconsulta?.nombre ?? 'Paciente desde Evolucionador')
+          }
         />
       )}
 
