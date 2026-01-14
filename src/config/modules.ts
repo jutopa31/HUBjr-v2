@@ -5,6 +5,7 @@ export type ModuleId =
   | 'inicio'
   | 'schedule'
   | 'pendientes'
+  | 'pending-patients'
   | 'ward-rounds'
   | 'interconsultas'
   | 'pacientes-post-alta'
@@ -46,6 +47,13 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     label: 'Pendientes',
     audience: 'core',
     corePath: '/pendientes'
+  },
+  'pending-patients': {
+    id: 'pending-patients',
+    label: 'Pacientes Pendientes',
+    audience: 'core',
+    corePath: '/pacientes-pendientes',
+    notes: 'Pacientes sin diagnóstico claro - estilo Google Keep'
   },
   schedule: {
     id: 'schedule',
@@ -122,6 +130,7 @@ export const CORE_MODULE_IDS: ModuleId[] = [
   'inicio',
   'ward-rounds',
   'pendientes',
+  'pending-patients',
   'interconsultas',
   'diagnostic',
   'pacientes-post-alta',
