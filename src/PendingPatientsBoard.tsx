@@ -113,6 +113,8 @@ export default function PendingPatientsBoard({ hospitalContext }: PendingPatient
     const newPatient: PendingPatient = {
       id: Date.now().toString(),
       ...data,
+      color: data.color || 'default',
+      priority: data.priority || 'medium',
       created_by: user?.email || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
