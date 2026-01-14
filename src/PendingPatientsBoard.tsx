@@ -23,7 +23,6 @@ export default function PendingPatientsBoard({ hospitalContext }: PendingPatient
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | 'all'>('all');
   const [showResolved, setShowResolved] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // FASE 1: Mock data for testing (will be replaced with Supabase in Phase 2)
   useEffect(() => {
