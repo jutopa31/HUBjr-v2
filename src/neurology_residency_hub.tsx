@@ -13,13 +13,15 @@ import {
   User,
   Syringe,
   MessageSquare,
-  Award
+  Award,
+  FileQuestion
 } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
 import AdminAuthModal from './AdminAuthModal';
 import EventManagerSupabase from './EventManagerSupabase';
 import PendientesIntegrados from './PendientesIntegrados';
+import PendingPatientsBoard from './PendingPatientsBoard';
 import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
@@ -122,6 +124,7 @@ const NeurologyResidencyHub = () => {
     inicio: Home,
     schedule: Calendar,
     pendientes: CheckSquare,
+    'pending-patients': FileQuestion,
     'ward-rounds': Users,
     'user-dashboard': User,
     'lumbar-punctures': Syringe,
@@ -5816,6 +5819,12 @@ const NeurologyResidencyHub = () => {
         return (
           <ProtectedRoute>
             <PendientesIntegrados />
+          </ProtectedRoute>
+        );
+      case 'pending-patients':
+        return (
+          <ProtectedRoute>
+            <PendingPatientsBoard hospitalContext={currentHospitalContext} />
           </ProtectedRoute>
         );
       /* case 'clinical':
