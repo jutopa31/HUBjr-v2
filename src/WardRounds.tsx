@@ -106,29 +106,23 @@ const WardRounds: React.FC = () => {
 
   const loadResidents = async () => {
     try {
-      // Get users from auth.users table via a Supabase function or edge function
-      // For now, we'll use a simpler approach by getting users who have created patients
-      const { data, error } = await supabase
-        .from('ward_round_patients')
-        .select('assigned_resident_id')
-        .not('assigned_resident_id', 'is', null);
+      // Query user_profiles table (secure public table) instead of auth.users
+      const { data: profiles, error } = await supabase
+        .from('user_profiles')
+        .select('id, email, full_name, role')
+        .eq('role', 'resident');
 
       if (error) throw error;
 
-      // Get unique resident IDs and fetch their profile data
-      const residentIds = [...new Set(data?.map(p => p.assigned_resident_id).filter(Boolean))];
-
-      if (residentIds.length > 0) {
-        // For a real implementation, you would fetch user profiles from auth.users
-        // For now, we'll create a mock approach or use the user metadata
-        const mockResidents: ResidentProfile[] = residentIds.map(id => ({
-          id: id as string,
-          email: `resident${id}@hospital.com`,
-          full_name: `Residente ${id?.slice(-4)}`,
-          role: 'resident'
+      if (profiles && profiles.length > 0) {
+        const residents: ResidentProfile[] = profiles.map(profile => ({
+          id: profile.id,
+          email: profile.email || '',
+          full_name: profile.full_name || 'Unknown User',
+          role: profile.role || 'resident'
         }));
 
-        setResidents(mockResidents);
+        setResidents(residents);
       }
 
       // Add current user to residents list if they have a profile
