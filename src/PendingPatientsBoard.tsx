@@ -9,6 +9,7 @@ import {
   CardColor,
   PRIORITY_LABELS
 } from './types/pendingPatients';
+import * as pendingPatientsService from './services/pendingPatientsService';
 
 interface PendingPatientsBoardProps {
   hospitalContext: 'Posadas' | 'Julian';
@@ -23,54 +24,27 @@ export default function PendingPatientsBoard({ hospitalContext }: PendingPatient
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | 'all'>('all');
   const [showResolved, setShowResolved] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // FASE 1: Mock data for testing (will be replaced with Supabase in Phase 2)
+  // FASE 2: Load patients from Supabase
   useEffect(() => {
-    loadMockData();
-  }, [hospitalContext]);
+    loadPatients();
+  }, [hospitalContext, showResolved]);
 
-  const loadMockData = () => {
-    // Mock data for testing - will be replaced with Supabase fetch
-    const mockPatients: PendingPatient[] = [
-      {
-        id: '1',
-        patient_name: 'Juan Pérez',
-        age: 45,
-        dni: '12345678',
-        admission_date: '2024-01-10',
-        chief_complaint: 'Cefalea y alteración del sensorio',
-        clinical_notes: 'Paciente con cefalea intensa de 3 días de evolución. TAC sin lesiones agudas. LCR: pleocitosis linfocitaria. PCR HSV pendiente.',
-        differential_diagnoses: ['Encefalitis viral', 'Meningitis bacteriana parcialmente tratada', 'Encefalitis autoinmune'],
-        pending_tests: ['PCR HSV en LCR', 'Panel autoinmune', 'RMN cerebral con contraste'],
-        color: 'red',
-        priority: 'urgent',
-        tags: ['infeccioso', 'urgente'],
-        hospital_context: hospitalContext,
-        created_by: user?.email || '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        resolved: false
-      },
-      {
-        id: '2',
-        patient_name: 'María González',
-        age: 67,
-        dni: '23456789',
-        chief_complaint: 'Deterioro cognitivo progresivo',
-        clinical_notes: 'Paciente con deterioro cognitivo de 6 meses de evolución. MMSE 20/30. RMN: atrofia temporal bilateral.',
-        differential_diagnoses: ['Enfermedad de Alzheimer', 'Demencia frontotemporal', 'Depresión pseudodemencia'],
-        pending_tests: ['PET amiloide', 'Evaluación neuropsicológica completa', 'Punción lumbar con biomarcadores'],
-        color: 'orange',
-        priority: 'high',
-        tags: ['demencia', 'ambulatorio'],
-        hospital_context: hospitalContext,
-        created_by: user?.email || '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        resolved: false
-      }
-    ];
-    setPatients(mockPatients);
+  const loadPatients = async () => {
+    setLoading(true);
+    const { data, error } = await pendingPatientsService.fetchPendingPatients(
+      hospitalContext,
+      showResolved
+    );
+
+    if (!error && data) {
+      setPatients(data);
+    } else {
+      console.error('Error loading patients:', error);
+      setPatients([]);
+    }
+    setLoading(false);
   };
 
   // Filter patients based on search and filters
@@ -108,19 +82,18 @@ export default function PendingPatientsBoard({ hospitalContext }: PendingPatient
     setFilteredPatients(filtered);
   }, [patients, searchTerm, priorityFilter, showResolved, hospitalContext]);
 
-  const handleCreatePatient = (data: CreatePendingPatientInput) => {
-    // FASE 1: Local state management (will be replaced with Supabase in Phase 2)
-    const newPatient: PendingPatient = {
-      id: Date.now().toString(),
-      ...data,
-      color: data.color || 'default',
-      priority: data.priority || 'medium',
-      created_by: user?.email || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      resolved: false
-    };
-    setPatients([...patients, newPatient]);
+  const handleCreatePatient = async (data: CreatePendingPatientInput) => {
+    const { data: newPatient, error } = await pendingPatientsService.createPendingPatient(
+      data,
+      user?.email || ''
+    );
+
+    if (!error && newPatient) {
+      setPatients([...patients, newPatient]);
+    } else {
+      console.error('Error creating patient:', error);
+      alert('Error al crear paciente. Por favor intenta de nuevo.');
+    }
   };
 
   const handleEditPatient = (patient: PendingPatient) => {
@@ -128,43 +101,66 @@ export default function PendingPatientsBoard({ hospitalContext }: PendingPatient
     setIsModalOpen(true);
   };
 
-  const handleUpdatePatient = (data: CreatePendingPatientInput) => {
+  const handleUpdatePatient = async (data: CreatePendingPatientInput) => {
     if (!editingPatient) return;
 
-    // FASE 1: Local state management (will be replaced with Supabase in Phase 2)
-    setPatients(patients.map(p =>
-      p.id === editingPatient.id
-        ? { ...p, ...data, updated_at: new Date().toISOString() }
-        : p
-    ));
-    setEditingPatient(null);
+    const { data: updatedPatient, error } = await pendingPatientsService.updatePendingPatient(
+      editingPatient.id,
+      data
+    );
+
+    if (!error && updatedPatient) {
+      setPatients(patients.map(p =>
+        p.id === editingPatient.id ? updatedPatient : p
+      ));
+      setEditingPatient(null);
+    } else {
+      console.error('Error updating patient:', error);
+      alert('Error al actualizar paciente. Por favor intenta de nuevo.');
+    }
   };
 
-  const handleDeletePatient = (id: string) => {
-    // FASE 1: Local state management (will be replaced with Supabase in Phase 2)
-    setPatients(patients.filter(p => p.id !== id));
+  const handleDeletePatient = async (id: string) => {
+    const { success, error } = await pendingPatientsService.deletePendingPatient(id);
+
+    if (success) {
+      setPatients(patients.filter(p => p.id !== id));
+    } else {
+      console.error('Error deleting patient:', error);
+      alert('Error al eliminar paciente. Por favor intenta de nuevo.');
+    }
   };
 
-  const handleResolvePatient = (id: string, finalDiagnosis: string) => {
-    // FASE 1: Local state management (will be replaced with Supabase in Phase 2)
-    setPatients(patients.map(p =>
-      p.id === id
-        ? {
-            ...p,
-            resolved: true,
-            resolved_at: new Date().toISOString(),
-            final_diagnosis: finalDiagnosis,
-            updated_at: new Date().toISOString()
-          }
-        : p
-    ));
+  const handleResolvePatient = async (id: string, finalDiagnosis: string) => {
+    const { data: resolvedPatient, error } = await pendingPatientsService.resolvePendingPatient(
+      id,
+      finalDiagnosis
+    );
+
+    if (!error && resolvedPatient) {
+      setPatients(patients.map(p =>
+        p.id === id ? resolvedPatient : p
+      ));
+    } else {
+      console.error('Error resolving patient:', error);
+      alert('Error al marcar paciente como resuelto. Por favor intenta de nuevo.');
+    }
   };
 
-  const handleColorChange = (id: string, color: CardColor) => {
-    // FASE 1: Local state management (will be replaced with Supabase in Phase 2)
-    setPatients(patients.map(p =>
-      p.id === id ? { ...p, color, updated_at: new Date().toISOString() } : p
-    ));
+  const handleColorChange = async (id: string, color: CardColor) => {
+    const { data: updatedPatient, error } = await pendingPatientsService.changePatientColor(
+      id,
+      color
+    );
+
+    if (!error && updatedPatient) {
+      setPatients(patients.map(p =>
+        p.id === id ? updatedPatient : p
+      ));
+    } else {
+      console.error('Error changing color:', error);
+      // Silently fail for color changes - not critical
+    }
   };
 
   const openCreateModal = () => {
@@ -246,7 +242,12 @@ export default function PendingPatientsBoard({ hospitalContext }: PendingPatient
 
       {/* Content - Grid of cards */}
       <div className="flex-1 overflow-y-auto p-6">
-        {filteredPatients.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-lg font-medium">Cargando pacientes...</p>
+          </div>
+        ) : filteredPatients.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
             <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
