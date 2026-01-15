@@ -74,8 +74,14 @@ export async function createPendingPatient(
       color: patientData.color || 'default',
       priority: patientData.priority || 'medium',
       created_by: userEmail,
-      resolved: false
+      resolved: false,
+      // Ensure arrays are proper arrays, not undefined
+      differential_diagnoses: patientData.differential_diagnoses || [],
+      pending_tests: patientData.pending_tests || [],
+      tags: patientData.tags || []
     };
+
+    console.log('📤 Creating pending patient with data:', newPatient);
 
     const { data, error } = await Promise.race([
       supabase.from('pending_patients').insert(newPatient).select().single(),
@@ -84,6 +90,8 @@ export async function createPendingPatient(
 
     if (error) {
       console.error('🔴 Error creating pending patient:', error);
+      console.error('🔴 Error details:', JSON.stringify(error, null, 2));
+      console.error('🔴 Data that failed:', JSON.stringify(newPatient, null, 2));
       return { data: null, error };
     }
 
