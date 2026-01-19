@@ -201,11 +201,12 @@ export default function ReadingBoard() {
       return;
     }
 
+    const savedItem = result.data;
     setItems((prev) => {
       const without = editingItem
         ? prev.filter((candidate) => candidate.dbId !== editingItem.dbId)
         : prev;
-      return sortItems([result.data, ...without]);
+      return sortItems([savedItem, ...without]);
     });
 
     setIsFormOpen(false);
