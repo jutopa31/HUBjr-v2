@@ -6,6 +6,7 @@ export type ModuleId =
   | 'schedule'
   | 'pendientes'
   | 'pending-patients'
+  | 'lectura'
   | 'ward-rounds'
   | 'interconsultas'
   | 'pacientes-post-alta'
@@ -54,6 +55,13 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     audience: 'core',
     corePath: '/pacientes-pendientes',
     notes: 'Pacientes sin diagnóstico claro - estilo Google Keep'
+  },
+  lectura: {
+    id: 'lectura',
+    label: 'Lectura',
+    audience: 'core',
+    corePath: '/lectura',
+    notes: 'Lecturas curadas para repasar temas neurologicos.'
   },
   schedule: {
     id: 'schedule',
@@ -131,6 +139,7 @@ export const CORE_MODULE_IDS: ModuleId[] = [
   'ward-rounds',
   'pendientes',
   'pending-patients',
+  'lectura',
   'interconsultas',
   'diagnostic',
   'pacientes-post-alta',

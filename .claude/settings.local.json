@@ -94,13 +94,17 @@
       "mcp__filesystem__list_directory",
       "mcp__playwright__browser_tabs",
       "mcp__filesystem__search_files",
-      "mcp__filesystem__write_file"
+      "mcp__filesystem__write_file",
+      "Bash(cmd /c \"copy \"\"C:\\\\Users\\\\Nicolas\\\\Downloads\\\\medical-evolution-organizer.skill\"\" \"\"C:\\\\dev\\\\proyect\\\\hubjr-v2\\\\temp-skill.zip\"\"\")"
     ],
     "deny": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "shadcn",
-    "supabase"
+    "supabase",
+    "filesystem",
+    "ripgrep"
   ],
   "outputStyle": "default"
 }

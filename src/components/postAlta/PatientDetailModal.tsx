@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, ArrowRight, Trash2 } from 'lucide-react';
 import { PacientePostAltaRow, updatePacientePostAlta } from '../../services/pacientesPostAltaService';
 
 interface PatientDetailModalProps {
   patient: PacientePostAltaRow;
   onClose: () => void;
   onUpdate: (updated: PacientePostAltaRow) => void;
+  onDelete?: (patientId: string) => Promise<{ success: boolean; error?: string }>;
+  onGoToEvolucionador?: (patient: PacientePostAltaRow) => void;
 }
 
-const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClose, onUpdate }) => {
+const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClose, onUpdate, onDelete, onGoToEvolucionador }) => {
   const [editedPatient, setEditedPatient] = useState<PacientePostAltaRow>(patient);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const notasEvolucionRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -104,6 +108,39 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
       setMessage({ type: 'error', text: err?.message || 'Error inesperado al guardar' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!patient.id || !onDelete) return;
+
+    setIsDeleting(true);
+    setMessage(null);
+
+    try {
+      const result = await onDelete(patient.id);
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Paciente eliminado exitosamente' });
+        // Close modal after short delay
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Error al eliminar el paciente' });
+        setShowDeleteConfirm(false);
+      }
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err?.message || 'Error inesperado al eliminar' });
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleGoToEvolucionador = () => {
+    if (onGoToEvolucionador) {
+      onGoToEvolucionador(patient);
+      onClose();
     }
   };
 
@@ -266,7 +303,36 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
 
           {/* Section 4: Actions + Timestamps */}
           <div>
-            <div className="flex items-center justify-between mb-4">
+            {/* Delete Confirmation */}
+            {showDeleteConfirm && (
+              <div className="mb-4 p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-800 dark:text-red-200 mb-3">
+                  ¿Estás seguro de que deseas eliminar a este paciente? Esta acción no se puede deshacer.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-medium transition-colors hover:bg-gray-300 dark:hover:bg-gray-600"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {/* Save Button */}
               <button
                 type="button"
                 onClick={handleSave}
@@ -283,8 +349,33 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
                 {isSaving ? 'Guardando...' : 'Guardar Cambios'}
               </button>
 
-              {!isDirty && (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+              {/* Evolucionar Button */}
+              {onGoToEvolucionador && (
+                <button
+                  type="button"
+                  onClick={handleGoToEvolucionador}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md font-medium bg-green-600 hover:bg-green-700 text-white transition-colors"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Evolucionar
+                </button>
+              )}
+
+              {/* Delete Button */}
+              {onDelete && !showDeleteConfirm && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800/40 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </button>
+              )}
+
+              {/* Status indicator */}
+              {!isDirty && !showDeleteConfirm && (
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
                   Sin cambios pendientes
                 </span>
               )}

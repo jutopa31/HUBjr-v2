@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Phone, FileText, AlertCircle, MessageCircle } from 'lucide-react';
+import { Calendar, Phone, FileText, AlertCircle, MessageCircle, ArrowRight } from 'lucide-react';
 import { PacientePostAltaRow } from '../../services/pacientesPostAltaService';
 
 // Utility: Format phone for WhatsApp
@@ -76,9 +76,10 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
 interface PatientCardProps {
   patient: PacientePostAltaRow;
   onClick: () => void;
+  onGoToEvolucionador?: (patient: PacientePostAltaRow) => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
+const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onGoToEvolucionador }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -141,9 +142,24 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
         )}
       </div>
 
-      {/* Action link */}
-      <div className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
-        Ver detalles →
+      {/* Action links */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
+          Ver detalles →
+        </div>
+        {onGoToEvolucionador && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onGoToEvolucionador(patient);
+            }}
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 rounded hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors"
+            title="Evolucionar paciente"
+          >
+            <ArrowRight className="h-3.5 w-3.5" />
+            Evolucionar
+          </button>
+        )}
       </div>
     </div>
   );

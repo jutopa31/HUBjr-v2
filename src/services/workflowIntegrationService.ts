@@ -5,6 +5,7 @@
 
 import { supabase } from '../utils/supabase';
 import type { InterconsultaRow } from './interconsultasService';
+import type { PacientePostAltaRow } from './pacientesPostAltaService';
 import type { PatientAssessment } from '../types';
 
 /**
@@ -28,6 +29,55 @@ ${interconsulta.estudios_ocr ? interconsulta.estudios_ocr + '\n' : ''}
 Interpretación
 
 Sugerencias
+
+Personal interviniente
+`;
+}
+
+/**
+ * Genera template estructurado para Evolucionador desde paciente Post-Alta
+ * @param patient - Datos del paciente post-alta
+ * @returns Template con secciones estructuradas pre-cargadas
+ */
+export function generateEvolucionadorTemplateFromPostAlta(patient: PacientePostAltaRow): string {
+  // Formatear fecha de visita
+  const fechaVisita = patient.fecha_visita
+    ? new Date(patient.fecha_visita).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    : 'No especificada';
+
+  // Construir header con notas previas SI existen (al inicio del template)
+  const notasPrevias = patient.notas_evolucion?.trim() || '';
+  const headerPrevio = notasPrevias
+    ? `--- EVOLUCIÓN PREVIA ---\n${notasPrevias}\n\n--- NUEVA EVOLUCIÓN ---\n\n`
+    : '';
+
+  // Construir sección de pendiente si existe
+  const pendientePrevio = patient.pendiente?.trim()
+    ? `Pendiente previo: ${patient.pendiente.trim()}`
+    : '';
+
+  return `${headerPrevio}PACIENTE: ${patient.nombre}
+DNI: ${patient.dni}, EDAD: No especificada, CAMA: Ambulatorio
+
+Antecedentes:
+${patient.diagnostico || ''}
+
+Enfermedad actual:
+Paciente en seguimiento ambulatorio post-alta.
+Fecha de visita programada: ${fechaVisita}
+
+Examen neurológico
+
+Estudios complementarios
+
+Interpretación
+
+Sugerencias
+${pendientePrevio}
 
 Personal interviniente
 `;

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText, Sparkles, MessageSquare, RefreshCw, FileDown } from 'lucide-react';
+import { Copy, Plus, Stethoscope, ChevronRight, ChevronDown, ChevronUp, Database, Search, X, LayoutList, FileText, Sparkles, MessageSquare, RefreshCw, FileDown, Wand2, Loader2 } from 'lucide-react';
 import { Scale, SavePatientData } from './types';
 import AIBadgeSystem from './AIBadgeSystem';
 import { useAITextAnalysis } from './aiTextAnalyzer';
@@ -11,7 +11,8 @@ import WardConfirmationModal from './components/interconsultas/WardConfirmationM
 import AIPromptChat from './components/evolucionador/AIPromptChat';
 import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
-import { generateEvolucionadorTemplate } from './services/workflowIntegrationService';
+import { generateEvolucionadorTemplate, generateEvolucionadorTemplateFromPostAlta } from './services/workflowIntegrationService';
+import type { PacientePostAltaRow } from './services/pacientesPostAltaService';
 import { useAuth } from './hooks/useAuth';
 import { listEvolucionadorDrafts, saveEvolucionadorDraft } from './services/evolucionadorDraftsService';
 
@@ -31,6 +32,10 @@ interface DiagnosticAlgorithmContentProps {
   // Workflow integration props
   activeInterconsulta?: any | null;
   onClearInterconsulta?: () => void;
+
+  // Post-Alta workflow integration props
+  activePostAltaPatient?: PacientePostAltaRow | null;
+  onClearPostAltaPatient?: () => void;
 }
 
 const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
@@ -43,7 +48,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   clickedScale,
   currentHospitalContext = 'Posadas',
   activeInterconsulta,
-  onClearInterconsulta
+  onClearInterconsulta,
+  activePostAltaPatient,
+  onClearPostAltaPatient
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
@@ -93,6 +100,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const [wardPatientData, setWardPatientData] = useState<any | null>(null);
   const [wardDataWithoutInterconsulta, setWardDataWithoutInterconsulta] = useState<any | null>(null);
 
+  // Estado para mejora con IA
+  const [isImproving, setIsImproving] = useState(false);
+
   // useEffect para pre-cargar template desde interconsulta
   useEffect(() => {
     if (activeInterconsulta && activeInterconsulta.id) {
@@ -111,13 +121,31 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }
   }, [activeInterconsulta, setNotes]);
 
+  // useEffect para pre-cargar template desde paciente post-alta
+  useEffect(() => {
+    if (activePostAltaPatient && activePostAltaPatient.id) {
+      console.log('[DiagnosticAlgorithm] Pre-cargando template desde post-alta:', activePostAltaPatient.nombre);
+      const template = generateEvolucionadorTemplateFromPostAlta(activePostAltaPatient);
+      setNotes(template);
+
+      // Mostrar notificación al usuario
+      setSaveStatus({
+        success: true,
+        message: `Datos de paciente post-alta cargados: ${activePostAltaPatient.nombre}`
+      });
+
+      // Limpiar notificación después de 3 segundos
+      setTimeout(() => setSaveStatus(null), 3000);
+    }
+  }, [activePostAltaPatient, setNotes]);
+
   useEffect(() => {
     if (!userId) return;
     hasLoadedDraft.current = false;
     setDraftListStatus(null);
     setDraftSyncLabel(null);
     setActiveDraftId(null);
-  }, [activeInterconsulta?.id, userId]);
+  }, [activeInterconsulta?.id, activePostAltaPatient?.id, userId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -161,6 +189,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   useEffect(() => {
     if (!userId || hasLoadedDraft.current) return;
+
+    // Si viene de Post-Alta, NO restaurar drafts viejos - usar el template fresco
+    // El template ya fue cargado por el useEffect anterior (líneas 125-140)
+    if (activePostAltaPatient?.id) {
+      console.log('[DiagnosticAlgorithm] Post-Alta activo, saltando restauración de drafts');
+      hasLoadedDraft.current = true;
+      return;
+    }
+
     let isMounted = true;
     const loadDrafts = async () => {
       setDraftListStatus('Cargando borrador...');
@@ -171,6 +208,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         return;
       }
       const drafts = result.data || [];
+      // Solo buscar draft coincidente si hay una interconsulta activa
       const matchingDraft = activeInterconsulta?.id
         ? drafts.find((draft) => draft.source_interconsulta_id === activeInterconsulta.id)
         : drafts[0];
@@ -192,7 +230,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [activeInterconsulta?.id, notes, setNotes, userId]);
+  }, [activeInterconsulta?.id, activePostAltaPatient?.id, notes, setNotes, userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -472,6 +510,60 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       setTimeout(() => setSaveStatus(null), 3000);
     });
   }, [notes, setSaveStatus]);
+
+  // Función para mejorar la nota con IA
+  const handleImproveWithAI = useCallback(async () => {
+    if (!notes.trim() || notes.trim().length < 50) {
+      setSaveStatus({
+        success: false,
+        message: 'La nota es muy corta para mejorar. Agrega mas contenido primero.'
+      });
+      setTimeout(() => setSaveStatus(null), 3000);
+      return;
+    }
+
+    setIsImproving(true);
+    setSaveStatus({
+      success: true,
+      message: 'Mejorando nota con IA...'
+    });
+
+    try {
+      const response = await fetch('/api/improve-evolution', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ evolutionNote: notes }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al mejorar la nota');
+      }
+
+      const data = await response.json();
+
+      if (data.improvedNote) {
+        setNotes(data.improvedNote);
+        setSaveStatus({
+          success: true,
+          message: `Nota mejorada con IA (costo: $${data.usage?.estimated_cost?.toFixed(4) || '0.00'} USD)`
+        });
+      } else {
+        throw new Error('No se recibio la nota mejorada');
+      }
+    } catch (error: any) {
+      console.error('Error al mejorar nota:', error);
+      setSaveStatus({
+        success: false,
+        message: error?.message || 'Error al mejorar la nota con IA'
+      });
+    } finally {
+      setIsImproving(false);
+      setTimeout(() => setSaveStatus(null), 5000);
+    }
+  }, [notes, setNotes, setSaveStatus]);
 
   // Función para manejar el guardado de paciente
   const handleSavePatient = () => {
@@ -847,6 +939,19 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             <MessageSquare className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">Consultar IA</span>
           </button>
+          <button
+            onClick={handleImproveWithAI}
+            disabled={isImproving || !notes.trim()}
+            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Mejorar nota con IA - Estructura y profesionaliza la evolucion"
+          >
+            {isImproving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Wand2 className="h-3.5 w-3.5" />
+            )}
+            <span className="hidden xl:inline">{isImproving ? 'Mejorando...' : 'Mejorar'}</span>
+          </button>
           {clearNotes && (
             <button
               onClick={clearNotes}
@@ -875,6 +980,32 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                 onClick={() => {
                   if (confirm('¿Descartar conexión con interconsulta? Los datos ya cargados permanecerán en el editor.')) {
                     onClearInterconsulta?.();
+                  }
+                }}
+                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+              >
+                Desconectar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Indicador de paciente post-alta activo */}
+      {activePostAltaPatient && (
+        <div className="mb-4 space-y-3">
+          <div className="p-3 bg-green-100 dark:bg-green-900 border-l-4 border-green-600 rounded">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-green-900 dark:text-green-100">Evolucionando paciente post-alta:</p>
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  {activePostAltaPatient.nombre} - DNI: {activePostAltaPatient.dni} - Fecha visita: {activePostAltaPatient.fecha_visita}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (confirm('¿Descartar conexión con paciente post-alta? Los datos ya cargados permanecerán en el editor.')) {
+                    onClearPostAltaPatient?.();
                   }
                 }}
                 className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
@@ -956,6 +1087,19 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           >
             <MessageSquare className="h-3.5 w-3.5" />
             <span>Consultar</span>
+          </button>
+          <button
+            onClick={handleImproveWithAI}
+            disabled={isImproving || !notes.trim()}
+            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Mejorar nota con IA"
+          >
+            {isImproving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Wand2 className="h-3.5 w-3.5" />
+            )}
+            <span>{isImproving ? 'Mejorando...' : 'Mejorar'}</span>
           </button>
           <button
             onClick={() => {

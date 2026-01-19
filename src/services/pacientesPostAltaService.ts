@@ -146,6 +146,32 @@ export async function listPacientesPostAltaMonth(year: number, month: number): P
   }
 }
 
+// NEW: Delete a patient by ID
+export async function deletePacientePostAlta(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('[PacientesPostAltaService] deletePacientePostAlta -> id:', id);
+
+    const resp: any = await withTimeout(
+      supabase
+      .from('pacientes_post_alta')
+      .delete()
+      .eq('id', id)
+    );
+
+    const { error } = resp || {};
+    if (error) {
+      console.error('[PacientesPostAltaService] deletePacientePostAlta error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[PacientesPostAltaService] deletePacientePostAlta -> success');
+    return { success: true };
+  } catch (e: any) {
+    console.error('[PacientesPostAltaService] deletePacientePostAlta unexpected error:', e);
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
+}
+
 // NEW: Update all fields of a patient (for modal editing)
 export async function updatePacientePostAlta(id: string, payload: Partial<PacientePostAltaRow>): Promise<{ success: boolean; data?: PacientePostAltaRow; error?: string }> {
   try {

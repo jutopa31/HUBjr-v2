@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Download, Plus, Users, RefreshCw } from 'lucide-react';
-import { listPacientesPostAltaMonth, PacientePostAltaRow } from './services/pacientesPostAltaService';
+import { listPacientesPostAltaMonth, deletePacientePostAlta, PacientePostAltaRow } from './services/pacientesPostAltaService';
 import { useAuthContext } from './components/auth/AuthProvider';
 import CalendarView from './components/postAlta/CalendarView';
 import PatientCard from './components/postAlta/PatientCard';
 import PatientDetailModal from './components/postAlta/PatientDetailModal';
 import CreatePatientForm from './components/postAlta/CreatePatientForm';
 
-const PacientesPostAlta: React.FC = () => {
+interface PacientesPostAltaProps {
+  onGoToEvolucionador?: (patient: PacientePostAltaRow) => void;
+}
+
+const PacientesPostAlta: React.FC<PacientesPostAltaProps> = ({ onGoToEvolucionador }) => {
   const { user } = useAuthContext();
 
   // State
@@ -89,6 +93,17 @@ const PacientesPostAlta: React.FC = () => {
         setAllPatients(prev => prev.filter(p => p.id !== updated.id));
       }
     }
+  };
+
+  const handleDeletePatient = async (patientId: string) => {
+    const result = await deletePacientePostAlta(patientId);
+    if (result.success) {
+      setAllPatients(prev => prev.filter(p => p.id !== patientId));
+      setSelectedPatientId(null); // Close modal if open
+    } else {
+      setError(result.error || 'Error al eliminar paciente');
+    }
+    return result;
   };
 
   const exportCSV = () => {
@@ -221,6 +236,7 @@ const PacientesPostAlta: React.FC = () => {
                   key={patient.id}
                   patient={patient}
                   onClick={() => setSelectedPatientId(patient.id || null)}
+                  onGoToEvolucionador={onGoToEvolucionador}
                 />
               ))}
             </div>
@@ -247,6 +263,8 @@ const PacientesPostAlta: React.FC = () => {
           patient={selectedPatient}
           onClose={() => setSelectedPatientId(null)}
           onUpdate={handleUpdatePatient}
+          onDelete={handleDeletePatient}
+          onGoToEvolucionador={onGoToEvolucionador}
         />
       )}
     </div>

@@ -26,6 +26,7 @@ import WardRounds from './WardRounds';
 import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
 import AcademiaManager from './AcademiaManager';
+import ReadingBoard from './ReadingBoard';
 import { ProtectedRoute } from './components/auth';
 import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
@@ -58,6 +59,16 @@ const NeurologyResidencyHub = () => {
   const handleGoToEvolucionador = (interconsulta: any) => {
     console.log('[Hub] Ir al Evolucionador con interconsulta:', interconsulta.nombre);
     setActiveInterconsulta(interconsulta);
+    setActivePostAltaPatient(null); // Clear any active post-alta patient
+    setActiveTab('diagnostic'); // Cambiar al tab del Evolucionador
+    setSidebarOpen(false);
+  };
+
+  // Handler para ir al Evolucionador desde Post-Alta (workflow integration)
+  const handleGoToEvolucionadorFromPostAlta = (patient: any) => {
+    console.log('[Hub] Ir al Evolucionador con paciente post-alta:', patient.nombre);
+    setActivePostAltaPatient(patient);
+    setActiveInterconsulta(null); // Clear any active interconsulta
     setActiveTab('diagnostic'); // Cambiar al tab del Evolucionador
     setSidebarOpen(false);
   };
@@ -86,6 +97,9 @@ const NeurologyResidencyHub = () => {
 
   // Estado para interconsulta activa (workflow integration)
   const [activeInterconsulta, setActiveInterconsulta] = useState<any | null>(null);
+
+  // Estado para paciente post-alta activo (workflow integration)
+  const [activePostAltaPatient, setActivePostAltaPatient] = useState<any | null>(null);
 
   // Estados para Google Calendar (removido - ahora usando Supabase)
   
@@ -134,7 +148,8 @@ const NeurologyResidencyHub = () => {
     'saved-patients': FolderOpen,
     academia: BookOpen,
     ranking: Award,
-    'resident-management': Settings
+    'resident-management': Settings,
+    lectura: BookOpen
   };
 
   const menuItems = CORE_MODULE_IDS.map((id) => {
@@ -5526,6 +5541,8 @@ const NeurologyResidencyHub = () => {
             currentHospitalContext={currentHospitalContext}
             activeInterconsulta={activeInterconsulta}
             onClearInterconsulta={() => setActiveInterconsulta(null)}
+            activePostAltaPatient={activePostAltaPatient}
+            onClearPostAltaPatient={() => setActivePostAltaPatient(null)}
           />
         );
       case 'inicio':
@@ -5540,6 +5557,8 @@ const NeurologyResidencyHub = () => {
         );
       case 'academia':
         return <AcademiaManager isAdminMode={isAdminMode} />;
+      case 'lectura':
+        return <ReadingBoard />;
       case 'ranking':
         return <RankingView isAdminMode={isAdminMode} />;
       /* case 'dashboard':
@@ -5812,7 +5831,7 @@ const NeurologyResidencyHub = () => {
       case 'pacientes-post-alta':
         return (
           <ProtectedRoute>
-            <PacientesPostAlta />
+            <PacientesPostAlta onGoToEvolucionador={handleGoToEvolucionadorFromPostAlta} />
           </ProtectedRoute>
         );
       case 'pendientes':
