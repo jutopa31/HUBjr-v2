@@ -14,7 +14,6 @@ import type {
   ScientificPapersFilters,
   ScientificPapersStats,
   PaperStatus,
-  PaperType,
   FileType
 } from '../types/scientificPapers';
 
@@ -324,7 +323,7 @@ export async function uploadPaperFile(
     const filePath = `${paperId}/${fileType}-${timestamp}.${extension}`;
 
     // Upload to storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(filePath, file, {
         cacheControl: '3600',
