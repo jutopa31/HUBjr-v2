@@ -333,7 +333,7 @@ export default function PaperCard({
           <div className="flex items-center">
             {paper.assigned_residents.length > 0 ? (
               <div className="flex -space-x-2">
-                {paper.assigned_residents.slice(0, 3).map((email, idx) => (
+                {paper.assigned_residents.slice(0, 3).map((email) => (
                   <div
                     key={email}
                     className="w-7 h-7 rounded-full bg-blue-500 border-2 border-white dark:border-gray-800 flex items-center justify-center text-white text-xs font-medium"
