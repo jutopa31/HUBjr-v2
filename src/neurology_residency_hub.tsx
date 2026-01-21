@@ -14,7 +14,8 @@ import {
   Syringe,
   MessageSquare,
   Award,
-  FileQuestion
+  FileQuestion,
+  FileText
 } from 'lucide-react';
 import DiagnosticAlgorithmContent from './DiagnosticAlgorithmContent';
 import { Scale, ScaleResult, HospitalContext } from './types';
@@ -27,6 +28,7 @@ import SavedPatients from './SavedPatients';
 import DashboardInicio from './DashboardInicio';
 import AcademiaManager from './AcademiaManager';
 import ReadingBoard from './ReadingBoard';
+import ScientificPapersBoard from './ScientificPapersBoard';
 import { ProtectedRoute } from './components/auth';
 import UserDashboard from './components/user/UserDashboard';
 import HospitalContextSelector from './HospitalContextSelector';
@@ -149,7 +151,8 @@ const NeurologyResidencyHub = () => {
     academia: BookOpen,
     ranking: Award,
     'resident-management': Settings,
-    lectura: BookOpen
+    lectura: BookOpen,
+    'scientific-papers': FileText
   };
 
   const menuItems = CORE_MODULE_IDS.map((id) => {
@@ -5559,6 +5562,8 @@ const NeurologyResidencyHub = () => {
         return <AcademiaManager isAdminMode={isAdminMode} />;
       case 'lectura':
         return <ReadingBoard />;
+      case 'scientific-papers':
+        return <ScientificPapersBoard hospitalContext={currentHospitalContext} />;
       case 'ranking':
         return <RankingView isAdminMode={isAdminMode} />;
       /* case 'dashboard':

@@ -16,7 +16,8 @@ export type ModuleId =
   | 'diagnostic'
   | 'academia'
   | 'ranking'
-  | 'resident-management';
+  | 'resident-management'
+  | 'scientific-papers';
 
 export type ModuleAudience = 'core' | 'auxiliary';
 
@@ -117,6 +118,13 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     corePath: '/academia',
     auxiliaryPath: '/aux/academia'
   },
+  'scientific-papers': {
+    id: 'scientific-papers',
+    label: 'Trabajos Cientificos',
+    audience: 'core',
+    corePath: '/trabajos-cientificos',
+    notes: 'Gestion de abstracts, posters y publicaciones.'
+  },
   ranking: {
     id: 'ranking',
     label: 'Ranking',
@@ -144,7 +152,8 @@ export const CORE_MODULE_IDS: ModuleId[] = [
   'diagnostic',
   'pacientes-post-alta',
   'lumbar-punctures',
-  'academia'
+  'academia',
+  'scientific-papers'
 ];
 
 export const AUXILIARY_MODULE_IDS: ModuleId[] = [
