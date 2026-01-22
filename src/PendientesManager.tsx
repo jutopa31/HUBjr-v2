@@ -11,6 +11,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'completed';
   due_date?: string;
+  scheduled_date?: string;
   patient_id?: string;
   source?: string;
   created_by?: string;
@@ -47,7 +48,8 @@ const PendientesManager: React.FC = () => {
     description: '',
     priority: 'medium',
     status: 'pending',
-    due_date: ''
+    due_date: '',
+    scheduled_date: ''
   });
 
   // Apply section accent for this view
@@ -191,7 +193,8 @@ const PendientesManager: React.FC = () => {
         description: '',
         priority: 'medium',
         status: 'pending',
-        due_date: ''
+        due_date: '',
+        scheduled_date: ''
       });
       setShowForm(false);
     } catch (err) {
@@ -346,7 +349,8 @@ const PendientesManager: React.FC = () => {
       description: task.description || '',
       priority: task.priority,
       status: task.status,
-      due_date: task.due_date || ''
+      due_date: task.due_date || '',
+      scheduled_date: task.scheduled_date || ''
     });
   };
 
@@ -594,7 +598,7 @@ const PendientesManager: React.FC = () => {
                 placeholder="Descripción detallada (opcional)"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Prioridad
@@ -630,7 +634,23 @@ const PendientesManager: React.FC = () => {
                 <input
                   type="date"
                   value={newTask.due_date}
-                  onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                  onChange={(e) => {
+                    const newDueDate = e.target.value;
+                    // Auto-copy to scheduled_date if it's empty
+                    const newScheduledDate = !newTask.scheduled_date ? newDueDate : newTask.scheduled_date;
+                    setNewTask({ ...newTask, due_date: newDueDate, scheduled_date: newScheduledDate });
+                  }}
+                  className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  Fecha en calendario
+                </label>
+                <input
+                  type="date"
+                  value={newTask.scheduled_date}
+                  onChange={(e) => setNewTask({ ...newTask, scheduled_date: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
                 />
               </div>
@@ -764,8 +784,8 @@ const PendientesManager: React.FC = () => {
                                   />
                                 </div>
 
-                                {/* Grid: Prioridad, Estado, Fecha */}
-                                <div className="grid grid-cols-3 gap-2">
+                                {/* Grid: Prioridad, Estado, Fechas */}
+                                <div className="grid grid-cols-2 gap-2">
                                   <div>
                                     <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
                                       Prioridad
@@ -803,7 +823,24 @@ const PendientesManager: React.FC = () => {
                                     <input
                                       type="date"
                                       value={editedValues.due_date || ''}
-                                      onChange={(e) => setEditedValues({ ...editedValues, due_date: e.target.value })}
+                                      onChange={(e) => {
+                                        const newDueDate = e.target.value;
+                                        // Auto-copy to scheduled_date if it's empty
+                                        const newScheduledDate = !editedValues.scheduled_date ? newDueDate : editedValues.scheduled_date;
+                                        setEditedValues({ ...editedValues, due_date: newDueDate, scheduled_date: newScheduledDate });
+                                      }}
+                                      className="w-full rounded-lg px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-xs font-medium mb-1.5 text-[var(--text-secondary)]">
+                                      Fecha calendario
+                                    </label>
+                                    <input
+                                      type="date"
+                                      value={editedValues.scheduled_date || ''}
+                                      onChange={(e) => setEditedValues({ ...editedValues, scheduled_date: e.target.value })}
                                       className="w-full rounded-lg px-2 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     />
                                   </div>
@@ -875,16 +912,16 @@ const PendientesManager: React.FC = () => {
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-2 text-xs text-[var(--text-tertiary)]">
-                                    {task.due_date && (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
+                                    {task.scheduled_date && (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 shadow-sm ring-1 ring-blue-100 text-blue-700" title="Fecha en calendario">
                                         <Calendar className="h-3 w-3" />
-                                        {new Date(task.due_date).toLocaleDateString('es-ES')}
+                                        {new Date(task.scheduled_date).toLocaleDateString('es-ES')}
                                       </span>
                                     )}
-                                    {task.created_at && (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm ring-1 ring-gray-100">
+                                    {task.due_date && (
+                                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 shadow-sm ring-1 ${isOverdue ? 'bg-red-50 ring-red-100 text-red-700' : 'bg-white/80 ring-gray-100'}`} title="Fecha límite">
                                         <Clock className="h-3 w-3" />
-                                        {new Date(task.created_at).toLocaleDateString('es-ES')}
+                                        {new Date(task.due_date).toLocaleDateString('es-ES')}
                                       </span>
                                     )}
                                   </div>

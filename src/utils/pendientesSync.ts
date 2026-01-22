@@ -16,6 +16,7 @@ export interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'completed';
   due_date?: string;
+  scheduled_date?: string;
   patient_id?: string;
   source?: string;
   created_by?: string;
@@ -59,6 +60,9 @@ export const createOrUpdateTaskFromPatient = async (patient: Patient): Promise<b
       return false;
     }
 
+    // Set scheduled_date to today so tasks appear in calendar
+    const today = new Date().toISOString().split('T')[0];
+
     const taskData = {
       title: `${patient.nombre} (${patient.cama}) - Pendientes`,
       description: patient.pendientes,
@@ -66,6 +70,7 @@ export const createOrUpdateTaskFromPatient = async (patient: Patient): Promise<b
       status: 'pending' as const,
       patient_id: patient.id,
       source: 'ward_rounds',
+      scheduled_date: today,
       updated_at: new Date().toISOString()
     };
 

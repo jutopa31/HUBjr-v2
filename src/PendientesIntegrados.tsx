@@ -24,6 +24,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'completed';
   due_date?: string;
+  scheduled_date?: string;
   patient_id?: string;
   source?: string;
   created_by?: string;
@@ -60,7 +61,8 @@ const PendientesIntegrados: React.FC = () => {
     description: '',
     priority: 'medium',
     status: 'pending',
-    due_date: ''
+    due_date: '',
+    scheduled_date: ''
   });
 
   const fetchEvents = async () => {
@@ -165,7 +167,8 @@ const PendientesIntegrados: React.FC = () => {
         description: '',
         priority: 'medium',
         status: 'pending',
-        due_date: ''
+        due_date: '',
+        scheduled_date: ''
       });
       setShowForm(false);
     } catch (err) {
@@ -340,8 +343,8 @@ const PendientesIntegrados: React.FC = () => {
   const getTasksForDate = (date: Date) => {
     const dateStr = date.toDateString();
     return tasks.filter((task) => {
-      if (!task.due_date) return false;
-      return new Date(task.due_date).toDateString() === dateStr;
+      if (!task.scheduled_date) return false;
+      return new Date(task.scheduled_date).toDateString() === dateStr;
     });
   };
 
@@ -379,9 +382,9 @@ const PendientesIntegrados: React.FC = () => {
 
   const tasksWithDate = useMemo(() => {
     return tasks
-      .filter((task) => task.due_date)
+      .filter((task) => task.scheduled_date)
       .sort((a, b) => {
-        const dateDiff = new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
+        const dateDiff = new Date(a.scheduled_date!).getTime() - new Date(b.scheduled_date!).getTime();
         if (dateDiff !== 0) return dateDiff;
         return statusOrder[a.status] - statusOrder[b.status];
       });
@@ -389,7 +392,7 @@ const PendientesIntegrados: React.FC = () => {
 
   const tasksWithoutDate = useMemo(() => {
     return tasks
-      .filter((task) => !task.due_date)
+      .filter((task) => !task.scheduled_date)
       .sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
   }, [tasks]);
 
@@ -532,7 +535,7 @@ const PendientesIntegrados: React.FC = () => {
                 placeholder="Descripción detallada (opcional)"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Prioridad
@@ -568,7 +571,23 @@ const PendientesIntegrados: React.FC = () => {
                 <input
                   type="date"
                   value={newTask.due_date}
-                  onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                  onChange={(e) => {
+                    const newDueDate = e.target.value;
+                    // Auto-copy to scheduled_date if it's empty
+                    const newScheduledDate = !newTask.scheduled_date ? newDueDate : newTask.scheduled_date;
+                    setNewTask({ ...newTask, due_date: newDueDate, scheduled_date: newScheduledDate });
+                  }}
+                  className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  Fecha en calendario
+                </label>
+                <input
+                  type="date"
+                  value={newTask.scheduled_date}
+                  onChange={(e) => setNewTask({ ...newTask, scheduled_date: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 focus:outline-none ring-accent"
                 />
               </div>
@@ -794,12 +813,12 @@ const PendientesIntegrados: React.FC = () => {
 
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Pendientes con fecha</h3>
+                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Pendientes en calendario</h3>
                 <span className="text-[11px] text-gray-500">{tasksWithDate.length}</span>
               </div>
               {tasksWithDate.length === 0 ? (
                 <div className="text-xs text-gray-500 bg-gray-50 rounded-md border border-dashed border-gray-200 p-3">
-                  No hay pendientes con fecha.
+                  No hay pendientes programados en el calendario.
                 </div>
               ) : (
                 tasksWithDate.map((task) => {
@@ -837,11 +856,20 @@ const PendientesIntegrados: React.FC = () => {
                             )}
                           </div>
                         </div>
-                        {task.due_date && (
-                          <span className="text-[11px] text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-200">
-                            {new Date(task.due_date).toLocaleDateString('es-ES')}
-                          </span>
-                        )}
+                        <div className="flex flex-col items-end gap-1">
+                          {task.scheduled_date && (
+                            <span className="inline-flex items-center gap-1 text-[11px] bg-blue-50 px-2 py-1 rounded-full border border-blue-200 text-blue-700" title="Fecha en calendario">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(task.scheduled_date).toLocaleDateString('es-ES')}
+                            </span>
+                          )}
+                          {task.due_date && (
+                            <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border ${isOverdue ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`} title="Fecha límite">
+                              <Clock className="h-3 w-3" />
+                              {new Date(task.due_date).toLocaleDateString('es-ES')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {task.description && (
                         <p className="text-xs text-gray-500 leading-relaxed">{task.description}</p>
@@ -872,17 +900,21 @@ const PendientesIntegrados: React.FC = () => {
 
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Pendientes sin fecha</h3>
+                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Pendientes sin calendario</h3>
                 <span className="text-[11px] text-gray-500">{tasksWithoutDate.length}</span>
               </div>
               {tasksWithoutDate.length === 0 ? (
                 <div className="text-xs text-gray-500 bg-gray-50 rounded-md border border-dashed border-gray-200 p-3">
-                  No hay pendientes sin fecha.
+                  No hay pendientes sin fecha de calendario.
                 </div>
               ) : (
                 tasksWithoutDate.map((task) => {
                   const priorityDisplay = getPriorityDisplay(task.priority);
                   const statusDisplay = getStatusDisplay(task.status);
+                  const isOverdue =
+                    task.due_date &&
+                    new Date(task.due_date) < new Date() &&
+                    task.status !== 'completed';
 
                   return (
                     <div key={task.id} className="border border-gray-200 rounded-lg p-3 bg-white space-y-2">
@@ -904,8 +936,19 @@ const PendientesIntegrados: React.FC = () => {
                             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${statusDisplay.color}`}>
                               {statusDisplay.label}
                             </span>
+                            {isOverdue && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-red-700 ring-1 ring-red-100">
+                                Vencida
+                              </span>
+                            )}
                           </div>
                         </div>
+                        {task.due_date && (
+                          <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border ${isOverdue ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`} title="Fecha límite">
+                            <Clock className="h-3 w-3" />
+                            {new Date(task.due_date).toLocaleDateString('es-ES')}
+                          </span>
+                        )}
                       </div>
                       {task.description && (
                         <p className="text-xs text-gray-500 leading-relaxed">{task.description}</p>

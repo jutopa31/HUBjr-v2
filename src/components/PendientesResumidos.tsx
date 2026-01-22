@@ -10,6 +10,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'completed';
   due_date?: string;
+  scheduled_date?: string;
   patient_id?: string;
   source?: string;
   created_by?: string;
