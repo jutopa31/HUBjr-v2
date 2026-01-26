@@ -84,6 +84,66 @@ Personal interviniente
 }
 
 /**
+ * Sincroniza las notas de evolución de vuelta al paciente Post-Alta
+ * @param postAltaPatientId - ID del paciente post-alta
+ * @param evolutionNotes - Notas de evolución a sincronizar
+ * @returns Resultado con éxito/error
+ */
+export async function syncNotesToPostAltaPatient(
+  postAltaPatientId: string,
+  evolutionNotes: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('[WorkflowIntegration] syncNotesToPostAltaPatient -> ID:', postAltaPatientId);
+
+    // Obtener notas existentes
+    const { data: patient, error: fetchError } = await supabase
+      .from('pacientes_post_alta')
+      .select('notas_evolucion')
+      .eq('id', postAltaPatientId)
+      .single();
+
+    if (fetchError) {
+      console.error('[WorkflowIntegration] Error al obtener paciente post-alta:', fetchError);
+      return { success: false, error: 'No se pudo obtener el paciente' };
+    }
+
+    // Crear timestamp
+    const timestamp = new Date().toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // Append con separador
+    const existingNotes = patient?.notas_evolucion?.trim() || '';
+    const newSection = `--- Evolución ${timestamp} ---\n${evolutionNotes}`;
+    const updatedNotes = existingNotes
+      ? `${existingNotes}\n\n${newSection}`
+      : newSection;
+
+    // Actualizar
+    const { error: updateError } = await supabase
+      .from('pacientes_post_alta')
+      .update({ notas_evolucion: updatedNotes })
+      .eq('id', postAltaPatientId);
+
+    if (updateError) {
+      console.error('[WorkflowIntegration] Error al actualizar paciente post-alta:', updateError);
+      return { success: false, error: 'No se pudo actualizar el paciente' };
+    }
+
+    console.log('[WorkflowIntegration] ✓ Notas sincronizadas a paciente post-alta');
+    return { success: true };
+  } catch (error: any) {
+    console.error('[WorkflowIntegration] syncNotesToPostAltaPatient error:', error);
+    return { success: false, error: error?.message || 'Error desconocido' };
+  }
+}
+
+/**
  * Extrae secciones estructuradas del texto del Evolucionador (FORMATO NUEVO)
  * @param clinicalNotes - Notas clínicas completas del evolucionador en formato nuevo
  * @returns Objeto con las secciones extraídas del formato nuevo

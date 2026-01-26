@@ -5546,6 +5546,10 @@ const NeurologyResidencyHub = () => {
             onClearInterconsulta={() => setActiveInterconsulta(null)}
             activePostAltaPatient={activePostAltaPatient}
             onClearPostAltaPatient={() => setActivePostAltaPatient(null)}
+            onNavigateToPostAlta={() => {
+              setActivePostAltaPatient(null);
+              setActiveTab('pacientes-post-alta');
+            }}
           />
         );
       case 'inicio':

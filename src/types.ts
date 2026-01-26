@@ -68,6 +68,7 @@ export interface EvolucionadorDraft {
   patient_age?: string;
   patient_bed?: string;
   source_interconsulta_id?: string | null;
+  source_post_alta_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -79,6 +80,7 @@ export interface EvolucionadorDraftPayload {
   patient_age?: string;
   patient_bed?: string;
   source_interconsulta_id?: string | null;
+  source_post_alta_id?: string | null;
 }
 
 export interface SavedScaleResult {

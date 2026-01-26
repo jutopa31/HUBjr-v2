@@ -51,6 +51,7 @@ interface DiagnosticAlgorithmContentProps {
   // Post-Alta workflow integration props
   activePostAltaPatient?: PacientePostAltaRow | null;
   onClearPostAltaPatient?: () => void;
+  onNavigateToPostAlta?: () => void;
 }
 
 const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
@@ -65,7 +66,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   activeInterconsulta,
   onClearInterconsulta,
   activePostAltaPatient,
-  onClearPostAltaPatient
+  onClearPostAltaPatient,
+  onNavigateToPostAlta
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     'Evaluación Neurológica': true,
@@ -205,14 +207,6 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   useEffect(() => {
     if (!userId || hasLoadedDraft.current) return;
 
-    // Si viene de Post-Alta, NO restaurar drafts viejos - usar el template fresco
-    // El template ya fue cargado por el useEffect anterior (líneas 125-140)
-    if (activePostAltaPatient?.id) {
-      console.log('[DiagnosticAlgorithm] Post-Alta activo, saltando restauración de drafts');
-      hasLoadedDraft.current = true;
-      return;
-    }
-
     let isMounted = true;
     const loadDrafts = async () => {
       setDraftListStatus('Cargando borrador...');
@@ -223,10 +217,21 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         return;
       }
       const drafts = result.data || [];
-      // Solo buscar draft coincidente si hay una interconsulta activa
-      const matchingDraft = activeInterconsulta?.id
-        ? drafts.find((draft) => draft.source_interconsulta_id === activeInterconsulta.id)
-        : drafts[0];
+
+      // Buscar draft coincidente según el contexto activo
+      let matchingDraft;
+      if (activePostAltaPatient?.id) {
+        // Si viene de Post-Alta, buscar draft vinculado a ese paciente
+        matchingDraft = drafts.find((draft) => draft.source_post_alta_id === activePostAltaPatient.id);
+        console.log('[DiagnosticAlgorithm] Buscando draft por post-alta ID:', activePostAltaPatient.id, matchingDraft ? 'encontrado' : 'no encontrado');
+      } else if (activeInterconsulta?.id) {
+        // Si viene de Interconsulta, buscar draft vinculado
+        matchingDraft = drafts.find((draft) => draft.source_interconsulta_id === activeInterconsulta.id);
+      } else {
+        // Sin contexto, usar el más reciente
+        matchingDraft = drafts[0];
+      }
+
       if (matchingDraft) {
         setActiveDraftId(matchingDraft.id);
         if (notes !== (matchingDraft.notes || '')) {
@@ -264,7 +269,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         patient_name: extracted.name || undefined,
         patient_dni: extracted.dni || undefined,
         patient_age: extracted.age || undefined,
-        source_interconsulta_id: getValidInterconsultaId(activeInterconsulta)
+        source_interconsulta_id: getValidInterconsultaId(activeInterconsulta),
+        source_post_alta_id: activePostAltaPatient?.id || null
       };
       const result = await saveEvolucionadorDraft(userId, activeDraftId, payload);
       if (result.success && result.data) {
@@ -284,7 +290,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         window.clearTimeout(saveTimerRef.current);
       }
     };
-  }, [activeDraftId, activeInterconsulta?.id, notes, userId]);
+  }, [activeDraftId, activeInterconsulta?.id, activePostAltaPatient?.id, notes, userId]);
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
@@ -606,10 +612,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
       console.log('[DiagnosticAlgorithm] Guardando con contexto:', patientData.hospital_context);
 
-      // Agregar source_interconsulta_id si viene de interconsulta (solo si es UUID válido)
+      // Agregar source IDs si viene de interconsulta o post-alta (solo si es UUID válido)
       const enrichedData = {
         ...patientData,
         source_interconsulta_id: getValidInterconsultaId(activeInterconsulta),
+        source_post_alta_id: activePostAltaPatient?.id || null,
         response_sent: false
       };
 
@@ -622,6 +629,21 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         if (result.data?.id) {
           setLastSavedAssessmentId(result.data.id);
           console.log('[DiagnosticAlgorithm] Assessment guardado con ID:', result.data.id);
+        }
+
+        // Sincronizar notas a paciente Post-Alta si corresponde
+        if (activePostAltaPatient?.id) {
+          try {
+            const { syncNotesToPostAltaPatient } = await import('./services/workflowIntegrationService');
+            const syncResult = await syncNotesToPostAltaPatient(activePostAltaPatient.id, patientData.clinical_notes);
+            if (syncResult.success) {
+              console.log('[DiagnosticAlgorithm] ✓ Notas sincronizadas a paciente post-alta');
+            } else {
+              console.warn('[DiagnosticAlgorithm] ⚠️ No se pudieron sincronizar notas a post-alta:', syncResult.error);
+            }
+          } catch (syncError) {
+            console.warn('[DiagnosticAlgorithm] ⚠️ Error al sincronizar notas a post-alta:', syncError);
+          }
         }
 
         setSaveStatus({
@@ -1017,16 +1039,27 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
                   {activePostAltaPatient.nombre} - DNI: {activePostAltaPatient.dni} - Fecha visita: {activePostAltaPatient.fecha_visita}
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  if (confirm('¿Descartar conexión con paciente post-alta? Los datos ya cargados permanecerán en el editor.')) {
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
                     onClearPostAltaPatient?.();
-                  }
-                }}
-                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
-              >
-                Desconectar
-              </button>
+                    onNavigateToPostAlta?.();
+                  }}
+                  className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+                >
+                  Volver a Post-Alta
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('¿Descartar conexión con paciente post-alta? Los datos ya cargados permanecerán en el editor.')) {
+                      onClearPostAltaPatient?.();
+                    }
+                  }}
+                  className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
+                >
+                  Desconectar
+                </button>
+              </div>
             </div>
           </div>
         </div>
