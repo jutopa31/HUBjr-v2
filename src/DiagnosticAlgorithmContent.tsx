@@ -19,6 +19,21 @@ import { listEvolucionadorDrafts, saveEvolucionadorDraft } from './services/evol
 const AI_SUGGESTIONS_GROUP = 'Sugerencias IA';
 const SEARCH_RESULTS_GROUP = 'Resultados de búsqueda';
 
+// Helper to check if an ID is a valid UUID (not a temporary optimistic ID)
+const isValidUUID = (id: string | null | undefined): boolean => {
+  if (!id) return false;
+  // Temporary IDs start with 'tmp-'
+  if (id.startsWith('tmp-')) return false;
+  // Basic UUID format check
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+};
+
+// Get interconsulta ID only if it's a valid UUID (not temporary)
+const getValidInterconsultaId = (interconsulta: any | null | undefined): string | null => {
+  if (!interconsulta?.id) return null;
+  return isValidUUID(interconsulta.id) ? interconsulta.id : null;
+};
+
 interface DiagnosticAlgorithmContentProps {
   notes: string;
   setNotes: (v: string) => void;
@@ -249,7 +264,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         patient_name: extracted.name || undefined,
         patient_dni: extracted.dni || undefined,
         patient_age: extracted.age || undefined,
-        source_interconsulta_id: activeInterconsulta?.id || null
+        source_interconsulta_id: getValidInterconsultaId(activeInterconsulta)
       };
       const result = await saveEvolucionadorDraft(userId, activeDraftId, payload);
       if (result.success && result.data) {
@@ -591,10 +606,10 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       console.log('[DiagnosticAlgorithm] handleConfirmSave -> payload:', patientData);
       console.log('[DiagnosticAlgorithm] Guardando con contexto:', patientData.hospital_context);
 
-      // Agregar source_interconsulta_id si viene de interconsulta
+      // Agregar source_interconsulta_id si viene de interconsulta (solo si es UUID válido)
       const enrichedData = {
         ...patientData,
-        source_interconsulta_id: activeInterconsulta?.id || null,
+        source_interconsulta_id: getValidInterconsultaId(activeInterconsulta),
         response_sent: false
       };
 

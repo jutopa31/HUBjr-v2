@@ -33,14 +33,24 @@ export function extractPatientData(notes: string): ExtractedPatientData {
   // Regex patterns for common headers
   const patterns = {
     name: [
-      /(?:^|\n)\s*(?:PACIENTE|Paciente|Nombre|Apellido\s*y\s*Nombre|Nombre\s*y\s*Apellido|Datos\s+paciente)\s*[:\-]\s*([^\n]+?)(?=\s+(?:DNI|EDAD|CAMA)\b|$)/i
+      // Original multiline format
+      /(?:^|\n)\s*(?:PACIENTE|Paciente|Nombre|Apellido\s*y\s*Nombre|Nombre\s*y\s*Apellido|Datos\s+paciente)\s*[:\-]\s*([^\n]+?)(?=\s+(?:DNI|EDAD|CAMA)\b|$)/i,
+      // Inline format: stops at comma before DNI/EDAD/Edad
+      /(?:PACIENTE|Paciente|Nombre|Apellido\s*y\s*Nombre|Nombre\s*y\s*Apellido)\s*[:\-]\s*([^,\n]+?)(?=\s*,\s*(?:DNI|D\.?N\.?I\.?|EDAD|Edad))/i,
+      // Simple format: captures name until comma or newline
+      /(?:PACIENTE|Paciente|Nombre)\s*[:\-]\s*([A-Za-zÀ-ÿ\s]+?)(?=\s*[,\n]|$)/i
     ],
     age: [
       /(?:^|\n)\s*Edad\s*[:\-]\s*(\d{1,3})/i,
-      /(?:^|\n)\s*(\d{1,3})\s*a(?:n|\u00f1)os?/i
+      /(?:^|\n)\s*(\d{1,3})\s*a(?:n|\u00f1)os?/i,
+      // Inline format: Edad after comma
+      /,\s*Edad\s*[:\-]?\s*(\d{1,3})/i
     ],
     dni: [
-      /(?:^|\n)\s*(?:DNI|D\.?N\.?I\.?|Documento(?:\s+Nacional)?|Doc\.?)\s*[:\-]?\s*([0-9.\-\s]{6,12})/i
+      // Original line-start format
+      /(?:^|\n)\s*(?:DNI|D\.?N\.?I\.?|Documento(?:\s+Nacional)?|Doc\.?)\s*[:\-]?\s*([0-9.\-\s]{6,12})/i,
+      // Inline format: DNI anywhere in text
+      /(?:DNI|D\.?N\.?I\.?)\s*[:\-]?\s*([0-9.\-]{6,12})/i
     ]
   };
 
