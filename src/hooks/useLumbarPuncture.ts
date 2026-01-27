@@ -65,6 +65,9 @@ export function useLumbarPuncture() {
         if (filters.technical_difficulty) {
           query = query.eq('technical_difficulty', filters.technical_difficulty);
         }
+        if (filters.status) {
+          query = query.eq('status', filters.status);
+        }
       }
 
       // Apply search
@@ -115,18 +118,43 @@ export function useLumbarPuncture() {
 
     try {
       // Clean the form data - remove undefined values and convert empty arrays to null if needed
+      const { add_to_calendar, scheduled_date, ...procedureData } = formData;
       const cleanedData: any = {
-        ...formData,
+        ...procedureData,
         resident_id: user.id,
       };
 
-      // Convert empty arrays to null for database compatibility
+      // Fields that should be null instead of 0 or empty (to satisfy DB constraints)
+      const numericFieldsToNullify = [
+        'patient_age', 'platelet_count', 'inr_value', 'opening_pressure_value',
+        'csf_volume_collected', 'csf_white_cells', 'csf_red_cells', 'csf_protein',
+        'csf_glucose', 'serum_glucose', 'csf_lactate', 'headache_severity', 'technical_difficulty'
+      ];
+
+      // Clean up the data
       Object.keys(cleanedData).forEach(key => {
+        // Convert empty arrays to empty array (Supabase handles this)
         if (Array.isArray(cleanedData[key]) && cleanedData[key].length === 0) {
           cleanedData[key] = [];
         }
+        // Remove undefined values
         if (cleanedData[key] === undefined) {
           delete cleanedData[key];
+        }
+        // Convert invalid or empty numeric values to null for constrained fields
+        if (
+          numericFieldsToNullify.includes(key) &&
+          (
+            cleanedData[key] === 0 ||
+            cleanedData[key] === '' ||
+            Number.isNaN(cleanedData[key])
+          )
+        ) {
+          cleanedData[key] = null;
+        }
+        // Convert empty strings to null for optional text fields
+        if (typeof cleanedData[key] === 'string' && cleanedData[key].trim() === '') {
+          cleanedData[key] = null;
         }
       });
 
@@ -136,6 +164,35 @@ export function useLumbarPuncture() {
         .insert([cleanedData]);
 
       if (insertError) throw insertError;
+
+      if (add_to_calendar && scheduled_date) {
+        const summaryParts = [
+          `Indicación: ${formData.indication}`,
+          formData.patient_summary ? `Resumen: ${formData.patient_summary}` : null,
+          formData.primary_diagnosis ? `Diagnóstico: ${formData.primary_diagnosis}` : null,
+          formData.clinical_question ? `Pregunta clínica: ${formData.clinical_question}` : null,
+          formData.supervisor ? `Supervisor: ${formData.supervisor}` : null
+        ].filter(Boolean);
+
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .insert([{
+            title: `Punción lumbar - ${formData.patient_initials}`,
+            description: summaryParts.join('\n'),
+            priority: 'medium',
+            status: 'pending',
+            due_date: scheduled_date,
+            scheduled_date,
+            source: 'lumbar_puncture',
+            created_by: user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+
+        if (taskError) {
+          console.error('Error creating lumbar puncture task:', taskError);
+        }
+      }
 
       // Refresh the procedures list to get the new record
       await fetchProcedures();

@@ -217,6 +217,12 @@ function ProcedureDetailView({ procedure, onEdit, onBack }: ProcedureDetailViewP
               <label className="block text-sm font-medium text-gray-500">Indication</label>
               <p className="mt-1 text-sm text-gray-900">{procedure.indication}</p>
             </div>
+            {procedure.patient_summary && (
+              <div>
+                <label className="block text-sm font-medium text-gray-500">Resumen del paciente</label>
+                <p className="mt-1 text-sm text-gray-900 whitespace-pre-line">{procedure.patient_summary}</p>
+              </div>
+            )}
             {procedure.primary_diagnosis && (
               <div>
                 <label className="block text-sm font-medium text-gray-500">Primary Diagnosis</label>

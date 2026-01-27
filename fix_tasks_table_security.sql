@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   priority TEXT CHECK (priority IN ('low', 'medium', 'high')) DEFAULT 'medium',
   status TEXT CHECK (status IN ('pending', 'in_progress', 'completed')) DEFAULT 'pending',
   due_date DATE,
+  scheduled_date DATE,
   patient_id UUID,
   source TEXT DEFAULT 'manual', -- 'manual' or 'ward_rounds'
   created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -78,6 +79,9 @@ CREATE INDEX idx_tasks_source ON public.tasks(source);
 
 DROP INDEX IF EXISTS idx_tasks_due_date;
 CREATE INDEX idx_tasks_due_date ON public.tasks(due_date);
+
+DROP INDEX IF EXISTS idx_tasks_scheduled_date;
+CREATE INDEX idx_tasks_scheduled_date ON public.tasks(scheduled_date);
 
 DROP INDEX IF EXISTS idx_tasks_created_by;
 CREATE INDEX idx_tasks_created_by ON public.tasks(created_by);

@@ -9,11 +9,13 @@ import {
   XCircle,
   Microscope,
   Save,
-  X
+  X,
+  CalendarPlus
 } from 'lucide-react';
 import { useLumbarPuncture } from '../hooks/useLumbarPuncture';
 import {
   LumbarPunctureFormData,
+  LPStatus,
   COMMON_LP_INDICATIONS,
   PCR_TEST_OPTIONS,
   ANTIGEN_TEST_OPTIONS
@@ -32,17 +34,22 @@ export default function LumbarPunctureForm({
   initialData,
   mode = 'create'
 }: LumbarPunctureFormProps) {
-  const { createProcedure, loading } = useLumbarPuncture();
+  const { createProcedure, updateProcedure, loading } = useLumbarPuncture();
+  const today = new Date().toISOString().split('T')[0];
 
   const [formData, setFormData] = useState<LumbarPunctureFormData>({
     patient_initials: '',
     patient_age: undefined,
     patient_gender: undefined,
-    procedure_date: new Date().toISOString().split('T')[0],
+    patient_summary: '',
+    status: initialData?.status || 'scheduled',
+    add_to_calendar: true,
+    scheduled_date: today,
+    procedure_date: today,
     procedure_time: '',
     indication: '',
     supervisor: '',
-    trainee_role: 'performed_supervised',
+    trainee_role: 'assisted',
 
     // Pre-procedure checklist
     contraindications_checked: false,
@@ -162,20 +169,55 @@ export default function LumbarPunctureForm({
     });
   };
 
+  // Guardar como programada (solo datos básicos)
+  const handleSaveAsScheduled = async () => {
+    setSubmitError(null);
+
+    if (!formData.patient_initials || !formData.procedure_date) {
+      setSubmitError('Se requieren las iniciales del paciente y la fecha');
+      return;
+    }
+
+    try {
+      const dataToSave = {
+        ...formData,
+        status: 'scheduled' as LPStatus
+      };
+
+      if (mode === 'create') {
+        const result = await createProcedure(dataToSave);
+        if (result) {
+          onSubmit?.(dataToSave);
+        } else {
+          setSubmitError('Error al guardar la punción lumbar programada');
+        }
+      } else {
+        onSubmit?.(dataToSave);
+      }
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Ocurrió un error');
+    }
+  };
+
+  // Guardar como completada (todos los datos)
   const handleSubmit = async () => {
     setSubmitError(null);
 
     try {
+      const dataToSave = {
+        ...formData,
+        status: 'completed' as LPStatus
+      };
+
       if (mode === 'create') {
-        const result = await createProcedure(formData);
+        const result = await createProcedure(dataToSave);
         if (result) {
-          onSubmit?.(formData);
+          onSubmit?.(dataToSave);
         } else {
           setSubmitError('Error al crear el registro de punción lumbar');
         }
       } else {
-        // For edit mode, you'd need to pass the ID
-        onSubmit?.(formData);
+        onSubmit?.(dataToSave);
       }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Ocurrió un error');
@@ -187,6 +229,21 @@ export default function LumbarPunctureForm({
       case 0: // Patient & Procedure Info
         return (
           <div className="space-y-6">
+            {/* Status indicator for scheduled LPs */}
+            {formData.status === 'scheduled' && mode === 'edit' && (
+              <div className="medical-card card-info rounded-lg p-4 mb-4">
+                <div className="flex items-center space-x-3">
+                  <CalendarPlus className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800">Punción Lumbar Programada</h4>
+                    <p className="text-sm text-blue-600">
+                      Complete los datos del procedimiento y guarde como completada cuando se realice.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -212,7 +269,10 @@ export default function LumbarPunctureForm({
                   min="1"
                   max="120"
                   value={formData.patient_age || ''}
-                  onChange={(e) => handleInputChange('patient_age', parseInt(e.target.value) || undefined)}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                    handleInputChange('patient_age', Number.isNaN(value) ? undefined : value);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -266,17 +326,16 @@ export default function LumbarPunctureForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supervisor *
+                  Supervisor
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    value={formData.supervisor}
+                    value={formData.supervisor || ''}
                     onChange={(e) => handleInputChange('supervisor', e.target.value)}
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Dr. García"
-                    required
                   />
                 </div>
               </div>
@@ -284,7 +343,7 @@ export default function LumbarPunctureForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Rol del Residente *
+                Rol del Residente
               </label>
               <select
                 value={formData.trainee_role}
@@ -293,20 +352,18 @@ export default function LumbarPunctureForm({
               >
                 <option value="observer">Observador</option>
                 <option value="assisted">Asistido</option>
-                <option value="performed_supervised">Realizado bajo supervisión</option>
                 <option value="performed_independent">Realizado independientemente</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Indicación *
+                Indicación
               </label>
               <select
-                value={formData.indication}
+                value={formData.indication || ''}
                 onChange={(e) => handleInputChange('indication', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
               >
                 <option value="">Seleccionar indicación</option>
                 {COMMON_LP_INDICATIONS.map(indication => (
@@ -322,6 +379,50 @@ export default function LumbarPunctureForm({
                   className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   onChange={(e) => handleInputChange('indication', e.target.value)}
                 />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Resumen del paciente
+              </label>
+              <textarea
+                value={formData.patient_summary}
+                onChange={(e) => handleInputChange('patient_summary', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={3}
+                placeholder="Resumen clinico breve, motivo y contexto"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={formData.add_to_calendar ?? false}
+                  onChange={(e) => handleInputChange('add_to_calendar', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Agregar al calendario de pendientes
+                </span>
+              </label>
+
+              {formData.add_to_calendar && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha en calendario
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="date"
+                      value={formData.scheduled_date || ''}
+                      onChange={(e) => handleInputChange('scheduled_date', e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -1085,12 +1186,18 @@ export default function LumbarPunctureForm({
     }
   };
 
+  // Validación mínima para guardar como programada
+  const canSaveAsScheduled = () => {
+    return Boolean(formData.patient_initials && formData.procedure_date);
+  };
+
+  // Validación para avanzar al siguiente paso
   const canProceedToNext = () => {
     switch (currentStep) {
       case 0:
-        return formData.patient_initials && formData.procedure_date && formData.indication && formData.supervisor;
+        return canSaveAsScheduled();
       case 1:
-        return formData.contraindications_checked && formData.informed_consent;
+        return true; // Pre-procedure checklist is optional for scheduled
       case 2:
         return true; // All technique fields have defaults
       case 3:
@@ -1107,9 +1214,9 @@ export default function LumbarPunctureForm({
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] flex items-center">
@@ -1130,19 +1237,7 @@ export default function LumbarPunctureForm({
 
         {/* Progress Bar */}
         <div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-500 mb-2">
-            {steps.map((step, index) => (
-              <span
-                key={index}
-                className={`${
-                  index === currentStep ? 'text-blue-600 font-medium' : ''
-                } ${index < currentStep ? 'text-blue-700' : ''}`}
-              >
-                {step}
-              </span>
-            ))}
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
@@ -1158,10 +1253,10 @@ export default function LumbarPunctureForm({
         {submitError && (
           <div className="mt-4 p-4 medical-card card-error rounded-lg">
             <div className="flex items-start space-x-3">
-              <AlertTriangle className="h-5 w-5 text-blue-700 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-gray-800">Error</h4>
-                <p className="text-sm text-gray-700 mt-1">{submitError}</p>
+                <h4 className="text-sm font-medium text-gray-800 dark:text-gray-200">Error</h4>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{submitError}</p>
               </div>
             </div>
           </div>
@@ -1169,21 +1264,33 @@ export default function LumbarPunctureForm({
       </div>
 
       {/* Footer Navigation */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between">
+      <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-between flex-wrap gap-2">
         <button
           onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
           disabled={currentStep === 0}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Anterior
         </button>
 
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 flex-wrap gap-2">
+          {/* Botón para guardar como programada (solo en paso 0) */}
+          {currentStep === 0 && mode === 'create' && (
+            <button
+              onClick={handleSaveAsScheduled}
+              disabled={loading || !canSaveAsScheduled()}
+              className="px-4 py-2 text-sm font-medium text-white bg-amber-600 border border-transparent rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              <CalendarPlus className="h-4 w-4 mr-2" />
+              {loading ? 'Guardando...' : 'Guardar Programada'}
+            </button>
+          )}
+
           {currentStep < steps.length - 1 ? (
             <button
               onClick={() => setCurrentStep(currentStep + 1)}
               disabled={!canProceedToNext()}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Siguiente
             </button>
@@ -1191,10 +1298,10 @@ export default function LumbarPunctureForm({
             <button
               onClick={handleSubmit}
               disabled={loading || !canProceedToNext()}
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Guardando...' : mode === 'create' ? 'Crear Procedimiento' : 'Actualizar Procedimiento'}
+              {loading ? 'Guardando...' : mode === 'create' ? 'Guardar Completada' : 'Actualizar'}
             </button>
           )}
         </div>

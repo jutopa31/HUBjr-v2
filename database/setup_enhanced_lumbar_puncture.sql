@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS lumbar_punctures (
   patient_initials TEXT NOT NULL CHECK (char_length(patient_initials) <= 4),
   patient_age INTEGER CHECK (patient_age > 0 AND patient_age <= 120),
   patient_gender TEXT CHECK (patient_gender IN ('M', 'F', 'Other')),
+  patient_summary TEXT,
+
+  -- Status (scheduled = programmed for future, completed = procedure done)
+  status TEXT NOT NULL CHECK (status IN ('scheduled', 'completed')) DEFAULT 'completed',
 
   -- Procedure details
   procedure_date DATE NOT NULL,
@@ -174,6 +178,9 @@ CREATE INDEX IF NOT EXISTS idx_lumbar_punctures_procedure_date
 CREATE INDEX IF NOT EXISTS idx_lumbar_punctures_successful
   ON lumbar_punctures(successful);
 
+CREATE INDEX IF NOT EXISTS idx_lumbar_punctures_status
+  ON lumbar_punctures(status);
+
 CREATE INDEX IF NOT EXISTS idx_lumbar_punctures_indication
   ON lumbar_punctures USING gin(to_tsvector('english', indication));
 
@@ -310,3 +317,16 @@ BEGIN
   ORDER BY month_year;
 END;
 $$ LANGUAGE plpgsql;
+
+-- View to include resident names for display
+CREATE OR REPLACE VIEW lumbar_punctures_with_names AS
+SELECT
+  lp.*,
+  COALESCE(CONCAT(rp.first_name, ' ', rp.last_name), u.email) as resident_name,
+  rp.training_level as resident_level
+FROM lumbar_punctures lp
+LEFT JOIN auth.users u ON lp.resident_id = u.id
+LEFT JOIN resident_profiles rp ON lp.resident_id = rp.user_id;
+
+-- Grant access to the view
+GRANT SELECT ON lumbar_punctures_with_names TO authenticated;

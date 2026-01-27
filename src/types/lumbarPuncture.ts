@@ -1,5 +1,8 @@
 // TypeScript types for lumbar puncture management system
 
+// Status del procedimiento
+export type LPStatus = 'scheduled' | 'completed';
+
 export interface LumbarPuncture {
   id: string;
   resident_id: string;
@@ -9,6 +12,10 @@ export interface LumbarPuncture {
   patient_initials: string;
   patient_age?: number;
   patient_gender?: 'M' | 'F' | 'Other';
+  patient_summary?: string;
+
+  // Status del procedimiento (scheduled = programada, completed = realizada)
+  status: LPStatus;
 
   // Procedure details
   procedure_date: string; // ISO date string
@@ -158,11 +165,18 @@ export interface LumbarPunctureFormData {
   patient_initials: string;
   patient_age?: number;
   patient_gender?: 'M' | 'F' | 'Other';
+  patient_summary?: string;
+
+  // Status del procedimiento
+  status: LPStatus;
+
   procedure_date: string;
   procedure_time?: string;
-  indication: string;
-  supervisor: string;
+  indication?: string; // Ahora opcional para permitir guardado parcial
+  supervisor?: string; // Ahora opcional para permitir guardado parcial
   trainee_role?: 'observer' | 'assisted' | 'performed_supervised' | 'performed_independent';
+  add_to_calendar?: boolean;
+  scheduled_date?: string;
 
   // Pre-procedure checklist
   contraindications_checked: boolean;
@@ -325,6 +339,7 @@ export interface LPFilters {
   complication_type?: string;
   trainee_role?: string;
   technical_difficulty?: number;
+  status?: LPStatus; // Filtrar por programadas o completadas
 }
 
 export interface LPSearchParams {
