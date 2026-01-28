@@ -34,7 +34,7 @@ export default function LumbarPunctureForm({
   initialData,
   mode = 'create'
 }: LumbarPunctureFormProps) {
-  const { createProcedure, updateProcedure, loading } = useLumbarPuncture();
+  const { createProcedure, loading } = useLumbarPuncture();
   const today = new Date().toISOString().split('T')[0];
 
   const [formData, setFormData] = useState<LumbarPunctureFormData>({
