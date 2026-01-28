@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { BookOpen, List } from 'lucide-react';
+import { BookOpen, FileQuestion, List, Sparkles } from 'lucide-react';
 import AcademiaSimplified from './AcademiaSimplified';
 import { AcademicClass, fetchClasses, isFutureClass, normalizeTimeValue } from './services/academiaService';
 
@@ -8,7 +8,7 @@ interface AcademiaManagerProps {
 }
 
 const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }) => {
-  const [activeTab, setActiveTab] = useState<'register' | 'calendar'>('register');
+  const [activeTab, setActiveTab] = useState<'register' | 'calendar' | 'weekly' | 'quizzes'>('register');
   const [nextClass, setNextClass] = useState<AcademicClass | null>(null);
 
   useEffect(() => {
@@ -93,6 +93,32 @@ const AcademiaManager: React.FC<AcademiaManagerProps> = ({ isAdminMode = false }
               >
                 <List className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Lista</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('weekly')}
+                aria-current={activeTab === 'weekly' ? 'page' : undefined}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                  activeTab === 'weekly'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
+                }`}
+                title="Tema semanal"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Semanal</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('quizzes')}
+                aria-current={activeTab === 'quizzes' ? 'page' : undefined}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                  activeTab === 'quizzes'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
+                }`}
+                title="Cuestionarios"
+              >
+                <FileQuestion className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Quiz</span>
               </button>
             </div>
           </div>

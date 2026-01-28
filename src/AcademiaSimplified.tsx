@@ -7,6 +7,8 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Plus, Clock, User, Trash2, Edit3, X, BookOpen } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
+import QuizHub from './components/academia/QuizHub';
+import WeeklyTopicBoard from './components/academia/WeeklyTopicBoard';
 import {
   ClassTopic,
   AcademicClass,
@@ -23,8 +25,8 @@ import {
 } from './services/academiaService';
 
 interface AcademiaSimplifiedProps {
-  activeTab: 'register' | 'calendar';
-  setActiveTab: (tab: 'register' | 'calendar') => void;
+  activeTab: 'register' | 'calendar' | 'weekly' | 'quizzes';
+  setActiveTab: (tab: 'register' | 'calendar' | 'weekly' | 'quizzes') => void;
 }
 
 const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
@@ -252,20 +254,21 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
         {/* Mensajes */}
         {message && (
           <div
-            className={`rounded-xl border px-4 py-3 text-sm shadow-sm ${
+            className={`rounded-xl border px-4 py-3 shadow-sm ${
               message.type === 'success'
                 ? 'border-emerald-200/70 bg-emerald-50 text-emerald-800'
                 : 'border-rose-200/70 bg-rose-50 text-rose-800'
-            }`}
+            } text-sm`}
           >
             {message.text}
           </div>
         )}
 
-        <div className="rounded-2xl bg-white p-4 shadow-xl ring-1 ring-slate-100 sm:p-5">
-          {/* TAB 1: REGISTRO DE CLASE */}
-          {activeTab === 'register' ? (
-            <div className="grid gap-6 lg:grid-cols-[1.15fr,0.85fr]">
+        {(activeTab === 'register' || activeTab === 'calendar') && (
+          <div className="rounded-2xl bg-white p-4 shadow-xl ring-1 ring-slate-100 sm:p-5">
+            {/* TAB 1: REGISTRO DE CLASE */}
+            {activeTab === 'register' ? (
+              <div className="grid gap-6 lg:grid-cols-[1.15fr,0.85fr]">
               <form onSubmit={handleRegisterClass} className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -426,78 +429,82 @@ const AcademiaSimplified: React.FC<AcademiaSimplifiedProps> = ({
                 </div>
               </aside>
             </div>
-          ) : (
-            /* TAB 2: CALENDARIO */
-            <div className="space-y-4 md:space-y-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">Calendario de clases</h2>
-                  <p className="hidden text-sm text-slate-500 sm:block">Próximas clases programadas y tu histórico.</p>
+            ) : (
+              /* TAB 2: CALENDARIO */
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">Calendario de clases</h2>
+                    <p className="hidden text-sm text-slate-500 sm:block">Próximas clases programadas y tu histórico.</p>
+                  </div>
+                  <div className="rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700">
+                    {classes.length} clases en total
+                  </div>
                 </div>
-                <div className="rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700">
-                  {classes.length} clases en total
-                </div>
+
+                {/* Clases futuras */}
+                {futureClasses.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Próximas clases ({futureClasses.length})
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {futureClasses.map(academicClass => (
+                        <ClassCard
+                          key={academicClass.id}
+                          academicClass={academicClass}
+                          user={user}
+                          onEdit={handleEditClass}
+                          onDelete={handleDeleteClass}
+                          isDeleting={deletingClassId === academicClass.id}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Clases pasadas */}
+                {pastClasses.length > 0 && (
+                  <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                    <h3 className="text-lg font-semibold text-slate-600">
+                      Clases pasadas ({pastClasses.length})
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {pastClasses.map(academicClass => (
+                        <ClassCard
+                          key={academicClass.id}
+                          academicClass={academicClass}
+                          user={user}
+                          onEdit={handleEditClass}
+                          onDelete={handleDeleteClass}
+                          isPast
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sin clases */}
+                {classes.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-slate-500 sm:px-6 sm:py-12">
+                    <Calendar className="mx-auto mb-4 h-12 w-12 text-slate-300 sm:h-14 sm:w-14" />
+                    <p className="text-lg font-semibold text-slate-700">No hay clases programadas</p>
+                    <p className="text-sm">Registra tu primera clase para llenar el calendario.</p>
+                    <button
+                      onClick={() => setActiveTab('register')}
+                      className="mt-4 inline-flex items-center justify-center rounded-full bg-sky-700 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-sky-200/40 transition hover:-translate-y-0.5 hover:bg-sky-800"
+                    >
+                      Programar clase
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
+          </div>
+        )}
 
-              {/* Clases futuras */}
-              {futureClasses.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    Próximas clases ({futureClasses.length})
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {futureClasses.map(academicClass => (
-                      <ClassCard
-                        key={academicClass.id}
-                        academicClass={academicClass}
-                        user={user}
-                        onEdit={handleEditClass}
-                        onDelete={handleDeleteClass}
-                        isDeleting={deletingClassId === academicClass.id}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Clases pasadas */}
-              {pastClasses.length > 0 && (
-                <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-                  <h3 className="text-lg font-semibold text-slate-600">
-                    Clases pasadas ({pastClasses.length})
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {pastClasses.map(academicClass => (
-                      <ClassCard
-                        key={academicClass.id}
-                        academicClass={academicClass}
-                        user={user}
-                        onEdit={handleEditClass}
-                        onDelete={handleDeleteClass}
-                        isPast
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sin clases */}
-              {classes.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-slate-500 sm:px-6 sm:py-12">
-                  <Calendar className="mx-auto mb-4 h-12 w-12 text-slate-300 sm:h-14 sm:w-14" />
-                  <p className="text-lg font-semibold text-slate-700">No hay clases programadas</p>
-                  <p className="text-sm">Registra tu primera clase para llenar el calendario.</p>
-                  <button
-                    onClick={() => setActiveTab('register')}
-                    className="mt-4 inline-flex items-center justify-center rounded-full bg-sky-700 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-sky-200/40 transition hover:-translate-y-0.5 hover:bg-sky-800"
-                  >
-                    Programar clase
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {activeTab === 'weekly' && <WeeklyTopicBoard />}
+        {activeTab === 'quizzes' && <QuizHub />}
 
         {/* Modal: Agregar Tema */}
         {showAddTopicModal && (

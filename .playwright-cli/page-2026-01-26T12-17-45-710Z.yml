@@ -1,0 +1,98 @@
+- generic [ref=e8]:
+  - toolbar [ref=e10]:
+    - button "English" [ref=e12] [cursor=pointer]: English
+  - generic [ref=e15]:
+    - heading "EpiPick" [level=1] [ref=e16]
+    - heading "A Tool for Selecting AntiSeizure Medication" [level=2] [ref=e17]
+  - generic [ref=e18]:
+    - paragraph [ref=e19]: This antiseizure medication selection tool is designed to assist healthcare providers both in diagnosing / classifying seizures and choosing an appropriate medication monotherapy. We recommend monotherapy when possible, because of the potential drug interactions. With the exception of treatment of absence seizures, this app does not consider ASMs for adjunct therapy. It is designed for use in patients whose seizures start at age 10 years or older.
+    - paragraph [ref=e20]: The algorithm was developed by Ali A. Asadi-Pooya, Sándor Beniczky, Emilio Perucca, Stefan Rampp, Guido Rubboli and Michael R. Sperling. The app was programmed by Stefan Rampp. The project was supported by a grant from the Danish Epilepsy Centre and Filadelfia Research Foundation. The translation into Portuguese was done by Isabella D'Andrea, Vanessa Cristina Colares Lessa, Elza Márcia Yacubian, Katia Lin and Fabio A. Nascimento.The translation into Ukranian was done by Yuliia Solodovnikova, Tetiana Marusich, Elisa Babych, Iryna Hnatiuk, Anastasiia Prokopiuk, Kateryna Sarazhyna, Alina Ivaniuk, Anzhelika Buhaienko. The translation into Japanese was done by Kazutaka Jin, Nobukazu Nakasato. The translation into French was done by Pierre Mégevand, Laurent Sheybani. The translation into Italian was done by Roberta Roberti, Emilio Russo, Simona Lattanzi, Antonietta Coppola, Simona Balestrini, on behalf of the antiseizure drug commissione of LICE (Italian League against Epilepsy). The translation into Hungarian was done by Levente Hadady, Sándor Beniczky.
+  - generic [ref=e22]:
+    - button "Version 03 October 2024 " [ref=e23] [cursor=pointer]:
+      - heading "Version 03 October 2024" [level=3] [ref=e24]
+      - text: 
+    - region "Version 03 October 2024 ":
+      - generic [ref=e25]:
+        - heading "18 February 2025" [level=4] [ref=e26]
+        - list [ref=e27]:
+          - listitem [ref=e28]: Added Hungarian translation
+        - heading "03 October 2024" [level=4] [ref=e29]
+        - list [ref=e30]:
+          - listitem [ref=e31]: Added French translation
+        - heading "14 December 2023" [level=4] [ref=e32]
+        - list [ref=e33]:
+          - listitem [ref=e34]: Added Italian translation
+          - listitem [ref=e35]: "Age now taken into account for classification of primary GTCS, generalized myoclonic seizures and/or absences: Features resulting in these seizure types now lead to a focal seizure result in patients age older than 25."
+          - listitem [ref=e36]: In patients with primary GTCS with or without generalized myoclonic seizures, PHT is moved to group 3 after normalization.
+        - heading "28 October 2023" [level=4] [ref=e37]
+        - list [ref=e38]:
+          - listitem [ref=e39]: Added Japanese translation
+          - listitem [ref=e40]: Added field to provide feedback on picked ASM
+          - listitem [ref=e41]: Various correction on spelling, wording and translations
+        - heading "29 November 2022" [level=4] [ref=e42]
+        - list [ref=e43]:
+          - listitem [ref=e44]: Changed questions on main seizure page to statements and added some instructions
+          - listitem [ref=e45]: "Due to teratogenic risk: In premenopausal women, ZNS and TPM are moved to class 3, without possibility for an upgrade in all seizure types except focal and GTCS. In focal epilepsies, both are removed completely."
+          - listitem [ref=e46]: In premenopausal women, PB is downgraded by 1 class
+          - listitem [ref=e47]: Added a warning when ZNS is recommended for premenopausal women, similar to PB, TPM and VPA
+          - listitem [ref=e48]: "ASMs protecting against GTCS without aggravating absences & myoclonus are now also considered: PER, LCM and PB placed in group 3 for GTCS+absences, GTCS+absences+myoclonia"
+          - listitem [ref=e49]: Added remark that these ASMs are used to control GTCS
+          - listitem [ref=e50]: Added remark that ETS can be added when absences are not control with these ASMs
+          - listitem [ref=e51]: "CEN updated: Focal now group 2 from 3 and uncertain from not considered to group 2 and removed warning for CEN"
+          - listitem [ref=e52]: Extended explanation of the intended aim of EpiPick in regard to monotherapy
+        - heading "19 October 2022" [level=4] [ref=e53]
+        - list [ref=e54]:
+          - listitem [ref=e55]: Added Ukranian translation
+          - listitem [ref=e56]: Moved eyes closed during the seizure to a separate red flag question
+          - listitem [ref=e57]: Moved question on jerks only when falling asleep to the red flags section
+          - listitem [ref=e58]: Improved some wording and corrected spelling mistakes
+        - heading "09 June 2022" [level=4] [ref=e59]
+        - list [ref=e60]:
+          - listitem [ref=e61]: Added Portugese translations
+          - listitem [ref=e62]: Added options for feedback on the final page
+          - listitem [ref=e63]: Added and adjusted red-flag questions
+          - listitem [ref=e64]: Additions to the legal disclaimer
+          - listitem [ref=e65]: Cleaned up the landing page
+        - heading "19 April 2021" [level=4] [ref=e66]
+        - list [ref=e67]:
+          - listitem [ref=e68]: Added cenobamate to focal epilepsies. As cenobamate is relatively new with limited safety data, it is now placed among the lower rank choices for early therapy. As additional safety data becomes available, its positioning will be reassessed.
+          - listitem [ref=e69]: "Cenobamate modifier: Downgrade by 1 level in case of allergy to any drug"
+          - listitem [ref=e70]: "Primary GTCS: Lacosamide and perampanel moved to group 2."
+          - listitem [ref=e71]: Improved support for smaller screens (mobile phones and tablets)
+  - generic [ref=e73]:
+    - button "EpiPick publications " [ref=e74] [cursor=pointer]:
+      - heading "EpiPick publications" [level=3] [ref=e75]
+      - text: 
+    - region "EpiPick publications ":
+      - generic [ref=e76]:
+        - paragraph [ref=e77]:
+          - text: "Asadi-Pooya AA, Beniczky S, Rubboli G, Sperling MR, Rampp S, Perucca E. A pragmatic algorithm to select appropriate antiseizure medications in patients with epilepsy. Epilepsia. 2020 Aug;61(8):1668-1677. doi: 10.1111/epi.16610. Epub 2020 Jul 22. PMID: 32697354."
+          - link "Pubmed" [ref=e78] [cursor=pointer]:
+            - /url: https://pubmed.ncbi.nlm.nih.gov/32697354/
+        - paragraph [ref=e79]:
+          - text: "Beniczky S, Rampp S, Asadi-Pooya AA, Rubboli G, Perucca E, Sperling MR. Optimal choice of antiseizure medication: Agreement among experts and validation of a web-based decision support application. Epilepsia. 2021 Jan;62(1):220-227. doi: 10.1111/epi.16763. Epub 2020 Dec 6. PMID: 33280100."
+          - link "Pubmed" [ref=e80] [cursor=pointer]:
+            - /url: https://pubmed.ncbi.nlm.nih.gov/33280100/
+        - paragraph [ref=e81]:
+          - text: "Beniczky S, Asadi-Pooya AA, Perucca E, Rubboli G, Tartara E, Meritam Larsen P, Ebrahimi S, Farzinmehr S, Rampp S, Sperling MR. A web-based algorithm to rapidly classify seizures for the purpose of drug selection. Epilepsia. 2021 Oct;62(10):2474-2484. doi: 10.1111/epi.17039. Epub 2021 Aug 22. PMID: 34420206."
+          - link "Pubmed" [ref=e82] [cursor=pointer]:
+            - /url: https://pubmed.ncbi.nlm.nih.gov/34420206/
+        - paragraph [ref=e83]:
+          - text: "Asadi-Pooya AA, Beniczky S, Rubboli G, Sperling MR, Rampp S, Perucca E. The EpiPick algorithm to select appropriate antiseizure medications in patients with epilepsy: Validation studies and updates. Epilepsia. 2021 Nov 19. doi: 10.1111/epi.17129. Epub ahead of print. PMID: 34797915."
+          - link "Pubmed" [ref=e84] [cursor=pointer]:
+            - /url: https://pubmed.ncbi.nlm.nih.gov/34797915/
+        - paragraph [ref=e85]:
+          - text: "Hadady L, Klivényi P, Perucca E, Rampp S, Fabó D, Bereczki C, Rubboli G, Asadi-Pooya AA, Sperling MR, Beniczky S. Web-based decision support system for patient-tailored selection of antiseizure medication in adolescents and adults: An external validation study. Eur J Neurol. 2021 Nov 5. doi: 10.1111/ene.15168. Epub ahead of print. PMID: 34741372."
+          - link "Pubmed" [ref=e86] [cursor=pointer]:
+            - /url: https://pubmed.ncbi.nlm.nih.gov/34741372/
+  - generic [ref=e88]:
+    - button "Legal disclaimer " [ref=e89] [cursor=pointer]:
+      - heading "Legal disclaimer" [level=3] [ref=e90]
+      - text: 
+    - region "EpiPick publications ":
+      - generic [ref=e91]:
+        - paragraph [ref=e92]: This program is designed for medical professionals. The app is based on available clinical evidence and the expert opinions of the app developers. It is not an official guideline, and the recommendations do not replace standard health care practice. Interpretation of the content and data presented are the responsibility of the user. This tool is designed to aid the prescriber, but does not substitute for that person's judgment and for the need to take into consideration additional patient-related variables not included in the software algorithm. The final decision regarding prescription of medication is the responsibility of the user, who may choose a different treatment than is suggested by this app. The designers do not take responsibility for failure of prescribed medication to control seizures nor any adverse effects that patients may experience. Users should be aware that antiepileptic medication may fail to control seizures and may produce adverse effects, some of which may be serious or life-threatening. Users should have detailed knowledge about any drug they prescribe and be familiar with efficacy and adverse effect profiles.
+        - paragraph [ref=e93]: The user understands that this is not a medical device and that the user must independently review the basis for the recommendations presented by the program so that the medical professionals using the app do not rely primarily on such recommendations, but rather on their own judgment, to make clinical decisions for individual patients.
+        - paragraph [ref=e94]: Data entry and choices made in the app will be saved anonymously so that app performance can be analyzed and improved. The authors may choose to publish about the use of the app, and no users will be identified in any way.
+        - paragraph [ref=e95]: The user is liable or responsible for any advice, course of treatment, diagnosis or any other information, services or product obtained through this site. The user releases and discharges the authors of EpiPick and their affiliates from any and all claims, liabilities, obligations, disputes, demands, damages, causes of action of any nature and kind, known or unknown, related to the use of the EpiPick application.
+  - button "Accept terms" [ref=e97] [cursor=pointer]
