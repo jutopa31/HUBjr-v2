@@ -1,0 +1,29 @@
+- generic [ref=e5]:
+  - navigation [ref=e98]:
+    - generic [ref=e99]:
+      - link "EpiPick" [ref=e101] [cursor=pointer]:
+        - /url: "#/Intro"
+      - list [ref=e102]:
+        - button "Start new case" [ref=e103] [cursor=pointer]
+      - list [ref=e104]:
+        - listitem [ref=e105]:
+          - button "English" [ref=e106] [cursor=pointer]: English
+  - generic [ref=e108]:
+    - generic [ref=e109]:
+      - heading "Has the patient experienced ANY of the following?" [level=2] [ref=e110]
+      - generic [ref=e112]:
+        - generic [ref=e114] [cursor=pointer]:
+          - checkbox "Epileptic seizures or convulsions" [ref=e115]
+          - text: Epileptic seizures or convulsions
+        - generic [ref=e117] [cursor=pointer]:
+          - checkbox "Temporary episodes with altered consciousness / awareness altered responsiveness / altered ability to speak involuntary movements / jerks strange behavior" [ref=e118]
+          - text: Temporary episodes with
+          - list [ref=e120]:
+            - listitem [ref=e121]: altered consciousness / awareness
+            - listitem [ref=e122]: altered responsiveness / altered ability to speak
+            - listitem [ref=e123]: involuntary movements / jerks
+            - listitem [ref=e124]: strange behavior
+        - generic [ref=e126] [cursor=pointer]:
+          - checkbox "Please verify that symptoms started at age 10 or older." [checked] [ref=e127]
+          - text: Please verify that symptoms started at age 10 or older.
+    - button "Next step" [ref=e128] [cursor=pointer]

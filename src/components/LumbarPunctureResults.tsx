@@ -10,12 +10,13 @@ import {
   AlertTriangle,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Clock
 } from 'lucide-react';
 import { useLumbarPuncture, useLPFilters } from '../hooks/useLumbarPuncture';
 import { useAuthContext } from '../components/auth/AuthProvider';
 import { awardPointsForLumbarPuncture } from '../services/rankingService';
-import { LumbarPuncture, LPFilters, LPSearchParams } from '../types/lumbarPuncture';
+import { LumbarPuncture, LPFilters, LPSearchParams, LPStatus } from '../types/lumbarPuncture';
 
 interface LumbarPunctureResultsProps {
   onEdit?: (procedure: LumbarPuncture) => void;
@@ -197,6 +198,19 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
                   <option value="false">Unsuccessful</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select
+                  value={searchParams.filters?.status || ''}
+                  onChange={(e) => handleFilter({ status: (e.target.value || undefined) as LPStatus | undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 "
+                >
+                  <option value="">Todas</option>
+                  <option value="scheduled">Programadas</option>
+                  <option value="completed">Completadas</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -275,6 +289,9 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Fecha
                   </th>
                   <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -311,7 +328,20 @@ export default function LumbarPunctureResults({ onEdit, onView }: LumbarPuncture
               </thead>
               <tbody className="bg-white">
                 {procedures.map((procedure) => (
-                  <tr key={procedure.id} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
+                  <tr key={procedure.id} className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${procedure.status === 'scheduled' ? 'bg-amber-50' : ''}`}>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      {procedure.status === 'scheduled' ? (
+                        <span className="badge badge-warning flex items-center">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          Programada
+                        </span>
+                      ) : (
+                        <span className="badge badge-success flex items-center">
+                          <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                          Completada
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
                         <Calendar className="h-3.5 w-3.5 text-gray-400 mr-1.5" />

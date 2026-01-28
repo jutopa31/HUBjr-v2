@@ -95,7 +95,14 @@
       "mcp__playwright__browser_tabs",
       "mcp__filesystem__search_files",
       "mcp__filesystem__write_file",
-      "Bash(cmd /c \"copy \"\"C:\\\\Users\\\\Nicolas\\\\Downloads\\\\medical-evolution-organizer.skill\"\" \"\"C:\\\\dev\\\\proyect\\\\hubjr-v2\\\\temp-skill.zip\"\"\")"
+      "Bash(cmd /c \"copy \"\"C:\\\\Users\\\\Nicolas\\\\Downloads\\\\medical-evolution-organizer.skill\"\" \"\"C:\\\\dev\\\\proyect\\\\hubjr-v2\\\\temp-skill.zip\"\"\")",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__create_directory",
+      "Bash(npx next build)",
+      "Bash(git worktree add:*)",
+      "Skill(playwright-cli)",
+      "Bash(git pull:*)",
+      "Bash(powershell -command:*)"
     ],
     "deny": []
   },
