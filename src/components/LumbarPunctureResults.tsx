@@ -3,7 +3,6 @@ import {
   Search,
   Filter,
   Calendar,
-  CalendarClock,
   User,
   Stethoscope,
   CheckCircle,
