@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, FileQuestion, PencilLine, ShieldCheck, Trash2 } from 'lucide-react';
+import { CheckCircle2, Edit3, Eye, EyeOff, FileQuestion, PencilLine, ShieldCheck, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Quiz,
@@ -10,10 +10,12 @@ import {
   createQuiz,
   createQuizQuestions,
   deleteQuiz,
+  deleteQuizQuestions,
   fetchQuizAttemptsForUser,
   fetchQuizQuestions,
   fetchQuizzes,
-  recordQuizAttempt
+  recordQuizAttempt,
+  updateQuiz
 } from '../../services/academiaQuizService';
 
 type QuizFormQuestion = {
@@ -49,12 +51,24 @@ const QuizHub: React.FC = () => {
   const [status, setStatus] = useState<QuizStatus>('draft');
   const [formQuestions, setFormQuestions] = useState<QuizFormQuestion[]>([emptyQuestion()]);
   const [savingQuiz, setSavingQuiz] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
+  const [togglingStatus, setTogglingStatus] = useState<string | null>(null);
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const publishedQuizzes = useMemo(
     () => quizzes.filter(quiz => quiz.status === 'published'),
     [quizzes]
+  );
+
+  const myDraftQuizzes = useMemo(
+    () => quizzes.filter(quiz => quiz.status === 'draft' && quiz.created_by === userId),
+    [quizzes, userId]
+  );
+
+  const myPublishedQuizzes = useMemo(
+    () => quizzes.filter(quiz => quiz.status === 'published' && quiz.created_by === userId),
+    [quizzes, userId]
   );
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -139,9 +153,44 @@ const QuizHub: React.FC = () => {
     setDescription('');
     setStatus('draft');
     setFormQuestions([emptyQuestion()]);
+    setEditingQuiz(null);
   };
 
-  const handleCreateQuiz = async () => {
+  const handleEditQuiz = async (quiz: Quiz) => {
+    setEditingQuiz(quiz);
+    setTitle(quiz.title);
+    setDescription(quiz.description || '');
+    setStatus(quiz.status);
+
+    const { data: questions } = await fetchQuizQuestions(quiz.id);
+    if (questions && questions.length > 0) {
+      setFormQuestions(questions.map(q => ({
+        question_text: q.question_text,
+        options: q.options,
+        correct_option_index: q.correct_option_index,
+        explanation: q.explanation || ''
+      })));
+    } else {
+      setFormQuestions([emptyQuestion()]);
+    }
+  };
+
+  const handleTogglePublish = async (quiz: Quiz) => {
+    setTogglingStatus(quiz.id);
+    const newStatus: QuizStatus = quiz.status === 'published' ? 'draft' : 'published';
+    const { error } = await updateQuiz(quiz.id, { status: newStatus });
+    setTogglingStatus(null);
+
+    if (error) {
+      showMessage('error', error.message || 'No pudimos cambiar el estado');
+      return;
+    }
+
+    showMessage('success', newStatus === 'published' ? 'Cuestionario publicado' : 'Cuestionario despublicado');
+    loadQuizzes();
+  };
+
+  const handleSaveQuiz = async () => {
     if (!userId) {
       showMessage('error', 'Debes iniciar sesion para crear cuestionarios');
       return;
@@ -165,18 +214,6 @@ const QuizHub: React.FC = () => {
     }
 
     setSavingQuiz(true);
-    const quizResult = await createQuiz({
-      title: title.trim(),
-      description: description.trim() || null,
-      status,
-      created_by: userId
-    });
-
-    if (quizResult.error || !quizResult.data) {
-      setSavingQuiz(false);
-      showMessage('error', quizResult.error?.message || 'No pudimos crear el cuestionario');
-      return;
-    }
 
     const questionsPayload: QuizQuestionInput[] = filteredQuestions.map((question, index) => ({
       question_text: question.question_text.trim(),
@@ -186,15 +223,57 @@ const QuizHub: React.FC = () => {
       display_order: index
     }));
 
-    const questionsResult = await createQuizQuestions(quizResult.data.id, questionsPayload);
-    setSavingQuiz(false);
+    if (editingQuiz) {
+      // Update existing quiz
+      const quizResult = await updateQuiz(editingQuiz.id, {
+        title: title.trim(),
+        description: description.trim() || null,
+        status
+      });
 
-    if (questionsResult.error) {
-      showMessage('error', questionsResult.error.message || 'Quiz creado, pero no pudimos guardar las preguntas');
-      return;
+      if (quizResult.error) {
+        setSavingQuiz(false);
+        showMessage('error', quizResult.error.message || 'No pudimos actualizar el cuestionario');
+        return;
+      }
+
+      // Delete old questions and create new ones
+      await deleteQuizQuestions(editingQuiz.id);
+      const questionsResult = await createQuizQuestions(editingQuiz.id, questionsPayload);
+      setSavingQuiz(false);
+
+      if (questionsResult.error) {
+        showMessage('error', questionsResult.error.message || 'Quiz actualizado, pero hubo un error con las preguntas');
+        return;
+      }
+
+      showMessage('success', 'Cuestionario actualizado');
+    } else {
+      // Create new quiz
+      const quizResult = await createQuiz({
+        title: title.trim(),
+        description: description.trim() || null,
+        status,
+        created_by: userId
+      });
+
+      if (quizResult.error || !quizResult.data) {
+        setSavingQuiz(false);
+        showMessage('error', quizResult.error?.message || 'No pudimos crear el cuestionario');
+        return;
+      }
+
+      const questionsResult = await createQuizQuestions(quizResult.data.id, questionsPayload);
+      setSavingQuiz(false);
+
+      if (questionsResult.error) {
+        showMessage('error', questionsResult.error.message || 'Quiz creado, pero no pudimos guardar las preguntas');
+        return;
+      }
+
+      showMessage('success', 'Cuestionario creado');
     }
 
-    showMessage('success', 'Cuestionario creado');
     resetQuizForm();
     loadQuizzes();
   };
@@ -276,10 +355,16 @@ const QuizHub: React.FC = () => {
       <div className="grid gap-6 xl:grid-cols-[1.1fr,1fr]">
         <section className="space-y-4 rounded-3xl border border-slate-100 bg-white px-5 py-5 shadow-sm">
           <header className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold">Crear cuestionario</p>
-            <h2 className="text-xl text-slate-900 font-semibold">Banco de preguntas</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold">
+              {editingQuiz ? 'Editar cuestionario' : 'Crear cuestionario'}
+            </p>
+            <h2 className="text-xl text-slate-900 font-semibold">
+              {editingQuiz ? `Editando: ${editingQuiz.title}` : 'Banco de preguntas'}
+            </h2>
             <p className="text-sm text-slate-500">
-              Disena mini-evaluaciones con feedback inmediato para cada respuesta.
+              {editingQuiz
+                ? 'Modifica el cuestionario y guarda los cambios.'
+                : 'Disena mini-evaluaciones con feedback inmediato para cada respuesta.'}
             </p>
           </header>
 
@@ -407,19 +492,126 @@ const QuizHub: React.FC = () => {
                 <PencilLine className="h-4 w-4" />
                 Agregar pregunta
               </button>
+              {editingQuiz && (
+                <button
+                  type="button"
+                  onClick={resetQuizForm}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-slate-700 text-sm font-semibold transition hover:bg-slate-100"
+                >
+                  Cancelar edicion
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleCreateQuiz}
+                onClick={handleSaveQuiz}
                 disabled={savingQuiz}
                 className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-white text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 disabled:opacity-60 disabled:translate-y-0"
               >
-                {savingQuiz ? 'Guardando...' : 'Guardar cuestionario'}
+                {savingQuiz ? 'Guardando...' : editingQuiz ? 'Actualizar cuestionario' : 'Guardar cuestionario'}
               </button>
             </div>
           </div>
         </section>
 
         <section className="space-y-4">
+          {/* Mis cuestionarios (borradores y publicados propios) */}
+          {userId && (myDraftQuizzes.length > 0 || myPublishedQuizzes.length > 0) && (
+            <div className="rounded-3xl border border-amber-200 bg-amber-50 px-5 py-5 shadow-sm">
+              <header className="mb-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold">Mis cuestionarios</p>
+                <h3 className="text-lg text-amber-900 font-semibold">Borradores y publicados</h3>
+              </header>
+
+              {myDraftQuizzes.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs text-amber-700 font-semibold mb-2">Borradores ({myDraftQuizzes.length})</p>
+                  <div className="space-y-2">
+                    {myDraftQuizzes.map((quiz) => (
+                      <div key={quiz.id} className="rounded-xl border border-amber-200 bg-white px-3 py-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-slate-900 font-semibold truncate">{quiz.title}</p>
+                            <p className="text-xs text-slate-500 truncate">{quiz.description || 'Sin descripcion'}</p>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleEditQuiz(quiz)}
+                              className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-slate-700 text-xs font-semibold transition hover:bg-slate-100"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePublish(quiz)}
+                              disabled={togglingStatus === quiz.id}
+                              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-white text-xs font-semibold transition hover:bg-emerald-700 disabled:opacity-60"
+                            >
+                              <Eye className="h-3 w-3" />
+                              {togglingStatus === quiz.id ? '...' : 'Publicar'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteQuiz(quiz.id)}
+                              className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-2.5 py-1 text-rose-700 text-xs font-semibold transition hover:bg-rose-50"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {myPublishedQuizzes.length > 0 && (
+                <div>
+                  <p className="text-xs text-amber-700 font-semibold mb-2">Publicados ({myPublishedQuizzes.length})</p>
+                  <div className="space-y-2">
+                    {myPublishedQuizzes.map((quiz) => (
+                      <div key={quiz.id} className="rounded-xl border border-emerald-200 bg-white px-3 py-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-slate-900 font-semibold truncate">{quiz.title}</p>
+                            <p className="text-xs text-slate-500 truncate">{quiz.description || 'Sin descripcion'}</p>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleEditQuiz(quiz)}
+                              className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-slate-700 text-xs font-semibold transition hover:bg-slate-100"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePublish(quiz)}
+                              disabled={togglingStatus === quiz.id}
+                              className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-amber-800 text-xs font-semibold transition hover:bg-amber-200 disabled:opacity-60"
+                            >
+                              <EyeOff className="h-3 w-3" />
+                              {togglingStatus === quiz.id ? '...' : 'Despublicar'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteQuiz(quiz.id)}
+                              className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-2.5 py-1 text-rose-700 text-xs font-semibold transition hover:bg-rose-50"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="rounded-3xl border border-slate-100 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 px-5 py-5 text-white shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>

@@ -201,6 +201,30 @@ export async function deleteQuiz(id: string): Promise<ServiceVoidResult> {
   }
 }
 
+export async function deleteQuizQuestions(quizId: string): Promise<ServiceVoidResult> {
+  if (!isSupabaseConfigured()) {
+    return { error: new Error('Supabase no configurado') };
+  }
+  try {
+    const { error } = await withTimeout(
+      supabase
+        .from('academy_quiz_questions')
+        .delete()
+        .eq('quiz_id', quizId)
+    );
+
+    if (error) {
+      console.error('Error deleting quiz questions:', error);
+      return { error: toFriendlyError(error, 'No pudimos eliminar las preguntas') };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Error in deleteQuizQuestions:', error);
+    return { error: toFriendlyError(error, 'No pudimos eliminar las preguntas') };
+  }
+}
+
 export async function createQuizQuestions(
   quizId: string,
   questions: QuizQuestionInput[]
