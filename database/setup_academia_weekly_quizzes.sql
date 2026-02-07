@@ -54,6 +54,16 @@ CREATE INDEX IF NOT EXISTS idx_academy_quiz_questions_quiz ON academy_quiz_quest
 CREATE INDEX IF NOT EXISTS idx_academy_quiz_attempts_quiz ON academy_quiz_attempts(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_academy_quiz_attempts_user ON academy_quiz_attempts(user_id);
 
+-- 3) Reminder logs (idempotency for weekly emails)
+CREATE TABLE IF NOT EXISTS academy_weekly_reminder_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  week_start_date DATE NOT NULL UNIQUE,
+  sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  recipient_count INTEGER DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_academy_weekly_reminder_logs_week ON academy_weekly_reminder_logs(week_start_date);
+
 -- 3) Updated_at trigger helper
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -76,6 +86,7 @@ ALTER TABLE academy_weekly_topics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE academy_quizzes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE academy_quiz_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE academy_quiz_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE academy_weekly_reminder_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Anyone can view weekly topics" ON academy_weekly_topics;
 CREATE POLICY "Anyone can view weekly topics"
@@ -164,3 +175,8 @@ DROP POLICY IF EXISTS "Users can insert own quiz attempts" ON academy_quiz_attem
 CREATE POLICY "Users can insert own quiz attempts"
   ON academy_quiz_attempts FOR INSERT
   WITH CHECK (auth.uid()::text = user_id);
+
+DROP POLICY IF EXISTS "Only service can manage reminder logs" ON academy_weekly_reminder_logs;
+CREATE POLICY "Only service can manage reminder logs"
+  ON academy_weekly_reminder_logs
+  USING (auth.role() = 'service_role');
