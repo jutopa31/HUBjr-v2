@@ -3,6 +3,7 @@ import useEscapeKey from './hooks/useEscapeKey';
 import { X, Save, Database, AlertCircle, CheckCircle, User, Calendar, Building2, Sparkles } from 'lucide-react';
 import { ExtractedPatientData, cleanPatientName } from './utils/patientDataExtractor';
 import { SavePatientData, HospitalContext } from './types';
+import type { StructuredSections } from './types/evolucionadorStructured';
 import { InterconsultaRow } from './services/interconsultasService';
 
 interface SavePatientModalProps {
@@ -13,6 +14,7 @@ interface SavePatientModalProps {
   fullNotes: string;
   currentHospitalContext?: HospitalContext;
   interconsultaContext?: InterconsultaRow | null;
+  structuredSections?: StructuredSections | null;
 }
 
 const SavePatientModal: React.FC<SavePatientModalProps> = ({
@@ -22,7 +24,8 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   extractedData,
   fullNotes,
   currentHospitalContext = 'Posadas',
-  interconsultaContext
+  interconsultaContext,
+  structuredSections
 }) => {
   const [patientName, setPatientName] = useState(extractedData.name || '');
   const [patientAge, setPatientAge] = useState(extractedData.age || '');
@@ -42,14 +45,15 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    const resolvedName = extractedData.name || interconsultaContext?.nombre || '';
-    const resolvedAge = extractedData.age || interconsultaContext?.edad || '';
-    const resolvedDni = extractedData.dni || interconsultaContext?.dni || '';
+    const structuredPaciente = structuredSections?.datosPaciente;
+    const resolvedName = structuredPaciente?.nombre || extractedData.name || interconsultaContext?.nombre || '';
+    const resolvedAge = structuredPaciente?.edad || extractedData.age || interconsultaContext?.edad || '';
+    const resolvedDni = structuredPaciente?.dni || extractedData.dni || interconsultaContext?.dni || '';
 
     setPatientName(resolvedName);
     setPatientAge(resolvedAge);
     setPatientDni(resolvedDni);
-  }, [extractedData, interconsultaContext, isOpen]);
+  }, [extractedData, interconsultaContext, isOpen, structuredSections]);
 
   useEscapeKey(onClose, isOpen);
 
@@ -79,6 +83,7 @@ const SavePatientModal: React.FC<SavePatientModalProps> = ({
         patient_dni: resolvedDni,
         clinical_notes: fullNotes,
         hospital_context: hospitalContext,
+        ...(structuredSections ? { structured_sections: structuredSections, format_version: 2 } : {}),
         scale_results: extractedData.extractedScales.map(scale => ({
           scale_name: scale.name,
           score: scale.score,

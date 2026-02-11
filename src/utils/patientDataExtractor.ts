@@ -180,3 +180,122 @@ export function generateDataSummary(data: ExtractedPatientData): string {
 
   return parts.join('\n');
 }
+
+export function compileSectionsToText(
+  sections: import('../types/evolucionadorStructured').StructuredSections
+): string {
+  const lines: string[] = [];
+
+  const pushSection = (title: string, content: string) => {
+    lines.push(`${title}:`);
+    lines.push(content?.trim() ? content.trim() : 'Sin datos');
+    lines.push('');
+  };
+
+  const { datosPaciente, antecedentes, motivoConsulta, examenFisico, estudiosComplementarios, interpretacion, sugerencias, media } = sections;
+  const hasAnyContent = Boolean(
+    datosPaciente.nombre ||
+      datosPaciente.dni ||
+      datosPaciente.edad ||
+      datosPaciente.cama ||
+      datosPaciente.obraSocial ||
+      antecedentes.texto ||
+      antecedentes.patologias.length ||
+      antecedentes.medicacionHabitual ||
+      antecedentes.alergias ||
+      motivoConsulta.texto ||
+      motivoConsulta.enfermedadActual ||
+      examenFisico.texto ||
+      examenFisico.examenNeurologico ||
+      estudiosComplementarios.texto ||
+      estudiosComplementarios.laboratorio ||
+      estudiosComplementarios.imagenes ||
+      estudiosComplementarios.otros ||
+      interpretacion ||
+      sugerencias ||
+      (media?.items?.length ?? 0) > 0
+  );
+
+  if (!hasAnyContent) {
+    return '';
+  }
+
+  const headerParts = [
+    `PACIENTE: ${datosPaciente.nombre || 'Sin nombre'}`,
+    `DNI: ${datosPaciente.dni || 'Sin DNI'}`,
+    `EDAD: ${datosPaciente.edad || 'Sin edad'}`,
+    `CAMA: ${datosPaciente.cama || 'Sin cama'}`
+  ];
+
+  const extraParts = [
+    datosPaciente.sexo ? `SEXO: ${datosPaciente.sexo}` : '',
+    datosPaciente.obraSocial ? `OBRA SOCIAL: ${datosPaciente.obraSocial}` : ''
+  ].filter(Boolean);
+
+  lines.push(headerParts[0]);
+  lines.push(`${headerParts.slice(1).join(', ')}${extraParts.length ? `, ${extraParts.join(', ')}` : ''}`);
+  lines.push('');
+
+  const antecedentesParts: string[] = [];
+  if (antecedentes.patologias.length > 0) {
+    antecedentesParts.push(`Patologias frecuentes: ${antecedentes.patologias.join(', ')}`);
+  }
+  if (antecedentes.texto.trim()) {
+    antecedentesParts.push(antecedentes.texto.trim());
+  }
+  if (antecedentes.medicacionHabitual.trim()) {
+    antecedentesParts.push(`Medicacion habitual: ${antecedentes.medicacionHabitual.trim()}`);
+  }
+  if (antecedentes.alergias.trim()) {
+    antecedentesParts.push(`Alergias: ${antecedentes.alergias.trim()}`);
+  }
+  pushSection('Antecedentes', antecedentesParts.join('\n') || 'Sin datos');
+
+  const motivoParts = [
+    motivoConsulta.texto.trim(),
+    motivoConsulta.enfermedadActual.trim()
+      ? `Enfermedad actual: ${motivoConsulta.enfermedadActual.trim()}`
+      : ''
+  ].filter(Boolean).join('\n');
+  pushSection('Motivo de consulta', motivoParts);
+
+  const examenParts = [
+    examenFisico.texto.trim(),
+    examenFisico.examenNeurologico.trim()
+      ? `Examen neurologico: ${examenFisico.examenNeurologico.trim()}`
+      : ''
+  ].filter(Boolean).join('\n');
+  pushSection('Examen fisico', examenParts);
+
+  const estudiosParts = [
+    estudiosComplementarios.texto.trim(),
+    estudiosComplementarios.laboratorio.trim()
+      ? `Laboratorio: ${estudiosComplementarios.laboratorio.trim()}`
+      : '',
+    estudiosComplementarios.imagenes.trim()
+      ? `Imagenes: ${estudiosComplementarios.imagenes.trim()}`
+      : '',
+    estudiosComplementarios.otros.trim()
+      ? `Otros: ${estudiosComplementarios.otros.trim()}`
+      : ''
+  ].filter(Boolean).join('\n');
+  pushSection('Estudios complementarios', estudiosParts);
+
+  if (interpretacion.trim()) {
+    pushSection('Interpretacion', interpretacion.trim());
+  }
+
+  if (sugerencias.trim()) {
+    pushSection('Sugerencias', sugerencias.trim());
+  }
+
+  if (media?.items?.length) {
+    const mediaLines = media.items.map(item => {
+      const desc = item.description?.trim();
+      return `- ${item.category}: ${item.fileName}${desc ? ` (${desc})` : ''}`;
+    });
+    pushSection('Media', mediaLines.join('\n'));
+  }
+
+  return lines.join('\n').trim();
+}

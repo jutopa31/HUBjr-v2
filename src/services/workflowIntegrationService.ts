@@ -7,6 +7,8 @@ import { supabase } from '../utils/supabase';
 import type { InterconsultaRow } from './interconsultasService';
 import type { PacientePostAltaRow } from './pacientesPostAltaService';
 import type { PatientAssessment } from '../types';
+import type { StructuredSections } from '../types/evolucionadorStructured';
+import { createEmptyStructuredSections } from '../types/evolucionadorStructured';
 
 /**
  * Genera template estructurado para Evolucionador desde interconsulta
@@ -81,6 +83,49 @@ ${pendientePrevio}
 
 Personal interviniente
 `;
+}
+
+export function generateStructuredTemplateFromInterconsulta(interconsulta: InterconsultaRow): StructuredSections {
+  const structured = createEmptyStructuredSections();
+  structured.datosPaciente.nombre = interconsulta.nombre || '';
+  structured.datosPaciente.dni = interconsulta.dni || '';
+  structured.datosPaciente.edad = interconsulta.edad || '';
+  structured.datosPaciente.cama = interconsulta.cama || '';
+  structured.motivoConsulta.texto = interconsulta.relato_consulta || '';
+  structured.estudiosComplementarios.texto = interconsulta.estudios_ocr || '';
+  return structured;
+}
+
+export function generateStructuredTemplateFromPostAlta(patient: PacientePostAltaRow): StructuredSections {
+  const structured = createEmptyStructuredSections();
+  structured.datosPaciente.nombre = patient.nombre || '';
+  structured.datosPaciente.dni = patient.dni || '';
+  structured.datosPaciente.edad = '';
+  structured.datosPaciente.cama = 'Ambulatorio';
+
+  if (patient.diagnostico) {
+    structured.antecedentes.texto = patient.diagnostico;
+  }
+
+  const fechaVisita = patient.fecha_visita
+    ? new Date(patient.fecha_visita).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    : 'No especificada';
+
+  structured.motivoConsulta.texto = `Paciente en seguimiento ambulatorio post-alta.\\nFecha de visita programada: ${fechaVisita}`;
+
+  if (patient.pendiente?.trim()) {
+    structured.sugerencias = `Pendiente previo: ${patient.pendiente.trim()}`;
+  }
+
+  if (patient.notas_evolucion?.trim()) {
+    structured.interpretacion = patient.notas_evolucion.trim();
+  }
+
+  return structured;
 }
 
 /**
@@ -431,6 +476,77 @@ export function mapToWardRoundPatient(
   assessment: PatientAssessment
 ): any {
   console.log('[WorkflowIntegration] mapToWardRoundPatient -> Starting mapping for:', interconsulta.nombre);
+
+  if (assessment.format_version === 2 && assessment.structured_sections) {
+    console.log('[WorkflowIntegration] ✅ Usando structured_sections (format_version=2)');
+    const structured = assessment.structured_sections as StructuredSections;
+
+    const antecedentesParts = [
+      structured.antecedentes.patologias.length
+        ? `Patologias: ${structured.antecedentes.patologias.join(', ')}`
+        : '',
+      structured.antecedentes.texto.trim(),
+      structured.antecedentes.medicacionHabitual.trim()
+        ? `Medicacion habitual: ${structured.antecedentes.medicacionHabitual.trim()}`
+        : '',
+      structured.antecedentes.alergias.trim()
+        ? `Alergias: ${structured.antecedentes.alergias.trim()}`
+        : ''
+    ].filter(Boolean).join('\n');
+
+    const motivoParts = [
+      structured.motivoConsulta.texto.trim(),
+      structured.motivoConsulta.enfermedadActual.trim()
+        ? `Enfermedad actual: ${structured.motivoConsulta.enfermedadActual.trim()}`
+        : ''
+    ].filter(Boolean).join('\n');
+
+    const examenParts = [
+      structured.examenFisico.texto.trim(),
+      structured.examenFisico.examenNeurologico.trim()
+        ? `Examen neurologico: ${structured.examenFisico.examenNeurologico.trim()}`
+        : ''
+    ].filter(Boolean).join('\n');
+
+    const estudiosParts = [
+      structured.estudiosComplementarios.texto.trim(),
+      structured.estudiosComplementarios.laboratorio.trim()
+        ? `Laboratorio: ${structured.estudiosComplementarios.laboratorio.trim()}`
+        : '',
+      structured.estudiosComplementarios.imagenes.trim()
+        ? `Imagenes: ${structured.estudiosComplementarios.imagenes.trim()}`
+        : '',
+      structured.estudiosComplementarios.otros.trim()
+        ? `Otros: ${structured.estudiosComplementarios.otros.trim()}`
+        : ''
+    ].filter(Boolean).join('\n');
+
+    return {
+      nombre: structured.datosPaciente.nombre || interconsulta.nombre,
+      dni: structured.datosPaciente.dni || interconsulta.dni,
+      edad: structured.datosPaciente.edad || interconsulta.edad || '',
+      cama: structured.datosPaciente.cama || interconsulta.cama,
+      fecha: new Date().toISOString().split('T')[0],
+
+      antecedentes: antecedentesParts || '',
+      motivo_consulta: motivoParts || '',
+      examen_fisico: examenParts || '',
+      estudios: estudiosParts || '',
+
+      diagnostico: structured.interpretacion || '',
+      plan: structured.sugerencias || '',
+
+      pendientes: '',
+
+      image_thumbnail_url: interconsulta.image_thumbnail_url || [],
+      image_full_url: interconsulta.image_full_url || [],
+      exa_url: interconsulta.exa_url || [],
+
+      hospital_context: interconsulta.hospital_context || 'Posadas',
+      severidad: 'II',
+      display_order: 9999
+    };
+  }
 
   const sections = extractStructuredSections(assessment.clinical_notes);
 

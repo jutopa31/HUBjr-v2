@@ -29,6 +29,7 @@
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.4.149",
     "Playwright": "npm:playwright@^1.55.0",
+    "pptxgenjs": "^4.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tesseract.js": "^6.0.1"

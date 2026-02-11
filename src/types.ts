@@ -53,6 +53,8 @@ export interface PatientAssessment {
   created_at?: string;
   created_by?: string;
   status?: string;
+  structured_sections?: import('./types/evolucionadorStructured').StructuredSections;
+  format_version?: number;
 
   // Workflow integration fields
   source_interconsulta_id?: string; // ID de interconsulta origen (si aplica)
@@ -71,6 +73,8 @@ export interface EvolucionadorDraft {
   source_post_alta_id?: string | null;
   created_at?: string;
   updated_at?: string;
+  structured_sections?: import('./types/evolucionadorStructured').StructuredSections;
+  format_version?: number;
 }
 
 export interface EvolucionadorDraftPayload {
@@ -81,6 +85,8 @@ export interface EvolucionadorDraftPayload {
   patient_bed?: string;
   source_interconsulta_id?: string | null;
   source_post_alta_id?: string | null;
+  structured_sections?: import('./types/evolucionadorStructured').StructuredSections;
+  format_version?: number;
 }
 
 export interface SavedScaleResult {
@@ -99,6 +105,8 @@ export interface SavePatientData {
   hospital_context?: 'Posadas' | 'Julian';
   source_interconsulta_id?: string;
   response_sent?: boolean;
+  structured_sections?: import('./types/evolucionadorStructured').StructuredSections;
+  format_version?: number;
 }
 
 // Tipos para contexto de hospital

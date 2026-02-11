@@ -61,6 +61,8 @@ export async function savePatientAssessment(patientData: SavePatientData): Promi
       hospital_context: patientData.hospital_context || 'Posadas',
       created_by: 'neurologist',
       status: 'active',
+      ...(patientData.structured_sections ? { structured_sections: patientData.structured_sections } : {}),
+      ...(typeof patientData.format_version === 'number' ? { format_version: patientData.format_version } : {}),
       ...(patientData.source_interconsulta_id ? { source_interconsulta_id: patientData.source_interconsulta_id } : {}),
       ...(typeof patientData.response_sent === 'boolean' ? { response_sent: patientData.response_sent } : {})
     };

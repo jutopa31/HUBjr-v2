@@ -9,12 +9,16 @@ import OCRProcessorModal from './components/admin/OCRProcessorModal';
 import EpicrisisAssistantModal from './components/evolucionador/EpicrisisAssistantModal';
 import WardConfirmationModal from './components/interconsultas/WardConfirmationModal';
 import AIPromptChat from './components/evolucionador/AIPromptChat';
-import { extractPatientData, validatePatientData } from './utils/patientDataExtractor';
+import { compileSectionsToText, extractPatientData, validatePatientData } from './utils/patientDataExtractor';
 import { savePatientAssessment } from './utils/diagnosticAssessmentDB';
-import { generateEvolucionadorTemplate, generateEvolucionadorTemplateFromPostAlta } from './services/workflowIntegrationService';
+import { generateStructuredTemplateFromInterconsulta, generateStructuredTemplateFromPostAlta } from './services/workflowIntegrationService';
 import type { PacientePostAltaRow } from './services/pacientesPostAltaService';
 import { useAuth } from './hooks/useAuth';
 import { listEvolucionadorDrafts, saveEvolucionadorDraft } from './services/evolucionadorDraftsService';
+import StructuredEvolucionador from './components/evolucionador/StructuredEvolucionador';
+import SlideGenerator from './components/evolucionador/slides/SlideGenerator';
+import { createEmptyStructuredSections } from './types/evolucionadorStructured';
+import type { StructuredSections } from './types/evolucionadorStructured';
 
 const AI_SUGGESTIONS_GROUP = 'Sugerencias IA';
 const SEARCH_RESULTS_GROUP = 'Resultados de búsqueda';
@@ -103,8 +107,9 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   const { user } = useAuth();
   const userId = user?.id || null;
 
-  // Estado y ref para el dropdown de patologías rápidas
-  const [showPathologyDropdown, setShowPathologyDropdown] = useState(false);
+  const [structuredSections, setStructuredSections] = useState<StructuredSections>(() => createEmptyStructuredSections());
+  const [formatVersion, setFormatVersion] = useState<number>(2);
+  const [isLegacyMode, setIsLegacyMode] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Estados para workflow integration (interconsulta ? evolucionador ? pase)
@@ -124,8 +129,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   useEffect(() => {
     if (activeInterconsulta && activeInterconsulta.id) {
       console.log('[DiagnosticAlgorithm] Pre-cargando template desde interconsulta:', activeInterconsulta.nombre);
-      const template = generateEvolucionadorTemplate(activeInterconsulta);
-      setNotes(template);
+      const template = generateStructuredTemplateFromInterconsulta(activeInterconsulta);
+      setStructuredSections(template);
+      setFormatVersion(2);
+      setIsLegacyMode(false);
+      setNotes(compileSectionsToText(template));
 
       // Mostrar notificación al usuario
       setSaveStatus({
@@ -136,14 +144,17 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       // Limpiar notificación después de 3 segundos
       setTimeout(() => setSaveStatus(null), 3000);
     }
-  }, [activeInterconsulta, setNotes]);
+  }, [activeInterconsulta, setNotes, setStructuredSections]);
 
   // useEffect para pre-cargar template desde paciente post-alta
   useEffect(() => {
     if (activePostAltaPatient && activePostAltaPatient.id) {
       console.log('[DiagnosticAlgorithm] Pre-cargando template desde post-alta:', activePostAltaPatient.nombre);
-      const template = generateEvolucionadorTemplateFromPostAlta(activePostAltaPatient);
-      setNotes(template);
+      const template = generateStructuredTemplateFromPostAlta(activePostAltaPatient);
+      setStructuredSections(template);
+      setFormatVersion(2);
+      setIsLegacyMode(false);
+      setNotes(compileSectionsToText(template));
 
       // Mostrar notificación al usuario
       setSaveStatus({
@@ -154,7 +165,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       // Limpiar notificación después de 3 segundos
       setTimeout(() => setSaveStatus(null), 3000);
     }
-  }, [activePostAltaPatient, setNotes]);
+  }, [activePostAltaPatient, setNotes, setStructuredSections]);
 
   useEffect(() => {
     if (!userId) return;
@@ -191,18 +202,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   // Auto-resize del textarea
   useEffect(() => {
+    if (!isLegacyMode) return;
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    // Resetear altura para calcular correctamente el scrollHeight
     textarea.style.height = 'auto';
-
-    // Calcular nueva altura basada en contenido
     const newHeight = Math.max(300, textarea.scrollHeight);
-
-    // Aplicar nueva altura
     textarea.style.height = `${newHeight}px`;
-  }, [notes]);
+  }, [isLegacyMode, notes]);
 
   useEffect(() => {
     if (!userId || hasLoadedDraft.current) return;
@@ -234,9 +241,23 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
       if (matchingDraft) {
         setActiveDraftId(matchingDraft.id);
-        if (notes !== (matchingDraft.notes || '')) {
+        const isStructuredDraft = matchingDraft.format_version === 2 && matchingDraft.structured_sections;
+
+        if (isStructuredDraft && matchingDraft.structured_sections) {
+          isHydratingDraft.current = true;
+          setStructuredSections(matchingDraft.structured_sections);
+          setFormatVersion(2);
+          setIsLegacyMode(false);
+          setNotes(compileSectionsToText(matchingDraft.structured_sections));
+          setDraftSyncLabel('Borrador restaurado');
+          setTimeout(() => {
+            isHydratingDraft.current = false;
+          }, 0);
+        } else if (notes !== (matchingDraft.notes || '')) {
           isHydratingDraft.current = true;
           setNotes(matchingDraft.notes || '');
+          setFormatVersion(matchingDraft.format_version || 1);
+          setIsLegacyMode(true);
           setDraftSyncLabel('Borrador restaurado');
           setTimeout(() => {
             isHydratingDraft.current = false;
@@ -255,7 +276,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
   useEffect(() => {
     if (!userId) return;
     if (isHydratingDraft.current) return;
-    if (!notes.trim()) return;
+    const notesToSave = formatVersion === 2 ? compileSectionsToText(structuredSections) : notes;
+    if (!notesToSave.trim()) return;
 
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
@@ -263,14 +285,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
     setDraftSyncLabel('Guardando borrador...');
     saveTimerRef.current = window.setTimeout(async () => {
-      const extracted = extractPatientData(notes);
+      const extracted = extractPatientData(notesToSave);
       const payload = {
-        notes,
+        notes: notesToSave,
         patient_name: extracted.name || undefined,
         patient_dni: extracted.dni || undefined,
         patient_age: extracted.age || undefined,
         source_interconsulta_id: getValidInterconsultaId(activeInterconsulta),
-        source_post_alta_id: activePostAltaPatient?.id || null
+        source_post_alta_id: activePostAltaPatient?.id || null,
+        ...(formatVersion === 2 ? { structured_sections: structuredSections, format_version: 2 } : {})
       };
       const result = await saveEvolucionadorDraft(userId, activeDraftId, payload);
       if (result.success && result.data) {
@@ -290,35 +313,26 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         window.clearTimeout(saveTimerRef.current);
       }
     };
-  }, [activeDraftId, activeInterconsulta?.id, activePostAltaPatient?.id, notes, userId]);
+  }, [activeDraftId, activeInterconsulta?.id, activePostAltaPatient?.id, formatVersion, notes, structuredSections, userId]);
+
+  const isStructuredMode = formatVersion === 2 && !isLegacyMode;
 
   // Análisis de IA del texto de notas
   const aiAnalysis = useAITextAnalysis(notes, 2000);
+  const extractedData = extractPatientData(notes);
+  const slidePatientName = structuredSections.datosPaciente.nombre || extractedData.name || 'Paciente';
+  const slideScaleResults = extractedData.extractedScales.map((scale) => ({
+    name: scale.name,
+    score: scale.score,
+    details: scale.details
+  }));
+  const hospitalLabel = currentHospitalContext === 'Julian' ? 'Consultorios Julian' : 'Hospital Posadas';
   
   // Debug: log del análisis
   console.log('[DiagnosticAlgorithm] Current notes:', notes);
   console.log('[DiagnosticAlgorithm] AI Analysis:', aiAnalysis);
   console.log('[DiagnosticAlgorithm] medicalScales received:', medicalScales?.length || 0);
   console.log('[DiagnosticAlgorithm] medicalScales data:', medicalScales?.map(s => ({ id: s.id, name: s.name, hasItems: !!s.items?.length })));
-
-  // Array de patologías frecuentes
-  const commonPathologies = [
-    { label: 'Hipertensión arterial', abbreviation: 'HTA' },
-    { label: 'Diabetes mellitus', abbreviation: 'DBT' },
-    { label: 'Tabaquismo', abbreviation: 'TBQ' },
-    { label: 'Dislipemia', abbreviation: 'DLP' },
-    { label: 'Obesidad', abbreviation: 'Obesidad' },
-    { label: 'Enfermedad pulmonar obstructiva crónica', abbreviation: 'EPOC' },
-    { label: 'Cardiopatía', abbreviation: 'Cardiopatía' },
-    { label: 'Fibrilación auricular', abbreviation: 'FA' },
-    { label: 'Enfermedad renal crónica', abbreviation: 'ERC' },
-    { label: 'Hipotiroidismo', abbreviation: 'Hipotiroidismo' },
-    { label: 'ACV previo', abbreviation: 'ACV previo' },
-    { label: 'Epilepsia', abbreviation: 'Epilepsia' },
-    { label: 'Migraña', abbreviation: 'Migraña' },
-    { label: 'Demencia', abbreviation: 'Demencia' },
-    { label: 'Enfermedad de Parkinson', abbreviation: 'Enf. Parkinson' }
-  ];
 
   // Función para insertar texto en la posición del cursor
   const insertAtCursor = useCallback((text: string) => {
@@ -339,6 +353,25 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     }, 0);
   }, [notes, setNotes]);
 
+  const applyStructuredUpdate = useCallback(
+    (updater: (prev: StructuredSections) => StructuredSections) => {
+      setStructuredSections((prev) => {
+        const next = updater(prev);
+        setNotes(compileSectionsToText(next));
+        return next;
+      });
+    },
+    [setNotes]
+  );
+
+  const handleStructuredChange = useCallback(
+    (nextSections: StructuredSections) => {
+      setStructuredSections(nextSections);
+      setNotes(compileSectionsToText(nextSections));
+    },
+    [setNotes]
+  );
+
   const handleInsertOcrText = useCallback((extractedText: string) => {
     const cleanedText = extractedText.trim();
     if (!cleanedText) {
@@ -346,14 +379,26 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       return;
     }
 
-    const trimmedCurrentNotes = notes.trim().length === 0 ? '' : notes.trimEnd();
-    const mergedNotes = trimmedCurrentNotes.length > 0
-      ? `${trimmedCurrentNotes}\n\n${cleanedText}`
-      : cleanedText;
+    if (formatVersion === 2) {
+      applyStructuredUpdate((prev) => ({
+        ...prev,
+        estudiosComplementarios: {
+          ...prev.estudiosComplementarios,
+          otros: prev.estudiosComplementarios.otros.trim()
+            ? `${prev.estudiosComplementarios.otros.trim()}\n${cleanedText}`
+            : cleanedText
+        }
+      }));
+    } else {
+      const trimmedCurrentNotes = notes.trim().length === 0 ? '' : notes.trimEnd();
+      const mergedNotes = trimmedCurrentNotes.length > 0
+        ? `${trimmedCurrentNotes}\n\n${cleanedText}`
+        : cleanedText;
 
-    setNotes(mergedNotes);
+      setNotes(mergedNotes);
+    }
     setShowOcrModal(false);
-  }, [notes, setNotes]);
+  }, [applyStructuredUpdate, formatVersion, notes, setNotes]);
 
   const handleToggleScales = useCallback(() => {
     setIsScalesVisible((prev) => {
@@ -364,6 +409,27 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       return next;
     });
   }, [isMobileView]);
+
+  const normalExamText =
+    'Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocoricas reactivas a la luz. MOE conservados. Sin deficit motor ni sensitivo. Taxia y sensibilidad conservadas.';
+
+  const handleInsertNormalExam = useCallback(() => {
+    if (isStructuredMode) {
+      applyStructuredUpdate((prev) => ({
+        ...prev,
+        examenFisico: {
+          ...prev.examenFisico,
+          examenNeurologico: prev.examenFisico.examenNeurologico.trim()
+            ? `${prev.examenFisico.examenNeurologico.trim()}\n\n${normalExamText}`
+            : normalExamText
+        }
+      }));
+      return;
+    }
+
+    const normalExamBlock = `Examen neurologico:\n${normalExamText}\n\n`;
+    insertAtCursor(normalExamBlock);
+  }, [applyStructuredUpdate, insertAtCursor, isStructuredMode, normalExamText]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -389,8 +455,18 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       if (matchingDraft && matchingDraft.id !== activeDraftId) {
         // Hay un borrador nuevo/actualizado
         setActiveDraftId(matchingDraft.id);
+        const isStructuredDraft = matchingDraft.format_version === 2 && matchingDraft.structured_sections;
         isHydratingDraft.current = true;
-        setNotes(matchingDraft.notes || '');
+        if (isStructuredDraft && matchingDraft.structured_sections) {
+          setStructuredSections(matchingDraft.structured_sections);
+          setFormatVersion(2);
+          setIsLegacyMode(false);
+          setNotes(compileSectionsToText(matchingDraft.structured_sections));
+        } else {
+          setNotes(matchingDraft.notes || '');
+          setFormatVersion(matchingDraft.format_version || 1);
+          setIsLegacyMode(true);
+        }
         setDraftSyncLabel('Borrador restaurado');
         setTimeout(() => {
           isHydratingDraft.current = false;
@@ -534,6 +610,14 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
 
   // Función para mejorar la nota con IA
   const handleImproveWithAI = useCallback(async () => {
+    if (isStructuredMode) {
+      setSaveStatus({
+        success: false,
+        message: 'La mejora con IA está disponible solo en modo legacy.'
+      });
+      setTimeout(() => setSaveStatus(null), 3000);
+      return;
+    }
     if (!notes.trim() || notes.trim().length < 50) {
       setSaveStatus({
         success: false,
@@ -584,13 +668,11 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
       setIsImproving(false);
       setTimeout(() => setSaveStatus(null), 5000);
     }
-  }, [notes, setNotes, setSaveStatus]);
+  }, [isStructuredMode, notes, setNotes, setSaveStatus]);
 
   // Función para manejar el guardado de paciente
   const handleSavePatient = () => {
     console.log('[DiagnosticAlgorithm] Abriendo modal con contexto:', currentHospitalContext);
-    const extractedData = extractPatientData(notes);
-
     if (!validatePatientData(extractedData) && notes.trim().length === 0) {
       setSaveStatus({
         success: false,
@@ -602,6 +684,27 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
     setShowSaveModal(true);
     setSaveStatus(null);
   };
+
+  const handleClearAll = useCallback(() => {
+    if (!clearNotes) return;
+
+    if (!isStructuredMode) {
+      clearNotes();
+      return;
+    }
+
+    const confirmClear = window.confirm(
+      '¿Estas seguro de que quieres limpiar todas las secciones?\n\nEsta accion no se puede deshacer.'
+    );
+    if (!confirmClear) return;
+
+    const emptySections = createEmptyStructuredSections();
+    setStructuredSections(emptySections);
+    setFormatVersion(2);
+    setIsLegacyMode(false);
+    setNotes('');
+    localStorage.setItem('hubjr-patient-notes', '');
+  }, [clearNotes, isStructuredMode, setNotes]);
 
   // Función para confirmar el guardado
   const handleConfirmSave = async (
@@ -617,7 +720,8 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
         ...patientData,
         source_interconsulta_id: getValidInterconsultaId(activeInterconsulta),
         source_post_alta_id: activePostAltaPatient?.id || null,
-        response_sent: false
+        response_sent: false,
+        ...(formatVersion === 2 ? { structured_sections: structuredSections, format_version: 2 } : {})
       };
 
       const result = await savePatientAssessment(enrichedData as any);
@@ -930,6 +1034,15 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <FileDown className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">PDF</span>
           </button>
+          {isStructuredMode && (
+            <SlideGenerator
+              sections={structuredSections}
+              patientName={slidePatientName}
+              scaleResults={slideScaleResults}
+              hospitalName={hospitalLabel}
+              onStatus={(status) => setSaveStatus(status)}
+            />
+          )}
           <button
             onClick={copyNotes}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
@@ -939,13 +1052,7 @@ const DiagnosticAlgorithmContent: React.FC<DiagnosticAlgorithmContentProps> = ({
             <span className="hidden xl:inline">Copiar</span>
           </button>
           <button
-            onClick={() => {
-              const normalExamText = `Examen neurológico:
-Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
-
-`;
-              insertAtCursor(normalExamText);
-            }}
+            onClick={handleInsertNormalExam}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
             title="Insertar examen físico normal"
           >
@@ -962,8 +1069,9 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </button>
           <button
             onClick={() => setShowEpicrisisAssistant(true)}
-            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-sm"
-            title="Asistente de Epicrisis con IA - Generar evolución automática"
+            disabled={isStructuredMode}
+            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-sm disabled:opacity-60"
+            title={isStructuredMode ? 'Disponible solo en modo legacy' : 'Asistente de Epicrisis con IA - Generar evolución automática'}
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">IA Epicrisis</span>
@@ -978,9 +1086,9 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </button>
           <button
             onClick={handleImproveWithAI}
-            disabled={isImproving || !notes.trim()}
+            disabled={isImproving || !notes.trim() || isStructuredMode}
             className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Mejorar nota con IA - Estructura y profesionaliza la evolucion"
+            title={isStructuredMode ? 'Disponible solo en modo legacy' : 'Mejorar nota con IA - Estructura y profesionaliza la evolucion'}
           >
             {isImproving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -991,7 +1099,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </button>
           {clearNotes && (
             <button
-              onClick={clearNotes}
+              onClick={handleClearAll}
               className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
               title="Limpiar notas"
             >
@@ -1104,6 +1212,15 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             <FileDown className="h-3.5 w-3.5" />
             <span>PDF</span>
           </button>
+          {isStructuredMode && (
+            <SlideGenerator
+              sections={structuredSections}
+              patientName={slidePatientName}
+              scaleResults={slideScaleResults}
+              hospitalName={hospitalLabel}
+              onStatus={(status) => setSaveStatus(status)}
+            />
+          )}
           <button
             onClick={copyNotes}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
@@ -1122,8 +1239,9 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </button>
           <button
             onClick={() => setShowEpicrisisAssistant(true)}
-            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-sm"
-            title="Asistente de Epicrisis con IA"
+            disabled={isStructuredMode}
+            className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium shadow-sm disabled:opacity-60"
+            title={isStructuredMode ? 'Disponible solo en modo legacy' : 'Asistente de Epicrisis con IA'}
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span>IA</span>
@@ -1138,9 +1256,9 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </button>
           <button
             onClick={handleImproveWithAI}
-            disabled={isImproving || !notes.trim()}
+            disabled={isImproving || !notes.trim() || isStructuredMode}
             className="px-2.5 py-1.5 text-xs rounded inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Mejorar nota con IA"
+            title={isStructuredMode ? 'Disponible solo en modo legacy' : 'Mejorar nota con IA'}
           >
             {isImproving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1150,13 +1268,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
             <span>{isImproving ? 'Mejorando...' : 'Mejorar'}</span>
           </button>
           <button
-            onClick={() => {
-              const normalExamText = `Examen neurológico:
-Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomina, obedece comandos simples y complejos. Pupilas isocóricas reactivas a la luz. MOE conservados. Sin déficit motor ni sensitivo. Taxia y sensibilidad conservadas.
-
-`;
-              insertAtCursor(normalExamText);
-            }}
+            onClick={handleInsertNormalExam}
             className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5"
             title="Insertar examen físico normal"
           >
@@ -1165,7 +1277,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           </button>
           {clearNotes && (
             <button
-              onClick={clearNotes}
+              onClick={handleClearAll}
               className="px-2.5 py-1.5 text-xs btn-soft rounded inline-flex items-center gap-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
               title="Limpiar notas"
             >
@@ -1361,67 +1473,34 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               </div>
             )}
 
-            <textarea
-              ref={textareaRef}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0a0a0a] p-4 font-mono text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              style={{
-                minHeight: '300px',
-                height: '300px',
-                overflowY: 'hidden'
-              }}
-              placeholder="Escriba aquí las notas del paciente..."
-            />
+            {isLegacyMode ? (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-100">
+                  Modo legacy: las evoluciones anteriores se muestran en lectura. Para crear una nueva evolución estructurada, limpia el contenido.
+                </div>
+                <textarea
+                  ref={textareaRef}
+                  value={notes}
+                  readOnly
+                  className="w-full resize-none rounded-lg border border-gray-300 bg-white p-4 text-sm text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-[#0a0a0a] dark:text-gray-200"
+                  style={{
+                    minHeight: '300px',
+                    height: '300px',
+                    overflowY: 'hidden'
+                  }}
+                />
+              </div>
+            ) : (
+              <StructuredEvolucionador
+                sections={structuredSections}
+                onChange={handleStructuredChange}
+                userId={userId}
+              />
+            )}
         </div>
       </div>
 
       {/* BOTONES DUPLICADOS ELIMINADOS - ahora todos están en el header */}
-      {/* Dropdown de Antecedentes */}
-      {showPathologyDropdown && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowPathologyDropdown(false)}
-          />
-          <div className="fixed top-20 right-4 z-50 w-80 max-h-96 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] shadow-2xl">
-            <div className="sticky top-0 border-b border-gray-300 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/50 dark:to-cyan-950/50 px-4 py-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Antecedentes Frecuentes</h3>
-                <button
-                  onClick={() => setShowPathologyDropdown(false)}
-                  className="rounded p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Click para insertar en el cursor</p>
-            </div>
-            <div className="divide-y divide-gray-200 dark:divide-gray-800">
-              {commonPathologies.map((pathology, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    insertAtCursor(pathology.abbreviation);
-                    setShowPathologyDropdown(false);
-                  }}
-                  className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-teal-50 dark:hover:bg-teal-950/30"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{pathology.label}</p>
-                  </div>
-                  <div className="ml-3 flex items-center space-x-2">
-                    <span className="rounded-full bg-blue-900/50 px-2 py-1 text-xs font-semibold text-blue-300 border border-blue-800">
-                      {pathology.abbreviation}
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-gray-500" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
       </div>
 
       {/* Modal de guardar paciente */}
@@ -1434,7 +1513,7 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
       )}
 
       {/* Modal de Asistente de Epicrisis */}
-      {showEpicrisisAssistant && (
+      {showEpicrisisAssistant && !isStructuredMode && (
         <EpicrisisAssistantModal
           isOpen={showEpicrisisAssistant}
           onClose={() => setShowEpicrisisAssistant(false)}
@@ -1462,10 +1541,11 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
           isOpen={showSaveModal}
           onClose={() => setShowSaveModal(false)}
           onSave={handleConfirmSave}
-          extractedData={extractPatientData(notes)}
+          extractedData={extractedData}
           fullNotes={notes}
           currentHospitalContext={currentHospitalContext}
           interconsultaContext={activeInterconsulta}
+          structuredSections={isStructuredMode ? structuredSections : null}
         />
       )}
 
@@ -1502,8 +1582,20 @@ Vigil, orientado en tiempo persona y espacio, lenguaje conservado. Repite, nomin
               lines.push(`  ${payload.interpretation.textoInterpretacion}`);
             }
             const block = lines.join('\n');
-            const prefix = notes.trim().length > 0 ? '\n\n' : '';
-            setNotes(notes + prefix + block);
+            if (formatVersion === 2) {
+              applyStructuredUpdate((prev) => ({
+                ...prev,
+                estudiosComplementarios: {
+                  ...prev.estudiosComplementarios,
+                  otros: prev.estudiosComplementarios.otros.trim()
+                    ? `${prev.estudiosComplementarios.otros.trim()}\n\n${block}`
+                    : block
+                }
+              }));
+            } else {
+              const prefix = notes.trim().length > 0 ? '\n\n' : '';
+              setNotes(notes + prefix + block);
+            }
             setShowHintsModal(false);
           }}
         />
