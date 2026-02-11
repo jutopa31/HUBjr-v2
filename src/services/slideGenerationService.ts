@@ -100,9 +100,25 @@ const addFooter = (slide: any) => {
   });
 };
 
+const loadPptxGen = async () => {
+  if (typeof window === 'undefined') {
+    throw new Error('La generación de presentaciones solo está disponible en el navegador.');
+  }
+
+  if (!(window as any).PptxGenJS) {
+    await import('pptxgenjs/dist/pptxgen.min.js');
+  }
+
+  const PptxGenJS = (window as any).PptxGenJS;
+  if (!PptxGenJS) {
+    throw new Error('No se pudo cargar PptxGenJS.');
+  }
+
+  return PptxGenJS;
+};
+
 export async function generatePresentation(config: PresentationConfig): Promise<Blob> {
-  const pptxModule = await import('pptxgenjs');
-  const PptxGenJS = pptxModule.default || pptxModule;
+  const PptxGenJS = await loadPptxGen();
   const pptx = new PptxGenJS();
 
   pptx.layout = 'LAYOUT_WIDE';
