@@ -10,25 +10,19 @@ const cleanValue = (val) => {
 };
 
 // Use Next.js public environment variables for client-side access
-const supabaseUrl = cleanValue(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) || 'https://jvdpuxpurhetopsclqrq.supabase.co';
-const supabaseKey = cleanValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2ZHB1eHB1cmhldG9wc2NscXJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MDk3NDYsImV4cCI6MjA3MjE4NTc0Nn0.WxyPZK6atg4CeQiPKCKwrUA5pTu6c0JyPGF26TqPTo8';
+const supabaseUrl = cleanValue(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+const supabaseKey = cleanValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY);
 
-// Debug logging for development
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Faltan variables de entorno de Supabase: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
+
+// Debug logging for development (sin exponer credenciales)
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-  console.log('Supabase Config:', { 
-    url: supabaseUrl, 
-    key: supabaseKey,
+  console.log('Supabase Config:', {
     hasUrl: !!supabaseUrl,
     hasKey: !!supabaseKey,
-    keyLength: supabaseKey ? supabaseKey.length : 0,
-    keyPrefix: supabaseKey ? supabaseKey.slice(0, 20) : 'none',
     isValidUrl: supabaseUrl && supabaseUrl.startsWith('https://'),
-    rawProcessEnv: {
-      url: process.env.SUPABASE_URL,
-      key: process.env.SUPABASE_ANON_KEY,
-      nextPublicUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      nextPublicKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    }
   });
 }
 
