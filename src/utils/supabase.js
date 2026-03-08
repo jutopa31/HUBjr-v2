@@ -14,7 +14,7 @@ const supabaseUrl = cleanValue(process.env.NEXT_PUBLIC_SUPABASE_URL || process.e
 const supabaseKey = cleanValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY);
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Faltan variables de entorno de Supabase: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  console.warn('[Supabase] Faltan variables de entorno: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY. La app no funcionará correctamente.');
 }
 
 // Debug logging for development (sin exponer credenciales)
@@ -26,8 +26,8 @@ if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
   });
 }
 
-// Initialize Supabase client
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+// Initialize Supabase client (con placeholders si faltan vars, para no romper el build)
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder-key', {
   auth: {
     // Better configuration for production deployment
     autoRefreshToken: true,
