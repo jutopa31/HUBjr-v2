@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safari viewport height fix (100vh bug) */
+@supports (-webkit-touch-callout: none) {
+  body, #root { min-height: -webkit-fill-available; }
+}
+/* Prevenir bounce scroll en el root */
+html { overscroll-behavior-y: none; }
+
 :root {
   --bg-elevated: #f8fafc;
   --bg-hover-subtle: #eef2f7;

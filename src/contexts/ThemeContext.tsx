@@ -42,6 +42,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (mounted) {
       localStorage.setItem('hubjr-theme', theme)
     }
+    // Sync PWA theme-color meta tag
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b0b0b' : '#0369a1')
   }, [theme, mounted])
 
   const toggleTheme = () => {
