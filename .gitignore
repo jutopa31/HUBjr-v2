@@ -51,3 +51,10 @@ prpr.pub
 .env
 .env.local
 .env.production
+openclaw/.env.chief-agent
+
+# PWA build artifacts
+public/sw.js
+public/workbox-*.js
+public/fallback-*.js
+public/sw.js.map

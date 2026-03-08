@@ -13,10 +13,12 @@
     "dev:vite": "vite",
     "build:vite": "tsc && vite build",
     "preview:vite": "vite preview",
-    "audit:responsive": "node scripts/responsive-audit.mjs"
+    "audit:responsive": "node scripts/responsive-audit.mjs",
+    "agent:chief": "node scripts/openclaw-chief-agent.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.31.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/supabase-js": "^2.56.1",
     "cors": "^2.8.5",
     "file-type": "^21.0.0",
@@ -28,6 +30,7 @@
     "papaparse": "^5.5.3",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.4.149",
+    "pg": "^8.20.0",
     "Playwright": "npm:playwright@^1.55.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -51,7 +54,8 @@
     "shadcn": "^3.5.1",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+    "vite": "^5.2.0",
+    "webpack": "^5.105.4"
   },
   "description": "[![Vercel Status](https://img.shields.io/badge/Vercel-Deployed-brightgreen)](https://github.com/jutopa31/HUBjr-v2)\r [![Next.js](https://img.shields.io/badge/Next.js-14.2.31-blue)](https://nextjs.org/)\r [![React](https://img.shields.io/badge/React-18.2.0-61DAFB)](https://reactjs.org/)\r [![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-3178C6)](https://www.typescriptlang.org/)\r [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E)](https://supabase.com/)",
   "main": "create_user_script.js",
